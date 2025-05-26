@@ -14,9 +14,7 @@ pytestmark = pytest.mark.usefixtures("fake_domain")
 
 
 class MockException(Exception):
-    """
-    A tracer exception.
-    """
+    """A tracer exception."""
 
     pass
 
@@ -24,10 +22,9 @@ class MockException(Exception):
 class DownloaderMock:
     """Mock for a Downloader.
 
-    URLs are expected to be the delay to wait to simulate downloading,
-    e.g `url='5'` will wait for 5 seconds. Negative numbers will raise
-    an exception after waiting for the absolute value, e.g. `url=-5` fails
-    after 5 seconds.
+    URLs are expected to be the delay to wait to simulate downloading, e.g `url='5'` will wait for 5
+    seconds. Negative numbers will raise an exception after waiting for the absolute value, e.g.
+    `url=-5` fails after 5 seconds.
     """
 
     def __init__(self, **kwargs):
@@ -120,8 +117,7 @@ def queue_dc(in_q, downloader_mock):
 @pytest_asyncio.fixture
 async def download_task(event_loop, in_q, out_q):
     async def _download_task():
-        """
-        A coroutine running the downloader stage with a mocked ProgressReport.
+        """A coroutine running the downloader stage with a mocked ProgressReport.
 
         Returns:
             The done count of the ProgressReport.
@@ -238,8 +234,9 @@ async def test_sparse_batches_dont_block_stage(
     """Regression test for issue https://pulp.plan.io/issues/4018."""
 
     def queue_content_with_a_single_download(batchsize=100, delay=100):
-        """
-        Queue a batch of `batchsize` declarative_content instances. Only the
+        """Queue a batch of `batchsize` declarative_content instances.
+
+        Only the
         first one triggers a download of duration `delay`.
         """
         queue_dc(delays=[delay])

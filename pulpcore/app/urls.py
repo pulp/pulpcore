@@ -1,4 +1,4 @@
-"""pulp URL Configuration"""
+"""Pulp URL Configuration."""
 
 from django.conf import settings
 from django.urls import path, include
@@ -39,8 +39,7 @@ else:
 
 
 class ViewSetNode:
-    """
-    Each node is a tree that can register nested ViewSets with DRF nested routers.
+    """Each node is a tree that can register nested ViewSets with DRF nested routers.
 
     The structure of the tree becomes the url heirarchy when the ViewSets are registered.
 
@@ -57,8 +56,7 @@ class ViewSetNode:
     """
 
     def __init__(self, viewset=None):
-        """
-        Create a new node.
+        """Create a new node.
 
         Args:
             viewset (pulpcore.app.viewsets.base.NamedModelViewSet): If provided, represent this
@@ -68,8 +66,8 @@ class ViewSetNode:
         self.children = []
 
     def add_decendent(self, node):
-        """
-        Add a VSNode to the tree. If node is not a direct child, attempt to add the to each child.
+        """Add a VSNode to the tree. If node is not a direct child, attempt to add the to each
+        child.
 
         Args:
             node (ViewSetNode): A node that represents a viewset and its decendents.
@@ -88,8 +86,7 @@ class ViewSetNode:
                 child.add_decendent(node)
 
     def register_with(self, router):
-        """
-        Register this tree with the specified router and create new routers as necessary.
+        """Register this tree with the specified router and create new routers as necessary.
 
         Args:
             router (routers.DefaultRouter): router to register the viewset with.

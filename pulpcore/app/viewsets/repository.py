@@ -47,9 +47,7 @@ from pulpcore.app.util import resolve_prn
 
 
 class RepositoryContentFilter(Filter):
-    """
-    Filter used to filter repositories which have a piece of content
-    """
+    """Filter used to filter repositories which have a piece of content."""
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("help_text", _("Content Unit referenced by HREF/PRN"))
@@ -101,9 +99,7 @@ class RepositoryFilter(BaseFilterSet):
 
 
 class BaseRepositoryViewSet(NamedModelViewSet):
-    """
-    A base class for any repository viewset.
-    """
+    """A base class for any repository viewset."""
 
     queryset = Repository.objects.exclude(user_hidden=True).order_by("name")
     serializer_class = RepositorySerializer
@@ -151,9 +147,7 @@ class ReadOnlyRepositoryViewSet(
     mixins.ListModelMixin,
     mixins.RetrieveModelMixin,
 ):
-    """
-    A readonly repository which allows only GET method.
-    """
+    """A readonly repository which allows only GET method."""
 
     queryset = Repository.objects.all().order_by("name")
     serializer_class = RepositorySerializer
@@ -169,16 +163,12 @@ class ImmutableRepositoryViewSet(
 ):
     # Too many cascaded deletes to block the gunicorn worker.
     ALLOW_NON_BLOCKING_DELETE = False
-
-    """
-    An immutable repository ViewSet that does not allow the usage of the methods PATCH and PUT.
-    """
+    """An immutable repository ViewSet that does not allow the usage of the methods PATCH and
+    PUT."""
 
 
 class RepositoryViewSet(ImmutableRepositoryViewSet, AsyncUpdateMixin, LabelsMixin):
-    """
-    A ViewSet for an ordinary repository.
-    """
+    """A ViewSet for an ordinary repository."""
 
 
 class RepositoryVersionFilter(BaseFilterSet):
@@ -273,9 +263,7 @@ class RepositoryVersionViewSet(
         responses={202: AsyncOperationResponseSerializer},
     )
     def destroy(self, request, repository_pk, number):
-        """
-        Queues a task to handle deletion of a RepositoryVersion
-        """
+        """Queues a task to handle deletion of a RepositoryVersion."""
         version = self.get_object()
 
         if version in version.repository.protected_versions():
@@ -294,9 +282,7 @@ class RepositoryVersionViewSet(
     )
     @action(detail=True, methods=["post"], serializer_class=RepairSerializer)
     def repair(self, request, repository_pk, number):
-        """
-        Queues a task to repair corrupted artifacts corresponding to a RepositoryVersion
-        """
+        """Queues a task to repair corrupted artifacts corresponding to a RepositoryVersion."""
         version = self.get_object()
         serializer = RepairSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)

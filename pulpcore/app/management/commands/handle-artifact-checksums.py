@@ -23,9 +23,7 @@ CHUNK_SIZE = 1024 * 1024  # 1 Mb
 
 
 class Command(BaseCommand):
-    """
-    Django management command for populating or removing checksums on artifacts.
-    """
+    """Django management command for populating or removing checksums on artifacts."""
 
     help = "Handle missing and forbidden checksums on the artifacts"
 
@@ -34,8 +32,7 @@ class Command(BaseCommand):
         parser.add_argument("--checksums", help=_("Comma separated list of checksums to evaluate"))
 
     def _print_out_repository_version_hrefs(self, repo_versions):
-        """
-        Print out repository version href from a query of repo versions.
+        """Print out repository version href from a query of repo versions.
 
         Args:
             repo_versions (django.db.models.QuerySet): repository versions query

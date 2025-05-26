@@ -18,10 +18,8 @@ def test_reclaim_immediate_content(
     basic_manifest_path,
     monitor_task,
 ):
-    """
-    Test whether immediate repository content can be reclaimed
-    and then re-populated back after sync.
-    """
+    """Test whether immediate repository content can be reclaimed and then re-populated back after
+    sync."""
     remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="immediate")
 
     # sync the repository with immediate policy
@@ -88,10 +86,8 @@ def test_reclaim_on_demand_content(
     sync_repository_distribution,
     monitor_task,
 ):
-    """
-    Test whether on_demand repository content can be reclaimed
-    and then re-populated back after client request.
-    """
+    """Test whether on_demand repository content can be reclaimed and then re-populated back after
+    client request."""
     repo, remote, distribution = sync_repository_distribution(policy="on_demand")
 
     distribution_base_url = distribution_base_url(distribution.base_url)

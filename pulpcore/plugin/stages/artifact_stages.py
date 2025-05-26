@@ -25,8 +25,8 @@ log = logging.getLogger(__name__)
 def _check_for_forbidden_checksum_type(artifact):
     """Check if content doesn't have forbidden checksum type.
 
-    If contains forbidden checksum type it will raise ValueError,
-    otherwise it passes without returning anything.
+    If contains forbidden checksum type it will raise ValueError, otherwise it passes without
+    returning anything.
     """
     for digest_type in Artifact.FORBIDDEN_DIGESTS:
         digest_value = getattr(artifact, digest_type)
@@ -41,9 +41,8 @@ def _check_for_forbidden_checksum_type(artifact):
 
 
 class QueryExistingArtifacts(Stage):
-    """
-    A Stages API stage that replaces :attr:`DeclarativeContent.content` objects with already-saved
-    [pulpcore.plugin.models.Artifact][] objects.
+    """A Stages API stage that replaces :attr:`DeclarativeContent.content` objects with already-
+    saved [pulpcore.plugin.models.Artifact][] objects.
 
     This stage expects [pulpcore.plugin.stages.DeclarativeContent][] units from `self._in_q`
     and inspects their associated [pulpcore.plugin.stages.DeclarativeArtifact][] objects. Each
@@ -64,8 +63,7 @@ class QueryExistingArtifacts(Stage):
     """
 
     async def run(self):
-        """
-        The coroutine for this stage.
+        """The coroutine for this stage.
 
         Returns:
             The coroutine for this stage.
@@ -114,8 +112,7 @@ class QueryExistingArtifacts(Stage):
 
 
 class GenericDownloader(Stage):
-    """
-    A base Stages API stage to download files.
+    """A base Stages API stage to download files.
 
     This stage creates a ProgressReport named `PROGRESS_REPORTING_MESSAGE` that counts the number of
     downloads completed. Since it's a stream the total count isn't known until it's finished.
@@ -144,8 +141,7 @@ class GenericDownloader(Stage):
         self.max_concurrent_content = max_concurrent_content
 
     async def run(self):
-        """
-        The coroutine for this stage.
+        """The coroutine for this stage.
 
         Returns:
             The coroutine for this stage.
@@ -207,9 +203,8 @@ class GenericDownloader(Stage):
 
 
 class ArtifactDownloader(GenericDownloader):
-    """
-    A Stages API stage to download [pulpcore.plugin.models.Artifact][] files, but don't save
-    the [pulpcore.plugin.models.Artifact][] in the db.
+    """A Stages API stage to download [pulpcore.plugin.models.Artifact][] files, but don't save the
+    [pulpcore.plugin.models.Artifact][] in the db.
 
     This stage downloads the file for any [pulpcore.plugin.models.Artifact][] objects missing
     files and creates a new [pulpcore.plugin.models.Artifact][] object from the downloaded
@@ -244,8 +239,7 @@ class ArtifactDownloader(GenericDownloader):
 
 
 class ArtifactSaver(Stage):
-    """
-    A Stages API stage that saves any unsaved :attr:`DeclarativeArtifact.artifact` objects.
+    """A Stages API stage that saves any unsaved :attr:`DeclarativeArtifact.artifact` objects.
 
     This stage expects [pulpcore.plugin.stages.DeclarativeContent][] units from `self._in_q`
     and inspects their associated [pulpcore.plugin.stages.DeclarativeArtifact][] objects. Each
@@ -261,8 +255,7 @@ class ArtifactSaver(Stage):
     """
 
     async def run(self):
-        """
-        The coroutine for this stage.
+        """The coroutine for this stage.
 
         Returns:
             The coroutine for this stage.
@@ -295,8 +288,7 @@ class ArtifactSaver(Stage):
 
 
 class RemoteArtifactSaver(Stage):
-    """
-    A Stage that saves [pulpcore.plugin.models.RemoteArtifact][] objects
+    """A Stage that saves [pulpcore.plugin.models.RemoteArtifact][] objects.
 
     An [pulpcore.plugin.models.RemoteArtifact][] object is saved for each
     [pulpcore.plugin.stages.DeclarativeArtifact][].
@@ -307,8 +299,7 @@ class RemoteArtifactSaver(Stage):
         self.fix_mismatched_remote_artifacts = fix_mismatched_remote_artifacts
 
     async def run(self):
-        """
-        The coroutine for this stage.
+        """The coroutine for this stage.
 
         Returns:
             The coroutine for this stage.
@@ -319,9 +310,8 @@ class RemoteArtifactSaver(Stage):
                 await self.put(d_content)
 
     async def _handle_remote_artifacts(self, batch):
-        """
-        Build a list of only [pulpcore.plugin.models.RemoteArtifact][] that need
-        to be created for the batch.
+        """Build a list of only [pulpcore.plugin.models.RemoteArtifact][] that need to be created
+        for the batch.
 
         Args:
             batch (list): List of [pulpcore.plugin.stages.DeclarativeContent][].
@@ -465,10 +455,8 @@ class RemoteArtifactSaver(Stage):
 
 
 class ACSArtifactHandler(Stage):
-    """
-    API stage to download [pulpcore.plugin.models.Artifact][] files from Alternate
-    Content Source if available.
-    """
+    """API stage to download [pulpcore.plugin.models.Artifact][] files from Alternate Content Source
+    if available."""
 
     def __init__(self, *args, **kwargs):
         self.remote_cache = {}

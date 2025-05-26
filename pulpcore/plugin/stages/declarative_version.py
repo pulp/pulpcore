@@ -21,9 +21,8 @@ from pulpcore.plugin.util import get_domain_pk
 
 class DeclarativeVersion:
     def __init__(self, first_stage, repository, mirror=False, acs=False):
-        """
-        A pipeline that creates a new [pulpcore.plugin.models.RepositoryVersion][] from a
-        stream of [pulpcore.plugin.stages.DeclarativeContent][] objects.
+        """A pipeline that creates a new [pulpcore.plugin.models.RepositoryVersion][] from a stream
+        of [pulpcore.plugin.stages.DeclarativeContent][] objects.
 
         The plugin writer needs to specify a first_stage that will create a
         [pulpcore.plugin.stages.DeclarativeContent][] object for each Content unit that should
@@ -106,7 +105,6 @@ class DeclarativeVersion:
                 'False' is the default.
             acs (bool): When set to 'True' a new stage is added to look for
                 Alternate Content Sources.
-
         """
         self.first_stage = first_stage
         self.repository = repository
@@ -114,8 +112,7 @@ class DeclarativeVersion:
         self.acs = acs
 
     def pipeline_stages(self, new_version):
-        """
-        Build the list of pipeline stages feeding into the ContentAssociation stage.
+        """Build the list of pipeline stages feeding into the ContentAssociation stage.
 
         Plugin-writers may override this method to build a custom pipeline. This
         can be achieved by returning a list with different stages or by extending
@@ -127,7 +124,6 @@ class DeclarativeVersion:
 
         Returns:
             list: List of [pulpcore.plugin.stages.Stage][] instances
-
         """
         pipeline = [
             self.first_stage,
@@ -148,8 +144,7 @@ class DeclarativeVersion:
         return pipeline
 
     def create(self):
-        """
-        Perform the work. This is the long-blocking call where all syncing occurs.
+        """Perform the work. This is the long-blocking call where all syncing occurs.
 
         Returns: The created RepositoryVersion or None if it represents no change from the latest.
         """

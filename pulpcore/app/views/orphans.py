@@ -16,9 +16,7 @@ class OrphansView(APIView):
         responses={202: AsyncOperationResponseSerializer},
     )
     def delete(self, request, format=None):
-        """
-        Cleans up all the Content and Artifact orphans in the system
-        """
+        """Cleans up all the Content and Artifact orphans in the system."""
         exclusive_resources = [f"pdrn:{request.pulp_domain.pulp_id}:orphans"]
         task = dispatch(orphan_cleanup, exclusive_resources=exclusive_resources)
 

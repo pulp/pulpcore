@@ -29,8 +29,7 @@ class NoArtifactContentSerializer(base.ModelSerializer):
     )
 
     def get_artifacts(self, validated_data):
-        """
-        Extract artifacts from validated_data.
+        """Extract artifacts from validated_data.
 
         This function is supposed to extract the information about content artifacts from
         validated_data and return a dictionary with artifacts and relative paths as keys.
@@ -38,11 +37,10 @@ class NoArtifactContentSerializer(base.ModelSerializer):
         return {}
 
     def retrieve(self, validated_data):
-        """
-        Retrieve existing content unit if it exists, else return None.
+        """Retrieve existing content unit if it exists, else return None.
 
-        This method is plugin-specific and implementing it for a specific content type
-        allows for uploading already existing content units of that type.
+        This method is plugin-specific and implementing it for a specific content type allows for
+        uploading already existing content units of that type.
         """
         return None
 
@@ -59,8 +57,7 @@ class NoArtifactContentSerializer(base.ModelSerializer):
         return data
 
     def create(self, validated_data):
-        """
-        Create the content and associate it with its Artifacts, or retrieve the existing content.
+        """Create the content and associate it with its Artifacts, or retrieve the existing content.
 
         Args:
             validated_data (dict): Data to save to the database
@@ -131,9 +128,7 @@ class SingleArtifactContentSerializer(NoArtifactContentSerializer):
     )
 
     def __init__(self, *args, **kwargs):
-        """
-        Initializer for SingleArtifactContentSerializer
-        """
+        """Initializer for SingleArtifactContentSerializer."""
         super().__init__(*args, **kwargs)
 
         # If the content model has its own database field 'relative_path',
@@ -172,8 +167,7 @@ class MultipleArtifactContentSerializer(NoArtifactContentSerializer):
 
 
 class ContentChecksumSerializer(serializers.Serializer):
-    """
-    Provide a serializer with artifact checksum fields for single artifact content.
+    """Provide a serializer with artifact checksum fields for single artifact content.
 
     If you use this serializer, it's recommended that you prefetch artifacts:
 
@@ -264,8 +258,7 @@ class ArtifactSerializer(base.ModelSerializer):
     )
 
     def validate(self, data):
-        """
-        Validate file by size and by all checksums provided.
+        """Validate file by size and by all checksums provided.
 
         Args:
             data (django.http.QueryDict) QueryDict mapping Artifact model fields to their
@@ -326,9 +319,7 @@ class ArtifactSerializer(base.ModelSerializer):
 
 
 class SigningServiceSerializer(base.ModelSerializer):
-    """
-    A serializer for the model declaring a signing service.
-    """
+    """A serializer for the model declaring a signing service."""
 
     pulp_href = base.IdentityField(view_name="signing-services-detail")
     name = serializers.CharField(help_text=_("A unique name used to recognize a script."))

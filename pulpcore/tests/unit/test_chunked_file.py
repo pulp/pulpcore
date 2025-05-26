@@ -11,7 +11,7 @@ from pulpcore.app.util import Crc32Hasher, compute_file_hash
 
 
 def write_chunk_files(tmp_path: Path, data_chunks: t.List[t.ByteString]):
-    """Utility to generate chunk-files fixtures"""
+    """Utility to generate chunk-files fixtures."""
     files = {}
 
     for i, chunk_bytes in enumerate(data_chunks):
@@ -26,8 +26,7 @@ def write_chunk_files(tmp_path: Path, data_chunks: t.List[t.ByteString]):
 def create_tocfile(
     tmp_path: Path, data_chunks: t.List[t.ByteString], chunk_size: int, corrupted: bool = False
 ):
-    """
-    Utility to generate a tocfile.json and return its path.
+    """Utility to generate a tocfile.json and return its path.
 
     It can optionally generate a corrupted toc-file with wrong first checksum.
 
@@ -74,7 +73,7 @@ def create_tocfile(
     ],
 )
 def test_chunked_file_fileobj_api(tmp_path, chunks_list, chunk_size):
-    """Methods tell, read and seek works inside context manager"""
+    """Methods tell, read and seek works inside context manager."""
     contiguous_data = b"".join(chunks_list)
 
     toc_path = create_tocfile(tmp_path, data_chunks=chunks_list, chunk_size=chunk_size)

@@ -64,8 +64,7 @@ class AccessPolicySerializer(ModelSerializer):
         )
 
     def validate(self, data):
-        """
-        Validate the AccessPolicy.
+        """Validate the AccessPolicy.
 
         This ensures that the customized boolean will be set to True anytime the user modifies it.
         """

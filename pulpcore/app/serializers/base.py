@@ -101,7 +101,7 @@ class _MatchingRegexViewName(object):
 
 
 class _DetailFieldMixin(HrefPrnFieldMixin):
-    """Mixin class containing code common to DetailIdentityField and DetailRelatedField"""
+    """Mixin class containing code common to DetailIdentityField and DetailRelatedField."""
 
     def __init__(self, view_name=None, view_name_pattern=None, **kwargs):
         if view_name is None:
@@ -155,7 +155,7 @@ class RelatedField(
     HrefPrnFieldMixin,
     serializers.HyperlinkedRelatedField,
 ):
-    """RelatedField when relating to non-Master/Detail models
+    """RelatedField when relating to non-Master/Detail models.
 
     When using this field on a serializer, it will serialize the related resource as a relative URL.
     """
@@ -179,9 +179,8 @@ PKDomainObject = namedtuple("PKDomainObject", ["pk", "pulp_domain"])
 class RelatedResourceField(RelatedField):
     """RelatedResourceField when relating a Resource object models.
 
-    This field should be used to relate a list of non-homogeneous resources. e.g.:
-    CreatedResource and ExportedResource models that store relationships to arbitrary
-    resources.
+    This field should be used to relate a list of non-homogeneous resources. e.g.: CreatedResource
+    and ExportedResource models that store relationships to arbitrary resources.
 
     Specific implementation requires the model to be defined in the Meta:.
     """
@@ -242,25 +241,25 @@ class RelatedResourceField(RelatedField):
 
 
 class DetailIdentityField(_DetailFieldMixin, serializers.HyperlinkedIdentityField):
-    """IdentityField for use in the pulp_href field of Master/Detail Serializers
+    """IdentityField for use in the pulp_href field of Master/Detail Serializers.
 
     When using this field on a Serializer, it will automatically cast objects to their Detail type
     base on the Serializer's Model before generating URLs for them.
 
-    Subclasses must indicate the Master model they represent by declaring a queryset
-    in their class body, usually <MasterModelImplementation>.objects.all().
+    Subclasses must indicate the Master model they represent by declaring a queryset in their class
+    body, usually <MasterModelImplementation>.objects.all().
     """
 
 
 class DetailRelatedField(_DetailFieldMixin, serializers.HyperlinkedRelatedField):
-    """RelatedField for use when relating to Master/Detail models
+    """RelatedField for use when relating to Master/Detail models.
 
-    When using this field on a Serializer, relate it to the Master model in a
-    Master/Detail relationship, and it will automatically cast objects to their Detail type
-    before generating URLs for them.
+    When using this field on a Serializer, relate it to the Master model in a Master/Detail
+    relationship, and it will automatically cast objects to their Detail type before generating URLs
+    for them.
 
-    Subclasses must indicate the Master model they represent by declaring a queryset
-    in their class body, usually <MasterModelImplementation>.objects.all().
+    Subclasses must indicate the Master model they represent by declaring a queryset in their class
+    body, usually <MasterModelImplementation>.objects.all().
     """
 
     def get_object(self, *args, **kwargs):
@@ -268,8 +267,9 @@ class DetailRelatedField(_DetailFieldMixin, serializers.HyperlinkedRelatedField)
         return super().get_object(*args, **kwargs).cast()
 
     def use_pk_only_optimization(self):
-        """
-        If the lookup field is `pk`, DRF substitutes a PKOnlyObject as an optimization. This
+        """If the lookup field is `pk`, DRF substitutes a PKOnlyObject as an optimization.
+
+        This
         optimization breaks with Detail fields like this one which need access to their Meta
         class to get the relevant `view_name`.
         """
@@ -297,8 +297,8 @@ class NestedRelatedField(
 
 
 def validate_unknown_fields(initial_data, defined_fields):
-    """
-    This will raise a `ValidationError` if a serializer is passed fields that are unknown.
+    """This will raise a `ValidationError` if a serializer is passed fields that are unknown.
+
     The `csrfmiddlewaretoken` field is silently ignored.
     """
     ignored_fields = {"csrfmiddlewaretoken"}
@@ -346,9 +346,9 @@ class ValidateFieldsMixin:
 
 
 class HiddenFieldsMixin(serializers.Serializer):
-    """
-    Adds a list field of hidden (write only) fields and whether their values are set
-    so clients can tell if they are overwriting an existing value.
+    """Adds a list field of hidden (write only) fields and whether their values are set so clients
+    can tell if they are overwriting an existing value.
+
     For example this could be any sensitive information such as a password, name or token.
     The list contains dictionaries with keys `name` and `is_set`.
     """
@@ -375,7 +375,7 @@ class HiddenFieldsMixin(serializers.Serializer):
 
 
 class GetOrCreateSerializerMixin:
-    """A mixin that provides a get_or_create with validation in the serializer"""
+    """A mixin that provides a get_or_create with validation in the serializer."""
 
     @classmethod
     def get_or_create(cls, natural_key, default_values=None):
@@ -436,7 +436,6 @@ class ModelSerializer(
     The class provides a default for the ``ref_name`` attribute in the
     ModelSerializers's ``Meta`` class. This ensures that the OpenAPI definitions
     of plugins are namespaced properly.
-
     """
 
     # default is 'fields!' which doesn't work in the bindings for some langs
@@ -457,9 +456,8 @@ class ModelSerializer(
     )
 
     def _validate_relative_path(self, path):
-        """
-        Validate a relative path (eg from a url) to ensure it forms a valid url and does not begin
-        or end with slashes nor contain spaces
+        """Validate a relative path (eg from a url) to ensure it forms a valid url and does not
+        begin or end with slashes nor contain spaces.
 
         Args:
             path (str): A relative path to validate
@@ -469,7 +467,6 @@ class ModelSerializer(
 
         Raises:
             django.core.exceptions.ValidationError: if the relative path is invalid
-
         """
         # in order to use django's URLValidator we need to construct a full url
         base = "http://localhost"  # use a scheme/hostname we know are valid
@@ -513,7 +510,6 @@ class ModelSerializer(
         The ``ref_name`` default value is computed using ``Meta.model``. If that
         is not defined (because the class must be subclassed to be useful),
         `ref_name` is not set.
-
         """
         super().__init_subclass__(**kwargs)
         meta = cls.Meta
@@ -527,9 +523,7 @@ class ModelSerializer(
 
 
 class AsyncOperationResponseSerializer(serializers.Serializer):
-    """
-    Serializer for asynchronous operations.
-    """
+    """Serializer for asynchronous operations."""
 
     task = RelatedField(
         required=True,
@@ -541,9 +535,7 @@ class AsyncOperationResponseSerializer(serializers.Serializer):
 
 
 class TaskGroupOperationResponseSerializer(serializers.Serializer):
-    """
-    Serializer for asynchronous operations that return a task group.
-    """
+    """Serializer for asynchronous operations that return a task group."""
 
     task_group = RelatedField(
         required=True,
@@ -555,18 +547,14 @@ class TaskGroupOperationResponseSerializer(serializers.Serializer):
 
 
 class SetLabelSerializer(serializers.Serializer):
-    """
-    Serializer for synchronously setting a label.
-    """
+    """Serializer for synchronously setting a label."""
 
     key = serializers.SlugField(required=True)
     value = serializers.CharField(required=True, allow_null=True, allow_blank=True)
 
 
 class UnsetLabelSerializer(serializers.Serializer):
-    """
-    Serializer for synchronously UNsetting a label.
-    """
+    """Serializer for synchronously UNsetting a label."""
 
     key = serializers.SlugField(required=True)
     value = serializers.CharField(read_only=True)

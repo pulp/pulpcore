@@ -10,9 +10,7 @@ from pulpcore.app.loggers import deprecation_logger
 
 
 class AccessPolicyFromDB(AccessPolicy):
-    """
-    An AccessPolicy that loads statements from an `AccessPolicy` model instance.
-    """
+    """An AccessPolicy that loads statements from an `AccessPolicy` model instance."""
 
     def __init_subclass__(self, *args, **kwargs):
         deprecation_logger.warning(
@@ -24,8 +22,7 @@ class AccessPolicyFromDB(AccessPolicy):
 
     @staticmethod
     def get_access_policy(view):
-        """
-        Retrieves the AccessPolicy from the DB or None if it doesn't exist.
+        """Retrieves the AccessPolicy from the DB or None if it doesn't exist.
 
         Args:
             view (subclass of rest_framework.view.APIView): The view or viewset to receive the
@@ -47,13 +44,11 @@ class AccessPolicyFromDB(AccessPolicy):
 
     @classmethod
     def handle_creation_hooks(cls, obj):
-        """
-        Handle the creation hooks defined in this policy for the passed in `obj`.
+        """Handle the creation hooks defined in this policy for the passed in `obj`.
 
         Args:
             cls: The class this method belongs to.
             obj: The model instance to have its creation hooks handled for.
-
         """
         viewset = get_viewset_for_model(obj)
         access_policy = cls.get_access_policy(viewset)
@@ -71,9 +66,7 @@ class AccessPolicyFromDB(AccessPolicy):
                 function(**kwargs)
 
     def scope_queryset(self, view, qs):
-        """
-        Scope the queryset based on the access policy `scope_queryset` method if present.
-        """
+        """Scope the queryset based on the access policy `scope_queryset` method if present."""
         if access_policy := self.get_access_policy(view):
             if access_policy.queryset_scoping:
                 scope = access_policy.queryset_scoping["function"]
@@ -86,8 +79,7 @@ class AccessPolicyFromDB(AccessPolicy):
         return qs
 
     def get_policy_statements(self, request, view):
-        """
-        Return the policy statements from an AccessPolicy instance matching the viewset name.
+        """Return the policy statements from an AccessPolicy instance matching the viewset name.
 
         This is an implementation of a method that will be called by
         `rest_access_policy.AccessPolicy`. See the drf-access-policy docs for more info:

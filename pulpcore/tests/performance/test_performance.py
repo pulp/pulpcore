@@ -62,7 +62,6 @@ def test_performance(
     data = []
 
     auth = (bindings_cfg.username, bindings_cfg.password)
-
     """Measure time of synchronization."""
 
     for r in args.repositories:
@@ -91,7 +90,6 @@ def test_performance(
 
     results = [monitor_task(response.task) for response in responses]
     report_tasks_stats("Sync tasks", results)
-
     """Measure time of resynchronization."""
     responses = []
     for r in data:
@@ -101,7 +99,6 @@ def test_performance(
 
     results = [monitor_task(response.task) for response in responses]
     report_tasks_stats("Resync tasks", results)
-
     """Measure time of repository publishing."""
     responses = []
     for r in data:
@@ -151,7 +148,6 @@ def test_performance(
 
     after = datetime.datetime.utcnow()
     print_fmt_experiment_time("Repository download", before, after)
-
     """Measure time of inspecting the repository content."""
     before = datetime.datetime.utcnow()
 
@@ -171,7 +167,6 @@ def test_performance(
             pool.starmap(measureit, params)
     after = datetime.datetime.utcnow()
     print_fmt_experiment_time("Content inspection", before, after)
-
     """Measure time of repository cloning."""
     for r in data:
         r["repository_clone1_name"] = str(uuid4())
@@ -237,5 +232,5 @@ def get_results(url, params=None, auth=None):
 
 
 def list_units_in_repo_ver(content_url, repo_ver, auth=None):
-    """List the file content with all the fields"""
+    """List the file content with all the fields."""
     return get_results(content_url, params={"repository_version": repo_ver}, auth=auth)

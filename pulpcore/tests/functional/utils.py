@@ -134,8 +134,8 @@ def generate_manifest(name, file_list):
 
 
 def get_files_in_manifest(url):
-    """
-    Download a File Repository manifest and return content as a list of tuples.
+    """Download a File Repository manifest and return content as a list of tuples.
+
     [(name,sha256,size),]
     """
     files = set()
@@ -146,9 +146,7 @@ def get_files_in_manifest(url):
 
 
 def get_from_url(url, auth=None, headers=None):
-    """
-    Performs a GET request on a URL and returns an aiohttp.Response object.
-    """
+    """Performs a GET request on a URL and returns an aiohttp.Response object."""
     return asyncio.run(_get_from_url(url, auth=auth, headers=headers))
 
 

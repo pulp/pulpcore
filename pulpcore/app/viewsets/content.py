@@ -90,9 +90,7 @@ class ArtifactViewSet(
     # However, for compatibility reasons, it is still possible to execute the DELETE
     # request by overriding the DEFAULT_ACCESS_POLICY.
     def destroy(self, request, pk):
-        """
-        Remove Artifact only if it is not associated with any Content.
-        """
+        """Remove Artifact only if it is not associated with any Content."""
         msg = _(
             "destroy is deprecated. Deleting artifacts is a dangerous operation, "
             "use orphan cleanup instead."
@@ -142,8 +140,7 @@ class ContentFilter(BaseFilterSet):
 
 
 class BaseContentViewSet(NamedModelViewSet):
-    """
-    A base class for any content viewset.
+    """A base class for any content viewset.
 
     It ensures that 'content/' is a part of endpoint, sets a default filter class and provides
     a default `scope_queryset` method.
@@ -213,23 +210,17 @@ class ContentViewSet(
     mixins.ListModelMixin,
     LabelsMixin,
 ):
-    """
-    Content viewset that supports POST and GET by default.
-    """
+    """Content viewset that supports POST and GET by default."""
 
 
 class ReadOnlyContentViewSet(
     BaseContentViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin, LabelsMixin
 ):
-    """
-    Content viewset that supports only GET by default.
-    """
+    """Content viewset that supports only GET by default."""
 
 
 class SigningServiceViewSet(NamedModelViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin):
-    """
-    A ViewSet that supports browsing of existing signing services.
-    """
+    """A ViewSet that supports browsing of existing signing services."""
 
     endpoint_name = "signing-services"
     queryset = SigningService.objects.all()

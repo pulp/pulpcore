@@ -58,8 +58,7 @@ MAX_ATTEMPTS = 3
 
 
 class ChunkedFile(ExitStack):
-    """
-    Read a toc file and represent the reconstructed file as a fileobj.
+    """Read a toc file and represent the reconstructed file as a fileobj.
 
     This class implements just enough of the fileobj interface to let `tarfile` work on a bunch of
     file chunks.
@@ -139,8 +138,7 @@ class ChunkedFile(ExitStack):
         self.chunks[self.chunk].seek(self.offset)
 
     def validate_chunks(self):
-        """
-        Check validity of table-of-contents file.
+        """Check validity of table-of-contents file.
 
         table-of-contents must:
           * exist
@@ -189,9 +187,8 @@ class ChunkedFile(ExitStack):
 
 
 def _get_destination_repo_name(importer, source_repo_name):
-    """
-    Return the name of a destination repository considering the mapping or source repository name.
-    """
+    """Return the name of a destination repository considering the mapping or source repository
+    name."""
     if importer.repo_mapping and importer.repo_mapping.get(source_repo_name):
         dest_repo_name = importer.repo_mapping[source_repo_name]
     else:
@@ -200,12 +197,10 @@ def _get_destination_repo_name(importer, source_repo_name):
 
 
 def _impfile_iterator(fd):
-    """
-    Iterate over an import-file returning batches of rows as a json-array-string.
+    """Iterate over an import-file returning batches of rows as a json-array-string.
 
-    We use naya.json.stream_array() to get individual rows; once a batch is gathered,
-    we yield the result of json.dumps() for that batch. Repeat until all rows have been
-    called for.
+    We use naya.json.stream_array() to get individual rows; once a batch is gathered, we yield the
+    result of json.dumps() for that batch. Repeat until all rows have been called for.
     """
     data = json_stream.load(fd)
     batch = []
@@ -218,13 +213,12 @@ def _impfile_iterator(fd):
 
 
 def _import_file(fpath, resource_class, retry=False):
-    """
-    Import the specified resource-file in batches to limit memory-use.
+    """Import the specified resource-file in batches to limit memory-use.
 
-    We process resource-files one "batch" at a time. Because of the way django-import's
-    internals work, we have to feed it batches as StringIO-streams of json-formatted strings.
-    The file-to-json-to-string-to-import is overhead, but it lets us put an upper bound on the
-    number of entities in memory at any one time at import-time.
+    We process resource-files one "batch" at a time. Because of the way django-import's internals
+    work, we have to feed it batches as StringIO-streams of json-formatted strings. The file-to-
+    json-to-string-to-import is overhead, but it lets us put an upper bound on the number of
+    entities in memory at any one time at import-time.
     """
     try:
         log.info(f"Importing file {fpath}.")
@@ -278,11 +272,10 @@ def _import_file(fpath, resource_class, retry=False):
 
 
 def _check_versions(version_json):
-    """
-    Compare the export version_json to the installed components.
+    """Compare the export version_json to the installed components.
 
-    An upstream whose db-metadata doesn't match the downstream won't import successfully; check
-    for compatibility and raise a ValidationError if incompatible versions are found.
+    An upstream whose db-metadata doesn't match the downstream won't import successfully; check for
+    compatibility and raise a ValidationError if incompatible versions are found.
     """
     error_messages = []
     for component in version_json:
@@ -315,8 +308,7 @@ def _check_versions(version_json):
 def import_repository_version(
     importer_pk, src_repo_name, src_repo_type, dest_repo_name, dest_repo_pk, tar_path, toc_path=None
 ):
-    """
-    Import a repository version from a Pulp export.
+    """Import a repository version from a Pulp export.
 
     Args:
         importer_pk (str): Importer we are working with.
@@ -424,8 +416,7 @@ def import_repository_version(
 
 
 def pulp_import(importer_pk, path, toc, create_repositories):
-    """
-    Import a Pulp export into Pulp.
+    """Import a Pulp export into Pulp.
 
     Args:
         importer_pk (str): Primary key of PulpImporter to do the import

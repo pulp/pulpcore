@@ -67,9 +67,8 @@ class JSONListField(serializers.JSONField):
 
 
 class SingleContentArtifactField(RelatedField):
-    """
-    A serializer field for the '_artifacts' ManyToManyField on the Content model (single-artifact).
-    """
+    """A serializer field for the '_artifacts' ManyToManyField on the Content model (single-
+    artifact)."""
 
     lookup_field = "pk"
     view_name = "artifacts-detail"
@@ -77,8 +76,8 @@ class SingleContentArtifactField(RelatedField):
     allow_null = True
 
     def get_attribute(self, instance):
-        """
-        Returns the field from the instance that should be serialized using this serializer field.
+        """Returns the field from the instance that should be serialized using this serializer
+        field.
 
         This serializer looks up the list of artifacts and returns only one, if any exist. If more
         than one exist, it throws and exception because this serializer is being used in an
@@ -107,9 +106,7 @@ class SingleContentArtifactField(RelatedField):
 
 
 class ContentArtifactChecksumField(serializers.CharField):
-    """
-    A serializer field for the artifact checksum Content model (single-artifact).
-    """
+    """A serializer field for the artifact checksum Content model (single-artifact)."""
 
     def __init__(self, *args, **kwargs):
         kwargs["read_only"] = True
@@ -117,8 +114,8 @@ class ContentArtifactChecksumField(serializers.CharField):
         super().__init__(*args, **kwargs)
 
     def get_attribute(self, instance):
-        """
-        Returns the field from the instance that should be serialized using this serializer field.
+        """Returns the field from the instance that should be serialized using this serializer
+        field.
 
         This serializer looks up the checksum for single artifact content
 
@@ -148,13 +145,10 @@ class ContentArtifactChecksumField(serializers.CharField):
 
 
 class ContentArtifactsField(serializers.DictField):
-    """
-    A serializer field for the '_artifacts' ManyToManyField on the Content model.
-    """
+    """A serializer field for the '_artifacts' ManyToManyField on the Content model."""
 
     def run_validation(self, data):
-        """
-        Validates 'data' dict.
+        """Validates 'data' dict.
 
         Validates that all keys of 'data' are relative paths. Validates that all values of 'data'
         are URLs for an existing Artifact.
@@ -192,8 +186,8 @@ class ContentArtifactsField(serializers.DictField):
         return ret
 
     def get_attribute(self, instance):
-        """
-        Returns the field from the instance that should be serialized using this serializer field.
+        """Returns the field from the instance that should be serialized using this serializer
+        field.
 
         This serializer field serializes a ManyToManyField that is actually stored as a
         ContentArtifact model. Instead of returning the field, this method returns all the
@@ -209,8 +203,7 @@ class ContentArtifactsField(serializers.DictField):
         return instance.contentartifact_set.all()
 
     def to_representation(self, value):
-        """
-        Serializes list of ContentArtifacts.
+        """Serializes list of ContentArtifacts.
 
         Returns a dict mapping relative paths inside the Content to the corresponding Artifact
         URLs.
@@ -282,9 +275,9 @@ class LatestVersionField(RepositoryVersionRelatedField):
     queryset = None  # read-only relational fields should not provide a `queryset` argument
 
     def __init__(self, *args, **kwargs):
-        """
-        Unfortunately you can't just set read_only=True on the class. It has
-        to be done explicitly in the kwargs to __init__, or else DRF complains.
+        """Unfortunately you can't just set read_only=True on the class.
+
+        It has to be done explicitly in the kwargs to __init__, or else DRF complains.
         """
         kwargs["read_only"] = True
         super().__init__(*args, **kwargs)
@@ -307,9 +300,7 @@ class LatestVersionField(RepositoryVersionRelatedField):
 
 
 class BaseURLField(serializers.CharField):
-    """
-    Serializer Field for the base_url field of the Distribution.
-    """
+    """Serializer Field for the base_url field of the Distribution."""
 
     def to_representation(self, value):
 

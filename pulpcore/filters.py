@@ -26,9 +26,8 @@ UPMatch = namedtuple("UPMatch", ("model", "pk"))
 
 
 class StableOrderingFilter(filters.OrderingFilter):
-    """
-    Ordering filter with a stabilized order by either creation date, if available or primary key.
-    """
+    """Ordering filter with a stabilized order by either creation date, if available or primary
+    key."""
 
     def filter(self, qs, value):
         try:
@@ -42,8 +41,7 @@ class StableOrderingFilter(filters.OrderingFilter):
 
 
 class HyperlinkRelatedFilter(filters.Filter):
-    """
-    Enables a user to filter by a foreign key using that FK's href/prn.
+    """Enables a user to filter by a foreign key using that FK's href/prn.
 
     Foreign key filter can be specified to an object type by specifying the base URI of that type.
     e.g. Filter by file remotes: ?remote=/pulp/api/v3/remotes/file/file/
@@ -284,15 +282,13 @@ class ExpressionFilter(filters.CharFilter):
 
 
 class BaseFilterSet(filterset.FilterSet):
-    """
-    Class to override django_filter's FilterSet and provide a way to set help text
+    """Class to override django_filter's FilterSet and provide a way to set help text.
 
     By default, this class will use predefined text and the field name to create help text for the
     filter. However, this can be overriden by setting a help_text dict with the field name
     mapped to some help text:
 
         help_text = {'name__in': 'Lorem ipsum dolor', 'pulp_last_updated__lt': 'blah blah'}
-
     """
 
     help_text = {}
@@ -365,8 +361,7 @@ class BaseFilterSet(filterset.FilterSet):
 
     @classmethod
     def filter_for_field(cls, field, name, lookup_expr):
-        """
-        Looks up and initializes a filter and returns it. Also, sets the help text on the filter.
+        """Looks up and initializes a filter and returns it. Also, sets the help text on the filter.
 
         Args:
             field: The field class for the filter

@@ -66,11 +66,10 @@ def test_add_remove_content(
 ):
     """Add and remove content to a repository. Verify side-effects.
 
-    A new repository version is automatically created each time content is
-    added to or removed from a repository. Furthermore, it's possible to
-    inspect any repository version and discover which content is present, which
-    content was removed, and which content was added. This test case explores
-    these features.
+    A new repository version is automatically created each time content is added to or removed from
+    a repository. Furthermore, it's possible to inspect any repository version and discover which
+    content is present, which content was removed, and which content was added. This test case
+    explores these features.
     """
     file_repo = file_repository_factory()
     repo_versions = file_bindings.RepositoriesFileVersionsApi.list(file_repo.pulp_href)

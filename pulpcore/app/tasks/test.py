@@ -26,7 +26,7 @@ def gooey_task(interval):
 
 
 def dummy_group_task(inbetween=3, intervals=None):
-    """A group task that dispatches 'interval' sleep tasks every 'inbetween' seconds.'"""
+    """A group task that dispatches 'interval' sleep tasks every 'inbetween' seconds.'."""
     intervals = intervals or range(5)
     task_group = TaskGroup.current()
     for interval in intervals:

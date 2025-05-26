@@ -285,8 +285,7 @@ class TaskScheduleSerializer(ModelSerializer):
 
 
 class TaskStatusMessageSerializer(TaskSerializer):
-    """
-    Serializer for Task status messages.
+    """Serializer for Task status messages.
 
     Independent of other serializers in order to decouple the task message schema from other
     interfaces.

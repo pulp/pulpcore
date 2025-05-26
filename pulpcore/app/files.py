@@ -10,9 +10,7 @@ from pulpcore.app import pulp_hashlib
 
 
 class PulpTemporaryUploadedFile(TemporaryUploadedFile):
-    """
-    A file uploaded to a temporary location in Pulp.
-    """
+    """A file uploaded to a temporary location in Pulp."""
 
     def __init__(self, name, content_type, size, charset, content_type_extra=None):
         self.hashers = {}
@@ -22,8 +20,7 @@ class PulpTemporaryUploadedFile(TemporaryUploadedFile):
 
     @classmethod
     def from_file(cls, file):
-        """
-        Create a PulpTemporaryUploadedFile from a file system file
+        """Create a PulpTemporaryUploadedFile from a file system file.
 
         Args:
             file (File): a filesystem file
@@ -52,9 +49,7 @@ class PulpTemporaryUploadedFile(TemporaryUploadedFile):
 
 
 class HashingFileUploadHandler(TemporaryFileUploadHandler):
-    """
-    Upload handler that streams data into a temporary file.
-    """
+    """Upload handler that streams data into a temporary file."""
 
     def new_file(
         self,
@@ -65,8 +60,7 @@ class HashingFileUploadHandler(TemporaryFileUploadHandler):
         charset=None,
         content_type_extra=None,
     ):
-        """
-        Signal that a new file has been started.
+        """Signal that a new file has been started.
 
         Args:
             field_name (str): Name of the model field that this file is associated with. This
@@ -90,8 +84,7 @@ class HashingFileUploadHandler(TemporaryFileUploadHandler):
 
 
 class TemporaryDownloadedFile(TemporaryUploadedFile):
-    """
-    A temporary downloaded file.
+    """A temporary downloaded file.
 
     The FileSystemStorage backend treats this object the same as a TemporaryUploadedFile. The
     storage backend attempts to link the file to its final location. If the final location is on a
@@ -99,8 +92,7 @@ class TemporaryDownloadedFile(TemporaryUploadedFile):
     """
 
     def __init__(self, file, name=None):
-        """
-        A constructor that does not create a blank temporary file.
+        """A constructor that does not create a blank temporary file.
 
         The __init__ for TemporaryUploadedFile creates an empty temporary file. This constructor
         is designed to handle files that have already been written to disk.
@@ -116,8 +108,7 @@ class TemporaryDownloadedFile(TemporaryUploadedFile):
 
 
 def validate_file_paths(paths):
-    """
-    Check for valid POSIX paths (ie ones that aren't duplicated and don't overlap).
+    """Check for valid POSIX paths (ie ones that aren't duplicated and don't overlap).
 
     Overlapping paths are where one path terminates inside another (e.g. a/b and a/b/c).
 

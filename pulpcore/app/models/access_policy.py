@@ -14,8 +14,8 @@ def _ensure_iterable(obj):
 
 
 class AccessPolicy(BaseModel):
-    """
-    A model storing a viewset authorization policy and permission assignment of new objects created.
+    """A model storing a viewset authorization policy and permission assignment of new objects
+    created.
 
     Fields:
 
@@ -30,7 +30,6 @@ class AccessPolicy(BaseModel):
             Defaults to False.
         queryset_scoping (models.JSONField): A dictionary identifying a callable to perform the
             queryset scoping. This field can be null if the user doesn't want to perform scoping.
-
     """
 
     creation_hooks = models.JSONField(null=True)
@@ -41,8 +40,7 @@ class AccessPolicy(BaseModel):
 
 
 class AutoAddObjPermsMixin:
-    """
-    A mixin that automatically adds roles based on the ``creation_hooks`` data.
+    """A mixin that automatically adds roles based on the ``creation_hooks`` data.
 
     To use this mixin, your model must support ``django-lifecycle``.
 
@@ -54,7 +52,6 @@ class AutoAddObjPermsMixin:
     * ``add_roles_for_object_creator`` will add the roles to the creator of the object.
     * ``add_roles_for_users`` will add the roles for one or more users by name.
     * ``add_roles_for_groups`` will add the roles for one or more groups by name.
-
     """
 
     def __init__(self, *args, **kwargs):
@@ -77,8 +74,7 @@ class AutoAddObjPermsMixin:
                     permission_class.handle_creation_hooks(self)
 
     def add_roles_for_users(self, roles, users):
-        """
-        Adds object-level roles for one or more users for this newly created object.
+        """Adds object-level roles for one or more users for this newly created object.
 
         Args:
             roles (str or list): One or more roles to be added at object-level for the users.
@@ -88,7 +84,6 @@ class AutoAddObjPermsMixin:
 
         Raises:
             ObjectDoesNotExist: If any of the users do not exist.
-
         """
         from pulpcore.app.role_util import assign_role
 
@@ -100,8 +95,7 @@ class AutoAddObjPermsMixin:
                 assign_role(role, user, self)
 
     def add_roles_for_groups(self, roles, groups):
-        """
-        Adds object-level roles for one or more groups for this newly created object.
+        """Adds object-level roles for one or more groups for this newly created object.
 
         Args:
             roles (str or list): One or more object-level roles to be added for the groups. This
@@ -111,7 +105,6 @@ class AutoAddObjPermsMixin:
 
         Raises:
             ObjectDoesNotExist: If any of the groups do not exist.
-
         """
         from pulpcore.app.role_util import assign_role
 
@@ -123,8 +116,7 @@ class AutoAddObjPermsMixin:
                 assign_role(role, group, self)
 
     def add_roles_for_object_creator(self, roles):
-        """
-        Adds object-level roles for the user creating the newly created object.
+        """Adds object-level roles for the user creating the newly created object.
 
         If the ``get_current_authenticated_user`` returns None because the API client did not
         provide authentication credentials, *no* permissions are added and this passes silently.
@@ -134,7 +126,6 @@ class AutoAddObjPermsMixin:
         Args:
             roles (list or str): One or more roles to be added at the object-level for the user.
                 This can either be a single role as a string, or list of role names.
-
         """
         from pulpcore.app.role_util import assign_role
 

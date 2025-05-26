@@ -40,8 +40,7 @@ def startup_hook():
 
 
 def delete_incomplete_resources(task):
-    """
-    Delete all incomplete created-resources on a canceled task.
+    """Delete all incomplete created-resources on a canceled task.
 
     Args:
         task (Task): A task.
@@ -90,7 +89,9 @@ def child_signal_handler(sig, frame):
 
 def perform_task(task_pk, task_working_dir_rel_path):
     """Setup the environment to handle a task and execute it.
-    This must be called as a subprocess, while the parent holds the advisory lock of the task."""
+
+    This must be called as a subprocess, while the parent holds the advisory lock of the task.
+    """
     signal.signal(signal.SIGINT, child_signal_handler)
     signal.signal(signal.SIGTERM, child_signal_handler)
     signal.signal(signal.SIGHUP, child_signal_handler)

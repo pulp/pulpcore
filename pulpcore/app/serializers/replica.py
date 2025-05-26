@@ -12,9 +12,7 @@ from pulpcore.app.models import UpstreamPulp
 
 
 class UpstreamPulpSerializer(ModelSerializer, HiddenFieldsMixin):
-    """
-    Serializer for a Server.
-    """
+    """Serializer for a Server."""
 
     pulp_href = IdentityField(view_name="upstream-pulps-detail")
     name = serializers.CharField(

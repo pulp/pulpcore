@@ -60,7 +60,7 @@ class PermissionField(serializers.RelatedField):
 
 
 class ContentObjectField(serializers.CharField):
-    """Content object field"""
+    """Content object field."""
 
     def to_representation(self, value):
         if value is None:
@@ -84,7 +84,7 @@ class ContentObjectField(serializers.CharField):
 
 
 class ContentObjectPRNField(serializers.CharField):
-    """Content object PRN field"""
+    """Content object PRN field."""
 
     def to_representation(self, value):
         if value is None:
@@ -259,10 +259,10 @@ class ValidateRoleMixin:
     CHECK_SAME_DOMAIN = False
 
     def _validate_role(self, role_type, data):
-        """
-        Checks if the role contains the right permissions for the object/domain
-        and checks if the user/group already has the role. Does not set any value
-        in data or return anything.
+        """Checks if the role contains the right permissions for the object/domain and checks if the
+        user/group already has the role.
+
+        Does not set any value in data or return anything.
         """
         if "content_object" not in data:
             raise serializers.ValidationError(
@@ -456,8 +456,7 @@ class GroupRoleSerializer(ValidateRoleMixin, ModelSerializer, NestedHyperlinkedM
 
 
 class NestedRoleSerializer(serializers.Serializer):
-    """
-    Serializer to add/remove object roles to/from users/groups.
+    """Serializer to add/remove object roles to/from users/groups.
 
     This is used in conjunction with ``pulpcore.app.viewsets.base.RolesMixin`` and requires the
     underlying object to be passed as ``content_object`` in the context.

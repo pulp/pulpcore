@@ -10,8 +10,7 @@ from pulpcore.app.models import Group, Repository
 
 
 def has_model_perms(request, view, action, permission):
-    """
-    Checks if the current user has a model-level permission.
+    """Checks if the current user has a model-level permission.
 
     This is usable as a conditional check in an AccessPolicy. Here is an example checking for
     "file.add_fileremote" permission at the model-level.
@@ -39,8 +38,7 @@ def has_model_perms(request, view, action, permission):
 
 
 def has_domain_perms(request, view, action, permission):
-    """
-    Checks if the user has current domain-level permission.
+    """Checks if the user has current domain-level permission.
 
     If DOMAIN_ENABLED, use the incoming request's domain for the permission check, else return
     False.
@@ -51,8 +49,7 @@ def has_domain_perms(request, view, action, permission):
 
 
 def has_obj_perms(request, view, action, permission):
-    """
-    Checks if the current user has object-level permission on the specific object.
+    """Checks if the current user has object-level permission on the specific object.
 
     The object in this case is the one the action is operating on, e.g. the URL
     ``/pulp/api/v3/tasks/15939b47-6b6d-4613-a441-939ca4ba6e63/`` is operating on the Task object
@@ -85,17 +82,14 @@ def has_obj_perms(request, view, action, permission):
 
 
 def has_model_or_domain_perms(request, view, action, permission):
-    """
-    Checks if the current user has either model-level (global) or domain-level permissions.
-    """
+    """Checks if the current user has either model-level (global) or domain-level permissions."""
     return has_model_perms(request, view, action, permission) or has_domain_perms(
         request, view, action, permission
     )
 
 
 def has_model_or_domain_or_obj_perms(request, view, action, permission):
-    """
-    Checks if the current user has the permission across all levels of Pulp.
+    """Checks if the current user has the permission across all levels of Pulp.
 
     This checks all three levels of permissions in Pulp: model, domain, and object level. Returns
     True if the user has the permission on any of those levels, False otherwise.
@@ -106,8 +100,7 @@ def has_model_or_domain_or_obj_perms(request, view, action, permission):
 
 
 def has_model_or_obj_perms(request, view, action, permission):
-    """
-    Checks if the current user has either model-level or object-level permissions.
+    """Checks if the current user has either model-level or object-level permissions.
 
     The object in this case is the one the action is operating on, e.g. the URL
     ``/pulp/api/v3/tasks/15939b47-6b6d-4613-a441-939ca4ba6e63/`` is operating on the Task object
@@ -144,8 +137,7 @@ def has_model_or_obj_perms(request, view, action, permission):
 
 
 def has_remote_param_obj_perms(request, view, action, permission):
-    """
-    Checks if the current user has object-level permission on the ``remote`` object.
+    """Checks if the current user has object-level permission on the ``remote`` object.
 
     The object in this case is the one specified by the ``remote`` parameter. For example when
     syncing the ``remote`` parameter is passed in as an argument.
@@ -193,17 +185,15 @@ def has_remote_param_obj_perms(request, view, action, permission):
 
 
 def has_remote_param_model_or_domain_or_obj_perms(request, view, action, permission):
-    """
-    Checks if the current user has the permission on the ``remote`` param.
-    """
+    """Checks if the current user has the permission on the ``remote`` param."""
     return has_model_or_domain_perms(
         request, view, action, permission
     ) or has_remote_param_obj_perms(request, view, action, permission)
 
 
 def has_remote_param_model_or_obj_perms(request, view, action, permission):
-    """
-    Checks if the current user has either model-level or object-level permissions on the ``remote``.
+    """Checks if the current user has either model-level or object-level permissions on the
+    ``remote``.
 
     The object in this case is the one specified by the ``remote`` parameter. For example when
     syncing the ``remote`` parameter is passed in as an argument.
@@ -245,8 +235,7 @@ def has_remote_param_model_or_obj_perms(request, view, action, permission):
 
 
 def has_repo_attr_obj_perms(request, view, action, permission):
-    """
-    Checks if the current user has object-level permission on a ``repository`` attribute.
+    """Checks if the current user has object-level permission on a ``repository`` attribute.
 
     The object in this case is the one specified by the ``repository`` attribute of a resource
     which is being operated on. For example, when deleting a repository version, a ``repository``
@@ -287,17 +276,14 @@ def has_repo_attr_obj_perms(request, view, action, permission):
 
 
 def has_repo_attr_model_or_domain_or_obj_perms(request, view, action, permission):
-    """
-    Checks if the current user has the permission on the ``repository`` attribute.
-    """
+    """Checks if the current user has the permission on the ``repository`` attribute."""
     return has_model_or_domain_perms(request, view, action, permission) or has_repo_attr_obj_perms(
         request, view, action, permission
     )
 
 
 def has_repo_attr_model_or_obj_perms(request, view, action, permission):
-    """
-    Checks if the current user has model-level or object-level permissions on a ``repository``.
+    """Checks if the current user has model-level or object-level permissions on a ``repository``.
 
     The object in this case is the one specified by the ``repository`` attribute of a resource
     which is being operated on. For example, when deleting a repository version, a ``repository``
@@ -339,8 +325,7 @@ def has_repo_attr_model_or_obj_perms(request, view, action, permission):
 
 
 def has_repository_obj_perms(request, view, action, permission):
-    """
-    Checks whether a user has the requested object permission on the repository in the URL.
+    """Checks whether a user has the requested object permission on the repository in the URL.
 
     This check is meant to be used for relations nested beneath a repository endpoint, e.g. the
     list of repository versions belonging to that repository. It will fail for other endpoints.
@@ -369,17 +354,14 @@ def has_repository_obj_perms(request, view, action, permission):
 
 
 def has_repository_model_or_domain_or_obj_perms(request, view, action, permission):
-    """
-    Checks if the current user has the permission for the repository in the URL.
-    """
+    """Checks if the current user has the permission for the repository in the URL."""
     return has_model_or_domain_perms(request, view, action, permission) or has_repository_obj_perms(
         request, view, action, permission
     )
 
 
 def has_repository_model_or_obj_perms(request, view, action, permission):
-    """
-    Checks whether a user has the requested model or object permission on the repository in the
+    """Checks whether a user has the requested model or object permission on the repository in the
     URL.
 
     This check is meant to be used for relations nested beneath a repository endpoint, e.g. the
@@ -410,9 +392,7 @@ def has_repository_model_or_obj_perms(request, view, action, permission):
 
 
 def has_repo_or_repo_ver_param_model_or_domain_or_obj_perms(request, view, action, permission):
-    """
-    Checks if the current user has permission on the ``repository`` or ``repository_version``.
-    """
+    """Checks if the current user has permission on the ``repository`` or ``repository_version``."""
     if has_model_or_domain_perms(request, view, action, permission):
         return True
     kwargs = {}
@@ -431,8 +411,7 @@ def has_repo_or_repo_ver_param_model_or_domain_or_obj_perms(request, view, actio
 
 
 def has_repo_or_repo_ver_param_model_or_obj_perms(request, view, action, permission):
-    """
-    Checks if the current user has object-level permission on the ``repository`` object.
+    """Checks if the current user has object-level permission on the ``repository`` object.
 
     The object in this case is the one specified by the ``repository`` or ``repository_version``
     parameter. For example when publishing the ``repository`` parameter is passed in as an argument.
@@ -486,8 +465,7 @@ def has_repo_or_repo_ver_param_model_or_obj_perms(request, view, action, permiss
 
 
 def has_required_repo_perms_on_upload(request, view, action, permission):
-    """
-    Checks if the current user has permission to upload content to the ``repository`` object.
+    """Checks if the current user has permission to upload content to the ``repository`` object.
 
     Since content queryset scoping prevents users from seeing orphaned content by default this
     also checks to make sure that any user that isn't an admin has also supplied the ``repository``
@@ -560,9 +538,7 @@ def has_required_repo_perms_on_upload(request, view, action, permission):
 
 
 def has_publication_param_model_or_domain_or_obj_perms(request, view, action, permission):
-    """
-    Checks if the current user has permission on the ``Publication`` param.
-    """
+    """Checks if the current user has permission on the ``Publication`` param."""
     if has_model_or_domain_perms(request, view, action, permission):
         return True
     kwargs = {}
@@ -579,8 +555,7 @@ def has_publication_param_model_or_domain_or_obj_perms(request, view, action, pe
 
 
 def has_publication_param_model_or_obj_perms(request, view, action, permission):
-    """
-    Checks if the current user has permission on the ``Publication`` object.
+    """Checks if the current user has permission on the ``Publication`` object.
 
     The object in this case is the one specified by the ``publication`` parameter. For example when
     distributing the ``publication`` parameter is passed in as an argument.
@@ -629,9 +604,7 @@ def has_publication_param_model_or_obj_perms(request, view, action, permission):
 
 
 def has_upload_param_model_or_domain_or_obj_perms(request, view, action, permission):
-    """
-    Checks if the current user has permission on the ``Upload`` param.
-    """
+    """Checks if the current user has permission on the ``Upload`` param."""
     if has_model_or_domain_perms(request, view, action, permission):
         return True
     kwargs = {}
@@ -648,8 +621,7 @@ def has_upload_param_model_or_domain_or_obj_perms(request, view, action, permiss
 
 
 def has_upload_param_model_or_obj_perms(request, view, action, permission):
-    """
-    Checks if the current user has permission on the ``Upload`` object.
+    """Checks if the current user has permission on the ``Upload`` object.
 
     The object in this case is the one specified by the ``upload`` parameter, for example to a
     one-shot content creation call.
@@ -701,8 +673,7 @@ def has_upload_param_model_or_obj_perms(request, view, action, permission):
 
 
 def has_group_obj_perms(request, view, action, permission):
-    """
-    Checks whether a user has the requested object permission on the Group in the URL.
+    """Checks whether a user has the requested object permission on the Group in the URL.
 
     This check is meant to be used for relations nested beneath the group endpoint, e.g. the list
     of users to belong to that group. It will fail for other endpoints.
@@ -731,8 +702,7 @@ def has_group_obj_perms(request, view, action, permission):
 
 
 def has_group_model_or_obj_perms(request, view, action, permission):
-    """
-    Checks whether a user has the requested object or model permission on the Group in the URL.
+    """Checks whether a user has the requested object or model permission on the Group in the URL.
 
     This check is meant to be used for relations nested beneath the group endpoint, e.g. the list
     of users to belong to that group. It will fail for other endpoints.

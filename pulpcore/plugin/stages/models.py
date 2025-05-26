@@ -7,9 +7,8 @@ from pulpcore.plugin.models import Artifact
 
 
 class DeclarativeArtifact:
-    """
-    Relates an [pulpcore.plugin.models.Artifact][], how to download it, and its
-    `relative_path` used later during publishing.
+    """Relates an [pulpcore.plugin.models.Artifact][], how to download it, and its `relative_path`
+    used later during publishing.
 
     This is used by the Stages API stages to determine if an
     [pulpcore.plugin.models.Artifact][] is already present and ensure Pulp can download it in
@@ -83,8 +82,7 @@ class DeclarativeArtifact:
         return self.urls[0]
 
     async def download(self):
-        """
-        Download content and update the associated Artifact.
+        """Download content and update the associated Artifact.
 
         Returns:
             Returns the [pulpcore.plugin.download.DownloadResult][] of the Artifact.
@@ -124,8 +122,7 @@ class DeclarativeArtifact:
 
 
 class DeclarativeContent:
-    """
-    Relates a Content unit and zero or more [pulpcore.plugin.stages.DeclarativeArtifact][]
+    """Relates a Content unit and zero or more [pulpcore.plugin.stages.DeclarativeArtifact][]
     objects.
 
     This is used by the Stages API stages to determine if a Content unit is already present and
@@ -166,13 +163,16 @@ class DeclarativeContent:
     @property
     def does_batch(self):
         """Whether this content is being awaited on and must therefore not wait forever in batches.
+
         When overwritten in subclasses, a `True` value must never be turned into `False`.
         """
         return self._resolved or self._future is None
 
     async def resolution(self):
         """Coroutine that waits for the content to be saved to database.
-        Returns the content unit."""
+
+        Returns the content unit.
+        """
         if self._resolved:
             # Already resolved ~> shortcut
             return self.content

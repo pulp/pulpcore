@@ -1,5 +1,4 @@
-"""
-Tests PulpImporter and PulpImport functionality
+"""Tests PulpImporter and PulpImport functionality.
 
 NOTE: assumes ALLOWED_EXPORT_PATHS and ALLOWED_IMPORT_PATHS settings contain "/tmp" - all tests
 will fail if this is not the case.
@@ -74,7 +73,7 @@ def exporter(pulpcore_bindings, tmpdir, gen_object_with_cleanup, import_export_r
 
 @pytest.fixture
 def import_check_directory(tmp_path):
-    """Creates a directory/file structure for testing import-check"""
+    """Creates a directory/file structure for testing import-check."""
     os.makedirs(f"{tmp_path}/noreaddir")
     os.makedirs(f"{tmp_path}/nowritedir")
     os.makedirs(f"{tmp_path}/nowritedir/notafile")

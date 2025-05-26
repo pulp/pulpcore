@@ -1,6 +1,4 @@
-"""
-Content related Django models.
-"""
+"""Content related Django models."""
 
 from gettext import gettext as _
 
@@ -60,13 +58,10 @@ _FORBIDDEN_DIGESTS = set(ALL_KNOWN_CONTENT_CHECKSUMS).difference(settings.ALLOWE
 
 
 class BulkCreateManager(models.Manager):
-    """
-    A manager that provides a bulk_get_or_create()
-    """
+    """A manager that provides a bulk_get_or_create()"""
 
     def bulk_get_or_create(self, objs, batch_size=None):
-        """
-        Insert the list of objects into the database and get existing objects from the database.
+        """Insert the list of objects into the database and get existing objects from the database.
 
         Do *not* call save() on each of the instances, do not send any pre/post_save signals,
         and do not set the primary key attribute if it is an autoincrement field (except if
@@ -99,20 +94,17 @@ class BulkCreateManager(models.Manager):
 
 
 class BulkTouchQuerySet(models.QuerySet):
-    """
-    A query set that provides ``touch()``.
-    """
+    """A query set that provides ``touch()``."""
 
     def touch(self):
-        """
-        Update the ``timestamp_of_interest`` on all objects of the query.
+        """Update the ``timestamp_of_interest`` on all objects of the query.
 
         Postgres' UPDATE call doesn't support order-by. This can (and does) result in deadlocks in
         high-concurrency environments, when using touch() on overlapping data sets. In order to
-        prevent this, we choose to SELECT FOR UPDATE with SKIP LOCKS == True, and only update
-        the rows that we were able to get locks on. Since a previously-locked-row implies
-        that updating that row's timestamp-of-interest is the responsibility of whoever currently
-        owns it, this results in correct data, while closing the window on deadlocks.
+        prevent this, we choose to SELECT FOR UPDATE with SKIP LOCKS == True, and only update the
+        rows that we were able to get locks on. Since a previously-locked-row implies that updating
+        that row's timestamp-of-interest is the responsibility of whoever currently owns it, this
+        results in correct data, while closing the window on deadlocks.
         """
         with transaction.atomic():
             sub_q = self.order_by("pk").select_for_update(skip_locked=True)
@@ -120,14 +112,10 @@ class BulkTouchQuerySet(models.QuerySet):
 
 
 class QueryMixin:
-    """
-    A mixin that provides models with querying utilities.
-    """
+    """A mixin that provides models with querying utilities."""
 
     def q(self):
-        """
-        Returns a Q object that represents the model
-        """
+        """Returns a Q object that represents the model."""
         if not self._state.adding:
             return models.Q(pk=self.pk)
         try:
@@ -139,13 +127,10 @@ class QueryMixin:
 
 
 class HandleTempFilesMixin:
-    """
-    A mixin that provides methods for handling temporary files.
-    """
+    """A mixin that provides methods for handling temporary files."""
 
     def save(self, *args, **kwargs):
-        """
-        Saves Model and closes the file associated with the Model
+        """Saves Model and closes the file associated with the Model.
 
         Args:
             args (list): list of positional arguments for Model.save()
@@ -157,8 +142,7 @@ class HandleTempFilesMixin:
             self.file.close()
 
     def delete(self, *args, **kwargs):
-        """
-        Deletes Model and the file associated with the Model
+        """Deletes Model and the file associated with the Model.
 
         Args:
             args (list): list of positional arguments for Model.delete()
@@ -182,8 +166,7 @@ class ArtifactQuerySet(BulkTouchQuerySet):
 
 
 class Artifact(HandleTempFilesMixin, BaseModel):
-    """
-    A file associated with a piece of content.
+    """A file associated with a piece of content.
 
     When calling `save()` on an Artifact, if the file is not stored in Django's storage backend, it
     is moved into place then.
@@ -207,8 +190,7 @@ class Artifact(HandleTempFilesMixin, BaseModel):
     """
 
     def storage_path(self, name):
-        """
-        Callable used by FileField to determine where the uploaded file should be stored.
+        """Callable used by FileField to determine where the uploaded file should be stored.
 
         Args:
             name (str): Original name of uploaded file. It is ignored by this method because the
@@ -253,8 +235,7 @@ class Artifact(HandleTempFilesMixin, BaseModel):
 
     @hook(BEFORE_SAVE)
     def before_save(self):
-        """
-        Pre-save hook that validates checksum rules prior to allowing an Artifact to be saved.
+        """Pre-save hook that validates checksum rules prior to allowing an Artifact to be saved.
 
         An Artifact with any checksums from the FORBIDDEN set will fail to save while raising
         an UnsupportedDigestValidationError exception.
@@ -290,8 +271,7 @@ class Artifact(HandleTempFilesMixin, BaseModel):
         return models.Q()
 
     def is_equal(self, other):
-        """
-        Is equal by matching digest.
+        """Is equal by matching digest.
 
         Args:
             other (pulpcore.app.models.Artifact): A artifact to match.
@@ -309,8 +289,7 @@ class Artifact(HandleTempFilesMixin, BaseModel):
 
     @staticmethod
     def init_and_validate(file, expected_digests=None, expected_size=None):
-        """
-        Initialize an in-memory Artifact from a file, and validate digest and size info.
+        """Initialize an in-memory Artifact from a file, and validate digest and size info.
 
         This accepts both a path to a file on-disk or a
         [pulpcore.app.files.PulpTemporaryUploadedFile][].
@@ -372,8 +351,7 @@ class Artifact(HandleTempFilesMixin, BaseModel):
 
     @classmethod
     def from_pulp_temporary_file(cls, temp_file):
-        """
-        Creates an Artifact from PulpTemporaryFile.
+        """Creates an Artifact from PulpTemporaryFile.
 
         Returns:
             An saved [pulpcore.plugin.models.Artifact][]
@@ -394,8 +372,7 @@ class Artifact(HandleTempFilesMixin, BaseModel):
 
 
 class PulpTemporaryFile(HandleTempFilesMixin, BaseModel):
-    """
-    A temporary file saved to the storage backend.
+    """A temporary file saved to the storage backend.
 
     Commonly used to pass data to one or more tasks.
 
@@ -410,8 +387,7 @@ class PulpTemporaryFile(HandleTempFilesMixin, BaseModel):
     """
 
     def storage_path(self, name):
-        """
-        Callable used by FileField to determine where the uploaded file should be stored.
+        """Callable used by FileField to determine where the uploaded file should be stored.
 
         Args:
             name (str): Original name of uploaded file. It is ignored by this method because the
@@ -426,8 +402,7 @@ class PulpTemporaryFile(HandleTempFilesMixin, BaseModel):
 
     @staticmethod
     def init_and_validate(file, expected_digests=None, expected_size=None):
-        """
-        Initialize an in-memory PulpTemporaryFile from a file, and validate digest and size info.
+        """Initialize an in-memory PulpTemporaryFile from a file, and validate digest and size info.
 
         This accepts both a path to a file on-disk or a
         [pulpcore.app.files.PulpTemporaryUploadedFile][].
@@ -511,8 +486,7 @@ ContentManager = BulkCreateManager.from_queryset(ContentQuerySet)
 
 
 class Content(MasterModel, QueryMixin):
-    """
-    A piece of managed content.
+    """A piece of managed content.
 
     Fields:
         upstream_id (models.UUIDField) : identifier of content imported from an 'upstream' Pulp
@@ -548,8 +522,7 @@ class Content(MasterModel, QueryMixin):
 
     @classmethod
     def repository_types(cls):
-        """
-        Tuple of the repository models that can store this content type.
+        """Tuple of the repository models that can store this content type.
 
         Populated at start up time. Read only.
         """
@@ -557,8 +530,8 @@ class Content(MasterModel, QueryMixin):
 
     @classmethod
     def natural_key_fields(cls):
-        """
-        Returns a tuple of the natural key fields which usually equates to unique_together fields.
+        """Returns a tuple of the natural key fields which usually equates to unique_together
+        fields.
 
         This can be overwritten in subclasses and should return a tuple of field names.
         """
@@ -567,8 +540,7 @@ class Content(MasterModel, QueryMixin):
     @classmethod
     @lru_cache(typed=True)
     def _sanitized_natural_key_fields(cls):
-        """
-        This function translates the names of the key fields to their attname.
+        """This function translates the names of the key fields to their attname.
 
         In case of foreign keys, this decodes to the corresponding `<...>_id` field preventing
         extra DB accesses to fetch the related objects.
@@ -576,8 +548,7 @@ class Content(MasterModel, QueryMixin):
         return tuple(getattr(cls, field).field.attname for field in cls.natural_key_fields())
 
     def natural_key(self):
-        """
-        Get the model's natural key based on natural_key_fields.
+        """Get the model's natural key based on natural_key_fields.
 
         Returns:
             tuple: The natural key.
@@ -585,15 +556,12 @@ class Content(MasterModel, QueryMixin):
         return tuple(getattr(self, f) for f in self._sanitized_natural_key_fields())
 
     def natural_key_dict(self):
-        """
-        Get the model's natural key as a dictionary of keys and values.
-        """
+        """Get the model's natural key as a dictionary of keys and values."""
         return {f: getattr(self, f) for f in self._sanitized_natural_key_fields()}
 
     @staticmethod
     def init_from_artifact_and_relative_path(artifact, relative_path):
-        """
-        Return an instance of the specific content by inspecting an artifact.
+        """Return an instance of the specific content by inspecting an artifact.
 
         Plugin writers are expected to override this method with an implementation for a specific
         content type. If the content type is stored with multiple artifacts plugin writers can
@@ -626,11 +594,10 @@ class Content(MasterModel, QueryMixin):
 
 
 class ContentArtifact(BaseModel, QueryMixin):
-    """
-    A relationship between a Content and an Artifact.
+    """A relationship between a Content and an Artifact.
 
-    Serves as a through model for the '_artifacts' ManyToManyField in Content.
-    Artifact is protected from deletion if it's present in a ContentArtifact relationship.
+    Serves as a through model for the '_artifacts' ManyToManyField in Content. Artifact is protected
+    from deletion if it's present in a ContentArtifact relationship.
     """
 
     artifact = models.ForeignKey(
@@ -647,8 +614,7 @@ class ContentArtifact(BaseModel, QueryMixin):
 
     @staticmethod
     def sort_key(ca):
-        """
-        Static method for defining a sort-key for a specified ContentArtifact.
+        """Static method for defining a sort-key for a specified ContentArtifact.
 
         Sorting lists of ContentArtifacts is critical for avoiding deadlocks in high-concurrency
         environments, when multiple workers may be operating on similar sets of content at the
@@ -691,8 +657,7 @@ class RemoteArtifactQuerySet(models.QuerySet):
 
 
 class RemoteArtifact(BaseModel, QueryMixin):
-    """
-    Represents a content artifact that is provided by a remote (external) repository.
+    """Represents a content artifact that is provided by a remote (external) repository.
 
     Remotes that want to support deferred download policies should use this model to store
     information required for downloading an Artifact at some point in the future. At a minimum this
@@ -766,8 +731,7 @@ class RemoteArtifact(BaseModel, QueryMixin):
 
 
 class SigningService(BaseModel):
-    """
-    A model used for producing signatures.
+    """A model used for producing signatures.
 
     Fields:
         name (models.TextField):
@@ -776,7 +740,6 @@ class SigningService(BaseModel):
             The value of the public key.
         script (models.TextField):
             An absolute path to an external signing script (or executable).
-
     """
 
     name = models.TextField(db_index=True, unique=True)
@@ -795,8 +758,7 @@ class SigningService(BaseModel):
         return {**os.environ, **env}
 
     def sign(self, filename, env_vars=None):
-        """
-        Signs the file provided via 'filename' by invoking an external script (or executable).
+        """Signs the file provided via 'filename' by invoking an external script (or executable).
 
         The external script is run as a subprocess. This is done in the expectation that the script
         has been validated as an external signing service by the validate() method. This validation
@@ -851,8 +813,7 @@ class SigningService(BaseModel):
         return return_value
 
     def validate(self):
-        """
-        Ensure that the external signing script produces the desired behaviour.
+        """Ensure that the external signing script produces the desired behaviour.
 
         With desired behaviour we mean the behaviour as validated by this method. Subclasses are
         required to implement this method. Works by calling the sign() method on some test data, and
@@ -865,9 +826,7 @@ class SigningService(BaseModel):
         raise NotImplementedError("Subclasses must implement a validate() method.")
 
     def save(self, *args, **kwargs):
-        """
-        Save a signing service to the database (unless it fails to validate).
-        """
+        """Save a signing service to the database (unless it fails to validate)."""
         if not self.public_key:
             raise RuntimeError(
                 _(
@@ -891,13 +850,10 @@ class SigningService(BaseModel):
 
 
 class AsciiArmoredDetachedSigningService(SigningService):
-    """
-    A model used for creating detached ASCII armored signatures.
-    """
+    """A model used for creating detached ASCII armored signatures."""
 
     def validate(self):
-        """
-        Validate a signing service for a detached ASCII armored signature.
+        """Validate a signing service for a detached ASCII armored signature.
 
         The validation seeks to ensure that the sign() method returns a dict as follows:
 

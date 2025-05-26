@@ -39,8 +39,7 @@ class PublicationQuerySet(models.QuerySet):
     """A queryset that provides publication filtering methods."""
 
     def with_content(self, content):
-        """
-        Filters publictions that contain the provided content units.
+        """Filters publictions that contain the provided content units.
 
         Args:
             content (django.db.models.QuerySet): query of content
@@ -60,9 +59,8 @@ class PublicationQuerySet(models.QuerySet):
 
 
 class Publication(MasterModel):
-    """
-    A publication contains metadata and artifacts associated with content
-    contained within a RepositoryVersion.
+    """A publication contains metadata and artifacts associated with content contained within a
+    RepositoryVersion.
 
     Using as a context manager is highly encouraged.  On context exit, the complete attribute
     is set True provided that an exception has not been raised.  In the event and exception
@@ -106,8 +104,7 @@ class Publication(MasterModel):
 
     @classmethod
     def create(cls, repository_version, pass_through=False, checkpoint=False):
-        """
-        Create a publication.
+        """Create a publication.
 
         This should be used to create a publication.  Using Publication() directly
         is highly discouraged.
@@ -139,8 +136,7 @@ class Publication(MasterModel):
 
     @property
     def repository(self):
-        """
-        Return the associated repository
+        """Return the associated repository.
 
         Returns:
             pulpcore.app.models.Repository: The repository associated to this publication
@@ -148,8 +144,7 @@ class Publication(MasterModel):
         return self.repository_version.repository
 
     def delete(self, **kwargs):
-        """
-        Delete the publication.
+        """Delete the publication.
 
         Args:
             **kwargs (dict): Delete options.
@@ -186,8 +181,7 @@ class Publication(MasterModel):
             return super().delete(**kwargs)
 
     def finalize_new_publication(self):
-        """
-        Finalize the incomplete Publication with plugin-provided code.
+        """Finalize the incomplete Publication with plugin-provided code.
 
         This method should be overridden by plugin writers for an opportunity for plugin input. This
         method is intended to be used to validate or modify the content.
@@ -199,8 +193,7 @@ class Publication(MasterModel):
         pass
 
     def __enter__(self):
-        """
-        Enter context.
+        """Enter context.
 
         Returns:
             Publication: self
@@ -208,8 +201,7 @@ class Publication(MasterModel):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        """
-        Set the complete=True, create the publication.
+        """Set the complete=True, create the publication.
 
         Args:
             exc_type (Type): (optional) Type of exception raised.
@@ -244,8 +236,7 @@ class Publication(MasterModel):
 
 
 class PublishedArtifact(BaseModel):
-    """
-    An artifact that is part of a publication.
+    """An artifact that is part of a publication.
 
     Fields:
         relative_path (models.TextField): The (relative) path component of the published url.
@@ -266,8 +257,7 @@ class PublishedArtifact(BaseModel):
 
 
 class PublishedMetadata(Content):
-    """
-    Metadata file that is part of a publication.
+    """Metadata file that is part of a publication.
 
     Fields:
         relative_path (models.TextField): The (relative) path component of the published url.
@@ -284,8 +274,7 @@ class PublishedMetadata(Content):
 
     @classmethod
     def create_from_file(cls, file, publication, relative_path=None):
-        """
-        Creates PublishedMetadata along with Artifact, ContentArtifact, and PublishedArtifact.
+        """Creates PublishedMetadata along with Artifact, ContentArtifact, and PublishedArtifact.
 
         Args:
             file (django.core.files.File): an open File that contains metadata
@@ -324,8 +313,7 @@ class PublishedMetadata(Content):
 
 
 class ContentGuard(MasterModel):
-    """
-    Defines a named content guard.
+    """Defines a named content guard.
 
     This is meant to be subclassed by plugin authors as an opportunity to provide
     plugin-specific persistent attributes and additional validation for those attributes.
@@ -340,7 +328,6 @@ class ContentGuard(MasterModel):
         name (models.TextField): Unique guard name per domain.
         description (models.TextField): An optional description.
         pulp_domain (models.ForeignKey): The domain the ContentGuard is a part of.
-
     """
 
     name = models.TextField(db_index=True)
@@ -348,8 +335,7 @@ class ContentGuard(MasterModel):
     pulp_domain = models.ForeignKey("Domain", default=get_domain_pk, on_delete=models.PROTECT)
 
     def permit(self, request):
-        """
-        Authorize the specified web request.
+        """Authorize the specified web request.
 
         Args:
             request (aiohttp.web.Request): A request for a published file.
@@ -371,15 +357,14 @@ class ContentGuard(MasterModel):
 
 
 class RBACContentGuard(ContentGuard, AutoAddObjPermsMixin):
-    """
-    A content guard that protects content based on RBAC permissions.
-    """
+    """A content guard that protects content based on RBAC permissions."""
 
     TYPE = "rbac"
 
     def permit(self, request):
-        """
-        Authorize the specified web request. Expects the request to have already been authenticated.
+        """Authorize the specified web request.
+
+        Expects the request to have already been authenticated.
         """
         if not (drequest := request.get("drf_request", None)):
             raise PermissionError("Content app didn't properly authenticate this request")
@@ -406,9 +391,7 @@ def _gen_secret():
 
 
 class ContentRedirectContentGuard(ContentGuard, AutoAddObjPermsMixin):
-    """
-    Content guard to allow preauthenticated redirects to the content app.
-    """
+    """Content guard to allow preauthenticated redirects to the content app."""
 
     TYPE = "content_redirect"
 
@@ -417,9 +400,7 @@ class ContentRedirectContentGuard(ContentGuard, AutoAddObjPermsMixin):
     shared_secret = models.BinaryField(max_length=32, default=_gen_secret)
 
     def permit(self, request):
-        """
-        Permit preauthenticated redirects from pulp-api.
-        """
+        """Permit preauthenticated redirects from pulp-api."""
         try:
             expires = request.query["expires"]
             if int(timezone.now().timestamp()) > int(expires):
@@ -436,9 +417,7 @@ class ContentRedirectContentGuard(ContentGuard, AutoAddObjPermsMixin):
             raise PermissionError("Access not authenticated")
 
     def preauthenticate_url(self, url, salt=None):
-        """
-        Add validate_token to urls query string.
-        """
+        """Add validate_token to urls query string."""
         if not salt:
             salt = _gen_secret()
         hex_salt = salt.hex()
@@ -472,9 +451,7 @@ class ContentRedirectContentGuard(ContentGuard, AutoAddObjPermsMixin):
 
 
 class HeaderContentGuard(ContentGuard, AutoAddObjPermsMixin):
-    """
-    Content guard to protect content based on a header value.
-    """
+    """Content guard to protect content based on a header value."""
 
     TYPE = "header"
 
@@ -528,8 +505,7 @@ class HeaderContentGuard(ContentGuard, AutoAddObjPermsMixin):
 
 
 class CompositeContentGuard(ContentGuard, AutoAddObjPermsMixin):
-    """
-    Content guard to allow a list of contentguards to be evaluated on access.
+    """Content guard to allow a list of contentguards to be evaluated on access.
 
     Content-guards in the `guards` list have their permit() calls issued in order. At the
     first "pass" result, access is permitted. Only if ALL guards in the list forbid access,
@@ -543,9 +519,7 @@ class CompositeContentGuard(ContentGuard, AutoAddObjPermsMixin):
     guards = models.ManyToManyField(ContentGuard, related_name="+", symmetrical=False)
 
     def permit(self, request):
-        """
-        Permit if ANY content-guard allows (OR permissions).
-        """
+        """Permit if ANY content-guard allows (OR permissions)."""
         errors = []
         if not self.guards.all():
             # No guards specified? PASS
@@ -577,8 +551,7 @@ class CompositeContentGuard(ContentGuard, AutoAddObjPermsMixin):
 
 
 class BaseDistribution(MasterModel):
-    """
-    A distribution defines how a publication is distributed by the Content App.
+    """A distribution defines how a publication is distributed by the Content App.
 
     This abstract model can be used by plugin writers to create concrete distributions that are
     stored in separate tables from the Distributions provided by pulpcore.
@@ -618,8 +591,7 @@ class BaseDistribution(MasterModel):
 
 
 class Distribution(MasterModel):
-    """
-    A Distribution defines how the Content App distributes a publication or repository_version.
+    """A Distribution defines how the Content App distributes a publication or repository_version.
 
     This master model can be used by plugin writers to create detail Distribution objects.
 
@@ -673,8 +645,7 @@ class Distribution(MasterModel):
         unique_together = (("name", "pulp_domain"), ("base_path", "pulp_domain"))
 
     def content_handler(self, path):
-        """
-        Handler to serve extra, non-Artifact content for this Distribution
+        """Handler to serve extra, non-Artifact content for this Distribution.
 
         Args:
             path (str): The path being requested
@@ -685,8 +656,7 @@ class Distribution(MasterModel):
         return None
 
     def content_handler_list_directory(self, rel_path):
-        """
-        Generate the directory listing entries for content_handler
+        """Generate the directory listing entries for content_handler.
 
         Args:
             rel_path (str): relative path inside the distribution's base_path. For example,
@@ -697,8 +667,7 @@ class Distribution(MasterModel):
         return set()
 
     def content_headers_for(self, path):
-        """
-        Opportunity for Distribution to specify response-headers for a specific path
+        """Opportunity for Distribution to specify response-headers for a specific path.
 
         Args:
             path (str): The path being requested

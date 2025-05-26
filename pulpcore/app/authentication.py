@@ -38,8 +38,7 @@ class PulpNoCreateRemoteUserBackend(RemoteUserBackend):
 
 
 class JSONHeaderRemoteAuthentication(BaseAuthentication):
-    """
-    Authenticate users based on a jq filter applied to a specific header.
+    """Authenticate users based on a jq filter applied to a specific header.
 
     For users logging in first time it creates User record.
     """
@@ -48,10 +47,7 @@ class JSONHeaderRemoteAuthentication(BaseAuthentication):
     jq_filter = settings.AUTHENTICATION_JSON_HEADER_JQ_FILTER
 
     def authenticate(self, request):
-        """
-        Checks for the presence of a header, and if its content is able
-        to be filtered by JQ.
-        """
+        """Checks for the presence of a header, and if its content is able to be filtered by JQ."""
         if self.header not in request.META:
             _logger.debug(
                 "Access not allowed. Header {header} not found.".format(header=self.header)

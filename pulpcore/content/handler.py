@@ -71,11 +71,10 @@ log = logging.getLogger(__name__)
 
 
 class PathNotResolved(HTTPNotFound):
-    """
-    The path could not be resolved to a published file.
+    """The path could not be resolved to a published file.
 
-    This could be caused by either the distribution, the publication,
-    or the published file could not be found.
+    This could be caused by either the distribution, the publication, or the published file could
+    not be found.
     """
 
     def __init__(self, path, *args, **kwargs):
@@ -85,8 +84,7 @@ class PathNotResolved(HTTPNotFound):
 
 
 class DistroListings(HTTPOk):
-    """
-    Response for browsing through the distributions and their potential multi-layered base-paths.
+    """Response for browsing through the distributions and their potential multi-layered base-paths.
 
     This is returned when visiting the base path of the content app (/pulp/content/) or a partial
     base path of a distribution, e.g. /pulp/content/foo/ for distros /foo/bar/ & /foo/baz/
@@ -119,8 +117,7 @@ class DistroListings(HTTPOk):
 
 
 class CheckpointListings(HTTPOk):
-    """
-    Response for browsing through the checkpoints of a specific checkpoint distro.
+    """Response for browsing through the checkpoints of a specific checkpoint distro.
 
     This is returned when visiting the base path of a checkpoint distro.
     """
@@ -141,16 +138,13 @@ class CheckpointListings(HTTPOk):
 
 
 class ArtifactNotFound(Exception):
-    """
-    The artifact associated with a published-artifact does not exist.
-    """
+    """The artifact associated with a published-artifact does not exist."""
 
     pass
 
 
 class Handler:
-    """
-    A default Handler for the Content App that also can be subclassed to create custom handlers.
+    """A default Handler for the Content App that also can be subclassed to create custom handlers.
 
     This Handler will perform the following:
 
@@ -171,7 +165,6 @@ class Handler:
     5. If the Distribution has a `remote`, find an associated `RemoteArtifact` that matches by
        `relative_path`. Fetch and stream the corresponding `RemoteArtifact` to the client,
        optionally saving the `Artifact` depending on the `policy` attribute.
-
     """
 
     hop_by_hop_headers = [
@@ -189,14 +182,12 @@ class Handler:
 
     @staticmethod
     def _reset_db_connection():
-        """
-        Reset database connection if it's unusable or obselete to avoid "connection already closed".
-        """
+        """Reset database connection if it's unusable or obselete to avoid "connection already
+        closed"."""
         connection.close_if_unusable_or_obsolete()
 
     async def list_distributions(self, request):
-        """
-        The handler for an HTML listing all distributions
+        """The handler for an HTML listing all distributions.
 
         Args:
             request (aiohttp.web.request) The request from the client.
@@ -220,8 +211,7 @@ class Handler:
 
     @classmethod
     async def find_base_path_cached(cls, request, cached):
-        """
-        Finds the base-path to use for the base-key in the cache
+        """Finds the base-path to use for the base-key in the cache.
 
         Args:
             request (aiohttp.web.request) The request from the client.
@@ -247,8 +237,7 @@ class Handler:
 
     @classmethod
     async def auth_cached(cls, request, cached, base_key):
-        """
-        Authentication check for the cached stream_content handler
+        """Authentication check for the cached stream_content handler.
 
         Args:
             request (aiohttp.web.request) The request from the client.
@@ -276,8 +265,7 @@ class Handler:
         auth=lambda req, cac, bk: Handler.auth_cached(req, cac, bk),
     )
     async def stream_content(self, request):
-        """
-        The request handler for the Content app.
+        """The request handler for the Content app.
 
         Args:
             request (aiohttp.web.request) The request from the client.
@@ -291,15 +279,13 @@ class Handler:
 
     @staticmethod
     def _base_paths(path):
-        """
-        Get a list of base paths used to match a distribution.
+        """Get a list of base paths used to match a distribution.
 
         Args:
             path (str): The path component of the URL.
 
         Returns:
             list: Of base paths.
-
         """
         tree = []
         while True:
@@ -312,8 +298,7 @@ class Handler:
 
     @classmethod
     def _match_distribution(cls, path, add_trailing_slash=True):
-        """
-        Match a distribution using a list of base paths and return its detail object.
+        """Match a distribution using a list of base paths and return its detail object.
 
         Args:
             path (str): The path component of the URL.
@@ -371,8 +356,7 @@ class Handler:
 
     @classmethod
     def _select_checkpoint_publication(cls, distro, path):
-        """
-        Finds the checkpoint publication to serve based on the checkpoint distribution and path.
+        """Finds the checkpoint publication to serve based on the checkpoint distribution and path.
 
         Args:
             distro (Distribution): The checkpoint distribution.
@@ -416,8 +400,7 @@ class Handler:
 
     @staticmethod
     def _parse_checkpoint_path(path):
-        """
-        Validate the path and extract the timestamp and rel_path from it.
+        """Validate the path and extract the timestamp and rel_path from it.
 
         Args:
             path (str): The checkpoint path component of the URL (e.g. 20250212T194653Z/dists/).
@@ -451,8 +434,7 @@ class Handler:
 
     @staticmethod
     def _format_checkpoint_timestamp(timestamp):
-        """
-        Format a timestamp to the checkpoint format.
+        """Format a timestamp to the checkpoint format.
 
         Args:
             timestamp (datetime): The timestamp to format.
@@ -464,8 +446,7 @@ class Handler:
 
     @staticmethod
     def _redirect_sub_path(path):
-        """
-        Redirect to the correct path based on whether domain is enabled.
+        """Redirect to the correct path based on whether domain is enabled.
 
         Args:
             path (str): The path component after the path prefix.
@@ -480,8 +461,7 @@ class Handler:
 
     @staticmethod
     def _permit(request, distribution):
-        """
-        Permit the request.
+        """Permit the request.
 
         Authorization is delegated to the optional content-guard associated with the distribution.
 
@@ -508,8 +488,7 @@ class Handler:
 
     @staticmethod
     def response_headers(path, distribution=None):
-        """
-        Get the Content-Type and Encoding-Type headers for the requested `path`.
+        """Get the Content-Type and Encoding-Type headers for the requested `path`.
 
         Args:
             path (str): The relative path that was requested.
@@ -534,8 +513,7 @@ class Handler:
 
     @staticmethod
     def render_html(directory_list, path="", dates=None, sizes=None):
-        """
-        Render a list of strings as an HTML list of links.
+        """Render a list of strings as an HTML list of links.
 
         Args:
             directory_list (iterable): an iterable of strings representing file and directory names
@@ -585,8 +563,7 @@ class Handler:
         )
 
     async def list_directory(self, repo_version, publication, path):
-        """
-        Generate a set with directory listing of the path.
+        """Generate a set with directory listing of the path.
 
         This method expects either a repo_version or a publication in addition to a path. This
         method generates a set of strings representing the list of a path inside the repository
@@ -665,8 +642,7 @@ class Handler:
         return await sync_to_async(list_directory_blocking)()
 
     async def _match_and_stream(self, path, request):
-        """
-        Match the path and stream results either from the filesystem or by downloading new data.
+        """Match the path and stream results either from the filesystem or by downloading new data.
 
         After deciding the client can access the distribution at ``path``, this function calls
         :meth:`Distribution.content_handler`. If that function returns a not-None result, it is
@@ -942,8 +918,8 @@ class Handler:
         raise PathNotResolved(path, reason=reason)
 
     async def _stream_content_artifact(self, request, response, content_artifact):
-        """
-        Stream and optionally save a ContentArtifact by requesting it using the associated remote.
+        """Stream and optionally save a ContentArtifact by requesting it using the associated
+        remote.
 
         If a fatal download failure occurs while downloading and there are additional
         [pulpcore.plugin.models.RemoteArtifact][] objects associated with the
@@ -992,8 +968,7 @@ class Handler:
         raise HTTPNotFound()
 
     def _save_artifact(self, download_result, remote_artifact, request=None):
-        """
-        Create/Get an Artifact and associate it to a RemoteArtifact and/or ContentArtifact.
+        """Create/Get an Artifact and associate it to a RemoteArtifact and/or ContentArtifact.
 
         Create (or get if already existing) an [pulpcore.plugin.models.Artifact][]
         based on the `download_result` and associate it to the `content_artifact` of the given
@@ -1139,8 +1114,7 @@ class Handler:
             raise NotImplementedError()
 
     async def _serve_content_artifact(self, content_artifact, headers, request):
-        """
-        Handle response for a Content Artifact with the file present.
+        """Handle response for a Content Artifact with the file present.
 
         Depending on where the file storage (e.g. filesystem, S3, etc) this could be responding with
         the file (filesystem) or a redirect (S3).
@@ -1185,8 +1159,7 @@ class Handler:
     async def _stream_remote_artifact(
         self, request, response, remote_artifact, save_artifact=True, repository=None
     ):
-        """
-        Stream and save a RemoteArtifact.
+        """Stream and save a RemoteArtifact.
 
         Args:
             request(aiohttp.web.Request) The request to prepare a response for.
@@ -1202,7 +1175,6 @@ class Handler:
                 [pulpcore.plugin.models.RemoteArtifact][] objects associated with the
                 [pulpcore.plugin.models.ContentArtifact][] returned the binary data needed for
                 the client.
-
         """
 
         remote = await remote_artifact.remote.acast()

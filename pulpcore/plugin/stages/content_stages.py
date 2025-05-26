@@ -13,9 +13,8 @@ from .api import Stage
 
 
 class QueryExistingContents(Stage):
-    """
-    A Stages API stage that saves :attr:`DeclarativeContent.content` objects and saves its related
-    [pulpcore.plugin.models.ContentArtifact][] objects too.
+    """A Stages API stage that saves :attr:`DeclarativeContent.content` objects and saves its
+    related [pulpcore.plugin.models.ContentArtifact][] objects too.
 
     This stage expects [pulpcore.plugin.stages.DeclarativeContent][] units from `self._in_q`
     and inspects their associated [pulpcore.plugin.stages.DeclarativeArtifact][] objects. Each
@@ -34,8 +33,7 @@ class QueryExistingContents(Stage):
     """
 
     async def run(self):
-        """
-        The coroutine for this stage.
+        """The coroutine for this stage.
 
         Returns:
             The coroutine for this stage.
@@ -70,9 +68,8 @@ class QueryExistingContents(Stage):
 
 
 class ContentSaver(Stage):
-    """
-    A Stages API stage that saves :attr:`DeclarativeContent.content` objects and saves its related
-    [pulpcore.plugin.models.ContentArtifact][] objects too.
+    """A Stages API stage that saves :attr:`DeclarativeContent.content` objects and saves its
+    related [pulpcore.plugin.models.ContentArtifact][] objects too.
 
     This stage expects [pulpcore.plugin.stages.DeclarativeContent][] units from `self._in_q`
     and inspects their associated [pulpcore.plugin.stages.DeclarativeArtifact][] objects. Each
@@ -89,8 +86,7 @@ class ContentSaver(Stage):
     """
 
     async def run(self):
-        """
-        The coroutine for this stage.
+        """The coroutine for this stage.
 
         Returns:
             The coroutine for this stage.
@@ -200,35 +196,30 @@ class ContentSaver(Stage):
                 await self.put(declarative_content)
 
     def _pre_save(self, batch):
-        """
-        A hook plugin-writers can override to save related objects prior to content unit saving.
+        """A hook plugin-writers can override to save related objects prior to content unit saving.
 
         This is run within the same transaction as the content unit saving.
 
         Args:
             batch (list of [pulpcore.plugin.stages.DeclarativeContent][]): The batch of
                 [pulpcore.plugin.stages.DeclarativeContent][] objects to be saved.
-
         """
         pass
 
     def _post_save(self, batch):
-        """
-        A hook plugin-writers can override to save related objects after content unit saving.
+        """A hook plugin-writers can override to save related objects after content unit saving.
 
         This is run within the same transaction as the content unit saving.
 
         Args:
             batch (list of [pulpcore.plugin.stages.DeclarativeContent][]): The batch of
                 [pulpcore.plugin.stages.DeclarativeContent][] objects to be saved.
-
         """
         pass
 
 
 class ResolveContentFutures(Stage):
-    """
-    This stage resolves the futures in [pulpcore.plugin.stages.DeclarativeContent][].
+    """This stage resolves the futures in [pulpcore.plugin.stages.DeclarativeContent][].
 
     Futures results are set to the found/created [pulpcore.plugin.models.Content][].
 
@@ -258,8 +249,7 @@ class ResolveContentFutures(Stage):
     """
 
     async def run(self):
-        """
-        The coroutine for this stage.
+        """The coroutine for this stage.
 
         Returns:
             The coroutine for this stage.
@@ -270,8 +260,7 @@ class ResolveContentFutures(Stage):
 
 
 class ContentAssociation(Stage):
-    """
-    A Stages API stage that associates content units with `new_version`.
+    """A Stages API stage that associates content units with `new_version`.
 
     This stage stores all content unit primary keys in memory before running. This is done to
     compute the units already associated but not received from `self._in_q`. These units are passed
@@ -299,8 +288,7 @@ class ContentAssociation(Stage):
         self.allow_delete = mirror
 
     async def run(self):
-        """
-        The coroutine for this stage.
+        """The coroutine for this stage.
 
         Returns:
             The coroutine for this stage.

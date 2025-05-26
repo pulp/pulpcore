@@ -4,11 +4,12 @@ from gunicorn.app.base import Application
 
 
 class PulpcoreGunicornApplication(Application):
-    """
-    A common class for the api and content applications to inherit from that loads the default
+    """A common class for the api and content applications to inherit from that loads the default
     gunicorn configs (including from a config file if one exists) and then overrides with the values
-    specified in the init scripts. With warnings / errors if the user overrides something that won't
-    take effect or cannot be changed.
+    specified in the init scripts.
+
+    With warnings / errors if the user overrides something that won't take effect or cannot be
+    changed.
     """
 
     def __init__(self, options):
@@ -16,10 +17,8 @@ class PulpcoreGunicornApplication(Application):
         super().__init__()
 
     def init(self, *args, **kwargs):
-        """
-        A hook for setting application-specific configs, which we instead do below in load_config
-        where it's non-overridable.
-        """
+        """A hook for setting application-specific configs, which we instead do below in load_config
+        where it's non-overridable."""
         pass
 
     def set_option(self, key, value, enforced=False):

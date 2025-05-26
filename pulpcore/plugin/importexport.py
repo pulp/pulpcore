@@ -3,8 +3,7 @@ from pulpcore.app.util import get_domain_pk
 
 
 class QueryModelResource(resources.ModelResource):
-    """
-    A ModelResource that knows the RepositoryVersion to use to filter its query
+    """A ModelResource that knows the RepositoryVersion to use to filter its query.
 
     QueryModelResource has-a repository-version that can be used to limit its export, and a
     queryset that is derived from that repository-version.
@@ -21,8 +20,8 @@ class QueryModelResource(resources.ModelResource):
     """
 
     def before_import_row(self, row, **kwargs):
-        """
-        Sets pulp_domain/_pulp_domain to the current-domain on import.
+        """Sets pulp_domain/_pulp_domain to the current-domain on import.
+
         Args:
             row (tablib.Dataset row): incoming import-row representing a single Variant.
             kwargs: args passed along from the import() call.
@@ -51,8 +50,7 @@ class QueryModelResource(resources.ModelResource):
 
 
 class BaseContentResource(QueryModelResource):
-    """
-    A QueryModelResource that knows how to fill in the 'upstream_id' export-field
+    """A QueryModelResource that knows how to fill in the 'upstream_id' export-field.
 
     BaseContentResource knows to de/hydrate upstream_id with the content-being-exported's pulp_id.
 

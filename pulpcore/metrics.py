@@ -20,8 +20,7 @@ def init_otel_meter(service_name, exporter=None, reader=None, provider=None):
 
 
 class MetricsEmitter:
-    """
-    A builder class that initializes an emitter.
+    """A builder class that initializes an emitter.
 
     If Open Telemetry is enabled, the builder configures a real emitter capable of sending data to
     the collector. Otherwise, a no-op emitter is initialized. The real emitter may utilize the

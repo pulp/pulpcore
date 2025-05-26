@@ -61,8 +61,7 @@ class PulpAutoSchema(AutoSchema):
     V3_API = API_ROOT_NO_FRONT_SLASH.replace("{pulp_domain}/", "")
 
     def _tokenize_path(self):
-        """
-        Tokenize path.
+        """Tokenize path.
 
         drf_spectacular uses this to tokenize the path:
             "/my/path/to/{variable}/api" => ["my", "path", "to", "api"]
@@ -71,7 +70,6 @@ class PulpAutoSchema(AutoSchema):
             "/pulp/api/v3/artifacts/{pulp_id}" == "{artifact_href}"
 
         This method extends _tokenize_path to handle pulp cases.
-
         """
         tokenized_path = []
 
@@ -92,8 +90,7 @@ class PulpAutoSchema(AutoSchema):
         return tokenized_path
 
     def get_tags(self):
-        """
-        Generate tags.
+        """Generate tags.
 
         For bindings, tags are used to group operation ids into same class.
         Example:
@@ -106,7 +103,6 @@ class PulpAutoSchema(AutoSchema):
         Example:
             class MyViewSet(ViewSet):
                 pulp_tag_name = "Pulp: Customized Tag"
-
         """
         pulp_tag_name = getattr(self.view, "pulp_tag_name", False)
         if pulp_tag_name:
@@ -126,8 +122,7 @@ class PulpAutoSchema(AutoSchema):
         return tags
 
     def get_operation_id_action(self):
-        """
-        Get action from operation_id.
+        """Get action from operation_id.
 
         - For default actions: maps methods to action
             "patch" => "partial_update"
@@ -144,8 +139,7 @@ class PulpAutoSchema(AutoSchema):
         return self.method_mapping[self.method.lower()]
 
     def get_operation_id(self):
-        """
-        Get operation id.
+        """Get operation id.
 
         Combines tokenized_path with action.
         Example:
@@ -153,7 +147,6 @@ class PulpAutoSchema(AutoSchema):
             method = "patch"
 
             Return "my_path_to_api_partial_update"
-
         """
         tokenized_path = self._tokenize_path()
         tokenized_path = [t.replace("-", "_").replace("/", "_").lower() for t in tokenized_path]
@@ -161,8 +154,8 @@ class PulpAutoSchema(AutoSchema):
         return "_".join(tokenized_path + [self.get_operation_id_action()])
 
     def get_summary(self):
-        """
-        Returns summary of operation.
+        """Returns summary of operation.
+
         This is the value that is displayed in the ReDoc document as the short name for the API
         operation.
         """
@@ -189,9 +182,7 @@ class PulpAutoSchema(AutoSchema):
             return f"Partially update {article} {resource}"
 
     def _get_serializer_name(self, serializer, direction, bypass_extensions=False):
-        """
-        Get serializer name.
-        """
+        """Get serializer name."""
         name = super()._get_serializer_name(
             serializer, direction, bypass_extensions=bypass_extensions
         )
@@ -202,8 +193,7 @@ class PulpAutoSchema(AutoSchema):
         return name
 
     def map_parsers(self):
-        """
-        Get request parsers.
+        """Get request parsers.
 
         Handling cases with `FileField`.
         """
@@ -222,9 +212,7 @@ class PulpAutoSchema(AutoSchema):
         return request_body
 
     def _get_response_bodies(self):
-        """
-        Handle response status code.
-        """
+        """Handle response status code."""
         response = super()._get_response_bodies()
         if (
             self.method == "POST"
@@ -275,6 +263,7 @@ class PulpSchemaGenerator(SchemaGenerator):
 
     def convert_endpoint_path_params(self, path, view, schema):
         """Replaces all 'pulp_id' path parameters with a specific name for the primary key.
+
         This method is used to ensure that the primary key name is consistent between nested
         endpoints. get_endpoints() returns paths that use 'pulp_id' for the top level path and a
         specific name for the nested paths. e.g.: repository_pk.

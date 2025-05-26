@@ -20,9 +20,8 @@ CHUNK_SIZE = 1024 * 1024  # 1 Mb
 
 
 def delete_version(pk):
-    """
-    Delete a repository version by squashing its changes with the next newer version. This ensures
-    that the content set for each version stays the same.
+    """Delete a repository version by squashing its changes with the next newer version. This
+    ensures that the content set for each version stays the same.
 
     There must be a newer version to squash into. If we deleted the latest version, the next content
     change would create a new one of the same number, which would violate the immutability
@@ -164,8 +163,7 @@ async def _repair_artifacts_for_content(subset=None, verify_checksums=True):
 
 
 def repair_version(repository_version_pk, verify_checksums):
-    """
-    Repair the artifacts associated with this repository version.
+    """Repair the artifacts associated with this repository version.
 
     Artifact files that have suffered from bit rot, were altered or have gone missing will be
     attempted to be refetched fron an associated upstream.
@@ -190,8 +188,7 @@ def repair_version(repository_version_pk, verify_checksums):
 
 
 def repair_all_artifacts(verify_checksums):
-    """
-    Repair all artifacts, globally.
+    """Repair all artifacts, globally.
 
     Artifact files that have suffered from bit rot, were altered or have gone missing will be
     attempted to be refetched fron an associated upstream.
@@ -206,8 +203,7 @@ def repair_all_artifacts(verify_checksums):
 
 
 def add_and_remove(repository_pk, add_content_units, remove_content_units, base_version_pk=None):
-    """
-    Create a new repository version by adding and then removing content units.
+    """Create a new repository version by adding and then removing content units.
 
     Args:
         repository_pk (uuid): The primary key for a Repository for which a new Repository Version

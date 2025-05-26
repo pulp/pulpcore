@@ -19,8 +19,7 @@ logging.getLogger("backoff").addHandler(logging.StreamHandler())
 
 
 def http_giveup_handler(exc):
-    """
-    Inspect a raised exception and determine if we should give up.
+    """Inspect a raised exception and determine if we should give up.
 
     Do not give up when the error is one of the following:
 
@@ -50,8 +49,7 @@ def http_giveup_handler(exc):
 
 
 class HttpDownloader(BaseDownloader):
-    """
-    An HTTP/HTTPS Downloader built on `aiohttp`.
+    """An HTTP/HTTPS Downloader built on `aiohttp`.
 
     This downloader downloads data from one `url` and is not reused.
 
@@ -175,8 +173,7 @@ class HttpDownloader(BaseDownloader):
         super().__init__(url, **kwargs)
 
     def raise_for_status(self, response):
-        """
-        Raise error if aiohttp response status is >= 400 and not silenced.
+        """Raise error if aiohttp response status is >= 400 and not silenced.
 
         Args:
             response (aiohttp.ClientResponse): The response to handle.
@@ -187,8 +184,7 @@ class HttpDownloader(BaseDownloader):
         response.raise_for_status()
 
     async def _handle_response(self, response):
-        """
-        Handle the aiohttp response by writing it to disk and calculating digests
+        """Handle the aiohttp response by writing it to disk and calculating digests.
 
         Args:
             response (aiohttp.ClientResponse): The response to handle.
@@ -213,8 +209,7 @@ class HttpDownloader(BaseDownloader):
         )
 
     async def run(self, extra_data=None):
-        """
-        Run the downloader with concurrency restriction and optional retry logic.
+        """Run the downloader with concurrency restriction and optional retry logic.
 
         This method acquires `self.semaphore` before calling the actual download implementation
         contained in `_run()`. This ensures that the semaphore stays acquired even as the `backoff`
@@ -226,7 +221,6 @@ class HttpDownloader(BaseDownloader):
 
         Returns:
             [pulpcore.plugin.download.DownloadResult][] from `_run()`.
-
         """
         disable_retry_list = [] if not extra_data else extra_data.get("disable_retry_list", [])
         default_retryable_errors = (
@@ -274,8 +268,7 @@ class HttpDownloader(BaseDownloader):
             return await download_wrapper()
 
     async def _run(self, extra_data=None):
-        """
-        Download, validate, and compute digests on the `url`. This is a coroutine.
+        """Download, validate, and compute digests on the `url`. This is a coroutine.
 
         This method is externally wrapped with backoff-and-retry behavior for some errors.
         It retries with exponential backoff some number of times before allowing a final

@@ -36,8 +36,8 @@ Args:
 
 
 class BaseDownloader:
-    """
-    The base class of all downloaders, providing digest calculation, validation, and file handling.
+    """The base class of all downloaders, providing digest calculation, validation, and file
+    handling.
 
     This is an abstract class and is meant to be subclassed. Subclasses are required to implement
     the :meth:`~pulpcore.plugin.download.BaseDownloader.run` method and do two things:
@@ -78,8 +78,7 @@ class BaseDownloader:
         *args,
         **kwargs,
     ):
-        """
-        Create a BaseDownloader object. This is expected to be called by all subclasses.
+        """Create a BaseDownloader object. This is expected to be called by all subclasses.
 
         Args:
             url (str): The url to download.
@@ -112,11 +111,10 @@ class BaseDownloader:
                 )
 
     def _ensure_writer_has_open_file(self):
-        """
-        Create a temporary file on demand.
+        """Create a temporary file on demand.
 
-        Create a temporary file when it's actually used,
-        allowing plugin writers to instantiate many downloaders in memory.
+        Create a temporary file when it's actually used, allowing plugin writers to instantiate many
+        downloaders in memory.
         """
         if not self._writer:
             filename = urlsplit(self.url).path.split("/")[-1]
@@ -141,8 +139,7 @@ class BaseDownloader:
             self._size = 0
 
     async def handle_data(self, data):
-        """
-        A coroutine that writes data to the file object and compute its digests.
+        """A coroutine that writes data to the file object and compute its digests.
 
         All subclassed downloaders are expected to pass all data downloaded to this method. Similar
         to the hashlib docstring, repeated calls are equivalent to a single call with
@@ -157,8 +154,7 @@ class BaseDownloader:
         self._record_size_and_digests_for_data(data)
 
     async def finalize(self):
-        """
-        A coroutine to flush downloaded data, close the file writer, and validate the data.
+        """A coroutine to flush downloaded data, close the file writer, and validate the data.
 
         All subclasses are required to call this method after all data has been passed to
         :meth:`~pulpcore.plugin.download.BaseDownloader.handle_data`.
@@ -181,8 +177,7 @@ class BaseDownloader:
         log.debug(f"Downloaded file from {self.url}")
 
     def fetch(self, extra_data=None):
-        """
-        Run the download synchronously and return the `DownloadResult`.
+        """Run the download synchronously and return the `DownloadResult`.
 
         Returns:
             [pulpcore.plugin.download.DownloadResult][]
@@ -194,8 +189,7 @@ class BaseDownloader:
         return result
 
     def _record_size_and_digests_for_data(self, data):
-        """
-        Record the size and digest for an available chunk of data.
+        """Record the size and digest for an available chunk of data.
 
         Args:
             data (bytes): The data to have its size and digest values recorded.
@@ -206,9 +200,9 @@ class BaseDownloader:
 
     @property
     def artifact_attributes(self):
-        """
-        A property that returns a dictionary with size and digest information. The keys of this
-        dictionary correspond with [pulpcore.plugin.models.Artifact][] fields.
+        """A property that returns a dictionary with size and digest information.
+
+        The keys of this dictionary correspond with [pulpcore.plugin.models.Artifact][] fields.
         """
         attributes = {"size": self._size}
         for algorithm in self._digests:
@@ -216,8 +210,7 @@ class BaseDownloader:
         return attributes
 
     def validate_digests(self):
-        """
-        Validate all digests validate if ``expected_digests`` is set
+        """Validate all digests validate if ``expected_digests`` is set.
 
         Raises:
             [pulpcore.exceptions.DigestValidationError][]: When any of the ``expected_digest``
@@ -231,8 +224,7 @@ class BaseDownloader:
                     raise DigestValidationError(actual_digest, expected_digest, url=self.url)
 
     def validate_size(self):
-        """
-        Validate the size if ``expected_size`` is set
+        """Validate the size if ``expected_size`` is set.
 
         Raises:
             [pulpcore.exceptions.SizeValidationError][]: When the ``expected_size`` value
@@ -246,8 +238,7 @@ class BaseDownloader:
                 raise SizeValidationError(actual_size, expected_size, url=self.url)
 
     async def run(self, extra_data=None):
-        """
-        Run the downloader with concurrency restriction.
+        """Run the downloader with concurrency restriction.
 
         This method acquires `self.semaphore` before calling the actual download implementation
         contained in `_run()`. This ensures that the semaphore stays acquired even as the `backoff`
@@ -258,7 +249,6 @@ class BaseDownloader:
 
         Returns:
             [pulpcore.plugin.download.DownloadResult][] from `_run()`.
-
         """
         async with self.semaphore:
             try:
@@ -267,8 +257,7 @@ class BaseDownloader:
                 raise TimeoutException(self.url)
 
     async def _run(self, extra_data=None):
-        """
-        Run the downloader.
+        """Run the downloader.
 
         This is a coroutine that asyncio can schedule to complete downloading. Subclasses are
         required to implement this method and do two things:
