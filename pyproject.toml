@@ -78,7 +78,7 @@ azure = ["django-storages[azure]==1.14.6"]
 prometheus = ["django-prometheus"]
 kafka = [
   # Pinned because project warns "things might (and will) break with every update"
-  "cloudevents==1.11.0",
+  "cloudevents==1.11.1",
   "confluent-kafka>=2.4.0,<2.10.0",
 ]
 diagnostics = ["pyinstrument~=5.0", "memray~=1.17"]
