@@ -7,7 +7,7 @@ import os
 
 from asgiref.sync import sync_to_async
 from aiohttp import web
-
+from gunicorn.arbiter import Arbiter
 import django
 
 
@@ -16,6 +16,7 @@ django.setup()
 
 from django.conf import settings  # noqa: E402: module level not at top of file
 from django.db.utils import (  # noqa: E402: module level not at top of file
+    IntegrityError,
     InterfaceError,
     DatabaseError,
 )
@@ -48,37 +49,35 @@ CONTENT_MODULE_NAME = "content"
 
 
 async def _heartbeat():
-    content_app_status = None
     name = get_worker_name()
     heartbeat_interval = settings.CONTENT_APP_TTL // 4
     msg = "Content App '{name}' heartbeat written, sleeping for '{interarrival}' seconds".format(
         name=name, interarrival=heartbeat_interval
     )
-    fail_msg = (
-        "Content App '{name}' failed to write a heartbeat to the database, sleeping for "
-        "'{interarrival}' seconds."
-    ).format(name=name, interarrival=heartbeat_interval)
+    fail_msg = ("Content App '{name}' failed to write a heartbeat to the database.").format(
+        name=name
+    )
     versions = {app.label: app.version for app in pulp_plugin_configs()}
 
     try:
+        content_app_status = await ContentAppStatus.objects.acreate(name=name, versions=versions)
+    except IntegrityError:
+        log.error(f"A content app with name {name} already exists in the database.")
+        exit(Arbiter.WORKER_BOOT_ERROR)
+    try:
         while True:
+            await asyncio.sleep(heartbeat_interval)
             try:
-                content_app_status, created = await ContentAppStatus.objects.aget_or_create(
-                    name=name, defaults={"versions": versions}
-                )
-
-                if not created:
-                    await sync_to_async(content_app_status.save_heartbeat)()
-
-                    if content_app_status.versions != versions:
-                        content_app_status.versions = versions
-                        await content_app_status.asave(update_fields=["versions"])
-
+                await content_app_status.asave_heartbeat()
                 log.debug(msg)
             except (InterfaceError, DatabaseError):
                 await sync_to_async(Handler._reset_db_connection)()
-                log.info(fail_msg)
-            await asyncio.sleep(heartbeat_interval)
+                try:
+                    await content_app_status.asave_heartbeat()
+                    log.debug(msg)
+                except (InterfaceError, DatabaseError):
+                    log.error(fail_msg)
+                    exit(Arbiter.WORKER_BOOT_ERROR)
     finally:
         if content_app_status:
             await content_app_status.adelete()

@@ -1,0 +1,1 @@
+Made a failure to update the heartbeat catastrophic, so we can actually rely on workers that claim to be "online".
