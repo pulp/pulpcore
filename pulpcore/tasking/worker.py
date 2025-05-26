@@ -13,7 +13,7 @@ from tempfile import TemporaryDirectory
 from packaging.version import parse as parse_version
 
 from django.conf import settings
-from django.db import connection
+from django.db import connection, DatabaseError, IntegrityError
 from django.db.models import Case, Count, F, Max, Value, When
 from django.db.models.functions import Random
 from django.utils import timezone
@@ -73,7 +73,11 @@ class PulpcoreWorker:
         self.last_metric_heartbeat = timezone.now()
         self.versions = {app.label: app.version for app in pulp_plugin_configs()}
         self.cursor = connection.cursor()
-        self.worker = self.handle_worker_heartbeat()
+        try:
+            self.worker = Worker.objects.create(name=self.name, versions=self.versions)
+        except IntegrityError:
+            _logger.error(f"A worker with name {self.name} already exists in the database.")
+            exit(1)
         # This defaults to immediate task cancellation.
         # It will be set into the future on moderately graceful worker shutdown,
         # and set to None for fully graceful shutdown.
@@ -148,32 +152,25 @@ class PulpcoreWorker:
 
     def handle_worker_heartbeat(self):
         """
-        Create or update worker heartbeat records.
+        Update worker heartbeat records.
 
-        Existing Worker objects are searched for one to update. If an existing one is found, it is
-        updated. Otherwise a new Worker entry is created. Logging at the info level is also done.
-
+        If the update fails (the record was deleted, the database is unreachable, ...) the worker
+        is shut down.
         """
-        worker, created = Worker.objects.get_or_create(
-            name=self.name, defaults={"versions": self.versions}
-        )
-        if not created and worker.versions != self.versions:
-            worker.versions = self.versions
-            worker.save(update_fields=["versions"])
-
-        if created:
-            _logger.info(_("New worker '{name}' discovered").format(name=self.name))
-        elif worker.online is False:
-            _logger.info(_("Worker '{name}' is back online.").format(name=self.name))
-
-        worker.save_heartbeat()
 
         msg = "Worker heartbeat from '{name}' at time {timestamp}".format(
-            timestamp=worker.last_heartbeat, name=self.name
+            timestamp=self.worker.last_heartbeat, name=self.name
         )
-        _logger.debug(msg)
-
-        return worker
+        try:
+            self.worker.save_heartbeat()
+            _logger.debug(msg)
+        except (IntegrityError, DatabaseError):
+            # WARNING: Do not attempt to recycle the connection here.
+            # The advisory locks are bound to the connection and we must not loose them.
+            _logger.error(f"Updating the heartbeat of worker {self.name} failed.")
+            # TODO if shutdown_requested, we may need to be more aggressive.
+            self.shutdown_requested = True
+            self.cancel_task = True
 
     def shutdown(self):
         self.worker.delete()
@@ -193,7 +190,7 @@ class PulpcoreWorker:
 
     def beat(self):
         if self.worker.last_heartbeat < timezone.now() - self.heartbeat_period:
-            self.worker = self.handle_worker_heartbeat()
+            self.handle_worker_heartbeat()
             if not self.auxiliary:
                 self.worker_cleanup_countdown -= 1
                 if self.worker_cleanup_countdown <= 0:
