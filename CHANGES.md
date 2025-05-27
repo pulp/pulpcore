@@ -8,6 +8,28 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.63.19 (2025-05-27) {: #3.63.19 }
+
+### REST API {: #3.63.19-rest-api }
+
+#### Bugfixes {: #3.63.19-rest-api-bugfix }
+
+- Prevent downloader session to be closed when there is a digest validation in on_demand content serving.
+
+### Plugin API {: #3.63.19-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.19-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.19-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.63.18 (2025-05-13) {: #3.63.18 }
 
 ### REST API {: #3.63.18-rest-api }
