@@ -8,6 +8,36 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.80.0 (2025-05-27) {: #3.80.0 }
+
+### REST API {: #3.80.0-rest-api }
+
+#### Bugfixes {: #3.80.0-rest-api-bugfix }
+
+- Prevent downloader session to be closed when there is a digest validation in on_demand content serving.
+
+#### Improved Documentation {: #3.80.0-rest-api-doc }
+
+- Adds docs on the Alternate Content Sources feature set.
+  [#6609](https://github.com/pulp/pulpcore/issues/6609)
+
+### Plugin API {: #3.80.0-plugin-api }
+
+#### Removals {: #3.80.0-plugin-api-removal }
+
+- Deprecated `TaskGroup.finish()` for removal with Pulp 4.
+  [#task_group_finish](https://github.com/pulp/pulpcore/issues/task_group_finish)
+
+### Pulp File {: #3.80.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.80.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.79.0 (2025-05-20) {: #3.79.0 }
 
 ### REST API {: #3.79.0-rest-api }
