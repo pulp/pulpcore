@@ -8,6 +8,23 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.39.32 (2025-05-27) {: #3.39.32 }
+
+### REST API {: #3.39.32-rest-api }
+
+#### Bugfixes {: #3.39.32-rest-api-bugfix }
+
+- Fixed bug which prevented the Pulp API usaging from a web browser
+  [#5250](https://github.com/pulp/pulpcore/issues/5250)
+- pass envvars to Signing Scripts to access GNUPGHOME
+  [#5911](https://github.com/pulp/pulpcore/issues/5911)
+
+### Plugin API {: #3.39.32-plugin-api }
+
+No significant changes.
+
+---
+
 ## 3.39.31 (2025-05-20) {: #3.39.31 }
 
 ### REST API {: #3.39.31-rest-api }
