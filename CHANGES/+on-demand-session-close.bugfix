@@ -1,1 +1,0 @@
-Prevent downloader session to be closed when there is a digest validation in on_demand content serving.
