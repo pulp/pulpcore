@@ -8,6 +8,56 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.80.0 (2025-05-27) {: #3.80.0 }
+
+### REST API {: #3.80.0-rest-api }
+
+#### Bugfixes {: #3.80.0-rest-api-bugfix }
+
+- Prevent downloader session to be closed when there is a digest validation in on_demand content serving.
+
+#### Improved Documentation {: #3.80.0-rest-api-doc }
+
+- Adds docs on the Alternate Content Sources feature set.
+  [#6609](https://github.com/pulp/pulpcore/issues/6609)
+
+### Plugin API {: #3.80.0-plugin-api }
+
+#### Removals {: #3.80.0-plugin-api-removal }
+
+- Deprecated `TaskGroup.finish()` for removal with Pulp 4.
+  [#task_group_finish](https://github.com/pulp/pulpcore/issues/task_group_finish)
+
+### Pulp File {: #3.80.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.80.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.79.1 (2025-05-27) {: #3.79.1 }
+
+### REST API {: #3.79.1-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.79.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.79.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.79.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.79.0 (2025-05-20) {: #3.79.0 }
 
 ### REST API {: #3.79.0-rest-api }
@@ -427,6 +477,28 @@ No significant changes.
   [#6244](https://github.com/pulp/pulpcore/issues/6244)
 
 ### Pulp Cert Guard {: #3.74.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.73.10 (2025-05-27) {: #3.73.10 }
+
+### REST API {: #3.73.10-rest-api }
+
+#### Bugfixes {: #3.73.10-rest-api-bugfix }
+
+- Prevent downloader session to be closed when there is a digest validation in on_demand content serving.
+
+### Plugin API {: #3.73.10-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.73.10-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.10-pulp-cert-guard }
 
 No significant changes.
 
@@ -1338,6 +1410,28 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.64.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.63.19 (2025-05-27) {: #3.63.19 }
+
+### REST API {: #3.63.19-rest-api }
+
+#### Bugfixes {: #3.63.19-rest-api-bugfix }
+
+- Prevent downloader session to be closed when there is a digest validation in on_demand content serving.
+
+### Plugin API {: #3.63.19-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.19-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.19-pulp-cert-guard }
 
 No significant changes.
 
@@ -4179,6 +4273,23 @@ No significant changes.
 -   Starting from this release pulp_file will be shipped as part of the pulpcore package.
     [#4550](https://github.com/pulp/pulpcore/issues/4550)
 
+## 3.39.32 (2025-05-27) {: #3.39.32 }
+
+### REST API {: #3.39.32-rest-api }
+
+#### Bugfixes {: #3.39.32-rest-api-bugfix }
+
+- Fixed bug which prevented the Pulp API usaging from a web browser
+  [#5250](https://github.com/pulp/pulpcore/issues/5250)
+- pass envvars to Signing Scripts to access GNUPGHOME
+  [#5911](https://github.com/pulp/pulpcore/issues/5911)
+
+### Plugin API {: #3.39.32-plugin-api }
+
+No significant changes.
+
+---
+
 ## 3.39.31 (2025-05-20) {: #3.39.31 }
 
 ### REST API {: #3.39.31-rest-api }
@@ -5147,6 +5258,23 @@ No significant changes.
 #### Misc
 
 -   [#3798](https://github.com/pulp/pulpcore/issues/3798)
+
+## 3.28.39 (2025-05-27) {: #3.28.39 }
+
+### REST API {: #3.28.39-rest-api }
+
+#### Bugfixes {: #3.28.39-rest-api-bugfix }
+
+- Fixed bug which prevented the Pulp API usaging from a web browser
+  [#5250](https://github.com/pulp/pulpcore/issues/5250)
+- pass envvars to Signing Scripts to access GNUPGHOME
+  [#5911](https://github.com/pulp/pulpcore/issues/5911)
+
+### Plugin API {: #3.28.39-plugin-api }
+
+No significant changes.
+
+---
 
 ## 3.28.38 (2025-05-20) {: #3.28.38 }
 
