@@ -23,7 +23,7 @@
 
 ### Plugin API {: #3.80.0-plugin-api }
 
-#### Removals {: #3.80.0-plugin-api-removal }
+#### Deprecations {: #3.80.0-plugin-api-deprecation }
 
 - Deprecated `TaskGroup.finish()` for removal with Pulp 4.
   [#task_group_finish](https://github.com/pulp/pulpcore/issues/task_group_finish)
@@ -104,7 +104,7 @@ No significant changes.
 
 #### Misc {: #3.78.0-rest-api-misc }
 
-- 
+-
 
 ### Plugin API {: #3.78.0-plugin-api }
 
@@ -167,7 +167,7 @@ No significant changes.
 
 #### Misc {: #3.77.0-rest-api-misc }
 
-- 
+-
 
 ### Plugin API {: #3.77.0-plugin-api }
 
@@ -1275,7 +1275,7 @@ No significant changes.
 - Downloaders now always ensure the download ends up under `WORKING_DIRECTORY`.
   [#5912](https://github.com/pulp/pulpcore/issues/5912)
 
-#### Removals {: #3.67.0-plugin-api-removal }
+#### Deprecations {: #3.67.0-plugin-api-deprecation }
 
 - Deprecated `AccessPolicyFromDB` for removal in 4.0.
   [#5822](https://github.com/pulp/pulpcore/issues/5822)
@@ -7976,7 +7976,7 @@ No significant changes.
 -   Documented the use of `RolesMixin` in the plugin writer concepts section.
     [#3085](https://github.com/pulp/pulpcore/issues/3085)
 
-#### Removals
+#### Deprecations
 
 -   Deprecated `verify_signature` in favor of `gpg_verify` for removal in 3.25.
     [#2930](https://github.com/pulp/pulpcore/issues/2930)
@@ -8119,6 +8119,13 @@ No significant changes.
 -   Update installation instructions about "User and database configuration" for the Database setup to point to a matching Django documentation.
     [#2877](https://github.com/pulp/pulpcore/issues/2877)
 
+#### Deprecations
+
+-   Deprecated creation hook interface was removed. Creation hook need to be registered with the view
+    set by the plugin writer before being used. Creation hooks can no longer be added with the
+    deprecated name `permission_assignments`.
+    [#2559](https://github.com/pulp/pulpcore/issues/2559)
+
 #### Removals
 
 -   Removed the group permission endpoints `api/v3/groups/:id/model_permissions/` and
@@ -8127,10 +8134,6 @@ No significant changes.
 -   Removed django-guardian from the stack. The `guardian.backends.ObjectPermissionBackend` should
     not be used anymore.
     [#2051](https://github.com/pulp/pulpcore/issues/2051)
--   Deprecated creation hook interface was removed. Creation hook need to be registered with the view
-    set by the plugin writer before being used. Creation hooks can no longer be added with the
-    deprecated name `permission_assignments`.
-    [#2559](https://github.com/pulp/pulpcore/issues/2559)
 
 #### Misc
 
@@ -9110,13 +9113,10 @@ No significant changes.
 -   Expose Roles model in plugin api.
     [#2185](https://github.com/pulp/pulpcore/issues/2185)
 
-#### Removals
+#### Deprecations
 
 -   Deprecate the the use of `custom_file_object` parameter in `BaseDownloader`.
     [#2123](https://github.com/pulp/pulpcore/issues/2123)
-
-#### Deprecations
-
 -   The `API_ROOT` constant has been deprecated and turned into a setting. Its removal is scheduled
     for 3.20. Please use the setting with the same name instead.
     [#2148](https://github.com/pulp/pulpcore/issues/2148)
