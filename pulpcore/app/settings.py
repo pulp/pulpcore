@@ -120,7 +120,7 @@ API_ROOT = "/pulp/"
 API_ROOT_REWRITE_HEADER = None
 
 # Enable Pulp v4 API namespace
-ENABLE_V4_API = False
+ENABLE_V4_API = True
 
 # Application definition
 
