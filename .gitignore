@@ -11,9 +11,6 @@ docs/_diagrams
 docs/api.yaml
 docs/pulpdocs/
 
-#vscode
-.vscode/
-
 # Overriden variables
 containers/vars/vars.yaml
 
