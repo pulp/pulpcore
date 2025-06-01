@@ -10,8 +10,8 @@ from packaging.version import Version
 from git import Repo
 
 RELEASE_BRANCH_REGEX = r"^([0-9]+)\.([0-9]+)$"
-Y_CHANGELOG_EXTS = [".feature", ".removal", ".deprecation"]
-Z_CHANGELOG_EXTS = [".bugfix", ".doc", ".misc"]
+Y_CHANGELOG_EXTS = [".feature"]
+Z_CHANGELOG_EXTS = [".bugfix", ".misc"]
 
 
 def options():
