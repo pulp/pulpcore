@@ -1,0 +1,3 @@
+Purged migrations that were squashed before.
+Plugins need to rebase their migrations onto "core:0091_systemid".
+Removed `BaseDistribution`.
