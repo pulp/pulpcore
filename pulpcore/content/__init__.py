@@ -25,13 +25,14 @@ from pulpcore.app.models import ContentAppStatus  # noqa: E402: module level not
 from pulpcore.app.util import get_worker_name  # noqa: E402: module level not at top of file
 
 from .handler import Handler  # noqa: E402: module level not at top of file
-from .instrumentation import instrumentation  # noqa: E402: module level not at top of file
 from .authentication import authenticate, guid  # noqa: E402: module level not at top of file
 
 
 log = logging.getLogger(__name__)
 
 if settings.OTEL_ENABLED:
+    from .instrumentation import instrumentation  # noqa: E402: module level not at top of file
+
     app = web.Application(middlewares=[guid, authenticate, instrumentation()])
 else:
     app = web.Application(middlewares=[guid, authenticate])
