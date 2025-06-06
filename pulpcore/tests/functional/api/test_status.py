@@ -57,7 +57,7 @@ STATUS = {
 
 
 @pytest.mark.parallel
-def test_get_authenticated(test_path, pulpcore_bindings, pulp_settings):
+def test_get_authenticated(pulpcore_bindings, pulp_settings):
     """GET the status path with valid credentials.
 
     Verify the response with :meth:`verify_get_response`.
@@ -67,7 +67,7 @@ def test_get_authenticated(test_path, pulpcore_bindings, pulp_settings):
 
 
 @pytest.mark.parallel
-def test_get_unauthenticated(test_path, pulpcore_bindings, anonymous_user, pulp_settings):
+def test_get_unauthenticated(pulpcore_bindings, anonymous_user, pulp_settings):
     """GET the status path with no credentials.
 
     Verify the response with :meth:`verify_get_response`.
@@ -79,7 +79,6 @@ def test_get_unauthenticated(test_path, pulpcore_bindings, anonymous_user, pulp_
 
 @pytest.mark.parallel
 def test_post_authenticated(
-    test_path,
     pulp_api_v3_path,
     pulp_api_v3_url,
     pulpcore_bindings,
@@ -94,9 +93,7 @@ def test_post_authenticated(
         assert post_attr not in attrs
     # Try anyway to POST to /status/
     status_url = f"{pulp_api_v3_url}status/"
-    response = pulpcore_bindings.client.rest_client.request(
-        "POST", status_url, headers={"User-Agent": test_path}
-    )
+    response = pulpcore_bindings.client.rest_client.request("POST", status_url)
     assert response.status == 405
 
 

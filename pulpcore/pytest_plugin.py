@@ -211,15 +211,10 @@ class ThreadedAiohttpServerData:
         return f"{protocol_handler}{self.host}:{self.port}{path}"
 
 
-@pytest.fixture
-def test_path():
-    return os.getenv("PYTEST_CURRENT_TEST").split()[0]
-
-
 # Webserver Fixtures
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def unused_port():
     def _unused_port():
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -229,7 +224,7 @@ def unused_port():
     return _unused_port
 
 
-@pytest.fixture
+@pytest.fixture(scope="class")
 def gen_threaded_aiohttp_server(fixtures_cfg, unused_port):
     fixture_servers_data = []
 
@@ -258,7 +253,7 @@ def gen_threaded_aiohttp_server(fixtures_cfg, unused_port):
         fixture_server_data.thread.join()
 
 
-@pytest.fixture
+@pytest.fixture(scope="class")
 def gen_fixture_server(gen_threaded_aiohttp_server):
     def _gen_fixture_server(fixtures_root, ssl_ctx):
         app = web.Application()
@@ -269,81 +264,6 @@ def gen_fixture_server(gen_threaded_aiohttp_server):
 
 
 # Proxy Fixtures
-
-
-@pytest.fixture(scope="session")
-def _proxy_module():
-    import proxy
-
-    return proxy
-
-
-@pytest.fixture
-def http_proxy(_proxy_module, fixtures_cfg, unused_port):
-    host = fixtures_cfg.aiohttp_fixtures_origin
-    port = unused_port()
-    proxypy_args = [
-        "--num-workers",
-        "4",
-        "--hostname",
-        host,
-        "--port",
-        str(port),
-    ]
-
-    proxy_data = ProxyData(host=host, port=port)
-
-    with _proxy_module.Proxy(input_args=proxypy_args):
-        yield proxy_data
-
-
-@pytest.fixture
-def http_proxy_with_auth(_proxy_module, fixtures_cfg, unused_port):
-    host = fixtures_cfg.aiohttp_fixtures_origin
-    port = unused_port()
-
-    username = str(uuid.uuid4())
-    password = str(uuid.uuid4())
-
-    proxypy_args = [
-        "--num-workers",
-        "4",
-        "--hostname",
-        host,
-        "--port",
-        str(port),
-        "--basic-auth",
-        f"{username}:{password}",
-    ]
-
-    proxy_data = ProxyData(host=host, port=port, username=username, password=password)
-
-    with _proxy_module.Proxy(input_args=proxypy_args):
-        yield proxy_data
-
-
-@pytest.fixture
-def https_proxy(_proxy_module, fixtures_cfg, unused_port, proxy_tls_certificate_pem_path):
-    host = fixtures_cfg.aiohttp_fixtures_origin
-    port = unused_port()
-
-    proxypy_args = [
-        "--num-workers",
-        "4",
-        "--hostname",
-        host,
-        "--port",
-        str(port),
-        "--cert-file",
-        proxy_tls_certificate_pem_path,  # contains both key and cert
-        "--key-file",
-        proxy_tls_certificate_pem_path,  # contains both key and cert
-    ]
-
-    proxy_data = ProxyData(host=host, port=port, ssl=True)  # TODO update me
-
-    with _proxy_module.Proxy(input_args=proxypy_args):
-        yield proxy_data
 
 
 class ProxyData:
@@ -370,6 +290,81 @@ class ProxyData:
         )
 
 
+@pytest.fixture(scope="session")
+def _proxy_module():
+    import proxy
+
+    return proxy
+
+
+@pytest.fixture(scope="class")
+def http_proxy(_proxy_module, fixtures_cfg, unused_port):
+    host = fixtures_cfg.aiohttp_fixtures_origin
+    port = unused_port()
+    proxypy_args = [
+        "--num-workers",
+        "4",
+        "--hostname",
+        host,
+        "--port",
+        str(port),
+    ]
+
+    proxy_data = ProxyData(host=host, port=port)
+
+    with _proxy_module.Proxy(input_args=proxypy_args):
+        yield proxy_data
+
+
+@pytest.fixture(scope="class")
+def http_proxy_with_auth(_proxy_module, fixtures_cfg, unused_port):
+    host = fixtures_cfg.aiohttp_fixtures_origin
+    port = unused_port()
+
+    username = str(uuid.uuid4())
+    password = str(uuid.uuid4())
+
+    proxypy_args = [
+        "--num-workers",
+        "4",
+        "--hostname",
+        host,
+        "--port",
+        str(port),
+        "--basic-auth",
+        f"{username}:{password}",
+    ]
+
+    proxy_data = ProxyData(host=host, port=port, username=username, password=password)
+
+    with _proxy_module.Proxy(input_args=proxypy_args):
+        yield proxy_data
+
+
+@pytest.fixture(scope="class")
+def https_proxy(_proxy_module, fixtures_cfg, unused_port, proxy_tls_certificate_pem_path):
+    host = fixtures_cfg.aiohttp_fixtures_origin
+    port = unused_port()
+
+    proxypy_args = [
+        "--num-workers",
+        "4",
+        "--hostname",
+        host,
+        "--port",
+        str(port),
+        "--cert-file",
+        proxy_tls_certificate_pem_path,  # contains both key and cert
+        "--key-file",
+        proxy_tls_certificate_pem_path,  # contains both key and cert
+    ]
+
+    proxy_data = ProxyData(host=host, port=port, ssl=True)  # TODO update me
+
+    with _proxy_module.Proxy(input_args=proxypy_args):
+        yield proxy_data
+
+
 # Server Side TLS Fixtures
 
 
@@ -385,12 +380,12 @@ def tls_certificate_authority(_trustme_module):
     return _trustme_module.CA()
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def tls_certificate_authority_cert(tls_certificate_authority):
     return tls_certificate_authority.cert_pem.bytes().decode()
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def tls_certificate(fixtures_cfg, tls_certificate_authority):
     return tls_certificate_authority.issue_cert(
         fixtures_cfg.aiohttp_fixtures_origin,
@@ -405,14 +400,14 @@ def proxy_tls_certificate_authority(_trustme_module):
     return _trustme_module.CA()
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def proxy_tls_certificate(fixtures_cfg, client_tls_certificate_authority):
     return client_tls_certificate_authority.issue_cert(
         fixtures_cfg.aiohttp_fixtures_origin,
     )
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def proxy_tls_certificate_pem_path(proxy_tls_certificate):
     with proxy_tls_certificate.private_key_and_cert_chain_pem.tempfile() as cert_pem:
         yield cert_pem
@@ -426,25 +421,25 @@ def client_tls_certificate_authority(_trustme_module):
     return _trustme_module.CA()
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def client_tls_certificate_authority_pem_path(client_tls_certificate_authority):
     with client_tls_certificate_authority.cert_pem.tempfile() as client_ca_pem:
         yield client_ca_pem
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def client_tls_certificate(fixtures_cfg, client_tls_certificate_authority):
     return client_tls_certificate_authority.issue_cert(
         fixtures_cfg.aiohttp_fixtures_origin,
     )
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def client_tls_certificate_cert_pem(client_tls_certificate):
     return client_tls_certificate.cert_chain_pems[0].bytes().decode()
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def client_tls_certificate_key_pem(client_tls_certificate):
     return client_tls_certificate.private_key_pem.bytes().decode()
 
@@ -452,14 +447,14 @@ def client_tls_certificate_key_pem(client_tls_certificate):
 # SSL Context Fixtures
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def ssl_ctx(tls_certificate):
     ssl_ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
     tls_certificate.configure_cert(ssl_ctx)
     return ssl_ctx
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def ssl_ctx_req_client_auth(
     tls_certificate, client_tls_certificate, client_tls_certificate_authority_pem_path
 ):
@@ -474,7 +469,7 @@ def ssl_ctx_req_client_auth(
 # Object factories
 
 
-@pytest.fixture
+@pytest.fixture(scope="class")
 def role_factory(pulpcore_bindings, gen_object_with_cleanup):
     def _role_factory(**kwargs):
         return gen_object_with_cleanup(pulpcore_bindings.RolesApi, kwargs)
@@ -482,7 +477,7 @@ def role_factory(pulpcore_bindings, gen_object_with_cleanup):
     return _role_factory
 
 
-@pytest.fixture
+@pytest.fixture(scope="class")
 def gen_user(bindings_cfg, pulpcore_bindings, gen_object_with_cleanup):
     class user_context:
         def __init__(self, username=None, model_roles=None, object_roles=None, domain_roles=None):
@@ -596,7 +591,7 @@ def random_artifact(random_artifact_factory):
     return random_artifact_factory()
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def backend_settings_factory(pulp_settings):
     def _settings_factory(storage_class=None, storage_settings=None):
         if not pulp_settings.DOMAIN_ENABLED:
@@ -639,13 +634,14 @@ def backend_settings_factory(pulp_settings):
     return _settings_factory
 
 
-@pytest.fixture()
+@pytest.fixture(scope="class")
 def domain_factory(
     pulpcore_bindings, pulp_domain_enabled, backend_settings_factory, gen_object_with_cleanup
 ):
+    if not pulp_domain_enabled:
+        pytest.skip("Domains not enabled")
+
     def _domain_factory(**kwargs):
-        if not pulp_domain_enabled:
-            pytest.skip("Domains not enabled")
 
         storage_class, storage_settings = backend_settings_factory(
             storage_class=kwargs.pop("storage_class", None),
@@ -656,6 +652,21 @@ def domain_factory(
         return gen_object_with_cleanup(pulpcore_bindings.DomainsApi, kwargs)
 
     return _domain_factory
+
+
+@pytest.fixture(scope="class")
+def openpgp_keyring_factory(pulpcore_bindings, gen_object_with_cleanup):
+    def _openpgp_keyring_factory(**kwargs):
+        extra_args = {}
+        if pulp_domain := kwargs.pop("pulp_domain", None):
+            extra_args["pulp_domain"] = pulp_domain
+        body = {"name": str(uuid.uuid4())}
+        body.update(kwargs)
+        return gen_object_with_cleanup(
+            pulpcore_bindings.RepositoriesOpenpgpKeyringApi, body, **extra_args
+        )
+
+    return _openpgp_keyring_factory
 
 
 # Random other fixtures
@@ -821,7 +832,7 @@ def pulp_versions(pulp_status):
     return {item.component: parse_version(item.version) for item in pulp_status.versions}
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def needs_pulp_plugin(pulp_versions):
     """Skip test if a component is not available in the specified version range"""
 
@@ -836,7 +847,7 @@ def needs_pulp_plugin(pulp_versions):
     return _needs_pulp_plugin
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def has_pulp_plugin(pulp_versions):
     def _has_pulp_plugin(plugin, min=None, max=None):
         if plugin not in pulp_versions:
@@ -973,7 +984,7 @@ def http_get():
     return _http_get
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def wget_recursive_download_on_host():
     def _wget_recursive_download_on_host(url, destination):
         subprocess.check_output(
@@ -1089,7 +1100,7 @@ def signing_gpg_homedir_path(tmp_path_factory):
     return tmp_path_factory.mktemp("gpghome")
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def sign_with_ascii_armored_detached_signing_service(signing_script_path, signing_gpg_metadata):
     """
     Runs the test signing script manually, locally, and returns the signature file produced.
@@ -1210,24 +1221,9 @@ def ascii_armored_detached_signing_service(
     ).results[0]
 
 
-@pytest.fixture(scope="class")
-def openpgp_keyring_factory(pulpcore_bindings, gen_object_with_cleanup):
-    def _openpgp_keyring_factory(**kwargs):
-        extra_args = {}
-        if pulp_domain := kwargs.pop("pulp_domain", None):
-            extra_args["pulp_domain"] = pulp_domain
-        body = {"name": str(uuid.uuid4())}
-        body.update(kwargs)
-        return gen_object_with_cleanup(
-            pulpcore_bindings.RepositoriesOpenpgpKeyringApi, body, **extra_args
-        )
-
-    return _openpgp_keyring_factory
-
-
 # if content_origin == None, base_url will return the relative path and
 # we need to add the hostname to run the tests
-@pytest.fixture
+@pytest.fixture(scope="session")
 def distribution_base_url(bindings_cfg):
     def _distribution_base_url(base_url):
         if base_url.startswith("http"):
