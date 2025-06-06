@@ -1,7 +1,9 @@
+from collections import defaultdict
+
 import pytest
 import uuid
-
-from collections import defaultdict
+import aiofiles
+from aiohttp import web
 
 from pulpcore.client.pulp_file import RepositorySyncURL
 
@@ -26,6 +28,64 @@ def perform_sync(
         return file_repo
 
     yield _perform_sync
+
+
+@pytest.fixture(scope="class")
+def gen_bad_response_fixture_server(gen_threaded_aiohttp_server):
+    """
+    This server will perform 3 bad responses for each file requested.
+
+    1st response will be incomplete, sending only half of the data.
+    2nd response will have corrupted data, with one byte changed.
+    3rd response will return error 429.
+    4th response will be correct.
+    """
+
+    def _gen_fixture_server(fixtures_root, ssl_ctx):
+        record = []
+        num_requests = defaultdict(int)
+
+        async def handler(request):
+            nonlocal num_requests
+            record.append(request)
+            relative_path = request.raw_path[1:]  # Strip off leading "/"
+            file_path = fixtures_root / relative_path
+            # Max retries is 3. So on fourth request, send full data
+            num_requests[relative_path] += 1
+            if "PULP_MANIFEST" in relative_path or num_requests[relative_path] % 4 == 0:
+                return web.FileResponse(file_path)
+
+            # On third request send 429 error, TooManyRequests
+            if num_requests[relative_path] % 4 == 3:
+                raise web.HTTPTooManyRequests
+
+            size = file_path.stat().st_size
+            response = web.StreamResponse(headers={"content-length": f"{size}"})
+            await response.prepare(request)
+            async with aiofiles.open(file_path, "rb") as f:
+                # Send only partial content causing aiohttp.ClientPayloadError if request num == 1
+                chunk = await f.read(size // 2)
+                await response.write(chunk)
+                # Send last chunk with modified last byte if request num == 2
+                if num_requests[relative_path] % 4 == 2:
+                    chunk2 = await f.read()
+                    await response.write(chunk2[:-1])
+                    await response.write(bytes([chunk2[-1] ^ 1]))
+                else:
+                    request.transport.close()
+
+            return response
+
+        app = web.Application()
+        app.add_routes([web.get("/{tail:.*}", handler)])
+        return gen_threaded_aiohttp_server(app, ssl_ctx, record)
+
+    return _gen_fixture_server
+
+
+@pytest.fixture(scope="class")
+def bad_response_fixture_server(file_fixtures_root, gen_bad_response_fixture_server):
+    return gen_bad_response_fixture_server(file_fixtures_root, None)
 
 
 @pytest.mark.parallel
