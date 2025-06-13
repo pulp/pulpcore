@@ -29,7 +29,7 @@ requires-python = ">=3.9"
 dependencies = [
   "aiodns>=3.3.0,<3.6",  # Looks like only bugfixes in z-Stream.
   "aiofiles>=22.1,<=24.1.0",  # Uses sort of CalVer, luckily not released often https://github.com/Tinche/aiofiles/issues/144 .
-  "aiohttp>=3.8.1,<3.13",  # SemVer https://docs.aiohttp.org/en/stable/faq.html#what-is-the-api-stability-and-deprecation-policy .
+  "aiohttp>=3.8.3,<3.13",  # SemVer https://docs.aiohttp.org/en/stable/faq.html#what-is-the-api-stability-and-deprecation-policy .
   "asyncio-throttle>=1.0,<=1.0.2",  # Unsure about versioning, but not released often anyway.
   "async-timeout>=4.0.3,<4.0.4;python_version<'3.11'",
   "backoff>=2.1.2,<2.3",  # Looks like only bugfixes in z-Stream.

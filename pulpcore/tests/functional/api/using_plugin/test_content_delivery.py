@@ -1,8 +1,10 @@
 """Tests related to content delivery."""
 
 import hashlib
+import requests
 import subprocess
 import uuid
+from random import sample
 from urllib.parse import urljoin
 
 import pytest
@@ -244,3 +246,35 @@ def test_handling_remote_artifact_on_demand_streaming_failure(
     # WHEN/THEN (second request)
     actual_checksum = download_from_distribution(content_name, distribution)
     assert actual_checksum == expected_checksum
+
+
+@pytest.mark.parallel
+def test_head_request_large_on_demand_file(
+    file_repo_with_auto_publish,
+    file_remote_factory,
+    file_bindings,
+    range_header_manifest_path,
+    distribution_base_url,
+    file_distribution_factory,
+    monitor_task,
+):
+    """Test that a HEAD request to a large on-demand file properly saves the file."""
+    # range_header_manifest_path has 8 files, each 4MB
+    remote = file_remote_factory(manifest_path=range_header_manifest_path, policy="on_demand")
+    body = RepositorySyncURL(remote=remote.pulp_href)
+    monitor_task(
+        file_bindings.RepositoriesFileApi.sync(file_repo_with_auto_publish.pulp_href, body).task
+    )
+    repo = file_bindings.RepositoriesFileApi.read(file_repo_with_auto_publish.pulp_href)
+    content = file_bindings.ContentFilesApi.list(repository_version=repo.latest_version_href)
+    content_href_filenames = sample([(c.pulp_href, c.relative_path) for c in content.results], k=3)
+
+    distro = file_distribution_factory(repository=repo.pulp_href)
+    for _, content_filename in content_href_filenames:
+        url = urljoin(distribution_base_url(distro.base_url), content_filename)
+        response = requests.head(url)
+        assert response.status_code == 200
+    # Give some time for the file to be saved
+    for content_href, _ in content_href_filenames:
+        content = file_bindings.ContentFilesApi.read(content_href)
+        assert content.artifact is not None
