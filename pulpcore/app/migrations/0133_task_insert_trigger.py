@@ -11,7 +11,7 @@ CREATE FUNCTION on_insert_timestamp_task()
   LANGUAGE plpgsql
   AS $$
     BEGIN
-      PERFORM pg_advisory_xact_lock(0, 21);  -- Same as TASK_DISPATCH_LOCK
+      LOCK TABLE core_task IN ROW EXCLUSIVE MODE;
       NEW.pulp_created = clock_timestamp();
       IF NEW.pulp_created <= (SELECT MAX(pulp_created) FROM core_task)
       THEN
