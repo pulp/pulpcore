@@ -20,7 +20,7 @@ jobs:
           path: "pulpcore"
       - uses: "actions/setup-python@v5"
         with:
-          python-version: "3.11"
+          python-version: "3.13"
       - name: "Build HTML site for pulpproject.org."
         run: |
           .github/workflows/scripts/build_all_docs.sh
@@ -47,7 +47,7 @@ jobs:
 
       - uses: "actions/setup-python@v5"
         with:
-          python-version: "3.11"
+          python-version: "3.13"
 
       - name: "Setting secrets"
         run: |
