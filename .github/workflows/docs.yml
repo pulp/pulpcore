@@ -6,12 +6,12 @@
 # For more info visit https://github.com/pulp/plugin_template
 
 ---
-name: "Docs"
+name: "Docs CI"
 on:
   workflow_call:
 
 jobs:
-  test:
+  changelog:
     if: "endsWith(github.base_ref, 'main')"
     runs-on: "ubuntu-latest"
     defaults:
@@ -22,28 +22,21 @@ jobs:
         with:
           fetch-depth: 1
           path: "pulpcore"
-      - uses: "actions/checkout@v4"
-        with:
-          fetch-depth: 0
-          repository: "pulp/pulp-docs"
-          path: "pulp-docs"
-          ref: "rewrite-as-mkdocs-plugin"
       - uses: "actions/setup-python@v5"
         with:
           python-version: "3.12"
       - name: "Install python dependencies"
         run: |
           echo ::group::PYDEPS
-          pip install ../pulp-docs towncrier
+          pip install towncrier
           echo ::endgroup::
       - name: "Build changelog"
         run: |
           towncrier build --yes --version 4.0.0.ci
-      - name: "Build docs"
-        working-directory: "pulp-docs"
-        run: |
-          pulp-docs fetch --dest ..
-          pulp-docs build
+  docs:
+    uses: 'pulp/pulp-docs/.github/workflows/docs-ci.yml@rewrite-as-mkdocs-plugin'
+    with:
+      pulpdocs_ref: 'rewrite-as-mkdocs-plugin'
 
   no-test:
     if: "!endsWith(github.base_ref, 'main')"
