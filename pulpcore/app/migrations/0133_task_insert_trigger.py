@@ -11,7 +11,7 @@ CREATE FUNCTION on_insert_timestamp_task()
   LANGUAGE plpgsql
   AS $$
     BEGIN
-      LOCK TABLE core_task IN ROW EXCLUSIVE MODE;
+      LOCK TABLE core_task IN SHARE ROW EXCLUSIVE MODE;
       NEW.pulp_created = clock_timestamp();
       IF NEW.pulp_created <= (SELECT MAX(pulp_created) FROM core_task)
       THEN
