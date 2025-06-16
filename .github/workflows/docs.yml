@@ -34,6 +34,7 @@ jobs:
         run: |
           towncrier build --yes --version 4.0.0.ci
   docs:
+    if: "endsWith(github.base_ref, 'main')"
     uses: 'pulp/pulp-docs/.github/workflows/docs-ci.yml@rewrite-as-mkdocs-plugin'
     with:
       pulpdocs_ref: 'rewrite-as-mkdocs-plugin'
