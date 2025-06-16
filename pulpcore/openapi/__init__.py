@@ -313,7 +313,7 @@ class PulpSchemaGenerator(SchemaGenerator):
             resource_path = "%s}/" % path.rsplit(sep="}", maxsplit=1)[0]
             # This check prevents /pulp/{pulp_domain}/ from being converted for non-detail endpoints
             # Possibly affects plugin-specific urls, depends on their url structure
-            if resource_path.lstrip("/") not in API_ROOT_NO_FRONT_SLASH:
+            if not resource_path.endswith("/{pulp_domain}/"):
                 path = path.replace(resource_path, "{%s}" % param_name)
         return path
 
