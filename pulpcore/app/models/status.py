@@ -103,6 +103,18 @@ class BaseAppStatus(BaseModel):
         """
         self.save(update_fields=["last_heartbeat"])
 
+    async def asave_heartbeat(self):
+        """
+        Update the last_heartbeat field to now and save it.
+
+        Only the last_heartbeat field will be saved. No other changes will be saved.
+
+        Raises:
+            ValueError: When the model instance has never been saved before. This method can
+                only update an existing database record.
+        """
+        await self.asave(update_fields=["last_heartbeat"])
+
     class Meta:
         abstract = True
 
