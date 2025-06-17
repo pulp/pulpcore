@@ -1,0 +1,10 @@
+INSERT INTO task (name, resources, sleep) VALUES ('test1', ARRAY['apple'], 4*random());
+INSERT INTO task (name, resources, sleep) VALUES ('test2', ARRAY['banana'], 4*random());
+INSERT INTO task (name, resources, sleep) VALUES ('test3', ARRAY['cherry'], 4*random());
+INSERT INTO task (name, resources, sleep) VALUES ('test4', ARRAY['date'], 4*random());
+INSERT INTO task (name, resources, sleep) VALUES ('test5', ARRAY['apple', 'banana'], 4*random());
+INSERT INTO task (name, resources, sleep) VALUES ('test6', ARRAY['apple', 'cherry'], 4*random());
+INSERT INTO task (name, resources, sleep) VALUES ('test7', ARRAY['apple', 'date'], 4*random());
+INSERT INTO task (name, resources, sleep) VALUES ('test8', ARRAY['banana', 'cherry'], 4*random());
+INSERT INTO task (name, resources, sleep) VALUES ('test9', ARRAY['banana', 'date'], 4*random());
+INSERT INTO task (name, resources, sleep) VALUES ('test10', ARRAY['cherry', 'date'], 4*random());
