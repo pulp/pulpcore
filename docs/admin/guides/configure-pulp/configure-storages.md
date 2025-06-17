@@ -63,7 +63,7 @@ In this example, the storage uses a bucket called `pulp3` that is hosted in regi
 MEDIA_ROOT = ""
 STORAGES = {
     "default": {
-        "BACKEND": "storages.backends.s3.S3Storage",
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
         "OPTIONS": {
             "access_key": 'AKIAIT2Z5TDYPX3ARJBA',
             "secret_key": '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',
@@ -72,6 +72,9 @@ STORAGES = {
             "addressing_style": "path",
             "region_name": "eu-central-1",
         },
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
 }
 ```
