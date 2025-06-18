@@ -146,6 +146,9 @@ jobs:
       - "publish-python-bindings"
       - "publish-ruby-bindings"
 
+    permissions:
+      contents: write
+
     steps:
       - name: "Create release on GitHub"
         uses: "actions/github-script@v7"
