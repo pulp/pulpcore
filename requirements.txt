@@ -27,6 +27,8 @@ opentelemetry-instrumentation-django>=0.38b0,<=0.44b0
 opentelemetry-instrumentation-wsgi>=0.38b0,<=0.44b0
 protobuf>=4.21.1,<4.25.4
 pulp-glue>=0.18.0,<0.30
+# pycares is only a transitive dependency, but there is a combination of versions that expresses a bug.
+pycares<4.9;python_version<'3.12'  # pycares==4.9 + aiodns==3.2.0 + python<3.12 = trouble
 pygtrie>=2.5,<=2.5.0
 psycopg[binary]>=3.1.8,<=3.2.3
 python-gnupg>=0.5,<=0.5.2
