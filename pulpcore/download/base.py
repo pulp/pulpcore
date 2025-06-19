@@ -2,6 +2,8 @@ from gettext import gettext as _
 
 import asyncio
 from collections import namedtuple
+import concurrent.futures
+from concurrent.futures import ThreadPoolExecutor, ALL_COMPLETED
 import logging
 import os
 import tempfile
@@ -33,6 +35,8 @@ Args:
     headers (aiohttp.multidict.MultiDict): HTTP response headers. The keys are header names. The
         values are header content. None when not using the HttpDownloader or sublclass.
 """
+
+THREADPOOL = ThreadPoolExecutor()
 
 
 class BaseDownloader:
@@ -200,8 +204,11 @@ class BaseDownloader:
         Args:
             data (bytes): The data to have its size and digest values recorded.
         """
-        for algorithm in self._digests.values():
-            algorithm.update(data)
+        global THREADPOOL
+        futures = [
+            THREADPOOL.submit(algorithm.update, data) for algorithm in self._digests.values()
+        ]
+        concurrent.futures.wait(futures, timeout=None, return_when=ALL_COMPLETED)
         self._size += len(data)
 
     @property

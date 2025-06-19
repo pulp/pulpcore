@@ -1,4 +1,6 @@
 import os
+import concurrent.futures
+from concurrent.futures import ThreadPoolExecutor, ALL_COMPLETED
 from gettext import gettext as _
 
 from django.core.files.uploadedfile import TemporaryUploadedFile
@@ -39,9 +41,10 @@ class PulpTemporaryUploadedFile(TemporaryUploadedFile):
         instance = cls(name, "", size, "", "")
         instance.file = file
         # Default 1MB
-        while data := file.read(1048576):
-            for hasher in models.Artifact.DIGEST_FIELDS:
-                instance.hashers[hasher].update(data)
+        with ThreadPoolExecutor(max_workers=6) as executor:
+            while data := file.read(1048576):
+                for hasher in models.Artifact.DIGEST_FIELDS:
+                    executor.submit(instance.hashers[hasher].update, data)
 
         # calling the method read() moves the file's pointer to the end of the file object,
         # thus, it is necessary to reset the file's pointer position back to 0 in case of
@@ -82,11 +85,15 @@ class HashingFileUploadHandler(TemporaryFileUploadHandler):
         self.file = PulpTemporaryUploadedFile(
             file_name, content_type, 0, charset, content_type_extra
         )
+        self.threadpool = ThreadPoolExecutor(max_workers=6)
 
     def receive_data_chunk(self, raw_data, start):
+        futures = [
+            self.threadpool.submit(self.file.hashers[hasher].update, raw_data)
+            for hasher in models.Artifact.DIGEST_FIELDS
+        ]
         self.file.write(raw_data)
-        for hasher in models.Artifact.DIGEST_FIELDS:
-            self.file.hashers[hasher].update(raw_data)
+        concurrent.futures.wait(futures, timeout=None, return_when=ALL_COMPLETED)
 
 
 class TemporaryDownloadedFile(TemporaryUploadedFile):
