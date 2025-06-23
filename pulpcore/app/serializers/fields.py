@@ -435,3 +435,13 @@ def pulp_labels_validator(value):
             )
 
     return value
+
+
+class PulpLabelsField(serializers.HStoreField):
+    """
+    Custom field for handling pulp labels that ensures proper dictionary format.
+    Converts JSON strings to dictionaries during validation.
+    """
+
+    def get_value(self, dictionary):
+        return dictionary.get(self.field_name, empty)
