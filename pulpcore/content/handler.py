@@ -1279,19 +1279,20 @@ class Handler:
             # "backstop" the prepare() call here, so the write() will be allowed.
             if not response.prepared:
                 await response.prepare(request)
-            if range_start or range_stop:
-                start_byte_pos = 0
-                end_byte_pos = len(data)
-                if range_start:
-                    start_byte_pos = max(0, range_start - data_size_handled)
-                if range_stop:
-                    end_byte_pos = min(len(data), range_stop - data_size_handled)
+            if request.method == "GET":
+                if range_start or range_stop:
+                    start_byte_pos = 0
+                    end_byte_pos = len(data)
+                    if range_start:
+                        start_byte_pos = max(0, range_start - data_size_handled)
+                    if range_stop:
+                        end_byte_pos = min(len(data), range_stop - data_size_handled)
 
-                data_for_client = data[start_byte_pos:end_byte_pos]
-                await response.write(data_for_client)
-                data_size_handled = data_size_handled + len(data)
-            else:
-                await response.write(data)
+                    data_for_client = data[start_byte_pos:end_byte_pos]
+                    await response.write(data_for_client)
+                    data_size_handled = data_size_handled + len(data)
+                else:
+                    await response.write(data)
             if remote.policy != Remote.STREAMED:
                 await original_handle_data(data)
 
