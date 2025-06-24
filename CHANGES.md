@@ -8,6 +8,38 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.81.0 (2025-06-24) {: #3.81.0 }
+
+### REST API {: #3.81.0-rest-api }
+
+#### Features {: #3.81.0-rest-api-feature }
+
+- Checksum calculation of files being uploaded or downloaded to Pulp is now multithreaded.
+
+#### Bugfixes {: #3.81.0-rest-api-bugfix }
+
+- Changed default http bind address from `[::]` to `0.0.0.0` if IPv6 is not available.
+  [#6606](https://github.com/pulp/pulpcore/issues/6606)
+- Raised the minimum version of gunicorn to 22.0.
+  [#6640](https://github.com/pulp/pulpcore/issues/6640)
+
+### Plugin API {: #3.81.0-plugin-api }
+
+#### Bugfixes {: #3.81.0-plugin-api-bugfix }
+
+- Fixed the `pulp_labels` field on the NoArtifactContentSerializer to work inside ViewSets for multipart/form uploads.
+  [#6713](https://github.com/pulp/pulpcore/issues/6713)
+
+### Pulp File {: #3.81.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.81.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.80.1 (2025-06-12) {: #3.80.1 }
 
 ### REST API {: #3.80.1-rest-api }
