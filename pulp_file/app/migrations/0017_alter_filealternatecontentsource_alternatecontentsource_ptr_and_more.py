@@ -8,7 +8,7 @@ import pulpcore.app.util
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('file', '0016_add_domain'),
+        ('file', '0001_initial_squashed_0016_add_domain'),
     ]
 
     operations = [
