@@ -6,6 +6,6 @@ class PulpCertGuardPluginAppConfig(PulpPluginAppConfig):
 
     name = "pulp_certguard.app"
     label = "certguard"
-    version = "3.49.43.dev"
+    version = "3.49.43"
     python_package_name = "pulpcore"
     domain_compatible = True
