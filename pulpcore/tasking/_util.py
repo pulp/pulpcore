@@ -127,21 +127,26 @@ def perform_task(task_pk, task_working_dir_rel_path):
     set_domain(task.pulp_domain)
     os.chdir(task_working_dir_rel_path)
 
-    if settings.TASK_DIAGNOSTICS:
-        _execute_task_and_profile(task)
+    if task.profile_options:
+        profilers = set(task.profile_options) & set(settings.TASK_DIAGNOSTICS)
+        if unavailable_profilers := set(task.profile_options) - set(settings.TASK_DIAGNOSTICS):
+            _logger.warning(
+                "Requested task diagnostic profilers are not available: %s", unavailable_profilers
+            )
+        _execute_task_and_profile(task, profilers)
     else:
         execute_task(task)
 
 
-def _execute_task_and_profile(task):
+def _execute_task_and_profile(task, profile_options):
     with tempfile.TemporaryDirectory(dir=settings.WORKING_DIRECTORY) as temp_dir:
         _execute_task = execute_task
 
-        if settings.TASK_DIAGNOSTICS is True or "memory" in settings.TASK_DIAGNOSTICS:
+        if "memory" in profile_options:
             _execute_task = _memory_diagnostic_decorator(temp_dir, _execute_task)
-        if settings.TASK_DIAGNOSTICS is True or "pyinstrument" in settings.TASK_DIAGNOSTICS:
+        if "pyinstrument" in profile_options:
             _execute_task = _pyinstrument_diagnostic_decorator(temp_dir, _execute_task)
-        if settings.TASK_DIAGNOSTICS is True or "memray" in settings.TASK_DIAGNOSTICS:
+        if "memray" in profile_options:
             _execute_task = _memray_diagnostic_decorator(temp_dir, _execute_task)
 
         _execute_task(task)

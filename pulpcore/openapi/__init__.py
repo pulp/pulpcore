@@ -201,6 +201,19 @@ class PulpAutoSchema(AutoSchema):
             name = name + "Response"
         return name
 
+    def get_override_parameters(self):
+        parameters = super().get_override_parameters()
+        parameters.append(
+            OpenApiParameter(
+                name="X-Task-Diagnostics",
+                location=OpenApiParameter.HEADER,
+                required=False,
+                type={"type": "array", "items": {"type": "string"}},
+                description="List of profilers to use on tasks.",
+            )
+        )
+        return parameters
+
     def map_parsers(self):
         """
         Get request parsers.

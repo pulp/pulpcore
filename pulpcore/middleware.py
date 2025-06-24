@@ -1,4 +1,5 @@
 import time
+from contextvars import ContextVar
 
 from django.http.response import Http404
 from django.conf import settings
@@ -12,6 +13,8 @@ from pulpcore.app.util import (
     set_current_user_lazy,
     set_domain,
 )
+
+x_task_diagnostics_var = ContextVar("x_profile_task")
 
 
 class DomainMiddleware:
@@ -143,3 +146,25 @@ class DjangoMetricsMiddleware:
         match = getattr(request, "resolver_match", "")
         route = getattr(match, "route", "")
         return route
+
+
+class TaskProfilerMiddleware:
+    """
+    Middleware that looks for the presence of X-TASK-DIAGNOSTICS header and provides its value
+    as a ContextVar to the dispatch() method in the tasking system. It enables generating
+    profiling data of tasks dispatched via API.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if "HTTP_X_TASK_DIAGNOSTICS" in request.META:
+            task_diagnostics = request.META["HTTP_X_TASK_DIAGNOSTICS"]
+            ctx_token = x_task_diagnostics_var.set(task_diagnostics.split(","))
+            try:
+                return self.get_response(request)
+            finally:
+                x_task_diagnostics_var.reset(ctx_token)
+        else:
+            return self.get_response(request)

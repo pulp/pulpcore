@@ -63,6 +63,7 @@ pulp_settings_azure:
   domain_enabled: true
   rest_framework__default_permission_classes:
   - pulpcore.plugin.access_policy.DefaultAccessPolicy
+  task_diagnostics: ["memory"]
 pulp_settings_gcp: null
 pulp_settings_s3:
   DISABLED_authentication_backends: '@merge django.contrib.auth.backends.RemoteUserBackend'

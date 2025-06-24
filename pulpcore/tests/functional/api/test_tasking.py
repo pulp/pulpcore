@@ -34,6 +34,25 @@ def test_retrieving_task_profile_artifacts(gen_user, pulpcore_bindings, task):
 
 
 @pytest.mark.parallel
+def test_profiling_task_using_header(gen_user, pulpcore_bindings, monitor_task, pulp_settings):
+    # Check that no profile artifacts are created by default
+    task_href = pulpcore_bindings.OrphansCleanupApi.cleanup({"orphan_protection_time": 10000}).task
+    task = monitor_task(task_href)
+    assert pulpcore_bindings.TasksApi.profile_artifacts(task.pulp_href).urls == {}
+
+    # Check that profile artifacts are created when X-TASK-DIAGNOSTICS headers is passed
+    task_href = pulpcore_bindings.OrphansCleanupApi.cleanup(
+        {"orphan_protection_time": 10000}, x_task_diagnostics=["memory"]
+    ).task
+    task = monitor_task(task_href)
+    profile_artifacts_urls = pulpcore_bindings.TasksApi.profile_artifacts(task.pulp_href).urls
+    if "memory" in pulp_settings.TASK_DIAGNOSTICS:
+        assert "memory_profile" in profile_artifacts_urls
+    else:
+        assert "memory_profile" not in profile_artifacts_urls
+
+
+@pytest.mark.parallel
 def test_multi_resource_locking(dispatch_task, monitor_task):
     task_href1 = dispatch_task(
         "pulpcore.app.tasks.test.sleep",
