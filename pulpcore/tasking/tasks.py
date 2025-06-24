@@ -26,6 +26,7 @@ from pulpcore.constants import (
     TASK_DISPATCH_LOCK,
     IMMEDIATE_TIMEOUT,
 )
+from pulpcore.middleware import x_task_diagnostics_var
 from pulpcore.tasking.kafka import send_task_notification
 
 _logger = logging.getLogger(__name__)
@@ -246,6 +247,7 @@ def dispatch(
                 versions=versions,
                 immediate=immediate,
                 deferred=deferred,
+                profile_options=x_task_diagnostics_var.get(None),
             )
             if newest_created and task.pulp_created <= newest_created:
                 # Let this workaround not row forever into the future.

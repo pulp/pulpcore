@@ -147,6 +147,7 @@ class Task(BaseModel, AutoAddObjPermsMixin):
     pulp_domain = models.ForeignKey("Domain", default=get_domain_pk, on_delete=models.CASCADE)
     versions = HStoreField(default=dict)
 
+    profile_options = ArrayField(models.TextField(), null=True)
     profile_artifacts = models.ManyToManyField("Artifact", through=ProfileArtifact)
 
     immediate = models.BooleanField(default=False, null=True)

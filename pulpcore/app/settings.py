@@ -173,6 +173,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "pulpcore.middleware.DomainMiddleware",
     "pulpcore.middleware.APIRootRewriteMiddleware",
+    "pulpcore.middleware.TaskProfilerMiddleware",
 ]
 
 AUTHENTICATION_BACKENDS = [
