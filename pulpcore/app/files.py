@@ -43,8 +43,11 @@ class PulpTemporaryUploadedFile(TemporaryUploadedFile):
         # Default 1MB
         with ThreadPoolExecutor(max_workers=6) as executor:
             while data := file.read(1048576):
-                for hasher in models.Artifact.DIGEST_FIELDS:
+                futures = [
                     executor.submit(instance.hashers[hasher].update, data)
+                    for hasher in models.Artifact.DIGEST_FIELDS
+                ]
+                concurrent.futures.wait(futures, timeout=None, return_when=ALL_COMPLETED)
 
         # calling the method read() moves the file's pointer to the end of the file object,
         # thus, it is necessary to reset the file's pointer position back to 0 in case of
