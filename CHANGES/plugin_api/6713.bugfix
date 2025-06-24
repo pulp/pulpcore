@@ -1,1 +1,0 @@
-Fixed the `pulp_labels` field on the NoArtifactContentSerializer to work inside ViewSets for multipart/form uploads.
