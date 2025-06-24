@@ -73,6 +73,9 @@ STORAGES = {
             "region_name": "eu-central-1",
         },
     },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
 }
 ```
 
