@@ -8,6 +8,31 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.63.21 (2025-06-24) {: #3.63.21 }
+
+### REST API {: #3.63.21-rest-api }
+
+#### Bugfixes {: #3.63.21-rest-api-bugfix }
+
+- Taught tasks to update the state of associated progress-reports when canceled/failed.
+
+  Added a management-task, `clean-up-progress-reports`, to clean up existing reports.
+  [#3609](https://github.com/pulp/pulpcore/issues/3609)
+
+### Plugin API {: #3.63.21-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.21-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.21-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.63.20 (2025-06-04) {: #3.63.20 }
 
 ### REST API {: #3.63.20-rest-api }
