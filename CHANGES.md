@@ -8,6 +8,58 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.81.0 (2025-06-24) {: #3.81.0 }
+
+### REST API {: #3.81.0-rest-api }
+
+#### Features {: #3.81.0-rest-api-feature }
+
+- Checksum calculation of files being uploaded or downloaded to Pulp is now multithreaded.
+
+#### Bugfixes {: #3.81.0-rest-api-bugfix }
+
+- Changed default http bind address from `[::]` to `0.0.0.0` if IPv6 is not available.
+  [#6606](https://github.com/pulp/pulpcore/issues/6606)
+- Raised the minimum version of gunicorn to 22.0.
+  [#6640](https://github.com/pulp/pulpcore/issues/6640)
+
+### Plugin API {: #3.81.0-plugin-api }
+
+#### Bugfixes {: #3.81.0-plugin-api-bugfix }
+
+- Fixed the `pulp_labels` field on the NoArtifactContentSerializer to work inside ViewSets for multipart/form uploads.
+  [#6713](https://github.com/pulp/pulpcore/issues/6713)
+
+### Pulp File {: #3.81.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.81.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.80.2 (2025-06-24) {: #3.80.2 }
+
+### REST API {: #3.80.2-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.80.2-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.80.2-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.80.2-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.80.1 (2025-06-12) {: #3.80.1 }
 
 ### REST API {: #3.80.1-rest-api }
@@ -497,6 +549,31 @@ No significant changes.
   [#6244](https://github.com/pulp/pulpcore/issues/6244)
 
 ### Pulp Cert Guard {: #3.74.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.73.13 (2025-06-24) {: #3.73.13 }
+
+### REST API {: #3.73.13-rest-api }
+
+#### Bugfixes {: #3.73.13-rest-api-bugfix }
+
+- Taught tasks to update the state of associated progress-reports when canceled/failed.
+
+  Added a management-task, `clean-up-progress-reports`, to clean up existing reports.
+  [#3609](https://github.com/pulp/pulpcore/issues/3609)
+
+### Plugin API {: #3.73.13-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.73.13-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.13-pulp-cert-guard }
 
 No significant changes.
 
@@ -1470,6 +1547,31 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.64.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.63.21 (2025-06-24) {: #3.63.21 }
+
+### REST API {: #3.63.21-rest-api }
+
+#### Bugfixes {: #3.63.21-rest-api-bugfix }
+
+- Taught tasks to update the state of associated progress-reports when canceled/failed.
+
+  Added a management-task, `clean-up-progress-reports`, to clean up existing reports.
+  [#3609](https://github.com/pulp/pulpcore/issues/3609)
+
+### Plugin API {: #3.63.21-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.21-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.21-pulp-cert-guard }
 
 No significant changes.
 
@@ -2776,6 +2878,26 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard
+
+No significant changes.
+
+---
+
+## 3.49.43 (2025-06-24) {: #3.49.43 }
+
+### REST API {: #3.49.43-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.49.43-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.43-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.43-pulp-cert-guard }
 
 No significant changes.
 
