@@ -51,7 +51,8 @@ dependencies = [
   "jinja2>=3.1,<=3.1.6",
   "json_stream>=2.3.2,<2.4",
   "jq>=1.6.0,<1.9.0",
-  "pycares<4.9",  # pycares==4.9 + aiodns==3.2.0 + python<3.12 = trouble
+  # pycares is only a transitive dependency, but there is a combination of versions that expresses a bug.
+  "pycares<4.9;python_version<'3.12'",  # pycares==4.9 + aiodns==3.2.0 + python<3.12 = trouble
   "PyOpenSSL<26.0",
   "opentelemetry-api>=1.27.0,<1.31",
   "opentelemetry-sdk>=1.27.0,<1.31",
