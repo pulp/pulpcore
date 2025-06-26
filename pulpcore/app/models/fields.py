@@ -90,7 +90,7 @@ class ArtifactFileField(FileField):
 
 
 class EncryptedTextField(TextField):
-    """A field mixin that encrypts text using settings.DB_ENCRYPTION_KEY."""
+    """A field that encrypts text using settings.DB_ENCRYPTION_KEY."""
 
     def __init__(self, *args, **kwargs):
         if kwargs.get("primary_key"):
@@ -114,7 +114,7 @@ class EncryptedTextField(TextField):
 
 
 class EncryptedJSONField(JSONField):
-    """A Field mixin that encrypts the JSON text using settings.DP_ENCRYPTION_KEY."""
+    """A Field that encrypts the JSON text using settings.DP_ENCRYPTION_KEY."""
 
     def __init__(self, *args, **kwargs):
         if kwargs.get("primary_key"):
