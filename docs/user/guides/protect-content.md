@@ -21,19 +21,19 @@ To set up an RBAC content guard:
 1. Create the content guard:
 
     ```bash
-    pulp content-guard rbac create --name rbac
+    pulp content-guard rbac create --name rbac-guard
     ```
 
 2. Assign permissions to users and/or groups:
 
     ```bash
-    pulp content-guard rbac assign --name rbac --user alice --user bob --group file-buddies
+    pulp content-guard rbac assign --name rbac-guard --user alice --user bob --group file-buddies
     ```
 
 3. Associate the content guard with a distribution:
 
     ```bash
-    pulp file distribution update --name foo --content-guard rbac
+    pulp file distribution update --name foo --content-guard core:rbac:rbac-guard
     ```
 
 By default, users/groups need the `core.download_rbaccontenguard` permission to access protected content.
@@ -55,10 +55,10 @@ The header content guard checks for specific HTTP headers in incoming requests. 
 
 ```bash
 # Create a header content guard that only accepts requests with the X-Pulp-User header set to alice
-pulp content-guard header create --name header --header-name X-Pulp-User --header-value alice
+pulp content-guard header create --name header-guard --header-name X-Pulp-User --header-value alice
 
 # Use a JQ filter to extract the value to check against from the header
-pulp content-guard header create --name header --header-name X-Auth-Service --header-value true --jq-filter '.authenticated'
+pulp content-guard header create --name header-guard --header-name X-Auth-Service --header-value true --jq-filter '.authenticated'
 ```
 
 ### Composite Content Guard
@@ -67,7 +67,7 @@ The composite content guard combines multiple guards using OR logic - if any of 
 
 ```bash
 # Use different types of content guards, e.g. RBAC and X509
-pulp content-guard composite create --name composite --guard rbac --guard x509
+pulp content-guard composite create --name composite-guard --guard core:rbac:rbac-guard --guard core:x509:x509-guard
 ```
 
 ### Redirect Content Guard
