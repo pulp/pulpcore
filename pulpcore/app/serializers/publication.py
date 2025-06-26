@@ -78,6 +78,10 @@ class PublicationSerializer(ModelSerializer):
 
 
 class ContentGuardSerializer(ModelSerializer):
+    """
+    Base class for content guard serializers.
+    """
+
     pulp_href = DetailIdentityField(view_name_pattern=r"contentguards(-.*/.*)-detail")
 
     name = serializers.CharField(
