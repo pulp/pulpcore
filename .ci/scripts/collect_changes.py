@@ -7,16 +7,21 @@
 # For more info visit https://github.com/pulp/plugin_template
 
 import itertools
+import json
 import os
 import re
 import tomllib
+import urllib.request
+from pathlib import Path
 
 from git import GitCommandError, Repo
 from packaging.version import parse as parse_version
 
+
+PYPI_PROJECT = "pulpcore"
+
 # Read Towncrier settings
-with open("pyproject.toml", "rb") as fp:
-    tc_settings = tomllib.load(fp)["tool"]["towncrier"]
+tc_settings = tomllib.loads(Path("pyproject.toml").read_text())["tool"]["towncrier"]
 
 CHANGELOG_FILE = tc_settings.get("filename", "NEWS.rst")
 START_STRING = tc_settings.get(
@@ -35,7 +40,7 @@ TITLE_FORMAT = tc_settings.get("title_format", "{name} {version} ({project_date}
 # see help(re.split) for more info.
 NAME_REGEX = r".*"
 VERSION_REGEX = r"[0-9]+\.[0-9]+\.[0-9][0-9ab]*"
-VERSION_CAPTURE_REGEX = rf"({VERSION_REGEX})"
+VERSION_CAPTURE_REGEX = rf"(?:YANKED )?({VERSION_REGEX})"
 DATE_REGEX = r"[0-9]{4}-[0-9]{2}-[0-9]{2}"
 TITLE_REGEX = (
     "("
@@ -75,6 +80,20 @@ def main():
     branches.sort(key=lambda ref: parse_version(ref.remote_head), reverse=True)
     branches = [ref.name for ref in branches]
 
+    changed = False
+
+    try:
+        response = urllib.request.urlopen(f"https://pypi.org/pypi/{PYPI_PROJECT}/json")
+        pypi_record = json.loads(response.read())
+        yanked_versions = {
+            parse_version(version): release[0]["yanked_reason"]
+            for version, release in pypi_record["releases"].items()
+            if release[0]["yanked"] is True
+        }
+    except Exception:
+        # If something failed, just don't mark anything as yanked.
+        yanked_versions = {}
+
     with open(CHANGELOG_FILE, "r") as f:
         main_changelog = f.read()
     preamble, main_changes = split_changelog(main_changelog)
@@ -95,9 +114,19 @@ def main():
             if left[0] != right[0]:
                 main_changes.append(right)
 
+    if yanked_versions:
+        for change in main_changes:
+            if change[0] in yanked_versions and "YANKED" not in change[1].split("\n")[0]:
+                reason = yanked_versions[change[0]]
+                version = str(change[0])
+                change[1] = change[1].replace(version, "YANKED " + version, count=1)
+                if reason:
+                    change[1] = change[1].replace("\n", f"\n\nYank reason: {reason}\n", count=1)
+                changed = True
+
     new_length = len(main_changes)
-    if old_length < new_length:
-        print(f"{new_length - old_length} new versions have been added.")
+    if old_length < new_length or changed:
+        print(f"{new_length - old_length} new versions have been added (or something has changed).")
         with open(CHANGELOG_FILE, "w") as fp:
             fp.write(preamble)
             for change in main_changes:
