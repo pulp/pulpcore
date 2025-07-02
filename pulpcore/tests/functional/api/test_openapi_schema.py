@@ -2,7 +2,7 @@
 
 import copy
 import json
-import os
+from pathlib import Path
 
 import pytest
 import jsonschema
@@ -10,28 +10,31 @@ import jsonschema
 from drf_spectacular import validation
 from collections import defaultdict
 
-JSON_SCHEMA_SPEC_PATH = os.path.join(
-    os.path.dirname(validation.__file__), "openapi_3_0_schema.json"
-)
-
 
 @pytest.fixture(scope="session")
-def openapi3_schema_spec():
-    with open(JSON_SCHEMA_SPEC_PATH) as fh:
-        openapi3_schema_spec = json.load(fh)
-
-    return openapi3_schema_spec
+def openapi3_schema_spec(pulp_openapi_schema):
+    schema_version = pulp_openapi_schema["openapi"]
+    if schema_version.startswith("3.0"):
+        spec_path = Path(validation.__file__).parent / "openapi_3_0_schema.json"
+    elif schema_version.startswith("3.1"):
+        spec_path = Path(validation.__file__).parent / "openapi_3_1_schema.json"
+    else:
+        pytest.fail(f"Unknown OpenAPI schema version [{schema_version}].")
+    return json.loads(spec_path.read_text())
 
 
 @pytest.fixture(scope="session")
 def openapi3_schema_with_modified_safe_chars(openapi3_schema_spec):
-    openapi3_schema_spec_copy = copy.deepcopy(openapi3_schema_spec)  # Don't modify the original
+    oas_copy = copy.deepcopy(openapi3_schema_spec)  # Don't modify the original
     # Making OpenAPI validation to accept paths starting with / and {
-    properties = openapi3_schema_spec_copy["definitions"]["Paths"]["patternProperties"]
-    properties["^\\/|{"] = properties["^\\/"]
-    del properties["^\\/"]
+    if "3.1.x" in oas_copy["description"]:
+        pattern_properties = oas_copy["$defs"]["paths"]["patternProperties"]
+        pattern_properties["^/|{"] = pattern_properties.pop("^/")
+    else:
+        pattern_properties = oas_copy["definitions"]["Paths"]["patternProperties"]
+        pattern_properties["^\\/|{"] = pattern_properties.pop("^\\/")
 
-    return openapi3_schema_spec_copy
+    return oas_copy
 
 
 @pytest.mark.parallel
