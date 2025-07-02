@@ -1,1 +1,0 @@
-Fixed HEAD requests to large on-demand files (>1MB) leaving behind temporary files.
