@@ -15,6 +15,3 @@ include pulpcore/app/templates/rest_framework/api.html
 include manage.py
 include test_requirements.txt
 exclude releasing.md
-
-
-exclude task_trigger_demonstration
