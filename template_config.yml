@@ -25,7 +25,7 @@ flake8: true
 flake8_ignore:
 - ./pulpcore/app/protobuf/*
 github_org: pulp
-latest_release_branch: '3.81'
+latest_release_branch: '3.82'
 lint_requirements: true
 os_required_packages: []
 parallel_test_workers: 8
@@ -63,7 +63,8 @@ pulp_settings_azure:
   domain_enabled: true
   rest_framework__default_permission_classes:
   - pulpcore.plugin.access_policy.DefaultAccessPolicy
-  task_diagnostics: ["memory"]
+  task_diagnostics:
+  - memory
 pulp_settings_gcp: null
 pulp_settings_s3:
   DISABLED_authentication_backends: '@merge django.contrib.auth.backends.RemoteUserBackend'
