@@ -52,6 +52,7 @@ from pulpcore.app.models import (  # noqa: E402: module level not at top of file
     Publication,
     Remote,
     RemoteArtifact,
+    RemoteDownload,
 )
 from pulpcore.app import mime_types  # noqa: E402: module level not at top of file
 from pulpcore.app.util import (  # noqa: E402: module level not at top of file
@@ -1304,6 +1305,14 @@ class Handler:
             if save_artifact and remote.policy != Remote.STREAMED:
                 await original_finalize()
 
+        rd_obj, created = await RemoteDownload.objects.aget_or_create(
+            download_id=remote_artifact.sha256
+        )
+        if not created:
+            remote_artifact.url = remote_artifact.url.replace("https:", "tmp:", 1)
+            remote_artifact.url = remote_artifact.url.replace("http:", "tmp:", 1)
+            save_artifact = False
+
         downloader = remote.get_downloader(
             remote_artifact=remote_artifact,
             headers_ready_callback=handle_response_headers,
@@ -1348,6 +1357,8 @@ class Handler:
             # Try to add content to repository if present & supported
             if repository and repository.PULL_THROUGH_SUPPORTED:
                 await sync_to_async(repository.pull_through_add_content)(ca)
+        if created:
+            await rd_obj.adelete()
         await response.write_eof()
 
         if response.status == 404:

@@ -15,12 +15,14 @@ import aiohttp
 from pulpcore.app.apps import PulpAppConfig
 from .http import HttpDownloader
 from .file import FileDownloader
+from .remote_tempfile import TempFileDownloader
 
 
 PROTOCOL_MAP = {
     "http": HttpDownloader,
     "https": HttpDownloader,
     "file": FileDownloader,
+    "tmp": TempFileDownloader,
 }
 
 
@@ -70,6 +72,7 @@ class DownloaderFactory:
             "https": self._http_or_https,
             "http": self._http_or_https,
             "file": self._generic,
+            "tmp": self._generic,
         }
         self._session = self._make_aiohttp_session_from_remote()
         self._semaphore = asyncio.Semaphore(value=download_concurrency)
