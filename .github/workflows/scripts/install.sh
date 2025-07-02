@@ -105,7 +105,7 @@ if [ "$TEST" = "s3" ]; then
   sed -i -e '$a s3_test: true\
 minio_access_key: "'$MINIO_ACCESS_KEY'"\
 minio_secret_key: "'$MINIO_SECRET_KEY'"\
-pulp_scenario_settings: {"DISABLED_authentication_backends": "@merge django.contrib.auth.backends.RemoteUserBackend", "DISABLED_authentication_json_header": "HTTP_X_RH_IDENTITY", "DISABLED_authentication_json_header_jq_filter": ".identity.user.username", "DISABLED_authentication_json_header_openapi_security_scheme": {"description": "External OAuth integration", "flows": {"clientCredentials": {"scopes": {"api.console": "grant_access_to_pulp"}, "tokenUrl": "https://your-identity-provider/token/issuer"}}, "type": "oauth2"}, "DISABLED_rest_framework__default_authentication_classes": "@merge pulpcore.app.authentication.JSONHeaderRemoteAuthentication", "domain_enabled": true, "hide_guarded_distributions": true, "rest_framework__default_permission_classes": ["pulpcore.plugin.access_policy.AccessPolicyFromSettings"]}\
+pulp_scenario_settings: {"DISABLED_authentication_backends": "@merge django.contrib.auth.backends.RemoteUserBackend", "DISABLED_authentication_json_header": "HTTP_X_RH_IDENTITY", "DISABLED_authentication_json_header_jq_filter": ".identity.user.username", "DISABLED_authentication_json_header_openapi_security_scheme": {"description": "External OAuth integration", "flows": {"clientCredentials": {"scopes": {"api.console": "grant_access_to_pulp"}, "tokenUrl": "https://your-identity-provider/token/issuer"}}, "type": "oauth2"}, "DISABLED_rest_framework__default_authentication_classes": "@merge pulpcore.app.authentication.JSONHeaderRemoteAuthentication", "domain_enabled": true, "hide_guarded_distributions": true, "rest_framework__default_permission_classes": ["pulpcore.plugin.access_policy.AccessPolicyFromSettings"], "spectacular_settings__oas_version": "3.0.3"}\
 pulp_scenario_env: {}\
 test_storages_compat_layer: true\
 ' vars/main.yaml
@@ -120,7 +120,7 @@ if [ "$TEST" = "azure" ]; then
       - ./azurite:/etc/pulp\
     command: "azurite-blob --blobHost 0.0.0.0"' vars/main.yaml
   sed -i -e '$a azure_test: true\
-pulp_scenario_settings: {"api_root_rewrite_header": "X-API-Root", "content_origin": null, "domain_enabled": true, "rest_framework__default_permission_classes": ["pulpcore.plugin.access_policy.DefaultAccessPolicy"], "task_diagnostics": ["memory"]}\
+pulp_scenario_settings: {"api_root_rewrite_header": "X-API-Root", "content_origin": null, "domain_enabled": true, "rest_framework__default_authentication_classes": "@merge pulpcore.app.authentication.PulpRemoteUserAuthentication", "rest_framework__default_permission_classes": ["pulpcore.plugin.access_policy.DefaultAccessPolicy"], "task_diagnostics": ["memory"]}\
 pulp_scenario_env: {}\
 ' vars/main.yaml
 fi
