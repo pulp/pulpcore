@@ -7,28 +7,8 @@ import pulpcore.app.util
 
 class Migration(migrations.Migration):
 
-    replaces = [
-        ("file", "0001_initial"),
-        ("file", "0002_file_related_names"),
-        ("file", "0003_auto_20191014_1721"),
-        ("file", "0004_filefilesystemexporter"),
-        ("file", "0005_filerepository"),
-        ("file", "0006_delete_filefilesystemexporter"),
-        ("file", "0007_filefilesystemexporter"),
-        ("file", "0008_add_manifest_field"),
-        ("file", "0009_move_data_to_new_master_distribution_model"),
-        ("file", "0010_auto_publish"),
-        ("file", "0011_fix_auto_publish"),
-        ("file", "0012_delete_filefilesystemexporter"),
-        ("file", "0013_file_acs"),
-        ("file", "0014_new_rbac_permissions"),
-        ("file", "0015_allow_null_manifest"),
-        ("file", "0016_add_domain"),
-    ]
-
     dependencies = [
         ("core", "0102_add_domain_relations"),
-        ("core", "0091_systemid"),
     ]
 
     operations = [
