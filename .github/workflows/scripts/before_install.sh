@@ -60,11 +60,17 @@ then
   exit $s
 fi
 
+CI_IMAGE="ghcr.io/pulp/pulp-ci-centos"  # get dynamically in plugin-template
+CONTAINER_PYTHON_VERSION="$(docker run --rm $CI_IMAGE python3 --version | awk '{print $2}')"
 if [[ "$TEST" = "pulp" ]]; then
-  python3 .ci/scripts/calc_constraints.py -u requirements.txt > upperbounds_constraints.txt
+  python3 .ci/scripts/calc_constraints.py \
+    --python-version "${CONTAINER_PYTHON_VERSION}" \
+    -u requirements.txt > upperbounds_constraints.txt
 fi
 if [[ "$TEST" = "lowerbounds" ]]; then
-  python3 .ci/scripts/calc_constraints.py requirements.txt > lowerbounds_constraints.txt
+  python3 .ci/scripts/calc_constraints.py \
+    --python-version "${CONTAINER_PYTHON_VERSION}" \
+    requirements.txt > lowerbounds_constraints.txt
 fi
 
 if [ -f $POST_BEFORE_INSTALL ]; then
