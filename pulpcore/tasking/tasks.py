@@ -249,6 +249,7 @@ def dispatch(
                 deferred=deferred,
                 profile_options=x_task_diagnostics_var.get(None),
             )
+            task.refresh_from_db()  # The database may have assigned a timestamp for us.
             if newest_created and task.pulp_created <= newest_created:
                 # Let this workaround not row forever into the future.
                 if newest_created - task.pulp_created > timedelta(seconds=1):
