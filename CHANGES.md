@@ -8,6 +8,42 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.82.0 (2025-07-02) {: #3.82.0 }
+
+### REST API {: #3.82.0-rest-api }
+
+#### Features {: #3.82.0-rest-api-feature }
+
+- Added support for profiling individual tasks with X-TASK-DIAGNOSTICS header.
+  The TASK_DIAGNOSTICS setting now determines which profilers are available to users of the REST API.
+  [#6725](https://github.com/pulp/pulpcore/issues/6725)
+
+#### Bugfixes {: #3.82.0-rest-api-bugfix }
+
+- Fixed S3 Storage configuration.
+  [#6630](https://github.com/pulp/pulpcore/issues/6630)
+- Fixed HEAD requests to large on-demand files (>1MB) leaving behind temporary files.
+  [#6647](https://github.com/pulp/pulpcore/issues/6647)
+
+#### Improved Documentation {: #3.82.0-rest-api-doc }
+
+- Updated "Protect Content" documentation regarding the `--guard` command-line option.
+  [#6731](https://github.com/pulp/pulpcore/issues/6731)
+
+### Plugin API {: #3.82.0-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.82.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.82.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.81.0 (2025-06-24) {: #3.81.0 }
 
 ### REST API {: #3.81.0-rest-api }
@@ -1572,6 +1608,26 @@ No significant changes.
 
 ---
 
+## 3.63.22 (2025-07-02) {: #3.63.22 }
+
+### REST API {: #3.63.22-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.63.22-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.22-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.22-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.63.21 (2025-06-24) {: #3.63.21 }
 
 ### REST API {: #3.63.21-rest-api }
@@ -2898,6 +2954,26 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard
+
+No significant changes.
+
+---
+
+## 3.49.44 (2025-07-02) {: #3.49.44 }
+
+### REST API {: #3.49.44-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.49.44-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.44-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.44-pulp-cert-guard }
 
 No significant changes.
 
