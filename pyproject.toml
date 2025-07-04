@@ -65,7 +65,7 @@ dependencies = [
   "redis>=4.3.0,<5.3",  # Looks like only bugfixes in z-Stream.
   "tablib>=3.5.0,<3.6",  # 3.6.0 breaks with import export. Not sure about semver.
   "url-normalize>=1.4.3,<2.3",  # SemVer. https://github.com/niksite/url-normalize/blob/master/CHANGELOG.md#changelog
-  "uuid6>=2023.5.2,<=2025.0.0",
+  "uuid6>=2023.5.2,<=2025.0.1",
   "whitenoise>=5.0,<6.10.0",
   "yarl>=1.8,<1.21",  # Seems to follow SemVer https://yarl.aio-libs.org/en/latest/contributing/release_guide/#pre-release-activities .
 ]
