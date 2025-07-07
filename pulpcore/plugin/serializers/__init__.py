@@ -38,6 +38,7 @@ from pulpcore.app.serializers import (
     ValidateFieldsMixin,
     validate_unknown_fields,
     TaskSerializer,
+    VulnerabilityReportSerializer,
 )
 
 from .content import (
@@ -87,4 +88,5 @@ __all__ = [
     "TaskSerializer",
     "NoArtifactContentUploadSerializer",
     "SingleArtifactContentUploadSerializer",
+    "VulnerabilityReportSerializer",
 ]
