@@ -9,6 +9,7 @@ from gettext import gettext as _
 
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField, HStoreField
+from django.contrib.postgres.indexes import GinIndex
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import connection, models
 from django.utils import timezone
@@ -348,6 +349,12 @@ class Task(BaseModel, AutoAddObjPermsMixin):
             models.Index(fields=["unblocked_at"]),
             models.Index(fields=["state"]),
             models.Index(fields=["state", "pulp_created"]),
+            GinIndex(
+                name="pulp_task_resources_index",
+                fields=["reserved_resources_record"],
+                condition=~models.Q(state__in=["completed", "failed", "canceled", "skipped"]),
+                opclasses=["array_ops"],
+            ),
         ]
         permissions = [
             ("manage_roles_task", "Can manage role assignments on task"),
