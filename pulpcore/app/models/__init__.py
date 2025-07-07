@@ -87,6 +87,8 @@ from .upload import (
     UploadChunk,
 )
 
+from .vulnerability_report import VulnerabilityReport
+
 # Moved here to avoid a circular import with Task
 from .progress import GroupProgressReport, ProgressReport
 
@@ -170,4 +172,5 @@ __all__ = [
     "OpenPGPSignature",
     "OpenPGPUserAttribute",
     "OpenPGPUserID",
+    "VulnerabilityReport",
 ]

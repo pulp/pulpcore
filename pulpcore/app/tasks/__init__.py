@@ -25,3 +25,5 @@ from .replica import replicate_distributions
 from .repository import repair_all_artifacts
 
 from .analytics import post_analytics
+
+from .vulnerability_report import check_content

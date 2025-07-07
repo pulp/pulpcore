@@ -387,6 +387,12 @@ This is [recommended by aiohttp] for performance improvements.
 The `uvloop` python package must be installed in the content-app's system.
 That's available as an optional dependency for pulpcore: `pulpcore[uvloop]`.
 
+### VULN\_REPORT\_TASK\_LIMITER
+
+This number determines the amount of concurrent vulnerability report processes that can be spawned
+at one time. Increasing this number will generally increase the speed of the task, but will also
+consume more resources of the worker. Defaults to 10 concurrent processes.
+
 ### WORKER\_TTL
 
 The number of seconds before a worker should be considered lost.

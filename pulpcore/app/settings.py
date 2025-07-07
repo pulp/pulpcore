@@ -427,6 +427,9 @@ KAFKA_SASL_PASSWORD = None
 # opentelemetry settings
 OTEL_ENABLED = False
 
+# VulnerabilityReport settings
+VULN_REPORT_TASK_LIMITER = 10
+
 # Replaces asyncio event loop with uvloop
 UVLOOP_ENABLED = False
 

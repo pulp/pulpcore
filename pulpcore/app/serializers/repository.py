@@ -7,7 +7,7 @@ from rest_framework import fields, serializers
 from rest_framework_nested.serializers import NestedHyperlinkedModelSerializer
 
 from pulpcore.app import models, settings
-from pulpcore.app.util import get_prn
+from pulpcore.app.util import get_prn, reverse
 from pulpcore.app.serializers import (
     DetailIdentityField,
     DetailRelatedField,
@@ -490,6 +490,12 @@ class RepositoryVersionSerializer(ModelSerializer, NestedHyperlinkedModelSeriali
         source="*",
         read_only=True,
     )
+    vuln_report = serializers.SerializerMethodField(
+        read_only=True,
+    )
+
+    def get_vuln_report(self, object):
+        return f"{reverse('vuln_report-list')}?repository_version={get_prn(object)}"
 
     class Meta:
         model = models.RepositoryVersion
@@ -499,6 +505,7 @@ class RepositoryVersionSerializer(ModelSerializer, NestedHyperlinkedModelSeriali
             "repository",
             "base_version",
             "content_summary",
+            "vuln_report",
         )
 
 

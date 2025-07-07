@@ -33,6 +33,7 @@ from pulpcore.app.viewsets import (
     RolesMixin,
     TaskGroupViewSet,
     TaskViewSet,
+    VulnerabilityReportViewSet,
 )
 
 from pulpcore.app.viewsets.custom_filters import (
@@ -89,4 +90,5 @@ __all__ = [
     "NoArtifactContentViewSet",
     "NoArtifactContentUploadViewSet",
     "SingleArtifactContentUploadViewSet",
+    "VulnerabilityReportViewSet",
 ]
