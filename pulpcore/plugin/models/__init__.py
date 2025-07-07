@@ -40,6 +40,7 @@ from pulpcore.app.models import (
     TaskGroup,
     Upload,
     UploadChunk,
+    VulnerabilityReport,
 )
 
 
@@ -87,4 +88,5 @@ __all__ = [
     "UploadChunk",
     "EncryptedTextField",
     "system_id",
+    "VulnerabilityReport",
 ]
