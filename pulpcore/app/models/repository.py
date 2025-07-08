@@ -11,11 +11,11 @@ import logging
 import django
 from asyncio_throttle import Throttler
 from django.conf import settings
-from django.contrib.postgres.fields import HStoreField
+from django.contrib.postgres.fields import HStoreField, ArrayField
 from django.core.validators import MinValueValidator
 from django.db import models, transaction
 from django.db.models import F, Func, Q, Value
-from django_lifecycle import AFTER_UPDATE, BEFORE_DELETE, hook
+from django_lifecycle import AFTER_UPDATE, BEFORE_CREATE, BEFORE_DELETE, hook
 from rest_framework.exceptions import APIException
 
 from pulpcore.app.util import (
@@ -771,6 +771,7 @@ class RepositoryVersionQuerySet(models.QuerySet):
         Returns:
             django.db.models.QuerySet: Repository versions which contains content.
         """
+        # TODO: Evaluate if this can be optimized with content_ids field
         query = models.Q(pk__in=[])
         repo_content = RepositoryContent.objects.filter(content__pk__in=content)
 
@@ -822,6 +823,7 @@ class RepositoryVersion(BaseModel):
     complete = models.BooleanField(db_index=True, default=False)
     base_version = models.ForeignKey("RepositoryVersion", null=True, on_delete=models.SET_NULL)
     info = models.JSONField(default=dict)
+    content_ids = ArrayField(models.UUIDField(), default=None, null=True)
 
     class Meta:
         default_related_name = "versions"
@@ -839,6 +841,31 @@ class RepositoryVersion(BaseModel):
         return RepositoryContent.objects.filter(
             repository_id=self.repository_id, version_added__number__lte=self.number
         ).exclude(version_removed__number__lte=self.number)
+
+    def _get_content_ids(self):
+        """
+        Returns the content ids for a repository version
+        """
+        if self.content_ids is not None:
+            return self.content_ids
+        return self._content_relationships().values_list("content_id", flat=True)
+
+    @hook(BEFORE_CREATE)
+    def set_content_ids(self):
+        """
+        Sets the content ids for the new repository version based on the previous version.
+        """
+        try:
+            previous = self.previous()
+        except self.DoesNotExist:
+            pass
+        else:
+            if previous.content_ids is not None:
+                self.content_ids = previous.content_ids
+        if self.content_ids is None:
+            self.content_ids = list(
+                self._content_relationships().values_list("content_id", flat=True)
+            )
 
     def get_content(self, content_qs=None):
         """
@@ -863,7 +890,7 @@ class RepositoryVersion(BaseModel):
         if content_qs is None:
             content_qs = Content.objects
 
-        return content_qs.filter(pk__in=self._content_relationships().values_list("content_id"))
+        return content_qs.filter(pk__in=self._get_content_ids())
 
     @property
     def content(self):
@@ -977,9 +1004,9 @@ class RepositoryVersion(BaseModel):
         if not base_version:
             return Content.objects.filter(version_memberships__version_added=self)
 
-        return Content.objects.filter(
-            version_memberships__in=self._content_relationships()
-        ).exclude(version_memberships__in=base_version._content_relationships())
+        return Content.objects.filter(pk__in=self._get_content_ids()).exclude(
+            pk__in=base_version._get_content_ids()
+        )
 
     def removed(self, base_version=None):
         """
@@ -992,9 +1019,9 @@ class RepositoryVersion(BaseModel):
         if not base_version:
             return Content.objects.filter(version_memberships__version_removed=self)
 
-        return Content.objects.filter(
-            version_memberships__in=base_version._content_relationships()
-        ).exclude(version_memberships__in=self._content_relationships())
+        return Content.objects.filter(pk__in=base_version._get_content_ids()).exclude(
+            pk__in=self._get_content_ids()
+        )
 
     def contains(self, content):
         """
@@ -1003,6 +1030,8 @@ class RepositoryVersion(BaseModel):
         Returns:
             bool: True if the repository version contains the content, False otherwise
         """
+        if self.content_ids is not None:
+            return content.pk in self.content_ids
         return self.content.filter(pk=content.pk).exists()
 
     def add_content(self, content):
@@ -1026,9 +1055,10 @@ class RepositoryVersion(BaseModel):
             .exists()
         )
         repo_content = []
-        to_add = set(content.values_list("pk", flat=True)) - set(
-            self.content.values_list("pk", flat=True)
-        )
+        to_add = set(content.values_list("pk", flat=True)) - set(self._get_content_ids())
+        if to_add:
+            self.content_ids += list(to_add)
+            self.save()
 
         # Normalize representation if content has already been removed in this version and
         # is re-added: Undo removal by setting version_removed to None.
@@ -1071,6 +1101,11 @@ class RepositoryVersion(BaseModel):
             .exclude(pulp_domain_id=get_domain_pk())
             .exists()
         )
+        content_ids = set(self._get_content_ids())
+        to_remove = set(content.values_list("pk", flat=True))
+        if to_remove:
+            self.content_ids = list(content_ids - to_remove)
+            self.save()
 
         # Normalize representation if content has already been added in this version.
         # Undo addition by deleting the RepositoryContent.
