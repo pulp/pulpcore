@@ -268,7 +268,7 @@ class RepositoryVersionIdentityField(RepositoryVersionFieldGetURLMixin, Identity
 
 
 class RepositoryVersionRelatedField(RepositoryVersionFieldGetURLMixin, RelatedField):
-    queryset = models.RepositoryVersion.objects.all()
+    queryset = models.RepositoryVersion.objects.all().defer("content_ids")
 
     def get_object(self, view_name, view_args, view_kwargs):
         lookup_kwargs = {

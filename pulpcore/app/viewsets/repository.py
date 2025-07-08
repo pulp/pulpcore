@@ -234,7 +234,7 @@ class RepositoryVersionQuerysetMixin:
     """A mixin to hold the shared get_queryset logic used by RepositoryVersionViewSets."""
 
     def get_queryset(self):
-        qs = super().get_queryset()
+        qs = super().get_queryset().defer("content_ids")
         if getattr(self, "action", "") == "list":
             # Fetch info for repository (DetailRelatedField),
             # base_version (RepositoryVersionRelatedField), and
