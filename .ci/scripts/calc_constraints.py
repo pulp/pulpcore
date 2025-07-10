@@ -53,6 +53,9 @@ def to_upper_bound(req):
         if requirement.name == "pulpcore":
             # An exception to allow for pulpcore deprecation policy.
             return fetch_pulpcore_upper_bound(requirement)
+        # skip requirement with environment scopes. E.g 'foo==1.0.0;python_version>=3.9'
+        if requirement.marker:
+            return f"# ENVIRONMENT IS UNTRACKABLE: {req}"
         for spec in requirement.specifier:
             if spec.operator == "~=":
                 return f"# NO BETTER CONSTRAINT: {req}"
