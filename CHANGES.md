@@ -8,6 +8,29 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.83.0 (2025-07-10) {: #3.83.0 }
+
+### REST API {: #3.83.0-rest-api }
+
+#### Features {: #3.83.0-rest-api-feature }
+
+- Improved RepositoryVersion content set calculation speed.
+  [#5783](https://github.com/pulp/pulpcore/issues/5783)
+
+### Plugin API {: #3.83.0-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.83.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.83.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.82.1 (2025-07-04) {: #3.82.1 }
 
 ### REST API {: #3.82.1-rest-api }
