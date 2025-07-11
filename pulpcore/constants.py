@@ -127,3 +127,9 @@ CHECKPOINT_TS_FORMAT = "%Y%m%dT%H%M%SZ"
 # The upper boundary represents an unsigned 32-bit integer and prevents overflow
 ORPHAN_PROTECTION_TIME_LOWER_BOUND = 0
 ORPHAN_PROTECTION_TIME_UPPER_BOUND = 4294967295  # (2^32)-1
+
+# OSV API URL
+OSV_QUERY_URL = "https://api.osv.dev/v1/query"
+
+# Timeout when waiting on tasks scan thread queue to avoid indefinite blocking.
+VULNERABILITY_TASK_THREAD_TIMEOUT = 60
