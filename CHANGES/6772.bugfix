@@ -1,0 +1,1 @@
+Fixed the new content set optimization failing when the RepositoryVersion grew larger than 65K content units.
