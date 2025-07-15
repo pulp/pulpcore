@@ -8,6 +8,29 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.83.1 (2025-07-15) {: #3.83.1 }
+
+### REST API {: #3.83.1-rest-api }
+
+#### Bugfixes {: #3.83.1-rest-api-bugfix }
+
+- Fixed the new content set optimization failing when the RepositoryVersion grew larger than 65K content units.
+  [#6772](https://github.com/pulp/pulpcore/issues/6772)
+
+### Plugin API {: #3.83.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.83.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.83.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.83.0 (2025-07-10) {: #3.83.0 }
 
 ### REST API {: #3.83.0-rest-api }
