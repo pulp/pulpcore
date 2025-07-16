@@ -1064,28 +1064,29 @@ class RepositoryVersion(BaseModel):
         )
         repo_content = []
         to_add = set(content.values_list("pk", flat=True)) - set(self._get_content_ids())
-        if to_add:
-            self.content_ids += list(to_add)
-            self.save()
+        with transaction.atomic():
+            if to_add:
+                self.content_ids += list(to_add)
+                self.save()
 
-        # Normalize representation if content has already been removed in this version and
-        # is re-added: Undo removal by setting version_removed to None.
-        for removed in batch_qs(self.removed().order_by("pk").values_list("pk", flat=True)):
-            to_readd = to_add.intersection(set(removed))
-            if to_readd:
-                RepositoryContent.objects.filter(
-                    content__in=to_readd, repository=self.repository, version_removed=self
-                ).update(version_removed=None)
-                to_add = to_add - to_readd
+            # Normalize representation if content has already been removed in this version and
+            # is re-added: Undo removal by setting version_removed to None.
+            for removed in batch_qs(self.removed().order_by("pk").values_list("pk", flat=True)):
+                to_readd = to_add.intersection(set(removed))
+                if to_readd:
+                    RepositoryContent.objects.filter(
+                        content__in=to_readd, repository=self.repository, version_removed=self
+                    ).update(version_removed=None)
+                    to_add = to_add - to_readd
 
-        for content_pk in to_add:
-            repo_content.append(
-                RepositoryContent(
-                    repository=self.repository, content_id=content_pk, version_added=self
+            for content_pk in to_add:
+                repo_content.append(
+                    RepositoryContent(
+                        repository=self.repository, content_id=content_pk, version_added=self
+                    )
                 )
-            )
 
-        RepositoryContent.objects.bulk_create(repo_content)
+            RepositoryContent.objects.bulk_create(repo_content)
 
     def remove_content(self, content):
         """
@@ -1111,23 +1112,24 @@ class RepositoryVersion(BaseModel):
         )
         content_ids = set(self._get_content_ids())
         to_remove = set(content.values_list("pk", flat=True))
-        if to_remove:
-            self.content_ids = list(content_ids - to_remove)
-            self.save()
+        with transaction.atomic():
+            if to_remove:
+                self.content_ids = list(content_ids - to_remove)
+                self.save()
 
-        # Normalize representation if content has already been added in this version.
-        # Undo addition by deleting the RepositoryContent.
-        RepositoryContent.objects.filter(
-            repository=self.repository,
-            content_id__in=content,
-            version_added=self,
-            version_removed=None,
-        ).delete()
+            # Normalize representation if content has already been added in this version.
+            # Undo addition by deleting the RepositoryContent.
+            RepositoryContent.objects.filter(
+                repository=self.repository,
+                content_id__in=content,
+                version_added=self,
+                version_removed=None,
+            ).delete()
 
-        q_set = RepositoryContent.objects.filter(
-            repository=self.repository, content_id__in=content, version_removed=None
-        )
-        q_set.update(version_removed=self)
+            q_set = RepositoryContent.objects.filter(
+                repository=self.repository, content_id__in=content, version_removed=None
+            )
+            q_set.update(version_removed=self)
 
     def set_content(self, content):
         """
