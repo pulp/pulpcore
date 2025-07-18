@@ -20,7 +20,8 @@ from django.core.files.storage import storages
 from django.conf import global_settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db import connection
-from dynaconf import DjangoDynaconf, Dynaconf, Validator
+from pulpcore.app.loggers import deprecation_logger
+from dynaconf import DjangoDynaconf, Dynaconf, Validator, get_history
 
 from pulpcore import constants
 
@@ -553,7 +554,14 @@ settings = DjangoDynaconf(
 
 # begin compatibility layer for DEFAULT_FILE_STORAGE
 # Remove on pulpcore=3.85 or pulpcore=4.0
-
+using_deprecated_storage_settings = len(get_history(settings, key="DEFAULT_FILE_STORAGE")) > 1
+if using_deprecated_storage_settings:
+    deprecation_logger.warning(
+        "[deprecation] DEFAULT_FILE_STORAGE will be removed in pulpcore 3.85. "
+        "Learn how to upgrade to STORAGES:\n"
+        "https://discourse.pulpproject.org/t/"
+        "action-required-upgrade-your-storage-settings-before-pulpcore-3-85/2072/2"
+    )
 # Ensures the cached property storage.backends uses the the right value
 storages._backends = settings.STORAGES.copy()
 storages.backends
