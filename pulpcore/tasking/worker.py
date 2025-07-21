@@ -483,6 +483,7 @@ class PulpcoreWorker:
         """
         keep_looping = True
         while keep_looping and not self.shutdown_requested:
+            self.beat()
             try:
                 with PGAdvisoryLock(TASK_UNBLOCKING_LOCK):
                     keep_looping = self.unblock_tasks()
