@@ -6,16 +6,12 @@ from urllib.parse import unquote
 from django.conf import settings
 from django.db import models
 
+from cryptography import x509
 from OpenSSL import crypto as openssl
 
 from pulpcore.plugin.models import ContentGuard
 
-from pulp_certguard.app.utils import get_rhsm
-
-try:
-    from rhsm import certificate
-except ImportError:
-    pass
+from pulp_certguard import rhsm
 
 
 logger = getLogger(__name__)
@@ -139,11 +135,6 @@ class RHSMCertGuard(BaseCertGuard):
 
     TYPE = "rhsm"
 
-    def __init__(self, *args, **kwargs):
-        """Initialize a RHSMCertGuard and ensure this system has python-rhsm on it."""
-        get_rhsm()  # Validate that rhsm is installed
-        super().__init__(*args, **kwargs)
-
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
 
@@ -159,29 +150,19 @@ class RHSMCertGuard(BaseCertGuard):
                 certificate, or if the client certificate is not trusted from the CA certificated
                 stored as `ca_certificate`.
         """
-        get_rhsm()
+        # TODO use python cryptography and only parse the certificate once.
         unquoted_certificate = self._get_client_cert_header(request)
         self._ensure_client_cert_is_trusted(unquoted_certificate)
-        rhsm_cert = self._create_rhsm_cert_from_pem(unquoted_certificate)
+        cert = x509.load_pem_x509_certificate(unquoted_certificate.encode())
         content_path_prefix_without_trail_slash = settings.CONTENT_PATH_PREFIX.rstrip("/")
         len_prefix_to_remove = len(content_path_prefix_without_trail_slash)
         path_without_content_path_prefix = request.path[len_prefix_to_remove:]
-        self._check_paths(rhsm_cert, path_without_content_path_prefix)
+        self._check_paths(cert, path_without_content_path_prefix)
 
     @staticmethod
-    def _create_rhsm_cert_from_pem(unquoted_certificate):
-        try:
-            rhsm_cert = certificate.create_from_pem(unquoted_certificate)
-        except certificate.CertificateException:
-            msg = _("An error occurred while loading the client certificate data into python-rhsm.")
-            logger.warning(msg)
-            raise PermissionError(msg)
-        return rhsm_cert
-
-    @staticmethod
-    def _check_paths(rhsm_cert, path):
+    def _check_paths(cert, path):
         logger.debug(f"Checking that path {path} is allowed in client cert")
-        if rhsm_cert.check_path(path) is False:
+        if rhsm.check_path(cert, path) is False:
             logger.warning(f"Path {path} is *not* allowed in client cert")
             msg = _("Requested path is not a subpath of a path in the client certificate.")
             raise PermissionError(msg)
