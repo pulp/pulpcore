@@ -15,6 +15,7 @@ from packaging.version import parse as parse_version
 from django.conf import settings
 from django.db import connection
 from django.db.models import Case, Count, F, Max, Value, When
+from django.db.models.functions import Random
 from django.utils import timezone
 
 from pulpcore.constants import (
@@ -327,7 +328,7 @@ class PulpcoreWorker:
             for task in Task.objects.filter(
                 state__in=TASK_INCOMPLETE_STATES,
                 unblocked_at__isnull=False,
-            ).order_by("-immediate", "pulp_created"):
+            ).order_by("-immediate", F("pulp_created") + Value(timedelta(seconds=8)) * Random()):
                 # This code will only be called if we acquired the lock successfully
                 # The lock will be automatically be released at the end of the block
                 with contextlib.suppress(AdvisoryLockError), task:
