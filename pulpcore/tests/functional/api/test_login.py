@@ -1,5 +1,6 @@
 import http
 import pytest
+import uuid
 
 pytestmark = [pytest.mark.parallel]
 
@@ -83,9 +84,25 @@ def test_login_sets_session_cookie(pulpcore_bindings, gen_user):
     assert cookie_jar["csrftoken"].value != ""
 
 
-def test_session_cookie_is_authorization(pulpcore_bindings, anonymous_user, session_user):
+def test_session_cookie_is_authorization(pulpcore_bindings, session_user):
+    assert pulpcore_bindings.client.configuration.username is None
     result = pulpcore_bindings.LoginApi.login_read()
     assert result.username == session_user.username
+
+
+def test_session_cookie_object_create(
+    pulpcore_bindings, session_user, gen_object_with_cleanup, pulp_admin_user
+):
+    # first assign create permission to the user
+    role = "core.rbaccontentguard_creator"
+    with pulp_admin_user:
+        pulpcore_bindings.UsersRolesApi.create(
+            auth_user_href=session_user.user.pulp_href,
+            user_role={"role": role, "domain": None, "content_object": None},
+        )
+    # now try to create an object
+    assert pulpcore_bindings.client.configuration.username is None
+    gen_object_with_cleanup(pulpcore_bindings.ContentguardsRbacApi, {"name": str(uuid.uuid4())})
 
 
 def test_logout_removes_sessionid(pulpcore_bindings, session_user):
