@@ -57,6 +57,7 @@ pulp_settings:
   task_protection_time: 10
   tmpfile_protection_time: 10
   upload_protection_time: 10
+  secure_referrer_policy: "unsafe-url"
 pulp_settings_azure:
   api_root_rewrite_header: X-API-Root
   content_origin: null
@@ -108,4 +109,3 @@ test_reroute: true
 test_s3: true
 test_storages_compat_layer: true
 use_issue_template: true
-
