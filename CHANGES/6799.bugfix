@@ -1,0 +1,1 @@
+Fixed a bug where workers would miss heartbeating in very busy deployments.
