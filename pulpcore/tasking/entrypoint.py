@@ -21,8 +21,18 @@ _logger = logging.getLogger(__name__)
 @click.option(
     "--reload/--no-reload", help="Reload worker on code changes. [requires hupper to be installed.]"
 )
+@click.option(
+    "--auxiliary/--no-auxiliary",
+    default=False,
+    help="Auxiliary workers do not perform housekeeping duties.",
+)
 @click.command()
-def worker(pid, burst, reload):
+def worker(
+    pid,
+    burst,
+    reload,
+    auxiliary,
+):
     """A Pulp worker."""
 
     if reload:
@@ -40,4 +50,4 @@ def worker(pid, burst, reload):
 
     _logger.info("Starting distributed type worker")
 
-    PulpcoreWorker().run(burst=burst)
+    PulpcoreWorker(auxiliary=auxiliary).run(burst=burst)
