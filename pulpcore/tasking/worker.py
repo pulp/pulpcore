@@ -57,12 +57,13 @@ THRESHOLD_UNBLOCKED_WAITING_TIME = 5
 
 
 class PulpcoreWorker:
-    def __init__(self):
+    def __init__(self, auxiliary=False):
         # Notification states from several signal handlers
         self.shutdown_requested = False
         self.wakeup = False
         self.cancel_task = False
 
+        self.auxiliary = auxiliary
         self.task = None
         self.name = f"{os.getpid()}@{socket.getfqdn()}"
         self.heartbeat_period = timedelta(seconds=settings.WORKER_TTL / 3)
@@ -180,15 +181,16 @@ class PulpcoreWorker:
     def beat(self):
         if self.worker.last_heartbeat < timezone.now() - self.heartbeat_period:
             self.worker = self.handle_worker_heartbeat()
-            self.worker_cleanup_countdown -= 1
-            if self.worker_cleanup_countdown <= 0:
-                self.worker_cleanup_countdown = WORKER_CLEANUP_INTERVAL
-                self.worker_cleanup()
-            with contextlib.suppress(AdvisoryLockError), PGAdvisoryLock(TASK_SCHEDULING_LOCK):
-                dispatch_scheduled_tasks()
-            # This "reporting code" must not me moved inside a task, because it is supposed
-            # to be able to report on a congested tasking system to produce reliable results.
-            self.record_unblocked_waiting_tasks_metric()
+            if not self.auxiliary:
+                self.worker_cleanup_countdown -= 1
+                if self.worker_cleanup_countdown <= 0:
+                    self.worker_cleanup_countdown = WORKER_CLEANUP_INTERVAL
+                    self.worker_cleanup()
+                with contextlib.suppress(AdvisoryLockError), PGAdvisoryLock(TASK_SCHEDULING_LOCK):
+                    dispatch_scheduled_tasks()
+                # This "reporting code" must not me moved inside a task, because it is supposed
+                # to be able to report on a congested tasking system to produce reliable results.
+                self.record_unblocked_waiting_tasks_metric()
 
     def notify_workers(self):
         self.cursor.execute("NOTIFY pulp_worker_wakeup")
@@ -426,10 +428,11 @@ class PulpcoreWorker:
                         cancel_state = TASK_STATES.CANCELED
                         self.cancel_task = False
                     if self.wakeup:
-                        with contextlib.suppress(AdvisoryLockError), PGAdvisoryLock(
-                            TASK_UNBLOCKING_LOCK
-                        ):
-                            self.unblock_tasks()
+                        if not self.auxiliary:
+                            with contextlib.suppress(AdvisoryLockError), PGAdvisoryLock(
+                                TASK_UNBLOCKING_LOCK
+                            ):
+                                self.unblock_tasks()
                         self.wakeup = False
                 if task_process.sentinel in r:
                     if not task_process.is_alive():
@@ -486,11 +489,14 @@ class PulpcoreWorker:
         while keep_looping and not self.shutdown_requested:
             # Clear pending wakeups. We are about to handle them anyway.
             self.wakeup = False
-            try:
-                with PGAdvisoryLock(TASK_UNBLOCKING_LOCK):
-                    keep_looping = self.unblock_tasks()
-            except AdvisoryLockError:
-                keep_looping = True
+            if self.auxiliary:
+                keep_looping = False
+            else:
+                try:
+                    with PGAdvisoryLock(TASK_UNBLOCKING_LOCK):
+                        keep_looping = self.unblock_tasks()
+                except AdvisoryLockError:
+                    keep_looping = True
             for task in self.iter_tasks():
                 keep_looping = True
                 self.supervise_task(task)
