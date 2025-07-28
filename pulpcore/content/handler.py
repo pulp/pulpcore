@@ -705,8 +705,11 @@ class Handler:
         rel_path = rel_path[len(distro.base_path) :]
         rel_path = rel_path.lstrip("/")
 
-        if rel_path == "" and not path.endswith("/"):
-            # The root of a distribution base_path was requested without a slash
+        # Check if we need to redirect to add a trailing slash for directory-like requests
+        if not path.endswith("/") and (
+            rel_path == ""  # non-checkpoint distro root
+            or (distro.checkpoint and rel_path and "/" not in rel_path)  # Checkpoint distro root
+        ):
             raise HTTPMovedPermanently(f"{request.path}/")
 
         original_rel_path = rel_path
