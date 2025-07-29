@@ -25,6 +25,7 @@ from pulpcore.constants import (
     TASK_STATES,
     TASK_DISPATCH_LOCK,
     IMMEDIATE_TIMEOUT,
+    TASK_WAKEUP_UNBLOCK,
 )
 from pulpcore.middleware import x_task_diagnostics_var
 from pulpcore.tasking.kafka import send_task_notification
@@ -47,10 +48,10 @@ def _validate_and_get_resources(resources):
     return list(resource_set)
 
 
-def wakeup_worker():
+def wakeup_worker(reason="unknown"):
     # Notify workers
     with connection.connection.cursor() as cursor:
-        cursor.execute("NOTIFY pulp_worker_wakeup")
+        cursor.execute("SELECT pg_notify('pulp_worker_wakeup', %s)", (reason,))
 
 
 def execute_task(task):
@@ -308,7 +309,7 @@ def dispatch(
                 task.set_canceling()
                 task.set_canceled(TASK_STATES.CANCELED, "Resources temporarily unavailable.")
     if notify_workers:
-        wakeup_worker()
+        wakeup_worker(TASK_WAKEUP_UNBLOCK)
     return task
 
 

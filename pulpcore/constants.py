@@ -12,6 +12,10 @@ TASK_UNBLOCKING_LOCK = 84
 TASK_METRICS_HEARTBEAT_LOCK = 74
 STORAGE_METRICS_LOCK = 72
 
+# Reasons to send along a task worker wakeup call.
+TASK_WAKEUP_UNBLOCK = "unblock"
+TASK_WAKEUP_HANDLE = "handle"
+
 #: All valid task states.
 TASK_STATES = SimpleNamespace(
     WAITING="waiting",
