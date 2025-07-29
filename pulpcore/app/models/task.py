@@ -71,7 +71,7 @@ class Task(BaseModel, AutoAddObjPermsMixin):
 
     The transitions to CANCELING (marked with *) are the only ones allowed to happen without
     holding the tasks advisory lock. Canceling is meant to be initiated asyncronously by a sparate
-    process before signalling the worker via Postgres LISTEN.
+    process before signalling the worker via a pubsub notification (e.g, Postgres LISTEN).
 
     Fields:
 

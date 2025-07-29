@@ -1,4 +1,5 @@
 from typing import NamedTuple
+from pulpcore.constants import TASK_PUBSUB
 import os
 import logging
 from contextlib import suppress
@@ -6,23 +7,18 @@ from contextlib import suppress
 logger = logging.getLogger(__name__)
 
 
-def wakeup_worker(pubsub_backend, reason="unknown"):
-    pubsub_backend.publish(BasePubSubBackend.WORKER_WAKEUP, reason)
-
-
-def cancel_task(task_pk, pubsub_backend):
-    pubsub_backend.publish(BasePubSubBackend.TASK_CANCELLATION, str(task_pk))
-
-
-def record_worker_metrics(pubsub_backend, now):
-    pubsub_backend.publish(BasePubSubBackend.WORKER_METRIC, str(now))
-
-
 class BasePubSubBackend:
-    WORKER_WAKEUP = "pulp_worker_wakeup"
-    TASK_CANCELLATION = "pulp_worker_cancel"
-    WORKER_METRIC = "pulp_worker_metrics_heartbeat"
+    # Utils
+    def wakeup_worker(self, reason="unknown"):
+        self.publish(TASK_PUBSUB.WAKEUP_WORKER, reason)
 
+    def cancel_task(self, task_pk):
+        self.publish(TASK_PUBSUB.CANCEL_TASK, str(task_pk))
+
+    def record_worker_metrics(self, now):
+        self.publish(TASK_PUBSUB.WORKER_METRICS, str(now))
+
+    # Interface
     def subscribe(self, channel, callback):
         raise NotImplementedError()
 
