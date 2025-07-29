@@ -1,0 +1,1 @@
+Redirect checkpoint URLs without a trailing slash to add the slash.
