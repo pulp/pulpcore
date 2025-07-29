@@ -1,12 +1,7 @@
-import django
-
-django.setup()
-
 from django.db import connection
 from pulpcore.tasking import pubsub
 from types import SimpleNamespace
 import select
-import time
 import pytest
 
 
