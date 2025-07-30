@@ -34,7 +34,6 @@ def worker(
     auxiliary,
 ):
     """A Pulp worker."""
-
     if reload:
         try:
             import hupper
