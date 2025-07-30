@@ -25,7 +25,7 @@ flake8: true
 flake8_ignore:
 - ./pulpcore/app/protobuf/*
 github_org: pulp
-latest_release_branch: '3.83'
+latest_release_branch: '3.84'
 lint_requirements: true
 os_required_packages: []
 parallel_test_workers: 8
@@ -53,12 +53,12 @@ pulp_settings:
   allowed_import_paths:
   - /tmp
   content_path_prefix: /somewhere/else/
+  csrf_trusted_origins:
+  - https://pulp:443
   orphan_protection_time: 0
   task_protection_time: 10
   tmpfile_protection_time: 10
   upload_protection_time: 10
-  csrf_trusted_origins:
-  - https://pulp:443
 pulp_settings_azure:
   api_root_rewrite_header: X-API-Root
   content_origin: null

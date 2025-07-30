@@ -1,1 +1,0 @@
-When running as a recurring scheduled task, purge will now clean stale task records accross all domains.
