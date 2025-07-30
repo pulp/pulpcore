@@ -82,17 +82,20 @@ def purge(finished_before=None, states=None, **kwargs):
         states (Optional[List[str]]): List of task-states we want to purge.
 
     """
+    scheduled = current_task.get().taskschedule_set.exists()
+
     if finished_before is None:
         assert settings.TASK_PROTECTION_TIME > 0
         finished_before = timezone.now() - timezone.timedelta(minutes=settings.TASK_PROTECTION_TIME)
     if states is None:
         states = TASK_FINAL_STATES
-    domain = get_domain()
+
     # Tasks, prior to the specified date, in the specified state, owned by the current-user, in the
     # current domain
-    candidate_qs = Task.objects.filter(
-        finished_at__lt=finished_before, state__in=states, pulp_domain=domain
-    )
+    candidate_qs = Task.objects.filter(finished_at__lt=finished_before, state__in=states)
+
+    if not scheduled:
+        candidate_qs = candidate_qs.filter(pulp_domain=get_domain())
     if "user_pk" in kwargs:
         if (user_pk := kwargs["user_pk"]) is not None:
             current_user = User.objects.get(pk=user_pk)
@@ -101,7 +104,7 @@ def purge(finished_before=None, states=None, **kwargs):
         # This is the old task signature (<= 3.74) without "user_pk".
         # Has this task not been dispatched from a task schedule? Then we assume there was a user
         # doing that.
-        if not current_task.get().taskschedule_set.exists():
+        if not scheduled:
             current_user = get_current_authenticated_user()
             if current_user is None:
                 raise RuntimeError(
