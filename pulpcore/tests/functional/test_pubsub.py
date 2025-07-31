@@ -1,118 +1,116 @@
 from django.db import connection
 from pulpcore.tasking import pubsub
 from types import SimpleNamespace
+from datetime import datetime
 import select
 import pytest
 
 
 def test_postgres_pubsub():
+    """Testing postgres low-level implementation."""
     state = SimpleNamespace()
-    state.got_first_message = False
-    state.got_second_message = False
+    state.got_message = False
     with connection.cursor() as cursor:
         assert connection.connection is cursor.connection
         conn = cursor.connection
+        # Listen and Notify
         conn.execute("LISTEN abc")
         conn.add_notify_handler(lambda notification: setattr(state, "got_message", True))
         cursor.execute("NOTIFY abc, 'foo'")
+        assert state.got_message is True
         conn.execute("SELECT 1")
+        assert state.got_message is True
+
+        # Reset and retry
+        state.got_message = False
         conn.execute("UNLISTEN abc")
-    assert state.got_message is True
+        cursor.execute("NOTIFY abc, 'foo'")
+        assert state.got_message is False
 
 
 M = pubsub.PubsubMessage
 
+PUBSUB_BACKENDS = [
+    pytest.param(pubsub.PostgresPubSub, id="and-using-postgres-backend"),
+]
 
+
+@pytest.mark.parametrize("pubsub_backend", PUBSUB_BACKENDS)
+class TestPublish:
+
+    @pytest.mark.parametrize(
+        "payload",
+        (
+            pytest.param(None, id="none"),
+            pytest.param("", id="empty-string"),
+            pytest.param("payload", id="non-empty-string"),
+            pytest.param(123, id="int"),
+            pytest.param(datetime.now(), id="datetime"),
+            pytest.param(True, id="bool"),
+        ),
+    )
+    def test_with_payload_as(self, pubsub_backend, payload):
+        pubsub_backend.publish("channel", payload=payload)
+
+
+@pytest.mark.parametrize("pubsub_backend", PUBSUB_BACKENDS)
 @pytest.mark.parametrize(
     "messages",
     (
-        [M("channel_a", "A1")],
-        [M("channel_a", "A1"), M("channel_a", "A2")],
-        [M("channel_a", "A1"), M("channel_a", "A2"), M("channel_b", "B1"), M("channel_c", "C1")],
+        pytest.param([M("a", "A1")], id="single-message"),
+        pytest.param([M("a", "A1"), M("a", "A2")], id="two-messages-in-same-channel"),
+        pytest.param(
+            [M("a", "A1"), M("a", "A2"), M("b", "B1"), M("c", "C1")],
+            id="tree-msgs-in-different-channels",
+        ),
     ),
 )
-@pytest.mark.parametrize("same_client", (True, False), ids=("same-clients", "different-clients"))
-class TestPubSub:
+class TestSubscribeFetch:
+    def unsubscribe_all(self, channels, subscriber):
+        for channel in channels:
+            subscriber.unsubscribe(channel)
 
-    def test_subscribe_publish_fetch(self, same_client, messages):
-        """
-        GIVEN a publisher and a subscriber (which may be the same)
-        AND a queue of messages Q with mixed channels and payloads
-        WHEN the subscriber subscribes to all the channels in Q
-        AND the publisher publishes all the messages in Q
-        THEN the subscriber fetch() call returns a queue equivalent to Q
-        AND calling fetch() a second time returns an empty queue
-        """
-        # Given
-        publisher = pubsub.PostgresPubSub(connection)
-        subscriber = publisher if same_client else pubsub.PostgresPubSub(connection)
+    def subscribe_all(self, channels, subscriber):
+        for channel in channels:
+            subscriber.subscribe(channel)
 
-        # When
-        for message in messages:
-            subscriber.subscribe(message.channel)
-        for message in messages:
-            publisher.publish(message.channel, message=message.payload)
+    def publish_all(self, messages, publisher):
+        for channel, payload in messages:
+            publisher.publish(channel, payload=payload)
 
-        # Then
-        assert subscriber.fetch() == messages
-        assert subscriber.fetch() == []
+    def test_with(
+        self, pubsub_backend: pubsub.BasePubSubBackend, messages: list[pubsub.PubsubMessage]
+    ):
+        channels = {m.channel for m in messages}
+        publisher = pubsub_backend
+        with pubsub_backend() as subscriber:
+            self.subscribe_all(channels, subscriber)
+            self.publish_all(messages, publisher)
+            assert subscriber.fetch() == messages
 
-    def test_unsubscribe(self, same_client, messages):
-        """
-        GIVEN a publisher and a subscriber (which may be the same)
-        AND a queue of messages Q with mixed channels and payloads
-        WHEN the subscriber subscribes and unsubscribes to all the channels in Q
-        AND the publisher publishes all the messages in Q
-        THEN the subscriber fetch() call returns an empty queue
-        """
-        # Given
-        publisher = pubsub.PostgresPubSub(connection)
-        subscriber = publisher if same_client else pubsub.PostgresPubSub(connection)
+            self.unsubscribe_all(channels, subscriber)
+            assert subscriber.fetch() == []
 
-        # When
-        for message in messages:
-            subscriber.subscribe(message.channel)
-        for message in messages:
-            subscriber.unsubscribe(message.channel)
-        for message in messages:
-            publisher.publish(message.channel, message=message.payload)
-
-        # Then
-        assert subscriber.fetch() == []
-
-    def test_select_loop(self, same_client, messages):
-        """
-        GIVEN a publisher and a subscriber (which may be the same)
-        AND a queue of messages Q with mixed channels and payloads
-        AND the subscriber is subscribed to all the channels in Q
-        WHEN the publisher has NOT published anything yet
-        THEN the select loop won't detect the subscriber readiness
-        AND the subscriber fetch() call returns an empty queue
-        BUT WHEN the publisher does publish all messages in Q
-        THEN the select loop detects the subscriber readiness
-        AND the subscriber fetch() call returns a queue equivalent to Q
-        """
+    def test_select_readiness_with(
+        self, pubsub_backend: pubsub.BasePubSubBackend, messages: list[pubsub.PubsubMessage]
+    ):
         TIMEOUT = 0.1
+        channels = {m.channel for m in messages}
+        publisher = pubsub_backend
+        with pubsub_backend() as subscriber:
+            self.subscribe_all(channels, subscriber)
+            r, w, x = select.select([subscriber], [], [], TIMEOUT)
+            assert subscriber not in r
+            assert subscriber.fetch() == []
 
-        # Given
-        publisher = pubsub.PostgresPubSub(connection)
-        subscriber = publisher if same_client else pubsub.PostgresPubSub(connection)
+            self.publish_all(messages, publisher)
+            r, w, x = select.select([subscriber], [], [], TIMEOUT)
+            assert subscriber in r
+            assert subscriber.fetch() == messages
+            assert subscriber.fetch() == []
 
-        # When
-        for message in messages:
-            subscriber.subscribe(message.channel)
-        r, w, x = select.select([subscriber], [], [], TIMEOUT)
-
-        # Then
-        assert subscriber not in r
-        assert subscriber.fetch() == []
-
-        # But When
-        for message in messages:
-            publisher.publish(message.channel, message=message.payload)
-        r, w, x = select.select([subscriber], [], [], TIMEOUT)
-
-        # Then
-        assert subscriber in r
-        assert subscriber.fetch() == messages
-        assert subscriber.fetch() == []
+            self.unsubscribe_all(channels, subscriber)
+            self.publish_all(messages, publisher)
+            r, w, x = select.select([subscriber], [], [], TIMEOUT)
+            assert subscriber not in r
+            assert subscriber.fetch() == []

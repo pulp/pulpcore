@@ -13,7 +13,6 @@ from tempfile import TemporaryDirectory
 from packaging.version import parse as parse_version
 
 from django.conf import settings
-from django.db import connection
 from django.db.models import Case, Count, F, Max, Value, When
 from django.db.models.functions import Random
 from django.utils import timezone
@@ -83,7 +82,7 @@ class PulpcoreWorker:
             int(WORKER_CLEANUP_INTERVAL / 10), WORKER_CLEANUP_INTERVAL
         )
         # Pubsub handling
-        self.pubsub_client = pubsub.PostgresPubSub(connection)
+        self.pubsub_client = pubsub.backend()
         self.pubsub_channel_callback = {}
 
         # Add a file descriptor to trigger select on signals
@@ -576,9 +575,7 @@ class PulpcoreWorker:
         self.pubsub_channel_callback[TASK_PUBSUB.WORKER_METRICS] = metric_callback
 
     def pubsub_teardown(self):
-        self.pubsub_client.unsubscribe(TASK_PUBSUB.WAKEUP_WORKER)
-        self.pubsub_client.unsubscribe(TASK_PUBSUB.CANCEL_TASK)
-        self.pubsub_client.unsubscribe(TASK_PUBSUB.WORKER_METRICS)
+        self.pubsub_client.close()
 
     def run(self, burst=False):
         with WorkerDirectory(self.name):
