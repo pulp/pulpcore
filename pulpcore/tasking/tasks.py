@@ -427,9 +427,8 @@ def cancel_task(task_id):
     # This is the only valid transition without holding the task lock.
     task.set_canceling()
     # Notify the worker that might be running that task and other workers to clean up
-    with pubsub.PostgresPubSub(connection) as pubsub_client:
-        pubsub_client.cancel_task(task_pk=task.pk)
-        pubsub_client.wakeup_worker()
+    pubsub.backend.cancel_task(task_pk=task.pk)
+    pubsub.backend.wakeup_worker()
     return task
 
 

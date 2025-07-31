@@ -2,6 +2,7 @@ from typing import NamedTuple
 from pulpcore.constants import TASK_PUBSUB
 import os
 import logging
+from django.db import connection
 from contextlib import suppress
 
 logger = logging.getLogger(__name__)
@@ -9,23 +10,27 @@ logger = logging.getLogger(__name__)
 
 class BasePubSubBackend:
     # Utils
-    def wakeup_worker(self, reason="unknown"):
-        self.publish(TASK_PUBSUB.WAKEUP_WORKER, reason)
+    @classmethod
+    def wakeup_worker(cls, reason="unknown"):
+        cls.publish(TASK_PUBSUB.WAKEUP_WORKER, reason)
 
-    def cancel_task(self, task_pk):
-        self.publish(TASK_PUBSUB.CANCEL_TASK, str(task_pk))
+    @classmethod
+    def cancel_task(cls, task_pk):
+        cls.publish(TASK_PUBSUB.CANCEL_TASK, str(task_pk))
 
-    def record_worker_metrics(self, now):
-        self.publish(TASK_PUBSUB.WORKER_METRICS, str(now))
+    @classmethod
+    def record_worker_metrics(cls, now):
+        cls.publish(TASK_PUBSUB.WORKER_METRICS, str(now))
 
     # Interface
-    def subscribe(self, channel, callback):
+    def subscribe(self, channel):
         raise NotImplementedError()
 
     def unsubscribe(self, channel):
         raise NotImplementedError()
 
-    def publish(self, channel, message=None):
+    @staticmethod
+    def publish(channel, payload=None):
         raise NotImplementedError()
 
     def fileno(self):
@@ -53,19 +58,19 @@ def drain_non_blocking_fd(fd):
 
 class PostgresPubSub(BasePubSubBackend):
 
-    def __init__(self, connection):
-        self.cursor = connection.cursor()
-        self.connection = connection.connection
-        assert self.cursor.connection is self.connection
+    def __init__(self):
         self.subscriptions = []
         self.message_buffer = []
-        self.connection.add_notify_handler(self._store_messages)
+        # Ensures a connection is established
+        if not connection.connection:
+            with connection.cursor():
+                pass
+        connection.connection.add_notify_handler(self._store_messages)
         # Handle message readiness
         # We can use os.evenfd in python >= 3.10
         self.sentinel_r, self.sentinel_w = os.pipe()
         os.set_blocking(self.sentinel_r, False)
         os.set_blocking(self.sentinel_w, False)
-        logger.debug(f"Initialized pubsub. Conn={self.connection}")
 
     def _store_messages(self, notification):
         self.message_buffer.append(
@@ -74,20 +79,25 @@ class PostgresPubSub(BasePubSubBackend):
 
     def subscribe(self, channel):
         self.subscriptions.append(channel)
-        self.connection.execute(f"LISTEN {channel}")
+        with connection.cursor() as cursor:
+            cursor.execute(f"LISTEN {channel}")
 
     def unsubscribe(self, channel):
         self.subscriptions.remove(channel)
         for i in range(0, len(self.message_buffer), -1):
             if self.message_buffer[i].channel == channel:
                 self.message_buffer.pop(i)
-        self.connection.execute(f"UNLISTEN {channel}")
+        with connection.cursor() as cursor:
+            cursor.execute(f"UNLISTEN {channel}")
 
-    def publish(self, channel, message=None):
-        if not message:
-            self.cursor.execute(f"NOTIFY {channel}")
+    @staticmethod
+    def publish(channel, payload=None):
+        if not payload:
+            with connection.cursor() as cursor:
+                cursor.execute(f"NOTIFY {channel}")
         else:
-            self.cursor.execute("SELECT pg_notify(%s, %s)", (channel, message))
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT pg_notify(%s, %s)", (channel, str(payload)))
 
     def fileno(self) -> int:
         if self.message_buffer:
@@ -97,7 +107,8 @@ class PostgresPubSub(BasePubSubBackend):
         return self.sentinel_r
 
     def fetch(self) -> list[PubsubMessage]:
-        self.connection.execute("SELECT 1").fetchone()
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1").fetchone()
         result = self.message_buffer.copy()
         self.message_buffer.clear()
         return result
@@ -105,10 +116,16 @@ class PostgresPubSub(BasePubSubBackend):
     def close(self):
         os.close(self.sentinel_r)
         os.close(self.sentinel_w)
-        self.cursor.close()
+        self.message_buffer.clear()
+        connection.connection.remove_notify_handler(self._store_messages)
+        for channel in self.subscriptions:
+            self.unsubscribe(channel)
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.close()
+
+
+backend = PostgresPubSub
