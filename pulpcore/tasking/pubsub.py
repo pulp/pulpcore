@@ -56,6 +56,9 @@ def drain_non_blocking_fd(fd):
             os.read(fd, 256)
 
 
+PID = os.getpid()
+
+
 class PostgresPubSub(BasePubSubBackend):
 
     def __init__(self):
@@ -73,6 +76,8 @@ class PostgresPubSub(BasePubSubBackend):
         os.set_blocking(self.sentinel_w, False)
 
     def _store_messages(self, notification):
+        logger.info(f"[{PID}] Received message: {notification}")
+        os.write(self.sentinel_w, b"0")
         self.message_buffer.append(
             PubsubMessage(channel=notification.channel, payload=notification.payload)
         )
@@ -92,6 +97,7 @@ class PostgresPubSub(BasePubSubBackend):
 
     @staticmethod
     def publish(channel, payload=None):
+        logger.info(f"[{PID}] Published message: ({channel}, {payload})")
         if not payload:
             with connection.cursor() as cursor:
                 cursor.execute(f"NOTIFY {channel}")
@@ -100,17 +106,15 @@ class PostgresPubSub(BasePubSubBackend):
                 cursor.execute("SELECT pg_notify(%s, %s)", (channel, str(payload)))
 
     def fileno(self) -> int:
-        if self.message_buffer:
-            os.write(self.sentinel_w, b"0")
-        else:
-            drain_non_blocking_fd(self.sentinel_r)
         return self.sentinel_r
 
     def fetch(self) -> list[PubsubMessage]:
         with connection.cursor() as cursor:
             cursor.execute("SELECT 1").fetchone()
         result = self.message_buffer.copy()
+        drain_non_blocking_fd(self.sentinel_r)
         self.message_buffer.clear()
+        # logger.info(f"[{PID}] Fetched messages: {result}")
         return result
 
     def close(self):

@@ -99,18 +99,22 @@ class TestSubscribeFetch:
         publisher = pubsub_backend
         with pubsub_backend() as subscriber:
             self.subscribe_all(channels, subscriber)
-            r, w, x = select.select([subscriber], [], [], TIMEOUT)
-            assert subscriber not in r
+            ready, _, _ = select.select([subscriber], [], [], TIMEOUT)
+            assert subscriber not in ready
             assert subscriber.fetch() == []
 
             self.publish_all(messages, publisher)
-            r, w, x = select.select([subscriber], [], [], TIMEOUT)
-            assert subscriber in r
+            ready, _, _ = select.select([subscriber], [], [], TIMEOUT)
+            assert subscriber in ready
+            ready, _, _ = select.select([subscriber], [], [], TIMEOUT)
+            assert subscriber in ready
             assert subscriber.fetch() == messages
+            ready, _, _ = select.select([subscriber], [], [], TIMEOUT)
+            assert subscriber not in ready
             assert subscriber.fetch() == []
 
             self.unsubscribe_all(channels, subscriber)
             self.publish_all(messages, publisher)
-            r, w, x = select.select([subscriber], [], [], TIMEOUT)
-            assert subscriber not in r
+            ready, _, _ = select.select([subscriber], [], [], TIMEOUT)
+            assert subscriber not in ready
             assert subscriber.fetch() == []
