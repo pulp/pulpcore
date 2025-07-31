@@ -12,7 +12,7 @@ from asgiref.sync import sync_to_async
 from gettext import gettext as _
 
 from django.conf import settings
-from django.db import connection, transaction
+from django.db import transaction
 from django.db.models import Model
 from django_guid import get_guid
 from pulpcore.app.apps import MODULE_PLUGIN_VERSIONS
@@ -278,8 +278,7 @@ def dispatch(
                 task.set_canceling()
                 task.set_canceled(TASK_STATES.CANCELED, "Resources temporarily unavailable.")
     if notify_workers:
-        with pubsub.PostgresPubSub(connection) as pubsub_client:
-            pubsub_client.wakeup_worker(reason=TASK_WAKEUP_UNBLOCK)
+        pubsub.backend.wakeup_worker(reason=TASK_WAKEUP_UNBLOCK)
     return task
 
 
@@ -313,9 +312,8 @@ def cancel_task(task_id):
     # This is the only valid transition without holding the task lock
     task.set_canceling()
     # Notify the worker that might be running that task and other workers to clean up
-    with pubsub.PostgresPubSub(connection) as pubsub_client:
-        pubsub_client.cancel_task(task_pk=task.pk)
-        pubsub_client.wakeup_worker()
+    pubsub.backend.cancel_task(task_pk=task.pk)
+    pubsub.backend.wakeup_worker()
     return task
 
 
