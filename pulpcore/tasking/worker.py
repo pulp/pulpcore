@@ -383,14 +383,14 @@ class PulpcoreWorker:
 
         _logger.debug(_("Worker %s entering sleep state."), self.name)
         while not self.shutdown_requested and not self.wakeup_handle:
+            if self.wakeup_unblock:
+                self.unblock_tasks()
             r, w, x = select.select(
                 [self.sentinel, self.pubsub_client], [], [], self.heartbeat_period.seconds
             )
             self.beat()
             if self.pubsub_client in r:
-                self.pubsub_handle_messages(self.pubsub_client.fetch())
-                if self.wakeup_unblock:
-                    self.unblock_tasks()
+                self.pubsub_handle_messages()
             if self.sentinel in r:
                 os.read(self.sentinel, 256)
         _logger.debug(_("Worker %s leaving sleep state."), self.name)
@@ -425,6 +425,17 @@ class PulpcoreWorker:
                         )
                         os.kill(task_process.pid, signal.SIGUSR1)
 
+                if self.cancel_task:
+                    _logger.info(
+                        _("Received signal to cancel current task %s in domain: %s."),
+                        task.pk,
+                        domain.name,
+                    )
+                    cancel_state = TASK_STATES.CANCELED
+                    self.cancel_task = False
+                if self.wakeup_unblock:
+                    self.unblock_tasks()
+
                 r, w, x = select.select(
                     [self.sentinel, self.pubsub_client, task_process.sentinel],
                     [],
@@ -433,17 +444,7 @@ class PulpcoreWorker:
                 )
                 self.beat()
                 if self.pubsub_client in r:
-                    self.pubsub_handle_messages(self.pubsub_client.fetch())
-                    if self.cancel_task:
-                        _logger.info(
-                            _("Received signal to cancel current task %s in domain: %s."),
-                            task.pk,
-                            domain.name,
-                        )
-                        cancel_state = TASK_STATES.CANCELED
-                        self.cancel_task = False
-                    if self.wakeup_unblock:
-                        self.unblock_tasks()
+                    self.pubsub_handle_messages()
                 if task_process.sentinel in r:
                     if not task_process.is_alive():
                         break
@@ -540,7 +541,8 @@ class PulpcoreWorker:
 
                 self.pubsub_client.record_worker_metrics(now)
 
-    def pubsub_handle_messages(self, messages: pubsub.PubsubMessage):
+    def pubsub_handle_messages(self):
+        messages = self.pubsub_client.fetch()
         for message in messages:
             callback = self.pubsub_channel_callback[message.channel]
             callback(message.payload)
@@ -594,10 +596,12 @@ class PulpcoreWorker:
                     # do work
                     if self.shutdown_requested:
                         break
+                    _logger.info(_("=== Worker %s will handle unblocked tasks. ==="), self.name)
                     self.handle_unblocked_tasks()
                     if self.shutdown_requested:
                         break
                     # rest until notified to wakeup
+                    _logger.info(_("*** Worker %s entering sleep state. ***"), self.name)
                     self.sleep()
             self.pubsub_teardown()
             self.shutdown()
