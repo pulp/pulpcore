@@ -8,6 +8,39 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.84.0 (2025-07-30) {: #3.84.0 }
+
+### REST API {: #3.84.0-rest-api }
+
+#### Features {: #3.84.0-rest-api-feature }
+
+- Added the `--auxiliary` flag to the workers entrypoint to allow adding workers to an installation that will only handle unblocked tasks.
+- Moved timestamping of new tasks from application code into the database.
+
+#### Bugfixes {: #3.84.0-rest-api-bugfix }
+
+- Fixed the new content set optimization failing when the RepositoryVersion grew larger than 65K content units.
+  [#6772](https://github.com/pulp/pulpcore/issues/6772)
+- Add some randomness to the task pickup code to relieve some pressure from the queue.
+  [#6799](https://github.com/pulp/pulpcore/issues/6799)
+- When running as a recurring scheduled task, purge will now clean stale task records accross all domains.
+  [#6815](https://github.com/pulp/pulpcore/issues/6815)
+- Added some Postgresql transactions in places where they are appropriate.
+
+### Plugin API {: #3.84.0-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.84.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.84.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.83.2 (2025-07-17) {: #3.83.2 }
 
 ### REST API {: #3.83.2-rest-api }
@@ -4659,6 +4692,18 @@ No significant changes.
 -   Starting from this release pulp_file will be shipped as part of the pulpcore package.
     [#4550](https://github.com/pulp/pulpcore/issues/4550)
 
+## 3.39.33 (2025-07-30) {: #3.39.33 }
+
+### REST API {: #3.39.33-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.39.33-plugin-api }
+
+No significant changes.
+
+---
+
 ## 3.39.32 (2025-05-27) {: #3.39.32 }
 
 ### REST API {: #3.39.32-rest-api }
@@ -5644,6 +5689,18 @@ No significant changes.
 #### Misc
 
 -   [#3798](https://github.com/pulp/pulpcore/issues/3798)
+
+## 3.28.40 (2025-07-30) {: #3.28.40 }
+
+### REST API {: #3.28.40-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.28.40-plugin-api }
+
+No significant changes.
+
+---
 
 ## 3.28.39 (2025-05-27) {: #3.28.39 }
 
