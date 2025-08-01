@@ -7,6 +7,7 @@ import select
 import signal
 import socket
 import contextlib
+import collections
 from datetime import datetime, timedelta
 from multiprocessing import Process
 from tempfile import TemporaryDirectory
@@ -393,8 +394,6 @@ class PulpcoreWorker:
                     )
                     cancel_state = TASK_STATES.CANCELED
                     self.cancel_task = False
-                if self.wakeup_unblock:
-                    self.unblock_tasks()
 
                 r, w, x = select.select(
                     [self.sentinel, self.pubsub_client, task_process.sentinel],
@@ -456,7 +455,7 @@ class PulpcoreWorker:
             if cancel_state:
                 self.cancel_abandoned_task(task, cancel_state, cancel_reason)
         if task.reserved_resources_record:
-            self.pubsub_client.wakeup_worker(reason=TASK_WAKEUP_UNBLOCK)
+            self.unblock_tasks()
         self.task = None
 
     def fetch_task(self):
@@ -571,16 +570,25 @@ class PulpcoreWorker:
 
     def pubsub_handle_messages(self):
         messages = self.pubsub_client.fetch()
+        by_channel = collections.defaultdict(list)
         for message in messages:
-            callback = self.pubsub_channel_callback[message.channel]
-            callback(message.payload)
+            by_channel[message.channel].append(message.payload)
+        for channel, channel_messages in by_channel.items():
+            callback = self.pubsub_channel_callback[channel]
+            callback(channel_messages)
 
     def pubsub_setup(self):
-        def cancellation_callback(message):
-            if self.task and message == str(self.task.pk):
-                self.cancel_task = True
+        def cancellation_callback(messages):
+            for message in messages:
+                if self.task and message == str(self.task.pk):
+                    self.cancel_task = True
 
-        def wakeup_callback(message):
+        def wakeup_callback(messages):
+            if len(messages) != 1:
+                message = "unknown"
+            else:
+                message = messages[0]
+
             if message == TASK_WAKEUP_UNBLOCK:
                 # Auxiliary workers don't do this.
                 self.wakeup_unblock = not self.auxiliary
@@ -592,7 +600,8 @@ class PulpcoreWorker:
                 self.wakeup_unblock = not self.auxiliary
                 self.wakeup_handle = True
 
-        def metric_callback(message):
+        def metric_callback(messages):
+            message = messages[0]
             self.last_metric_heartbeat = datetime.fromisoformat(message)
 
         self.pubsub_client.subscribe(TASK_PUBSUB.WAKEUP_WORKER)
@@ -624,12 +633,12 @@ class PulpcoreWorker:
                     # do work
                     if self.shutdown_requested:
                         break
-                    _logger.info(_("=== Worker %s will handle unblocked tasks. ==="), self.name)
+                    # _logger.info(_("=== Worker %s will handle unblocked tasks. ==="), self.name)
                     self.handle_unblocked_tasks()
                     if self.shutdown_requested:
                         break
                     # rest until notified to wakeup
-                    _logger.info(_("*** Worker %s entering sleep state. ***"), self.name)
+                    # _logger.info(_("*** Worker %s entering sleep state. ***"), self.name)
                     self.sleep()
             self.pubsub_teardown()
             self.shutdown()
