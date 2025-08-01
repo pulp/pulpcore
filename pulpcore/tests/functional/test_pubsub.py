@@ -106,9 +106,11 @@ class TestSubscribeFetch:
             self.publish_all(messages, publisher)
             ready, _, _ = select.select([subscriber], [], [], TIMEOUT)
             assert subscriber in ready
+
             ready, _, _ = select.select([subscriber], [], [], TIMEOUT)
             assert subscriber in ready
             assert subscriber.fetch() == messages
+
             ready, _, _ = select.select([subscriber], [], [], TIMEOUT)
             assert subscriber not in ready
             assert subscriber.fetch() == []

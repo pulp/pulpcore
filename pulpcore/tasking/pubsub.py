@@ -2,6 +2,7 @@ from typing import NamedTuple
 from pulpcore.constants import TASK_PUBSUB
 import os
 import logging
+import select
 from django.db import connection
 from contextlib import suppress
 
@@ -113,6 +114,9 @@ class PostgresPubSub(BasePubSubBackend):
                 cursor.execute(*query)
 
     def fileno(self) -> int:
+        has_data, _, _ = select.select([connection.connection], [], [], 0)
+        if has_data:
+            return connection.connection.fileno()
         return self.sentinel_r
 
     def fetch(self) -> list[PubsubMessage]:
