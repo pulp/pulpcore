@@ -62,6 +62,9 @@ VARSYAML
 fi
 
 cat >> vars/main.yaml << VARSYAML
+extra_files:
+  - origin: "pulpcore/pulpcore/tests/functional/assets/api_root_rewrite.conf"
+    destination: "/etc/nginx/pulp/api_root_rewrite.conf"
 services:
   - name: pulp
     image: "pulp:ci_build"

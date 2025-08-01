@@ -21,6 +21,9 @@ deploy_to_pypi: true
 disabled_redis_runners:
 - s3
 docker_fixtures: true
+extra_files:
+  - origin: pulpcore/pulpcore/tests/functional/assets/api_root_rewrite.conf
+    destination: /etc/nginx/pulp/api_root_rewrite.conf
 flake8: true
 flake8_ignore:
 - ./pulpcore/app/protobuf/*
