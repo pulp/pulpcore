@@ -12,11 +12,13 @@ from pulpcore.app.tasks import (
     orphan_cleanup,
     reclaim_space,
 )
+from pulpcore.app.tasks.vulnerability_report import check_content, content_queue
 from pulpcore.app.tasks.repository import add_and_remove
 
 
 __all__ = [
     "ageneral_update",
+    "check_content",
     "dispatch",
     "fs_publication_export",
     "fs_repo_version_export",
@@ -27,4 +29,5 @@ __all__ = [
     "orphan_cleanup",
     "reclaim_space",
     "add_and_remove",
+    "content_queue",
 ]
