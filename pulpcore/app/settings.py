@@ -120,6 +120,9 @@ DB_ENCRYPTION_KEY = "/etc/pulp/certs/database_fields.symmetric.key"
 API_ROOT = "/pulp/"
 API_ROOT_REWRITE_HEADER = None
 
+# Enable Pulp v4 API namespace
+ENABLE_V4_API = True
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -213,7 +216,9 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.SessionAuthentication",
     ),
     "UPLOADED_FILES_USE_URL": False,
-    "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.URLPathVersioning",
+    "DEFAULT_VERSIONING_CLASS": "pulpcore.middleware.NamespaceVersioning",
+    "DEFAULT_VERSION": "v3",
+    "ALLOWED_VERSIONS": ["v3", "v4"],
     "DEFAULT_SCHEMA_CLASS": "pulpcore.openapi.PulpAutoSchema",
 }
 
@@ -659,7 +664,18 @@ if settings.API_ROOT_REWRITE_HEADER:
     api_root = "/<path:api_root>/"
 else:
     api_root = settings.API_ROOT
+
 settings.set("V3_API_ROOT", api_root + "api/v3/")  # Not user configurable
 settings.set("V3_DOMAIN_API_ROOT", api_root + "<slug:pulp_domain>/api/v3/")
 settings.set("V3_API_ROOT_NO_FRONT_SLASH", settings.V3_API_ROOT.lstrip("/"))
 settings.set("V3_DOMAIN_API_ROOT_NO_FRONT_SLASH", settings.V3_DOMAIN_API_ROOT.lstrip("/"))
+
+settings.set("V4_API_ROOT", api_root + "api/v4/")  # Not user configurable
+settings.set("V4_DOMAIN_API_ROOT", api_root + "<slug:pulp_domain>/api/v4/")
+settings.set("V4_API_ROOT_NO_FRONT_SLASH", settings.V4_API_ROOT.lstrip("/"))
+settings.set("V4_DOMAIN_API_ROOT_NO_FRONT_SLASH", settings.V4_DOMAIN_API_ROOT.lstrip("/"))
+
+if settings.API_ROOT_REWRITE_HEADER:
+    V3_API_ROOT = settings.V3_API_ROOT.replace("/<path:api_root>/", settings.API_ROOT)
+else:
+    V3_API_ROOT = settings.V3_API_ROOT
