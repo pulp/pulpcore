@@ -34,7 +34,7 @@ dependencies = [
   "async-timeout>=4.0.3,<4.0.4;python_version<'3.11'",
   "backoff>=2.1.2,<2.3",  # Looks like only bugfixes in z-Stream.
   "click>=8.1.0,<8.2",  # Uses milestone.feature.fix https://palletsprojects.com/versions .
-  "cryptography>=38.0.1,<46.0",  # SemVer compatible https://cryptography.io/en/latest/api-stability/#versioning .
+  "cryptography>=44.0.3,<46.0",  # SemVer compatible https://cryptography.io/en/latest/api-stability/#versioning .
   "Django~=4.2.0",  # LTS version, switch only if we have a compelling reason to".
   "django-filter>=23.1,<=25.1",  # Looks like CalVer.
   "django-guid>=3.3.0,<3.6",  # Looks like only bugfixes in z-Stream.

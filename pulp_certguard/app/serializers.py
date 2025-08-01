@@ -6,7 +6,6 @@ from pulpcore.plugin.serializers import ContentGuardSerializer
 
 from rest_framework import serializers
 
-from pulp_certguard.app.utils import get_rhsm
 from .models import RHSMCertGuard, X509CertGuard
 
 
@@ -45,7 +44,6 @@ class RHSMCertGuardSerializer(BaseCertGuardSerializer):
     @staticmethod
     def validate_ca_certificate(ca_certificate):
         """Validates the given certificate."""
-        get_rhsm()  # Validate that rhsm is installed
         return BaseCertGuardSerializer.validate_ca_certificate(ca_certificate)
 
 
