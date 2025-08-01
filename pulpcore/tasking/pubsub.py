@@ -29,8 +29,8 @@ class BasePubSubBackend:
     def unsubscribe(self, channel):
         raise NotImplementedError()
 
-    @staticmethod
-    def publish(channel, payload=None):
+    @classmethod
+    def publish(cls, channel, payload=None):
         raise NotImplementedError()
 
     def fileno(self):
@@ -60,14 +60,12 @@ PID = os.getpid()
 
 
 class PostgresPubSub(BasePubSubBackend):
+    cursor = None
 
     def __init__(self):
         self.subscriptions = []
         self.message_buffer = []
-        # Ensures a connection is established
-        if not connection.connection:
-            with connection.cursor():
-                pass
+        PostgresPubSub.cursor = connection.cursor()
         connection.connection.add_notify_handler(self._store_messages)
         # Handle message readiness
         # We can use os.evenfd in python >= 3.10
@@ -76,7 +74,7 @@ class PostgresPubSub(BasePubSubBackend):
         os.set_blocking(self.sentinel_w, False)
 
     def _store_messages(self, notification):
-        logger.info(f"[{PID}] Received message: {notification}")
+        # logger.info(f"[{PID}] Received message: {notification}")
         os.write(self.sentinel_w, b"0")
         self.message_buffer.append(
             PubsubMessage(channel=notification.channel, payload=notification.payload)
@@ -95,15 +93,24 @@ class PostgresPubSub(BasePubSubBackend):
         with connection.cursor() as cursor:
             cursor.execute(f"UNLISTEN {channel}")
 
-    @staticmethod
-    def publish(channel, payload=None):
-        logger.info(f"[{PID}] Published message: ({channel}, {payload})")
-        if not payload:
-            with connection.cursor() as cursor:
-                cursor.execute(f"NOTIFY {channel}")
+    @classmethod
+    def publish(cls, channel, payload=None):
+        # import inspect
+        # s = inspect.stack()[2]
+        # source = f"{s.filename.split('/')[-1]}@{s.lineno}:{s.function}"
+        # logger.info(f"[{PID}][{source}] Published message: ({channel}, {payload})")
+
+        query = (
+            (f"NOTIFY {channel}",)
+            if not payload
+            else ("SELECT pg_notify(%s, %s)", (channel, str(payload)))
+        )
+
+        if cls.cursor:
+            cls.cursor.execute(*query)
         else:
             with connection.cursor() as cursor:
-                cursor.execute("SELECT pg_notify(%s, %s)", (channel, str(payload)))
+                cursor.execute(*query)
 
     def fileno(self) -> int:
         return self.sentinel_r
@@ -122,6 +129,10 @@ class PostgresPubSub(BasePubSubBackend):
         os.close(self.sentinel_w)
         self.message_buffer.clear()
         connection.connection.remove_notify_handler(self._store_messages)
+        class_cursor = PostgresPubSub.cursor
+        if class_cursor and not class_cursor.closed:
+            class_cursor.close()
+        PostgresPubSub.cursor = None
         for channel in self.subscriptions:
             self.unsubscribe(channel)
 
