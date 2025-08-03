@@ -5,9 +5,9 @@ FROM {{ ci_base | default(pulp_default_container) }}
 ADD ./{{ item.name }} ./{{ item.name }}
 {% endfor %}
 
-# Install python packages
-# S3 botocore needs to be patched to handle responses from minio during 0-byte uploads
-# Hacking botocore (https://github.com/boto/botocore/pull/1990)
+{% for item in extra_files | default([]) %}
+ADD ./{{ item.origin }} {{ item.destination }}
+{% endfor %}
 
 # This MUST be the ONLY call to pip install in inside the container.
 RUN pip3 install --upgrade pip setuptools wheel && \

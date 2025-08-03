@@ -21,6 +21,7 @@ deploy_to_pypi: true
 disabled_redis_runners:
 - s3
 docker_fixtures: true
+extra_files: []
 flake8: true
 flake8_ignore:
 - ./pulpcore/app/protobuf/*
@@ -53,12 +54,12 @@ pulp_settings:
   allowed_import_paths:
   - /tmp
   content_path_prefix: /somewhere/else/
+  csrf_trusted_origins:
+  - https://pulp:443
   orphan_protection_time: 0
   task_protection_time: 10
   tmpfile_protection_time: 10
   upload_protection_time: 10
-  csrf_trusted_origins:
-  - https://pulp:443
 pulp_settings_azure:
   api_root_rewrite_header: X-API-Root
   content_origin: null
