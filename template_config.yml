@@ -1,7 +1,7 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# generated with plugin_template@unknown
+# generated with plugin_template
 
 api_root: /pulp/
 black: true
@@ -21,6 +21,7 @@ deploy_to_pypi: true
 disabled_redis_runners:
 - s3
 docker_fixtures: true
+extra_files: []
 flake8: true
 flake8_ignore:
 - ./pulpcore/app/protobuf/*
