@@ -4,14 +4,10 @@ from types import SimpleNamespace
 from datetime import datetime
 import select
 import pytest
-import threading
 from functools import partial
 from contextlib import contextmanager
-from multiprocessing import Process, Pipe, Lock, SimpleQueue, Value
+from multiprocessing import Process, Pipe, Lock, SimpleQueue
 from multiprocessing.connection import Connection
-import multiprocessing as mp
-
-# mp.set_start_method('spawn')
 
 
 def test_postgres_pubsub():
@@ -103,10 +99,12 @@ class TestNoIpcSubscribeFetch:
         self, pubsub_backend: pubsub.BasePubSubBackend, messages: list[pubsub.PubsubMessage]
     ):
         TIMEOUT = 0.1
-        channels = {m.channel for m in messages}
+        CHANNELS = {m.channel for m in messages}
         publisher = pubsub_backend
         with pubsub_backend() as subscriber:
-            self.subscribe_all(channels, subscriber)
+            self.subscribe_all(CHANNELS, subscriber)
+            assert subscriber.get_subscriptions() == CHANNELS
+
             ready, _, _ = select.select([subscriber], [], [], TIMEOUT)
             assert subscriber not in ready
             assert subscriber.fetch() == []
@@ -123,7 +121,7 @@ class TestNoIpcSubscribeFetch:
             assert subscriber not in ready
             assert subscriber.fetch() == []
 
-            self.unsubscribe_all(channels, subscriber)
+            self.unsubscribe_all(CHANNELS, subscriber)
             self.publish_all(messages, publisher)
             ready, _, _ = select.select([subscriber], [], [], TIMEOUT)
             assert subscriber not in ready
@@ -162,7 +160,7 @@ class IpcUtil:
     @staticmethod
     @contextmanager
     def _actor_turn(conn: Connection, starts: bool, log, lock: Lock, done: bool = False):
-        TIMEOUT = 2
+        TIMEOUT = 1
 
         def flush_conn(conn):
             if not conn.poll(TIMEOUT):
@@ -189,6 +187,7 @@ class IpcUtil:
         return result
 
 
+# @pytest.mark.skip
 def test_ipc_utils():
     RUNS = 1000
     errors = 0
@@ -235,8 +234,6 @@ def test_postgres_backend_ipc():
 
     def host_act(host_turn, log):
         with host_turn():  # 1
-            from django.db import connection
-
             assert connection.connection is None
             with connection.cursor() as cursor:
                 cursor.execute("select 1")
@@ -245,8 +242,6 @@ def test_postgres_backend_ipc():
 
     def child_act(child_turn, log):
         with child_turn():  # 2
-            from django.db import connection
-
             assert connection.connection is None
             with connection.cursor() as cursor:
                 cursor.execute("select 1")
@@ -334,33 +329,59 @@ class TestIpcSubscribeFetch:
         log = IpcUtil.run(subscriber_act, publisher_act)
         assert log == EXPECTED_LOG
 
-    @pytest.mark.skip("TODO")
     def test_select_readiness_with(
         self, pubsub_backend: pubsub.BasePubSubBackend, messages: list[pubsub.PubsubMessage]
     ):
         TIMEOUT = 0.1
-        channels = {m.channel for m in messages}
-        publisher = pubsub_backend
-        with pubsub_backend() as subscriber:
-            self.subscribe_all(channels, subscriber)
-            ready, _, _ = select.select([subscriber], [], [], TIMEOUT)
-            assert subscriber not in ready
-            assert subscriber.fetch() == []
+        CHANNELS = {m.channel for m in messages}
+        EXPECTED_LOG = [
+            "subscribe/select-empty",
+            "publish",
+            "fetch/select-ready/unsubscribe",
+            "publish",
+            "fetch/select-empty",
+        ]
 
-            self.publish_all(messages, publisher)
-            ready, _, _ = select.select([subscriber], [], [], TIMEOUT)
-            assert subscriber in ready
+        def subscriber_act(subscriber_turn, log):
+            with pubsub_backend() as subscriber:
+                with subscriber_turn():  # 1
+                    log.put("subscribe/select-empty")
+                    for channel in CHANNELS:
+                        subscriber.subscribe(channel)
+                    assert subscriber.get_subscriptions() == CHANNELS
+                    ready, _, _ = select.select([subscriber], [], [], TIMEOUT)
+                    assert subscriber not in ready
+                    assert subscriber.fetch() == []
 
-            ready, _, _ = select.select([subscriber], [], [], TIMEOUT)
-            assert subscriber in ready
-            assert subscriber.fetch() == messages
+                with subscriber_turn():  # 3
+                    log.put("fetch/select-ready/unsubscribe")
+                    ready, _, _ = select.select([subscriber], [], [], TIMEOUT)
+                    assert subscriber in ready
 
-            ready, _, _ = select.select([subscriber], [], [], TIMEOUT)
-            assert subscriber not in ready
-            assert subscriber.fetch() == []
+                    ready, _, _ = select.select([subscriber], [], [], TIMEOUT)
+                    assert subscriber in ready
+                    assert subscriber.fetch() == messages
+                    assert subscriber.fetch() == []
+                    for channel in CHANNELS:
+                        subscriber.unsubscribe(channel)
 
-            self.unsubscribe_all(channels, subscriber)
-            self.publish_all(messages, publisher)
-            ready, _, _ = select.select([subscriber], [], [], TIMEOUT)
-            assert subscriber not in ready
-            assert subscriber.fetch() == []
+                with subscriber_turn():  # 5
+                    log.put("fetch/select-empty")
+                    ready, _, _ = select.select([subscriber], [], [], TIMEOUT)
+                    assert subscriber not in ready
+                    assert subscriber.fetch() == messages
+
+        def publisher_act(publisher_turn, log):
+            publisher = pubsub_backend
+            with publisher_turn():  # 2
+                log.put("publish")
+                for message in messages:
+                    publisher.publish(message.channel, payload=message.payload)
+
+            with publisher_turn():  # 4
+                log.put("publish")
+                for message in messages:
+                    publisher.publish(message.channel, payload=message.payload)
+
+        log = IpcUtil.run(subscriber_act, publisher_act)
+        assert log == EXPECTED_LOG

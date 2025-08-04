@@ -65,31 +65,27 @@ class PostgresPubSub(BasePubSubBackend):
     def __init__(self):
         self._subscriptions = set()
         self.message_buffer = []
-        PostgresPubSub.cursor = connection.cursor()
-        connection.connection.add_notify_handler(self._store_messages)
-        # Handle message readiness
-        # We can use os.evenfd in python >= 3.10
+        self.cursor = connection.cursor()
+        self.backend_pid = connection.connection.info.backend_pid
+        # logger.info(f"{connection.connection.info.backend_pid=}")
         self.sentinel_r, self.sentinel_w = os.pipe()
         os.set_blocking(self.sentinel_r, False)
         os.set_blocking(self.sentinel_w, False)
+        connection.connection.add_notify_handler(self._store_messages)
 
     def _store_messages(self, notification):
         # logger.info(f"[{PID}] Received message: {notification}")
-        os.write(self.sentinel_w, b"0")
         self.message_buffer.append(
             PubsubMessage(channel=notification.channel, payload=notification.payload)
         )
+        if notification.pid == self.backend_pid:
+            os.write(self.sentinel_w, b"1")
 
     def get_subscriptions(self):
         return self._subscriptions.copy()
 
     @classmethod
     def publish(cls, channel, payload=None):
-        # import inspect
-        # s = inspect.stack()[2]
-        # source = f"{s.filename.split('/')[-1]}@{s.lineno}:{s.function}"
-        # logger.info(f"[{PID}][{source}] Published message: ({channel}, {payload})")
-
         query = (
             (f"NOTIFY {channel}",)
             if not payload
@@ -113,25 +109,26 @@ class PostgresPubSub(BasePubSubBackend):
             cursor.execute(f"UNLISTEN {channel}")
 
     def fileno(self) -> int:
-        has_data, _, _ = select.select([connection.connection], [], [], 0)
-        if has_data:
-            return connection.connection.fileno()
-        return self.sentinel_r
+        ready, _, _ = select.select([self.sentinel_r], [], [], 0)
+        if self.sentinel_r in ready:
+            return self.sentinel_r
+        return connection.connection.fileno()
 
     def fetch(self) -> list[PubsubMessage]:
         with connection.cursor() as cursor:
             cursor.execute("SELECT 1").fetchone()
         result = self.message_buffer.copy()
-        drain_non_blocking_fd(self.sentinel_r)
         self.message_buffer.clear()
+        drain_non_blocking_fd(self.sentinel_r)
         # logger.info(f"[{PID}] Fetched messages: {result}")
         return result
 
     def close(self):
-        os.close(self.sentinel_r)
-        os.close(self.sentinel_w)
         self.message_buffer.clear()
         connection.connection.remove_notify_handler(self._store_messages)
+        drain_non_blocking_fd(self.sentinel_r)
+        os.close(self.sentinel_r)
+        os.close(self.sentinel_w)
         for channel in self.get_subscriptions():
             self.unsubscribe(channel)
 
