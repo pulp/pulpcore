@@ -213,7 +213,11 @@ class IpcUtil:
 
             def flush_conn(conn):
                 if not conn.poll(TIMEOUT):
-                    raise TimeoutError()
+                    err_msg = (
+                        "Tip: make sure the last 'with turn()' (in execution order) "
+                        "is called with 'actor_turn(done=True)', otherwise it may hang."
+                    )
+                    raise TimeoutError(err_msg)
                 conn.recv()
 
             if starts:
@@ -434,11 +438,11 @@ class TestIpcSubscribeFetch:
                     for channel in CHANNELS:
                         subscriber.unsubscribe(channel)
 
-                with subscriber_turn():  # 5
+                with subscriber_turn(done=True):  # 5
                     log.put("fetch/select-empty")
                     ready, _, _ = select.select([subscriber], [], [], TIMEOUT)
                     assert subscriber not in ready
-                    assert subscriber.fetch() == messages
+                    assert subscriber.fetch() == []
 
         def publisher_act(publisher_turn, log):
             publisher = pubsub_backend
