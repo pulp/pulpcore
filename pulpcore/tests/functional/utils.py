@@ -167,14 +167,31 @@ async def _get_from_url(url, auth=None, headers=None):
 
 class ProcessErrorData(NamedTuple):
     error: Exception
-    stack_trace: str
+    stacktrace: str
 
 
 class IpcUtil:
+    TIMEOUT_ERROR_MESSAGE = (
+        "Tip: make sure the last 'with turn()' (in execution order) "
+        "is called with 'actor_turn(done=True)', otherwise it may hang."
+    )
+    SUBPROCESS_ERROR_HEADER_TEMPLATE = "Error from sub-process (pid={pid}) on test using IpcUtil"
+    TURN_WAIT_TIMEOUT = 1
 
     @staticmethod
     def run(host_act, child_act) -> list:
-        # ensures a connection from one run doesn't interfere with the other
+        """Run two processes in synchronous alternate turns.
+
+        The act are functions with the signature (act_turn, log), where act_turn is
+        a context manager where each step of the act takes place, and log is a
+        queue where each actor can put messages in using Q.put(item).
+
+        Args:
+            host_act: The function of the act that start the communication
+            child_act: The function of the act that follows host_act
+        Returns:
+            A list with the items collected via log.
+        """
         conn_1, conn_2 = mp.Pipe()
         log = mp.SimpleQueue()
         lock = mp.Lock()
@@ -198,6 +215,7 @@ class IpcUtil:
         log.close()
         if proc_1.exitcode != 0 or proc_2.exitcode != 0:
             error = Exception("General exception")
+            stacktrace = "No stacktrace"
             for item in result:
                 if isinstance(item, ProcessErrorData):
                     error, stacktrace = item
@@ -208,19 +226,12 @@ class IpcUtil:
     @staticmethod
     @contextmanager
     def _actor_turn(conn: Connection, starts: bool, log, lock: mp.Lock, done: bool = False):
-        TIMEOUT = 1
+        def flush_conn(conn: Connection):
+            if not conn.poll(IpcUtil.TURN_WAIT_TIMEOUT):
+                raise TimeoutError(IpcUtil.TIMEOUT_ERROR_MESSAGE)
+            conn.recv()
 
         try:
-
-            def flush_conn(conn):
-                if not conn.poll(TIMEOUT):
-                    err_msg = (
-                        "Tip: make sure the last 'with turn()' (in execution order) "
-                        "is called with 'actor_turn(done=True)', otherwise it may hang."
-                    )
-                    raise TimeoutError(err_msg)
-                conn.recv()
-
             if starts:
                 with lock:
                     conn.send("done")
@@ -234,9 +245,8 @@ class IpcUtil:
                     conn.send("done")
         except Exception as e:
             traceback.print_exc(file=sys.stderr)
-            err_header = f"Error from sub-process (pid={os.getpid()}) on test using IpcUtil"
-            traceback_str = f"{err_header}\n\n{traceback.format_exc()}"
-
+            error_header = IpcUtil.SUBPROCESS_ERROR_HEADER_TEMPLATE.format(pid=os.getpid())
+            traceback_str = f"{error_header}\n\n{traceback.format_exc()}"
             error = ProcessErrorData(e, traceback_str)
             log.put(error)
             exit(1)
@@ -246,4 +256,6 @@ class IpcUtil:
         result = []
         while not log.empty():
             result.append(log.get())
+        for item in result:
+            log.put(item)
         return result
