@@ -22,7 +22,7 @@ from django.db.utils import (  # noqa: E402: module level not at top of file
 )
 
 from pulpcore.app.apps import pulp_plugin_configs  # noqa: E402: module level not at top of file
-from pulpcore.app.models import ContentAppStatus  # noqa: E402: module level not at top of file
+from pulpcore.app.models import AppStatus  # noqa: E402: module level not at top of file
 from pulpcore.app.util import get_worker_name  # noqa: E402: module level not at top of file
 
 from .handler import Handler  # noqa: E402: module level not at top of file
@@ -60,7 +60,9 @@ async def _heartbeat():
     versions = {app.label: app.version for app in pulp_plugin_configs()}
 
     try:
-        content_app_status = await ContentAppStatus.objects.acreate(name=name, versions=versions)
+        app_status = await AppStatus.objects.acreate(
+            name=name, app_type="content", versions=versions
+        )
     except IntegrityError:
         log.error(f"A content app with name {name} already exists in the database.")
         exit(Arbiter.WORKER_BOOT_ERROR)
@@ -68,19 +70,19 @@ async def _heartbeat():
         while True:
             await asyncio.sleep(heartbeat_interval)
             try:
-                await content_app_status.asave_heartbeat()
+                await app_status.asave_heartbeat()
                 log.debug(msg)
             except (InterfaceError, DatabaseError):
                 await sync_to_async(Handler._reset_db_connection)()
                 try:
-                    await content_app_status.asave_heartbeat()
+                    await app_status.asave_heartbeat()
                     log.debug(msg)
                 except (InterfaceError, DatabaseError):
                     log.error(fail_msg)
                     exit(Arbiter.WORKER_BOOT_ERROR)
     finally:
-        if content_app_status:
-            await content_app_status.adelete()
+        if app_status:
+            await app_status.adelete()
 
 
 async def _heartbeat_ctx(app):

@@ -28,12 +28,12 @@ class PulpApiWorker(SyncWorker):
 
     def heartbeat(self):
         try:
-            self.api_app_status.save_heartbeat()
+            self.app_status.save_heartbeat()
             logger.debug(self.beat_msg)
         except (InterfaceError, DatabaseError):
             connection.close_if_unusable_or_obsolete()
             try:
-                self.api_app_status.save_heartbeat()
+                self.app_status.save_heartbeat()
                 logger.debug(self.beat_msg)
             except (InterfaceError, DatabaseError):
                 logger.error(self.fail_beat_msg)
@@ -42,7 +42,7 @@ class PulpApiWorker(SyncWorker):
     def init_process(self):
         os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pulpcore.app.settings")
         django.setup()
-        from pulpcore.app.models import ApiAppStatus
+        from pulpcore.app.models import AppStatus
 
         if settings.API_APP_TTL < 2 * self.timeout:
             logger.warning(
@@ -52,7 +52,6 @@ class PulpApiWorker(SyncWorker):
                 self.timeout,
             )
 
-        self.ApiAppStatus = ApiAppStatus
         self.name = "{pid}@{hostname}".format(pid=self.pid, hostname=socket.gethostname())
         self.versions = {app.label: app.version for app in pulp_plugin_configs()}
         self.beat_msg = (
@@ -64,8 +63,8 @@ class PulpApiWorker(SyncWorker):
             "Api App '{name}' failed to write a heartbeat to the database."
         ).format(name=self.name)
         try:
-            self.api_app_status = ApiAppStatus.objects.create(
-                name=self.name, versions=self.versions
+            self.app_status = AppStatus.objects.create(
+                name=self.name, app_type="api", versions=self.versions
             )
         except IntegrityError:
             logger.error(f"An API app with name {self.name} already exists in the database.")
@@ -78,8 +77,8 @@ class PulpApiWorker(SyncWorker):
             super().run()
         finally:
             # cleanup
-            if self.api_app_status:
-                self.api_app_status.delete()
+            if self.app_status:
+                self.app_status.delete()
 
 
 class PulpcoreApiApplication(PulpcoreGunicornApplication):
