@@ -13,11 +13,17 @@ from multiprocessing.connection import Connection
 
 
 @pytest.fixture(autouse=True)
-def django_connection_reset(django_db_blocker):
+def django_connection_reset(request):
     # django_db_blocker is from pytest-django. We don't want it to try to safeguard
     # us from using our functional Pulp instance.
     # https://pytest-django.readthedocs.io/en/latest/database.html#django-db-blocker
-    django_db_blocker.unblock()
+    pytest_django_installed = False
+    try:
+        django_db_blocker = request.getfixturevalue("django_db_blocker")
+        django_db_blocker.unblock()
+        pytest_django_installed = True
+    except pytest.FixtureLookupError:
+        pass
 
     # If we dont' reset the connections we'll get interference between tests,
     # as listen/notify is connection based.
@@ -25,7 +31,8 @@ def django_connection_reset(django_db_blocker):
 
     connections.close_all()
     yield
-    django_db_blocker.block()
+    if pytest_django_installed:
+        django_db_blocker.block()
 
 
 def test_postgres_pubsub():
@@ -61,7 +68,7 @@ M = PubsubMessage
 
 
 @pytest.fixture
-def pubsub_backend(django_db_blocker):
+def pubsub_backend():
     from pulpcore.tasking import pubsub
 
     return pubsub.PostgresPubSub

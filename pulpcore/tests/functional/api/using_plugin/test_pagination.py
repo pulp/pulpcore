@@ -4,20 +4,6 @@ import pytest
 
 
 @pytest.mark.parallel
-def test_debugging(
-    file_bindings,
-    file_content_unit_with_name_factory,
-    file_repo,
-    monitor_task,
-):
-    i = 0
-    content_unit = file_content_unit_with_name_factory(f"{i}.iso")
-    file_bindings.RepositoriesFileApi.modify(
-        file_repo.pulp_href, {"add_content_units": [content_unit.pulp_href]}
-    ).task
-
-
-@pytest.mark.parallel
 def test_repo_version_pagination(
     file_bindings,
     file_content_unit_with_name_factory,
