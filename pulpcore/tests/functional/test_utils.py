@@ -19,7 +19,7 @@ class TestIpcUtil:
         with pytest.raises(Exception, match=error_msg):
             IpcUtil.run(host_act, child_act)
 
-    def test_turns_are_respected(self):
+    def test_turns_are_deterministic(self):
         RUNS = 1000
         errors = 0
 
