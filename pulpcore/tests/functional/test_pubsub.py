@@ -1,7 +1,10 @@
 from types import SimpleNamespace
 from datetime import datetime
+import traceback
 import select
 import pytest
+import sys
+import os
 from typing import NamedTuple
 from functools import partial
 from contextlib import contextmanager
@@ -10,11 +13,19 @@ from multiprocessing.connection import Connection
 
 
 @pytest.fixture(autouse=True)
-def django_connection_reset():
+def django_connection_reset(django_db_blocker):
+    # django_db_blocker is from pytest-django. We don't want it to try to safeguard
+    # us from using our functional Pulp instance.
+    # https://pytest-django.readthedocs.io/en/latest/database.html#django-db-blocker
+    django_db_blocker.unblock()
+
+    # If we dont' reset the connections we'll get interference between tests,
+    # as listen/notify is connection based.
     from django.db import connections
 
     connections.close_all()
     yield
+    django_db_blocker.block()
 
 
 def test_postgres_pubsub():
@@ -50,7 +61,7 @@ M = PubsubMessage
 
 
 @pytest.fixture
-def pubsub_backend():
+def pubsub_backend(django_db_blocker):
     from pulpcore.tasking import pubsub
 
     return pubsub.PostgresPubSub
@@ -141,6 +152,23 @@ class TestNoIpcSubscribeFetch:
             assert subscriber.fetch() == []
 
 
+class ProcessErrorData(NamedTuple):
+    error: Exception
+    stack_trace: str
+
+
+class RemoteTracebackError(Exception):
+    """An exception that wraps another exception and its remote traceback string."""
+
+    def __init__(self, message, remote_traceback):
+        super().__init__(message)
+        self.remote_traceback = remote_traceback
+
+    def __str__(self):
+        """Override __str__ to include the remote traceback when printed."""
+        return f"{super().__str__()}\n\n--- Remote Traceback ---\n{self.remote_traceback}"
+
+
 class IpcUtil:
 
     @staticmethod
@@ -167,6 +195,13 @@ class IpcUtil:
         conn_2.close()
         result = IpcUtil.read_log(log)
         log.close()
+        if proc_1.exitcode != 0 or proc_2.exitcode != 0:
+            error = Exception("General exception")
+            for item in result:
+                if isinstance(item, ProcessErrorData):
+                    error, stacktrace = item
+                    break
+            raise Exception(stacktrace) from error
         return result
 
     @staticmethod
@@ -174,22 +209,32 @@ class IpcUtil:
     def _actor_turn(conn: Connection, starts: bool, log, lock: Lock, done: bool = False):
         TIMEOUT = 1
 
-        def flush_conn(conn):
-            if not conn.poll(TIMEOUT):
-                raise TimeoutError()
-            conn.recv()
+        try:
 
-        if starts:
-            with lock:
-                conn.send("done")
-                yield
-            if not done:
+            def flush_conn(conn):
+                if not conn.poll(TIMEOUT):
+                    raise TimeoutError()
+                conn.recv()
+
+            if starts:
+                with lock:
+                    conn.send("done")
+                    yield
+                if not done:
+                    flush_conn(conn)
+            else:
                 flush_conn(conn)
-        else:
-            flush_conn(conn)
-            with lock:
-                yield
-                conn.send("done")
+                with lock:
+                    yield
+                    conn.send("done")
+        except Exception as e:
+            traceback.print_exc(file=sys.stderr)
+            err_header = f"Error from sub-process (pid={os.getpid()}) on test using IpcUtil"
+            traceback_str = f"{err_header}\n\n{traceback.format_exc()}"
+
+            error = ProcessErrorData(e, traceback_str)
+            log.put(error)
+            exit(1)
 
     @staticmethod
     def read_log(log: SimpleQueue) -> list:
@@ -199,8 +244,23 @@ class IpcUtil:
         return result
 
 
-# @pytest.mark.skip
-def test_ipc_utils():
+def test_ipc_utils_error_catching():
+
+    def host_act(host_turn, log):
+        with host_turn():
+            log.put(0)
+
+    def child_act(child_turn, log):
+        with child_turn():
+            log.put(1)
+            assert 1 == 0
+
+    error_msg = "AssertionError: assert 1 == 0"
+    with pytest.raises(Exception, match=error_msg):
+        IpcUtil.run(host_act, child_act)
+
+
+def test_ipc_utils_correctness():
     RUNS = 1000
     errors = 0
 
