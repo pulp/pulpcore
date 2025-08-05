@@ -30,7 +30,7 @@ from pulpcore.constants import (
 from pulpcore.metrics import init_otel_meter
 from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app.models import Worker, Task, ApiAppStatus, ContentAppStatus
-from pulpcore.app.util import PGAdvisoryLock, get_domain
+from pulpcore.app.util import PGAdvisoryLock
 from pulpcore.exceptions import AdvisoryLockError
 
 from pulpcore.tasking.storage import WorkerDirectory
@@ -214,7 +214,7 @@ class PulpcoreWorker:
         Return ``True`` if the task was actually canceled, ``False`` otherwise.
         """
         # A task is considered abandoned when in running state, but no worker holds its lock
-        domain = get_domain()
+        domain = task.pulp_domain
         try:
             task.set_canceling()
         except RuntimeError:
@@ -241,7 +241,7 @@ class PulpcoreWorker:
         return True
 
     def is_compatible(self, task):
-        domain = get_domain()
+        domain = task.pulp_domain
         unmatched_versions = [
             f"task: {label}>={version} worker: {self.versions.get(label)}"
             for label, version in task.versions.items()
@@ -424,7 +424,7 @@ class PulpcoreWorker:
         task.save(update_fields=["worker"])
         cancel_state = None
         cancel_reason = None
-        domain = get_domain()
+        domain = task.pulp_domain
         with TemporaryDirectory(dir=".") as task_working_dir_rel_path:
             task_process = Process(target=perform_task, args=(task.pk, task_working_dir_rel_path))
             task_process.start()
