@@ -1,17 +1,26 @@
-from django.db import connection, connections
-from pulpcore.tasking import pubsub
 from types import SimpleNamespace
 from datetime import datetime
 import select
 import pytest
+from typing import NamedTuple
 from functools import partial
 from contextlib import contextmanager
 from multiprocessing import Process, Pipe, Lock, SimpleQueue
 from multiprocessing.connection import Connection
 
 
+@pytest.fixture(autouse=True)
+def django_connection_reset():
+    from django.db import connections
+
+    connections.close_all()
+    yield
+
+
 def test_postgres_pubsub():
     """Testing postgres low-level implementation."""
+    from django.db import connection
+
     state = SimpleNamespace()
     state.got_message = False
     with connection.cursor() as cursor:
@@ -32,14 +41,22 @@ def test_postgres_pubsub():
         assert state.got_message is False
 
 
-M = pubsub.PubsubMessage
-
-PUBSUB_BACKENDS = [
-    pytest.param(pubsub.PostgresPubSub, id="and-using-postgres-backend"),
-]
+class PubsubMessage(NamedTuple):
+    channel: str
+    payload: str
 
 
-@pytest.mark.parametrize("pubsub_backend", PUBSUB_BACKENDS)
+M = PubsubMessage
+
+
+@pytest.fixture
+def pubsub_backend():
+    from pulpcore.tasking import pubsub
+
+    return pubsub.PostgresPubSub
+
+
+# @pytest.mark.parametrize("pubsub_backend", PUBSUB_BACKENDS)
 class TestPublish:
 
     @pytest.mark.parametrize(
@@ -57,7 +74,7 @@ class TestPublish:
         pubsub_backend.publish("channel", payload=payload)
 
 
-@pytest.mark.parametrize("pubsub_backend", PUBSUB_BACKENDS)
+# @pytest.mark.parametrize("pubsub_backend", PUBSUB_BACKENDS)
 @pytest.mark.parametrize(
     "messages",
     (
@@ -82,9 +99,7 @@ class TestNoIpcSubscribeFetch:
         for channel, payload in messages:
             publisher.publish(channel, payload=payload)
 
-    def test_with(
-        self, pubsub_backend: pubsub.BasePubSubBackend, messages: list[pubsub.PubsubMessage]
-    ):
+    def test_with(self, pubsub_backend, messages):
         channels = {m.channel for m in messages}
         publisher = pubsub_backend
         with pubsub_backend() as subscriber:
@@ -95,9 +110,7 @@ class TestNoIpcSubscribeFetch:
             self.unsubscribe_all(channels, subscriber)
             assert subscriber.fetch() == []
 
-    def test_select_readiness_with(
-        self, pubsub_backend: pubsub.BasePubSubBackend, messages: list[pubsub.PubsubMessage]
-    ):
+    def test_select_readiness_with(self, pubsub_backend, messages):
         TIMEOUT = 0.1
         CHANNELS = {m.channel for m in messages}
         publisher = pubsub_backend
@@ -133,7 +146,6 @@ class IpcUtil:
     @staticmethod
     def run(host_act, child_act) -> list:
         # ensures a connection from one run doesn't interfere with the other
-        connections.close_all()
         conn_1, conn_2 = Pipe()
         log = SimpleQueue()
         lock = Lock()
@@ -231,6 +243,7 @@ def test_postgres_backend_ipc():
     From psycopg, the backend_id is:
     "The process ID (PID) of the backend process handling this connection."
     """
+    from django.db import connection
 
     def host_act(host_turn, log):
         with host_turn():  # 1
@@ -254,7 +267,7 @@ def test_postgres_backend_ipc():
     assert host_connection_pid != child_connection_pid
 
 
-@pytest.mark.parametrize("pubsub_backend", PUBSUB_BACKENDS)
+# @pytest.mark.parametrize("pubsub_backend", PUBSUB_BACKENDS)
 @pytest.mark.parametrize(
     "messages",
     (
@@ -269,9 +282,7 @@ def test_postgres_backend_ipc():
 )
 class TestIpcSubscribeFetch:
 
-    def test_with(
-        self, pubsub_backend: pubsub.BasePubSubBackend, messages: list[pubsub.PubsubMessage]
-    ):
+    def test_with(self, pubsub_backend, messages):
         CHANNELS = {m.channel for m in messages}
         EXPECTED_LOG = [
             "subscribe",
@@ -329,9 +340,7 @@ class TestIpcSubscribeFetch:
         log = IpcUtil.run(subscriber_act, publisher_act)
         assert log == EXPECTED_LOG
 
-    def test_select_readiness_with(
-        self, pubsub_backend: pubsub.BasePubSubBackend, messages: list[pubsub.PubsubMessage]
-    ):
+    def test_select_readiness_with(self, pubsub_backend, messages):
         TIMEOUT = 0.1
         CHANNELS = {m.channel for m in messages}
         EXPECTED_LOG = [
