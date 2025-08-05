@@ -1,4 +1,3 @@
-from django.db import connection, connections
 from pulpcore.tasking import pubsub
 from types import SimpleNamespace
 from datetime import datetime
@@ -10,10 +9,18 @@ from multiprocessing import Process, Pipe, Lock, SimpleQueue
 from multiprocessing.connection import Connection
 
 
-def test_postgres_pubsub():
+@pytest.fixture
+def django_connection():
+    from django.db import connection
+
+    return connection
+
+
+def test_postgres_pubsub(django_connection):
     """Testing postgres low-level implementation."""
     state = SimpleNamespace()
     state.got_message = False
+    connection = django_connection
     with connection.cursor() as cursor:
         assert connection.connection is cursor.connection
         conn = cursor.connection
@@ -128,56 +135,69 @@ class TestNoIpcSubscribeFetch:
             assert subscriber.fetch() == []
 
 
+@pytest.fixture
+def SyncProcesses():
+    # ensures a connection from one run doesn't interfere with the other
+    from django.db import connections
+
+    connections.close_all()
+    ipc = IpcUtil()
+    yield ipc
+    ipc.close()
+
+
+@contextmanager
+def actor_turn(conn: Connection, starts: bool, log, lock: Lock, done: bool = False):
+    TIMEOUT = 1
+
+    def flush_conn(conn):
+        if not conn.poll(TIMEOUT):
+            raise TimeoutError()
+        conn.recv()
+
+    if starts:
+        with lock:
+            conn.send("done")
+            yield
+        if not done:
+            flush_conn(conn)
+    else:
+        flush_conn(conn)
+        with lock:
+            yield
+            conn.send("done")
+
+
 class IpcUtil:
 
-    @staticmethod
-    def run(host_act, child_act) -> list:
-        # ensures a connection from one run doesn't interfere with the other
-        connections.close_all()
-        conn_1, conn_2 = Pipe()
-        log = SimpleQueue()
-        lock = Lock()
-        turn_1 = partial(IpcUtil._actor_turn, conn_1, starts=True, log=log, lock=lock)
-        turn_2 = partial(IpcUtil._actor_turn, conn_2, starts=False, log=log, lock=lock)
-        proc_1 = Process(target=host_act, args=(turn_1, log))
-        proc_2 = Process(target=child_act, args=(turn_2, log))
-        proc_1.start()
-        proc_2.start()
+    def __init__(self):
+        self.proc_1 = None
+        self.proc_2 = None
+        self.conn_1, self.conn_2 = Pipe()
+        self.log = SimpleQueue()
+        self.lock = Lock()
+
+    def run(self, host_act, child_act) -> list:
+        turn_1 = partial(actor_turn, self.conn_1, starts=True, log=self.log, lock=self.lock)
+        turn_2 = partial(actor_turn, self.conn_2, starts=False, log=self.log, lock=self.lock)
+        self.proc_1 = Process(target=host_act, args=(turn_1, self.log))
+        self.proc_2 = Process(target=child_act, args=(turn_2, self.log))
+        self.proc_1.start()
+        self.proc_2.start()
         try:
-            proc_1.join()
+            self.proc_1.join()
         finally:
-            conn_1.send("1")
+            self.conn_1.send("1")
         try:
-            proc_2.join()
+            self.proc_2.join()
         finally:
-            conn_2.send("1")
-        conn_1.close()
-        conn_2.close()
-        result = IpcUtil.read_log(log)
-        log.close()
-        return result
+            self.conn_2.send("1")
+        return self.read_log(self.log)
 
-    @staticmethod
-    @contextmanager
-    def _actor_turn(conn: Connection, starts: bool, log, lock: Lock, done: bool = False):
-        TIMEOUT = 1
-
-        def flush_conn(conn):
-            if not conn.poll(TIMEOUT):
-                raise TimeoutError()
-            conn.recv()
-
-        if starts:
-            with lock:
-                conn.send("done")
-                yield
-            if not done:
-                flush_conn(conn)
-        else:
-            flush_conn(conn)
-            with lock:
-                yield
-                conn.send("done")
+    def close(self):
+        self.conn_1.close()
+        self.conn_2.close()
+        self.log.close()
 
     @staticmethod
     def read_log(log: SimpleQueue) -> list:
@@ -187,8 +207,7 @@ class IpcUtil:
         return result
 
 
-# @pytest.mark.skip
-def test_ipc_utils():
+def test_ipc_utils(SyncProcesses):
     RUNS = 1000
     errors = 0
 
@@ -213,7 +232,7 @@ def test_ipc_utils():
             log.put(5)
 
     def run():
-        log = IpcUtil.run(host_act, child_act)
+        log = SyncProcesses.run(host_act, child_act)
         if log != [0, 1, 2, 3, 4, 5]:
             return 1
         return 0
@@ -225,7 +244,7 @@ def test_ipc_utils():
     assert error_rate == 0
 
 
-def test_postgres_backend_ipc():
+def test_postgres_backend_ipc(SyncProcesses):
     """Asserts that we are really testing two different connections.
 
     From psycopg, the backend_id is:
@@ -233,6 +252,8 @@ def test_postgres_backend_ipc():
     """
 
     def host_act(host_turn, log):
+        from django.db import connection
+
         with host_turn():  # 1
             assert connection.connection is None
             with connection.cursor() as cursor:
@@ -241,6 +262,8 @@ def test_postgres_backend_ipc():
             log.put(connection.connection.info.backend_pid)
 
     def child_act(child_turn, log):
+        from django.db import connection
+
         with child_turn():  # 2
             assert connection.connection is None
             with connection.cursor() as cursor:
@@ -248,7 +271,7 @@ def test_postgres_backend_ipc():
             assert connection.connection is not None
             log.put(connection.connection.info.backend_pid)
 
-    log = IpcUtil.run(host_act, child_act)
+    log = SyncProcesses.run(host_act, child_act)
     assert len(log) == 2
     host_connection_pid, child_connection_pid = log
     assert host_connection_pid != child_connection_pid
@@ -270,7 +293,10 @@ def test_postgres_backend_ipc():
 class TestIpcSubscribeFetch:
 
     def test_with(
-        self, pubsub_backend: pubsub.BasePubSubBackend, messages: list[pubsub.PubsubMessage]
+        self,
+        pubsub_backend: pubsub.BasePubSubBackend,
+        messages: list[pubsub.PubsubMessage],
+        SyncProcesses,
     ):
         CHANNELS = {m.channel for m in messages}
         EXPECTED_LOG = [
@@ -326,11 +352,14 @@ class TestIpcSubscribeFetch:
                 for message in messages:  # 6
                     publisher.publish(message.channel, payload=message.payload)
 
-        log = IpcUtil.run(subscriber_act, publisher_act)
+        log = SyncProcesses.run(subscriber_act, publisher_act)
         assert log == EXPECTED_LOG
 
     def test_select_readiness_with(
-        self, pubsub_backend: pubsub.BasePubSubBackend, messages: list[pubsub.PubsubMessage]
+        self,
+        pubsub_backend: pubsub.BasePubSubBackend,
+        messages: list[pubsub.PubsubMessage],
+        SyncProcesses,
     ):
         TIMEOUT = 0.1
         CHANNELS = {m.channel for m in messages}
@@ -383,5 +412,5 @@ class TestIpcSubscribeFetch:
                 for message in messages:
                     publisher.publish(message.channel, payload=message.payload)
 
-        log = IpcUtil.run(subscriber_act, publisher_act)
+        log = SyncProcesses.run(subscriber_act, publisher_act)
         assert log == EXPECTED_LOG
