@@ -633,12 +633,10 @@ class PulpcoreWorker:
                     # do work
                     if self.shutdown_requested:
                         break
-                    # _logger.info(_("=== Worker %s will handle unblocked tasks. ==="), self.name)
                     self.handle_unblocked_tasks()
                     if self.shutdown_requested:
                         break
                     # rest until notified to wakeup
-                    # _logger.info(_("*** Worker %s entering sleep state. ***"), self.name)
                     self.sleep()
             self.pubsub_teardown()
             self.shutdown()

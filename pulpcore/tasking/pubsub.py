@@ -30,6 +30,9 @@ class BasePubSubBackend:
     def unsubscribe(self, channel):
         raise NotImplementedError()
 
+    def get_subscriptions(self):
+        raise NotImplementedError()
+
     @classmethod
     def publish(cls, channel, payload=None):
         raise NotImplementedError()
@@ -57,35 +60,35 @@ def drain_non_blocking_fd(fd):
             os.read(fd, 256)
 
 
-PID = os.getpid()
-
-
 class PostgresPubSub(BasePubSubBackend):
+    PID = os.getpid()
 
     def __init__(self):
         self._subscriptions = set()
         self.message_buffer = []
-        self.cursor = connection.cursor()
+        # ensures a connection is initialized
+        with connection.cursor() as cursor:
+            cursor.execute("select 1")
         self.backend_pid = connection.connection.info.backend_pid
-        # logger.info(f"{connection.connection.info.backend_pid=}")
         self.sentinel_r, self.sentinel_w = os.pipe()
         os.set_blocking(self.sentinel_r, False)
         os.set_blocking(self.sentinel_w, False)
         connection.connection.add_notify_handler(self._store_messages)
 
+    @classmethod
+    def _debug(cls, message):
+        logger.debug(f"[{cls.PID}] {message}")
+
     def _store_messages(self, notification):
-        # logger.info(f"[{PID}] Received message: {notification}")
         self.message_buffer.append(
             PubsubMessage(channel=notification.channel, payload=notification.payload)
         )
         if notification.pid == self.backend_pid:
             os.write(self.sentinel_w, b"1")
-
-    def get_subscriptions(self):
-        return self._subscriptions.copy()
+        self._debug(f"Received message: {notification}")
 
     @classmethod
-    def publish(cls, channel, payload=None):
+    def publish(cls, channel, payload=""):
         query = (
             (f"NOTIFY {channel}",)
             if not payload
@@ -94,6 +97,7 @@ class PostgresPubSub(BasePubSubBackend):
 
         with connection.cursor() as cursor:
             cursor.execute(*query)
+        cls._debug(f"Sent message: ({channel}, {str(payload)})")
 
     def subscribe(self, channel):
         self._subscriptions.add(channel)
@@ -108,7 +112,12 @@ class PostgresPubSub(BasePubSubBackend):
         with connection.cursor() as cursor:
             cursor.execute(f"UNLISTEN {channel}")
 
+    def get_subscriptions(self):
+        return self._subscriptions.copy()
+
     def fileno(self) -> int:
+        # when pub/sub clients are the same, the notification callback may be called
+        # asynchronously, making select on connection miss new notifications
         ready, _, _ = select.select([self.sentinel_r], [], [], 0)
         if self.sentinel_r in ready:
             return self.sentinel_r
@@ -120,7 +129,7 @@ class PostgresPubSub(BasePubSubBackend):
         result = self.message_buffer.copy()
         self.message_buffer.clear()
         drain_non_blocking_fd(self.sentinel_r)
-        # logger.info(f"[{PID}] Fetched messages: {result}")
+        self._debug(f"Fetched messages: {result}")
         return result
 
     def close(self):
