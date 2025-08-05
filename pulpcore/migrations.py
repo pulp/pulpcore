@@ -3,6 +3,8 @@ from packaging.version import parse as parse_version
 from django.conf import settings
 from django.utils import timezone
 from django.db.migrations.operations.base import Operation
+from django.db.models import F
+from django.db.models.functions import Now
 
 
 class RequireVersion(Operation):
@@ -22,21 +24,41 @@ class RequireVersion(Operation):
 
     def database_forwards(self, app_label, schema_editor, from_state, to_state):
         from_state.clear_delayed_apps_cache()
-        ApiAppStatus = from_state.apps.get_model("core", "ApiAppStatus")
-        ContentAppStatus = from_state.apps.get_model("core", "ContentAppStatus")
-        Worker = from_state.apps.get_model("core", "Worker")
 
         needed_version = parse_version(self.version)
         errors = []
+        found_either_table = False
 
-        for worker_class, ttl, class_name in [
-            (ApiAppStatus, settings.API_APP_TTL, "api server"),
-            (ContentAppStatus, settings.CONTENT_APP_TTL, "content server"),
-            (Worker, settings.WORKER_TTL, "pulp worker"),
-        ]:
-            for worker in worker_class.objects.filter(
-                last_heartbeat__gte=timezone.now() - timezone.timedelta(seconds=ttl)
-            ):
+        try:
+            ApiAppStatus = from_state.apps.get_model("core", "ApiAppStatus")
+            ContentAppStatus = from_state.apps.get_model("core", "ContentAppStatus")
+            Worker = from_state.apps.get_model("core", "Worker")
+        except LookupError:
+            pass
+        else:
+            for worker_class, ttl, class_name in [
+                (ApiAppStatus, settings.API_APP_TTL, "api server"),
+                (ContentAppStatus, settings.CONTENT_APP_TTL, "content server"),
+                (Worker, settings.WORKER_TTL, "pulp worker"),
+            ]:
+                for worker in worker_class.objects.filter(
+                    last_heartbeat__gte=timezone.now() - timezone.timedelta(seconds=ttl)
+                ):
+                    present_version = worker.versions.get(self.plugin)
+                    if (
+                        present_version is not None
+                        and parse_version(present_version) < needed_version
+                    ):
+                        errors.append(
+                            f"  - '{self.plugin}'='{present_version}' "
+                            f"with {class_name} '{worker.name}'"
+                        )
+
+            found_either_table = True
+
+        try:
+            AppStatus = from_state.apps.get_model("core", "AppStatus")
+            for worker in AppStatus.objects.filter(F("last_heartbeat") + F("ttl") >= Now()):
                 present_version = worker.versions.get(self.plugin)
                 if present_version is not None and parse_version(present_version) < needed_version:
                     errors.append(
@@ -44,6 +66,11 @@ class RequireVersion(Operation):
                         f"with {class_name} '{worker.name}'"
                     )
 
+            found_either_table = True
+        except LookupError:
+            pass
+
+        assert found_either_table
         if errors:
             raise RuntimeError(
                 "\n".join(

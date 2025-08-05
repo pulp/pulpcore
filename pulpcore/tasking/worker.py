@@ -29,7 +29,7 @@ from pulpcore.constants import (
 )
 from pulpcore.metrics import init_otel_meter
 from pulpcore.app.apps import pulp_plugin_configs
-from pulpcore.app.models import Worker, Task, ApiAppStatus, ContentAppStatus
+from pulpcore.app.models import Worker, Task, AppStatus, ApiAppStatus, ContentAppStatus
 from pulpcore.app.util import PGAdvisoryLock
 from pulpcore.exceptions import AdvisoryLockError
 
@@ -74,7 +74,10 @@ class PulpcoreWorker:
         self.versions = {app.label: app.version for app in pulp_plugin_configs()}
         self.cursor = connection.cursor()
         try:
-            self.worker = Worker.objects.create(name=self.name, versions=self.versions)
+            self.app_status = AppStatus.objects.create(
+                name=self.name, app_type="worker", versions=self.versions
+            )
+            self.worker = self.app_status._old_status
         except IntegrityError:
             _logger.error(f"A worker with name {self.name} already exists in the database.")
             exit(1)
@@ -159,10 +162,10 @@ class PulpcoreWorker:
         """
 
         msg = "Worker heartbeat from '{name}' at time {timestamp}".format(
-            timestamp=self.worker.last_heartbeat, name=self.name
+            timestamp=self.app_status.last_heartbeat, name=self.name
         )
         try:
-            self.worker.save_heartbeat()
+            self.app_status.save_heartbeat()
             _logger.debug(msg)
         except (IntegrityError, DatabaseError):
             # WARNING: Do not attempt to recycle the connection here.
@@ -173,23 +176,26 @@ class PulpcoreWorker:
             self.cancel_task = True
 
     def shutdown(self):
-        self.worker.delete()
+        self.app_status.delete()
         _logger.info(_("Worker %s was shut down."), self.name)
 
     def worker_cleanup(self):
+        qs = AppStatus.objects.older_than(age=timedelta(days=7))
+        for app_worker in qs:
+            _logger.info(_("Clean missing %s worker %s."), app_worker.app_type, app_worker.name)
+        qs.delete()
         for cls, cls_name in (
             (Worker, "pulp"),
             (ApiAppStatus, "api"),
             (ContentAppStatus, "content"),
         ):
             qs = cls.objects.missing(age=timedelta(days=7))
-            if qs:
-                for app_worker in qs:
-                    _logger.info(_("Clean missing %s worker %s."), cls_name, app_worker.name)
-                qs.delete()
+            for app_worker in qs:
+                _logger.info(_("Clean missing %s worker %s."), cls_name, app_worker.name)
+            qs.delete()
 
     def beat(self):
-        if self.worker.last_heartbeat < timezone.now() - self.heartbeat_period:
+        if self.app_status.last_heartbeat < timezone.now() - self.heartbeat_period:
             self.handle_worker_heartbeat()
             if not self.auxiliary:
                 self.worker_cleanup_countdown -= 1
