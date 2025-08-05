@@ -1,15 +1,9 @@
 from types import SimpleNamespace
 from datetime import datetime
-import traceback
 import select
 import pytest
-import sys
-import os
-from typing import NamedTuple
-from functools import partial
-from contextlib import contextmanager
-from multiprocessing import Process, Pipe, Lock, SimpleQueue
-from multiprocessing.connection import Connection
+from pulpcore.tasking import pubsub
+from pulpcore.tests.functional.utils import IpcUtil
 
 
 @pytest.fixture(autouse=True)
@@ -59,22 +53,13 @@ def test_postgres_pubsub():
         assert state.got_message is False
 
 
-class PubsubMessage(NamedTuple):
-    channel: str
-    payload: str
+M = pubsub.PubsubMessage
+PUBSUB_BACKENDS = [
+    pubsub.PostgresPubSub,
+]
 
 
-M = PubsubMessage
-
-
-@pytest.fixture
-def pubsub_backend():
-    from pulpcore.tasking import pubsub
-
-    return pubsub.PostgresPubSub
-
-
-# @pytest.mark.parametrize("pubsub_backend", PUBSUB_BACKENDS)
+@pytest.mark.parametrize("pubsub_backend", PUBSUB_BACKENDS)
 class TestPublish:
 
     @pytest.mark.parametrize(
@@ -88,11 +73,11 @@ class TestPublish:
             pytest.param(True, id="bool"),
         ),
     )
-    def test_with_payload_as(self, pubsub_backend, payload):
+    def test_with_payload_as(self, pubsub_backend: pubsub.BasePubSubBackend, payload):
         pubsub_backend.publish("channel", payload=payload)
 
 
-# @pytest.mark.parametrize("pubsub_backend", PUBSUB_BACKENDS)
+@pytest.mark.parametrize("pubsub_backend", PUBSUB_BACKENDS)
 @pytest.mark.parametrize(
     "messages",
     (
@@ -117,7 +102,9 @@ class TestNoIpcSubscribeFetch:
         for channel, payload in messages:
             publisher.publish(channel, payload=payload)
 
-    def test_with(self, pubsub_backend, messages):
+    def test_with(
+        self, pubsub_backend: pubsub.BasePubSubBackend, messages: list[pubsub.PubsubMessage]
+    ):
         channels = {m.channel for m in messages}
         publisher = pubsub_backend
         with pubsub_backend() as subscriber:
@@ -128,7 +115,9 @@ class TestNoIpcSubscribeFetch:
             self.unsubscribe_all(channels, subscriber)
             assert subscriber.fetch() == []
 
-    def test_select_readiness_with(self, pubsub_backend, messages):
+    def test_select_readiness_with(
+        self, pubsub_backend: pubsub.BasePubSubBackend, messages: list[pubsub.PubsubMessage]
+    ):
         TIMEOUT = 0.1
         CHANNELS = {m.channel for m in messages}
         publisher = pubsub_backend
@@ -157,155 +146,6 @@ class TestNoIpcSubscribeFetch:
             ready, _, _ = select.select([subscriber], [], [], TIMEOUT)
             assert subscriber not in ready
             assert subscriber.fetch() == []
-
-
-class ProcessErrorData(NamedTuple):
-    error: Exception
-    stack_trace: str
-
-
-class RemoteTracebackError(Exception):
-    """An exception that wraps another exception and its remote traceback string."""
-
-    def __init__(self, message, remote_traceback):
-        super().__init__(message)
-        self.remote_traceback = remote_traceback
-
-    def __str__(self):
-        """Override __str__ to include the remote traceback when printed."""
-        return f"{super().__str__()}\n\n--- Remote Traceback ---\n{self.remote_traceback}"
-
-
-class IpcUtil:
-
-    @staticmethod
-    def run(host_act, child_act) -> list:
-        # ensures a connection from one run doesn't interfere with the other
-        conn_1, conn_2 = Pipe()
-        log = SimpleQueue()
-        lock = Lock()
-        turn_1 = partial(IpcUtil._actor_turn, conn_1, starts=True, log=log, lock=lock)
-        turn_2 = partial(IpcUtil._actor_turn, conn_2, starts=False, log=log, lock=lock)
-        proc_1 = Process(target=host_act, args=(turn_1, log))
-        proc_2 = Process(target=child_act, args=(turn_2, log))
-        proc_1.start()
-        proc_2.start()
-        try:
-            proc_1.join()
-        finally:
-            conn_1.send("1")
-        try:
-            proc_2.join()
-        finally:
-            conn_2.send("1")
-        conn_1.close()
-        conn_2.close()
-        result = IpcUtil.read_log(log)
-        log.close()
-        if proc_1.exitcode != 0 or proc_2.exitcode != 0:
-            error = Exception("General exception")
-            for item in result:
-                if isinstance(item, ProcessErrorData):
-                    error, stacktrace = item
-                    break
-            raise Exception(stacktrace) from error
-        return result
-
-    @staticmethod
-    @contextmanager
-    def _actor_turn(conn: Connection, starts: bool, log, lock: Lock, done: bool = False):
-        TIMEOUT = 1
-
-        try:
-
-            def flush_conn(conn):
-                if not conn.poll(TIMEOUT):
-                    err_msg = (
-                        "Tip: make sure the last 'with turn()' (in execution order) "
-                        "is called with 'actor_turn(done=True)', otherwise it may hang."
-                    )
-                    raise TimeoutError(err_msg)
-                conn.recv()
-
-            if starts:
-                with lock:
-                    conn.send("done")
-                    yield
-                if not done:
-                    flush_conn(conn)
-            else:
-                flush_conn(conn)
-                with lock:
-                    yield
-                    conn.send("done")
-        except Exception as e:
-            traceback.print_exc(file=sys.stderr)
-            err_header = f"Error from sub-process (pid={os.getpid()}) on test using IpcUtil"
-            traceback_str = f"{err_header}\n\n{traceback.format_exc()}"
-
-            error = ProcessErrorData(e, traceback_str)
-            log.put(error)
-            exit(1)
-
-    @staticmethod
-    def read_log(log: SimpleQueue) -> list:
-        result = []
-        while not log.empty():
-            result.append(log.get())
-        return result
-
-
-def test_ipc_utils_error_catching():
-
-    def host_act(host_turn, log):
-        with host_turn():
-            log.put(0)
-
-    def child_act(child_turn, log):
-        with child_turn():
-            log.put(1)
-            assert 1 == 0
-
-    error_msg = "AssertionError: assert 1 == 0"
-    with pytest.raises(Exception, match=error_msg):
-        IpcUtil.run(host_act, child_act)
-
-
-def test_ipc_utils_correctness():
-    RUNS = 1000
-    errors = 0
-
-    def host_act(host_turn, log):
-        with host_turn():
-            log.put(0)
-
-        with host_turn():
-            log.put(2)
-
-        with host_turn():
-            log.put(4)
-
-    def child_act(child_turn, log):
-        with child_turn():
-            log.put(1)
-
-        with child_turn():
-            log.put(3)
-
-        with child_turn():
-            log.put(5)
-
-    def run():
-        log = IpcUtil.run(host_act, child_act)
-        if log != [0, 1, 2, 3, 4, 5]:
-            return 1
-        return 0
-
-    for _ in range(RUNS):
-        errors += run()
-
-    error_rate = errors / RUNS
-    assert error_rate == 0
 
 
 def test_postgres_backend_ipc():
@@ -338,7 +178,7 @@ def test_postgres_backend_ipc():
     assert host_connection_pid != child_connection_pid
 
 
-# @pytest.mark.parametrize("pubsub_backend", PUBSUB_BACKENDS)
+@pytest.mark.parametrize("pubsub_backend", PUBSUB_BACKENDS)
 @pytest.mark.parametrize(
     "messages",
     (
@@ -353,7 +193,9 @@ def test_postgres_backend_ipc():
 )
 class TestIpcSubscribeFetch:
 
-    def test_with(self, pubsub_backend, messages):
+    def test_with(
+        self, pubsub_backend: pubsub.BasePubSubBackend, messages: list[pubsub.PubsubMessage]
+    ):
         CHANNELS = {m.channel for m in messages}
         EXPECTED_LOG = [
             "subscribe",
@@ -411,7 +253,9 @@ class TestIpcSubscribeFetch:
         log = IpcUtil.run(subscriber_act, publisher_act)
         assert log == EXPECTED_LOG
 
-    def test_select_readiness_with(self, pubsub_backend, messages):
+    def test_select_readiness_with(
+        self, pubsub_backend: pubsub.BasePubSubBackend, messages: list[pubsub.PubsubMessage]
+    ):
         TIMEOUT = 0.1
         CHANNELS = {m.channel for m in messages}
         EXPECTED_LOG = [
