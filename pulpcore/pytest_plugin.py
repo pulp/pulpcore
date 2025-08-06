@@ -608,28 +608,28 @@ def backend_settings_factory(pulp_settings):
             "bucket_name",
         ]
         keys["storages.backends.azure_storage.AzureStorage"] = [
-            "AZURE_ACCOUNT_NAME",
-            "AZURE_CONTAINER",
-            "AZURE_ACCOUNT_KEY",
-            "AZURE_URL_EXPIRATION_SECS",
-            "AZURE_OVERWRITE_FILES",
-            "AZURE_LOCATION",
-            "AZURE_CONNECTION_STRING",
+            "account_name",
+            "azure_container",
+            "account_key",
+            "expiration_secs",
+            "overwrite_files",
+            "location",
+            "connection_string",
         ]
-        settings = storage_settings or dict()
-        backend = storage_class or pulp_settings.STORAGES["default"]["BACKEND"]
-        not_defined_settings = (k for k in keys[backend] if k not in settings)
-        # The CI configures s3 with STORAGES and Azure with legacy
-        # Move all to STORAGES structure on DEFAULT_FILE_STORAGE removal
-        if backend == "storages.backends.s3boto3.S3Boto3Storage":
-            storages_dict = getattr(pulp_settings, "STORAGES", {})
-            storage_options = storages_dict.get("default", {}).get("OPTIONS", {})
-            for key in not_defined_settings:
-                settings[key] = storage_options.get(key)
-        else:
-            for key in not_defined_settings:
-                settings[key] = getattr(pulp_settings, key, None)
-        return backend, settings
+
+        def get_installation_storage_option(key, backend):
+            value = pulp_settings.STORAGES["default"]["OPTIONS"].get(key)
+            # Some FileSystem backend options may be defined in the top settings module
+            if backend == "pulpcore.app.models.storage.FileSystem" and not value:
+                value = getattr(pulp_settings, key, None)
+            return value
+
+        storage_settings = storage_settings or dict()
+        storage_backend = storage_class or pulp_settings.STORAGES["default"]["BACKEND"]
+        unset_storage_settings = (k for k in keys[storage_backend] if k not in storage_settings)
+        for key in unset_storage_settings:
+            storage_settings[key] = get_installation_storage_option(key, storage_backend)
+        return storage_backend, storage_settings
 
     return _settings_factory
 
