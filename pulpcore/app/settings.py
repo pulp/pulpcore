@@ -12,6 +12,7 @@ import sys
 
 from contextlib import suppress
 from importlib import import_module
+from importlib.metadata import entry_points
 from logging import getLogger
 from pathlib import Path
 
@@ -33,12 +34,6 @@ try:
 except ImportError:
     pass
 
-if sys.version_info < (3, 10):
-    # Python 3.9 has a rather different interface for `entry_points`.
-    # Let's use a compatibility version.
-    from importlib_metadata import entry_points
-else:
-    from importlib.metadata import entry_points
 
 # Load settings first pass before applying all the defaults to get a grip on ENABLED_PLUGINS.
 enabled_plugins_validator = Validator(
