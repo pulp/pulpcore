@@ -39,9 +39,14 @@ For instructions on how to configure the database, refer to [Django database set
 
 ### DEFAULT\_FILE\_STORAGE
 
-!!! warning "Deprecated in `3.70`"
-    The `DEFAULT_FILE_STORAGE` setting was deprecated in [django 4.2] and will be removed from pulpcore on `3.85`.
-    Between `3.70` and `3.85`, replace it with [`STORAGES`](#storages).
+!!! warning "Deprecated in `pulpcore 3.70`"
+
+    Learn how to update it to [`STORAGES`](#storages) in the [Storages Upgrade Guide].
+    Note this must be done between `3.70` and `3.85`.
+
+!!! warning "Removed in `pulpcore 3.85`"
+
+[storages upgrade guide]: https://discourse.pulpproject.org/t/action-required-upgrade-your-storage-settings-before-pulpcore-3-85/2072>
 
 ### LOGGING
 
