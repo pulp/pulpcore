@@ -5,7 +5,13 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
 from pulpcore.app import models
-from pulpcore.app.serializers import base, fields, pulp_labels_validator, DetailRelatedField
+from pulpcore.app.serializers import (
+    base,
+    fields,
+    pulp_labels_validator,
+    DetailRelatedField,
+    RelatedField,
+)
 from pulpcore.app.util import get_domain
 
 
@@ -26,6 +32,11 @@ class NoArtifactContentSerializer(base.ModelSerializer):
         write_only=True,
         view_name_pattern=r"repositories(-.*/.*)-detail",
         queryset=models.Repository.objects.all(),
+    )
+    vuln_report = RelatedField(
+        read_only=True,
+        view_name="vuln_report-detail",
+        source="core_vulnerabilityreport",
     )
 
     def get_artifacts(self, validated_data):
@@ -116,6 +127,7 @@ class NoArtifactContentSerializer(base.ModelSerializer):
         fields = base.ModelSerializer.Meta.fields + (
             "repository",
             "pulp_labels",
+            "vuln_report",
         )
 
 
