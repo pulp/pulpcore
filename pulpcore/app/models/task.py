@@ -116,7 +116,8 @@ class Task(BaseModel, AutoAddObjPermsMixin):
             Defaults to `True`.
 
     Relations:
-
+        app_lock (AppStatus): The app holding the lock on this task.
+            Warning: This is not yet implemented/enforced.
         parent (models.ForeignKey): Task that spawned this task (if any)
         worker (models.ForeignKey): The worker that this task is in
         pulp_domain (models.ForeignKey): The domain the Task is a part of
@@ -138,6 +139,10 @@ class Task(BaseModel, AutoAddObjPermsMixin):
     enc_kwargs = EncryptedJSONField(null=True, encoder=DjangoJSONEncoder)
 
     worker = models.ForeignKey("Worker", null=True, related_name="tasks", on_delete=models.SET_NULL)
+    # This field is supposed to replace the session advisory locks to protect tasks.
+    app_lock = models.ForeignKey(
+        "AppStatus", null=True, related_name="tasks", on_delete=models.SET_NULL
+    )
 
     parent_task = models.ForeignKey(
         "Task", null=True, related_name="child_tasks", on_delete=models.SET_NULL

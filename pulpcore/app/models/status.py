@@ -15,6 +15,7 @@ from pulpcore.app.models import BaseModel
 
 
 class AppStatusManager(models.Manager):
+    # This should be replaced with 3.87.
     def online(self):
         """
         Returns a queryset of objects that are online.
@@ -51,8 +52,15 @@ class AppStatusManager(models.Manager):
 
 class _AppStatusManager(AppStatusManager):
     # This is an intermediate class in order to allow a ZDU.
-    # It should be removed from the chain with 3.87.
+    # It should be made the real thing with 3.87.
+    def __init__(self):
+        super().__init__()
+        self._current_app_status = None
+
     def create(self, app_type, **kwargs):
+        if self._current_app_status is not None:
+            raise RuntimeError("There is already an app status in this process.")
+
         if app_type == "api":
             old_obj = ApiAppStatus.objects.create(**kwargs)
         elif app_type == "worker":
@@ -63,16 +71,26 @@ class _AppStatusManager(AppStatusManager):
             raise NotImplementedError(f"Invalid app_type: {app_type}")
         obj = super().create(app_type=app_type, **kwargs)
         obj._old_status = old_obj
+        self._current_app_status = obj
         return obj
 
     async def acreate(self, app_type, **kwargs):
+        if self._current_app_status is not None:
+            raise RuntimeError("There is already an app status in this process.")
+
         if app_type == "content":
             old_obj = await ContentAppStatus.objects.acreate(**kwargs)
         else:
             raise NotImplementedError(f"Invalid app_type: {app_type}")
         obj = await super().acreate(app_type=app_type, **kwargs)
         obj._old_status = old_obj
+        self._current_app_status = obj
         return obj
+
+    def current(self):
+        if self._current_app_status is None:
+            raise RuntimeError("There is no current app status.")
+        return self._current_app_status
 
     def online(self):
         """

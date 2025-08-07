@@ -16,8 +16,13 @@ from django.db import connection, transaction
 from django.db.models import Model
 from django_guid import get_guid
 from pulpcore.app.apps import MODULE_PLUGIN_VERSIONS
-from pulpcore.app.models import Task, TaskGroup
-from pulpcore.app.util import current_task, get_domain, get_prn, deprecation_logger
+from pulpcore.app.models import Task, TaskGroup, AppStatus
+from pulpcore.app.util import (
+    current_task,
+    get_domain,
+    get_prn,
+    deprecation_logger,
+)
 from pulpcore.constants import (
     TASK_FINAL_STATES,
     TASK_INCOMPLETE_STATES,
@@ -240,6 +245,7 @@ def dispatch(
                 immediate=immediate,
                 deferred=deferred,
                 profile_options=x_task_diagnostics_var.get(None),
+                app_lock=(immediate and AppStatus.objects.current()) or None,
             )
             task.refresh_from_db()  # The database may have assigned a timestamp for us.
             if immediate:
@@ -272,13 +278,16 @@ def dispatch(
                     try:
                         execute_task(task)
                     finally:
-                        # whether the task fails or not, we should always restore the workdir
+                        # Whether the task fails or not, we should always restore the workdir.
                         os.chdir(cur_dir)
 
                 if resources:
                     notify_workers = True
             elif deferred:
+                # Resources are blocked. Let the others handle it.
                 notify_workers = True
+                task.app_lock = None
+                task.save()
             else:
                 task.set_canceling()
                 task.set_canceled(TASK_STATES.CANCELED, "Resources temporarily unavailable.")
