@@ -1013,23 +1013,25 @@ def dispatch_task(pulpcore_bindings):
         commands = (
             "from django_guid import set_guid; "
             "from pulpcore.tasking.tasks import dispatch; "
-            "from pulpcore.app.models import TaskGroup; "
+            "from pulpcore.app.models import TaskGroup, AppStatus; "
             "from pulpcore.app.util import get_url, set_current_user; "
             "from django.contrib.auth import get_user_model; "
+            f"app_status=AppStatus.objects.create(name='test-' + {cid!r},app_type='worker'); "
             "User = get_user_model(); "
             f"user = User.objects.filter(username='{username}').first(); "
             "set_current_user(user); "
             f"set_guid({cid!r}); "
             f"tg = {task_group_id!r} and TaskGroup.objects.filter(pk={task_group_id!r}).first(); "
             f"task = dispatch(*{args!r}, task_group=tg, **{kwargs!r}); "
+            "app_status.delete(); "
             "print(get_url(task))"
         )
 
         process = subprocess.run(["pulpcore-manager", "shell", "-c", commands], capture_output=True)
-
-        assert process.returncode == 0
+        err_log = process.stderr.decode()
+        assert process.returncode == 0, err_log
         task_href = process.stdout.decode().strip()
-        print(process.stderr.decode(), file=sys.stderr)
+        print(err_log, file=sys.stderr)
         return task_href
 
     return _dispatch_task

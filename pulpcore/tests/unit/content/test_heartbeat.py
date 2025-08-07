@@ -5,7 +5,7 @@ from django.db.utils import InterfaceError, OperationalError
 
 from pulpcore.content import _heartbeat
 from pulpcore.content.handler import Handler
-from pulpcore.app.models.status import AppStatusManager
+from pulpcore.app.models.status import AppStatus, AppStatusManager
 
 
 class MockException(Exception):
@@ -25,6 +25,7 @@ async def test_db_connection_interface_error(monkeypatch, settings, error_class)
     mock_acreate = AsyncMock()
     mock_acreate.return_value = mock_app_status
     monkeypatch.setattr(AppStatusManager, "acreate", mock_acreate)
+    monkeypatch.setattr(AppStatus, "objects", AppStatusManager())
     mock_reset_db = Mock()
     monkeypatch.setattr(Handler, "_reset_db_connection", mock_reset_db)
     settings.CONTENT_APP_TTL = 1

@@ -4,7 +4,6 @@ import pytest
 import subprocess
 import uuid
 from datetime import datetime, timedelta
-from random import choice
 from time import sleep
 
 
@@ -23,7 +22,7 @@ def test_worker_actions(pulpcore_bindings):
             assert val is not None
 
     # Pick a random worker to be used for the next assertions.
-    chosen_worker = choice(workers)
+    chosen_worker = next(worker for worker in workers if not worker.name.startswith("test-"))
 
     # Read a worker by its pulp_href.
     read_worker = pulpcore_bindings.WorkersApi.read(chosen_worker.pulp_href)

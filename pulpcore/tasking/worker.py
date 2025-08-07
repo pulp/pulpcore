@@ -363,41 +363,60 @@ class PulpcoreWorker:
     def iter_tasks(self):
         """Iterate over ready tasks and yield each task while holding the lock."""
         while not self.shutdown_requested:
-            # When batching this query, be sure to use "pulp_created" as a cursor
+            # When batching this query, be sure to use "pulp_created" as a cursor.
             for task in Task.objects.filter(
                 state__in=TASK_INCOMPLETE_STATES,
                 unblocked_at__isnull=False,
             ).order_by("-immediate", F("pulp_created") + Value(timedelta(seconds=8)) * Random()):
-                # This code will only be called if we acquired the lock successfully
-                # The lock will be automatically be released at the end of the block
+                # This code will only be called if we acquired the lock successfully.
+                # The lock will be automatically be released at the end of the block.
                 with contextlib.suppress(AdvisoryLockError), task:
-                    # Check if someone else changed the task before we got the lock
-                    task.refresh_from_db()
+                    # We got the advisory lock (OLD) now try to get the app_lock (NEW).
+                    rows = Task.objects.filter(pk=task.pk, app_lock=None).update(
+                        app_lock=AppStatus.objects.current()
+                    )
+                    if rows == 0:
+                        _logger.error(
+                            "Acquired advisory lock but missed the app_lock for the task. "
+                            "This should only happen during the upgrade phase to the new app_lock."
+                        )
+                        continue
+                    try:
+                        # Check if someone else changed the task before we got the lock.
+                        task.refresh_from_db()
 
-                    if task.state == TASK_STATES.CANCELING and task.worker is None:
-                        # No worker picked this task up before being canceled
-                        if self.cancel_abandoned_task(task, TASK_STATES.CANCELED):
-                            # Continue looking for the next task without considering this
-                            # tasks resources, as we just released them
-                            continue
-                    if task.state in [TASK_STATES.RUNNING, TASK_STATES.CANCELING]:
-                        # A running task without a lock must be abandoned
-                        if self.cancel_abandoned_task(
-                            task, TASK_STATES.FAILED, "Worker has gone missing."
+                        if task.state == TASK_STATES.CANCELING and task.worker is None:
+                            # No worker picked this task up before being canceled.
+                            if self.cancel_abandoned_task(task, TASK_STATES.CANCELED):
+                                # Continue looking for the next task without considering this
+                                # tasks resources, as we just released them.
+                                continue
+                        if task.state in [TASK_STATES.RUNNING, TASK_STATES.CANCELING]:
+                            # A running task without a lock must be abandoned.
+                            if self.cancel_abandoned_task(
+                                task, TASK_STATES.FAILED, "Worker has gone missing."
+                            ):
+                                # Continue looking for the next task without considering this
+                                # tasks resources, as we just released them.
+                                continue
+
+                        # This statement is using lazy evaluation.
+                        if (
+                            task.state == TASK_STATES.WAITING
+                            and task.unblocked_at is not None
+                            and self.is_compatible(task)
                         ):
-                            # Continue looking for the next task without considering this
-                            # tasks resources, as we just released them
-                            continue
-
-                    # This statement is using lazy evaluation
-                    if (
-                        task.state == TASK_STATES.WAITING
-                        and task.unblocked_at is not None
-                        and self.is_compatible(task)
-                    ):
-                        yield task
-                        # Start from the top of the Task list
-                        break
+                            yield task
+                            # Start from the top of the Task list.
+                            break
+                    finally:
+                        rows = Task.objects.filter(
+                            pk=task.pk, app_lock=AppStatus.objects.current()
+                        ).update(app_lock=None)
+                        if rows != 1:
+                            raise RuntimeError(
+                                "Something other than us is messing around with locks."
+                            )
             else:
                 # No task found in the for-loop
                 break
