@@ -7,13 +7,14 @@ import select
 import signal
 import socket
 import contextlib
+import collections
 from datetime import datetime, timedelta
 from multiprocessing import Process
 from tempfile import TemporaryDirectory
 from packaging.version import parse as parse_version
 
 from django.conf import settings
-from django.db import connection, DatabaseError, IntegrityError
+from django.db import DatabaseError, IntegrityError
 from django.db.models import Case, Count, F, Max, Value, When
 from django.db.models.functions import Random
 from django.utils import timezone
@@ -26,6 +27,7 @@ from pulpcore.constants import (
     TASK_METRICS_HEARTBEAT_LOCK,
     TASK_WAKEUP_UNBLOCK,
     TASK_WAKEUP_HANDLE,
+    TASK_PUBSUB,
 )
 from pulpcore.metrics import init_otel_meter
 from pulpcore.app.apps import pulp_plugin_configs
@@ -33,6 +35,7 @@ from pulpcore.app.models import Worker, Task, ApiAppStatus, ContentAppStatus
 from pulpcore.app.util import PGAdvisoryLock
 from pulpcore.exceptions import AdvisoryLockError
 
+from pulpcore.tasking import pubsub
 from pulpcore.tasking.storage import WorkerDirectory
 from pulpcore.tasking._util import (
     delete_incomplete_resources,
@@ -72,7 +75,6 @@ class PulpcoreWorker:
         self.heartbeat_period = timedelta(seconds=settings.WORKER_TTL / 3)
         self.last_metric_heartbeat = timezone.now()
         self.versions = {app.label: app.version for app in pulp_plugin_configs()}
-        self.cursor = connection.cursor()
         try:
             self.worker = Worker.objects.create(name=self.name, versions=self.versions)
         except IntegrityError:
@@ -85,6 +87,9 @@ class PulpcoreWorker:
         self.worker_cleanup_countdown = random.randint(
             int(WORKER_CLEANUP_INTERVAL / 10), WORKER_CLEANUP_INTERVAL
         )
+        # Pubsub handling
+        self.pubsub_client = pubsub.backend()
+        self.pubsub_channel_callback = {}
 
         # Add a file descriptor to trigger select on signals
         self.sentinel, sentinel_w = os.pipe()
@@ -130,25 +135,6 @@ class PulpcoreWorker:
                 seconds=TASK_GRACE_INTERVAL
             )
         self.shutdown_requested = True
-
-    def _pg_notify_handler(self, notification):
-        if notification.channel == "pulp_worker_wakeup":
-            if notification.payload == TASK_WAKEUP_UNBLOCK:
-                # Auxiliary workers don't do this.
-                self.wakeup_unblock = not self.auxiliary
-            elif notification.payload == TASK_WAKEUP_HANDLE:
-                self.wakeup_handle = True
-            else:
-                _logger.warn("Unknown wakeup call recieved. Reason: '%s'", notification.payload)
-                # We cannot be sure so assume everything happened.
-                self.wakeup_unblock = not self.auxiliary
-                self.wakeup_handle = True
-
-        elif notification.channel == "pulp_worker_metrics_heartbeat":
-            self.last_metric_heartbeat = datetime.fromisoformat(notification.payload)
-        elif self.task and notification.channel == "pulp_worker_cancel":
-            if notification.payload == str(self.task.pk):
-                self.cancel_task = True
 
     def handle_worker_heartbeat(self):
         """
@@ -202,9 +188,6 @@ class PulpcoreWorker:
                 # to be able to report on a congested tasking system to produce reliable results.
                 self.record_unblocked_waiting_tasks_metric()
 
-    def notify_workers(self, reason="unknown"):
-        self.cursor.execute("SELECT pg_notify('pulp_worker_wakeup', %s)", (reason,))
-
     def cancel_abandoned_task(self, task, final_state, reason=None):
         """Cancel and clean up an abandoned task.
 
@@ -237,7 +220,7 @@ class PulpcoreWorker:
         delete_incomplete_resources(task)
         task.set_canceled(final_state=final_state, reason=reason)
         if task.reserved_resources_record:
-            self.notify_workers(TASK_WAKEUP_UNBLOCK)
+            self.pubsub_client.wakeup_worker(reason=TASK_WAKEUP_UNBLOCK)
         return True
 
     def is_compatible(self, task):
@@ -277,7 +260,7 @@ class PulpcoreWorker:
         self.wakeup_unblock_tasks = False
         with contextlib.suppress(AdvisoryLockError), PGAdvisoryLock(TASK_UNBLOCKING_LOCK):
             if count := self._unblock_tasks():
-                self.notify_workers(TASK_WAKEUP_HANDLE)
+                self.pubsub_client.wakeup_worker(TASK_WAKEUP_HANDLE)
         return count
 
     def _unblock_tasks(self):
@@ -402,11 +385,11 @@ class PulpcoreWorker:
         _logger.debug(_("Worker %s entering sleep state."), self.name)
         while not self.shutdown_requested and not self.wakeup_handle:
             r, w, x = select.select(
-                [self.sentinel, connection.connection], [], [], self.heartbeat_period.seconds
+                [self.sentinel, self.pubsub_client], [], [], self.heartbeat_period.seconds
             )
             self.beat()
-            if connection.connection in r:
-                connection.connection.execute("SELECT 1")
+            if self.pubsub_client in r:
+                self.pubsub_handle_messages()
                 if self.wakeup_unblock:
                     self.unblock_tasks()
             if self.sentinel in r:
@@ -443,23 +426,24 @@ class PulpcoreWorker:
                         )
                         os.kill(task_process.pid, signal.SIGUSR1)
 
+                if self.cancel_task:
+                    _logger.info(
+                        _("Received signal to cancel current task %s in domain: %s."),
+                        task.pk,
+                        domain.name,
+                    )
+                    cancel_state = TASK_STATES.CANCELED
+                    self.cancel_task = False
+
                 r, w, x = select.select(
-                    [self.sentinel, connection.connection, task_process.sentinel],
+                    [self.sentinel, self.pubsub_client, task_process.sentinel],
                     [],
                     [],
                     self.heartbeat_period.seconds,
                 )
                 self.beat()
-                if connection.connection in r:
-                    connection.connection.execute("SELECT 1")
-                    if self.cancel_task:
-                        _logger.info(
-                            _("Received signal to cancel current task %s in domain: %s."),
-                            task.pk,
-                            domain.name,
-                        )
-                        cancel_state = TASK_STATES.CANCELED
-                        self.cancel_task = False
+                if self.pubsub_client in r:
+                    self.pubsub_handle_messages()
                     if self.wakeup_unblock:
                         self.unblock_tasks()
                 if task_process.sentinel in r:
@@ -503,7 +487,7 @@ class PulpcoreWorker:
             if cancel_state:
                 self.cancel_abandoned_task(task, cancel_state, cancel_reason)
         if task.reserved_resources_record:
-            self.notify_workers(TASK_WAKEUP_UNBLOCK)
+            self.unblock_tasks()
         self.task = None
 
     def handle_unblocked_tasks(self):
@@ -556,18 +540,62 @@ class PulpcoreWorker:
                     unblocked_tasks_stats["longest_unblocked_waiting_time"].seconds
                 )
 
-                self.cursor.execute(f"NOTIFY pulp_worker_metrics_heartbeat, '{str(now)}'")
+                self.pubsub_client.record_worker_metrics(now)
+
+    def pubsub_handle_messages(self):
+        messages = self.pubsub_client.fetch()
+        by_channel = collections.defaultdict(list)
+        for message in messages:
+            by_channel[message.channel].append(message.payload)
+        for channel, channel_messages in by_channel.items():
+            callback = self.pubsub_channel_callback[channel]
+            callback(channel_messages)
+
+    def pubsub_setup(self):
+        def cancellation_callback(messages):
+            for message in messages:
+                if self.task and message == str(self.task.pk):
+                    self.cancel_task = True
+
+        def wakeup_callback(messages):
+            if len(messages) != 1:
+                message = "unknown"
+            else:
+                message = messages[0]
+
+            if message == TASK_WAKEUP_UNBLOCK:
+                # Auxiliary workers don't do this.
+                self.wakeup_unblock = not self.auxiliary
+            elif message == TASK_WAKEUP_HANDLE:
+                self.wakeup_handle = True
+            else:
+                _logger.warn("Unknown wakeup call recieved. Reason: '%s'", message)
+                # We cannot be sure so assume everything happened.
+                self.wakeup_unblock = not self.auxiliary
+                self.wakeup_handle = True
+
+        def metric_callback(messages):
+            message = messages[0]
+            self.last_metric_heartbeat = datetime.fromisoformat(message)
+
+        self.pubsub_client.subscribe(TASK_PUBSUB.WAKEUP_WORKER)
+        self.pubsub_channel_callback[TASK_PUBSUB.WAKEUP_WORKER] = wakeup_callback
+        self.pubsub_client.subscribe(TASK_PUBSUB.CANCEL_TASK)
+        self.pubsub_channel_callback[TASK_PUBSUB.CANCEL_TASK] = cancellation_callback
+        self.pubsub_client.subscribe(TASK_PUBSUB.WORKER_METRICS)
+        self.pubsub_channel_callback[TASK_PUBSUB.WORKER_METRICS] = metric_callback
+
+    def pubsub_teardown(self):
+        self.pubsub_client.close()
 
     def run(self, burst=False):
         with WorkerDirectory(self.name):
             signal.signal(signal.SIGINT, self._signal_handler)
             signal.signal(signal.SIGTERM, self._signal_handler)
             signal.signal(signal.SIGHUP, self._signal_handler)
-            # Subscribe to pgsql channels
-            connection.connection.add_notify_handler(self._pg_notify_handler)
-            self.cursor.execute("LISTEN pulp_worker_cancel")
-            self.cursor.execute("LISTEN pulp_worker_metrics_heartbeat")
+            self.pubsub_setup()
             if burst:
+                self.pubsub_client.unsubscribe(self.pubsub_client.WORKER_WAKEUP)
                 if not self.auxiliary:
                     # Attempt to flush the task queue completely.
                     # Stop iteration if no new tasks were found to unblock.
@@ -575,7 +603,6 @@ class PulpcoreWorker:
                         self.handle_unblocked_tasks()
                 self.handle_unblocked_tasks()
             else:
-                self.cursor.execute("LISTEN pulp_worker_wakeup")
                 while not self.shutdown_requested:
                     # do work
                     if self.shutdown_requested:
@@ -585,7 +612,5 @@ class PulpcoreWorker:
                         break
                     # rest until notified to wakeup
                     self.sleep()
-                self.cursor.execute("UNLISTEN pulp_worker_wakeup")
-            self.cursor.execute("UNLISTEN pulp_worker_metrics_heartbeat")
-            self.cursor.execute("UNLISTEN pulp_worker_cancel")
+            self.pubsub_teardown()
             self.shutdown()

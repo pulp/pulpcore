@@ -12,7 +12,7 @@ from asgiref.sync import sync_to_async
 from gettext import gettext as _
 
 from django.conf import settings
-from django.db import connection, transaction
+from django.db import transaction
 from django.db.models import Model
 from django_guid import get_guid
 from pulpcore.app.apps import MODULE_PLUGIN_VERSIONS
@@ -26,6 +26,7 @@ from pulpcore.constants import (
     TASK_WAKEUP_UNBLOCK,
 )
 from pulpcore.middleware import x_task_diagnostics_var
+from pulpcore.tasking import pubsub
 from pulpcore.tasking.kafka import send_task_notification
 
 _logger = logging.getLogger(__name__)
@@ -44,12 +45,6 @@ def _validate_and_get_resources(resources):
         else:
             raise ValueError(_("Must be (str|Model)"))
     return list(resource_set)
-
-
-def wakeup_worker(reason="unknown"):
-    # Notify workers
-    with connection.connection.cursor() as cursor:
-        cursor.execute("SELECT pg_notify('pulp_worker_wakeup', %s)", (reason,))
 
 
 def execute_task(task):
@@ -283,7 +278,7 @@ def dispatch(
                 task.set_canceling()
                 task.set_canceled(TASK_STATES.CANCELED, "Resources temporarily unavailable.")
     if notify_workers:
-        wakeup_worker(TASK_WAKEUP_UNBLOCK)
+        pubsub.backend.wakeup_worker(reason=TASK_WAKEUP_UNBLOCK)
     return task
 
 
@@ -317,9 +312,8 @@ def cancel_task(task_id):
     # This is the only valid transition without holding the task lock
     task.set_canceling()
     # Notify the worker that might be running that task and other workers to clean up
-    with connection.cursor() as cursor:
-        cursor.execute("SELECT pg_notify('pulp_worker_cancel', %s)", (str(task.pk),))
-        cursor.execute("NOTIFY pulp_worker_wakeup")
+    pubsub.backend.cancel_task(task_pk=task.pk)
+    pubsub.backend.wakeup_worker()
     return task
 
 
