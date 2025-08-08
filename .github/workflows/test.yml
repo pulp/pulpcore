@@ -43,19 +43,19 @@ jobs:
           python-version: "3.11"
 
       - name: "Download plugin package"
-        uses: actions/download-artifact@v5
+        uses: "actions/download-artifact@v4"
         with:
           name: "plugin_package"
           path: "pulpcore/dist/"
 
       - name: "Download API specs"
-        uses: actions/download-artifact@v5
+        uses: "actions/download-artifact@v4"
         with:
           name: "api_spec"
           path: "pulpcore/"
 
       - name: "Download client packages"
-        uses: actions/download-artifact@v5
+        uses: "actions/download-artifact@v4"
         with:
           name: "python-client.tar"
           path: "pulpcore"
@@ -79,7 +79,7 @@ jobs:
       - name: "Install python dependencies"
         run: |
           echo ::group::PYDEPS
-          pip install towncrier twine wheel httpie docker netaddr boto3 'ansible~=11.8.0' mkdocs jq jsonpatch bump-my-version
+          pip install towncrier twine wheel httpie docker netaddr boto3 'ansible~=10.3.0' mkdocs jq jsonpatch bump-my-version
           echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/pulpcore/.ci/assets/httpie/" >> $GITHUB_ENV
           echo ::endgroup::
 
