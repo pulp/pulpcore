@@ -101,11 +101,7 @@ class APIRootRewriteMiddleware:
 class DjangoMetricsMiddleware:
     def __init__(self, get_response):
         self.meter = init_otel_meter("pulp-api")
-        self.request_duration_histogram = self.meter.create_histogram(
-            name="api.request_duration",
-            description="Tracks the duration of HTTP requests",
-            unit="ms",
-        )
+        self._set_histogram(self.meter)
 
         self.get_response = get_response
 
@@ -122,11 +118,18 @@ class DjangoMetricsMiddleware:
         return response
 
     def _set_histogram(self, meter):
-        self.request_duration_histogram = meter.create_histogram(
-            name="api.request_duration",
-            description="Tracks the duration of HTTP requests",
-            unit="ms",
-        )
+        create_histogram_kwargs = {
+            "name": "api.request_duration",
+            "description": "Tracks the duration of HTTP requests",
+            "unit": "ms",
+        }
+
+        if settings.OTEL_PULP_API_HISTOGRAM_BUCKETS:
+            create_histogram_kwargs["explicit_bucket_boundaries_advisory"] = (
+                settings.OTEL_PULP_API_HISTOGRAM_BUCKETS
+            )
+
+        self.request_duration_histogram = meter.create_histogram(**create_histogram_kwargs)
 
     def _process_attributes(self, request, response):
         return {
