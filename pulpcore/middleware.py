@@ -1,5 +1,8 @@
 import time
+import re
+
 from contextvars import ContextVar
+from os import environ
 
 from django.http.response import Http404
 from django.conf import settings
@@ -105,7 +108,28 @@ class DjangoMetricsMiddleware:
 
         self.get_response = get_response
 
+    def _excluded_urls(self, url):
+
+        excluded_urls = environ.get(
+            "OTEL_PYTHON_EXCLUDED_URLS", environ.get("OTEL_PYTHON_DJANGO_EXCLUDED_URLS", "")
+        )
+
+        if excluded_urls:
+            excluded_urls_list = [excluded_url.strip() for excluded_url in excluded_urls.split(",")]
+        else:
+            return False
+
+        exclusion_pattern = "|".join(excluded_urls_list)
+
+        if re.search(exclusion_pattern, url):
+            return True
+
+        return False
+
     def __call__(self, request):
+        if self._excluded_urls(request.build_absolute_uri("?")):
+            return self.get_response(request)
+
         start_time = time.time()
         response = self.get_response(request)
         end_time = time.time()
