@@ -421,6 +421,7 @@ KAFKA_SASL_PASSWORD = None
 
 # opentelemetry settings
 OTEL_ENABLED = False
+OTEL_PULP_API_HISTOGRAM_BUCKETS = []
 
 # Replaces asyncio event loop with uvloop
 UVLOOP_ENABLED = False
@@ -519,6 +520,16 @@ authentication_json_header_openapi_security_scheme_validator = Validator(
     messages={"is_type_of": "{name} must be a dictionary."},
 )
 
+otel_pulp_api_histogram_buckets_validator = Validator(
+    "OTEL_PULP_API_HISTOGRAM_BUCKETS",
+    is_type_of=list,
+    condition=lambda v: all([isinstance(value, float) for value in v]),
+    messages={
+        "is_type_of": "{name} must be a list.",
+        "condition": "All buckets must be declared as a float value",
+    },
+)
+
 
 def otel_middleware_hook(settings):
     data = {"dynaconf_merge": True}
@@ -545,6 +556,7 @@ settings = DjangoDynaconf(
         unknown_algs_validator,
         json_header_auth_validator,
         authentication_json_header_openapi_security_scheme_validator,
+        otel_pulp_api_histogram_buckets_validator,
     ],
     post_hooks=(otel_middleware_hook,),
 )
