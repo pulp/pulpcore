@@ -33,7 +33,7 @@ jobs:
           fetch-depth: 1
           path: "pulpcore"
 
-      - uses: "actions/download-artifact@v4"
+      - uses: actions/download-artifact@v5
         with:
           name: "plugin_package"
           path: "pulpcore/dist/"
@@ -72,7 +72,7 @@ jobs:
           path: "pulpcore"
 
       - name: "Download Python client"
-        uses: "actions/download-artifact@v4"
+        uses: actions/download-artifact@v5
         with:
           name: "python-client.tar"
           path: "pulpcore/"
@@ -117,7 +117,7 @@ jobs:
           path: "pulpcore"
 
       - name: "Download Ruby client"
-        uses: "actions/download-artifact@v4"
+        uses: actions/download-artifact@v5
         with:
           name: "ruby-client.tar"
           path: "pulpcore/"
@@ -130,7 +130,7 @@ jobs:
 
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: "2.6"
+          ruby-version: "2.7"
 
       - name: "Setting secrets"
         run: |

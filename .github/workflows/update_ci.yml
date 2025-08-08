@@ -55,7 +55,7 @@ jobs:
           ../plugin_template/scripts/update_ci.sh
 
       - name: "Create Pull Request for CI files"
-        uses: "peter-evans/create-pull-request@v6"
+        uses: peter-evans/create-pull-request@v7
         id: "create_pr_main"
         with:
           token: "${{ secrets.RELEASE_TOKEN }}"
@@ -86,7 +86,7 @@ jobs:
           ../plugin_template/scripts/update_ci.sh --release
 
       - name: "Create Pull Request for CI files"
-        uses: "peter-evans/create-pull-request@v6"
+        uses: peter-evans/create-pull-request@v7
         id: "create_pr_3_28"
         with:
           token: "${{ secrets.RELEASE_TOKEN }}"
@@ -117,7 +117,7 @@ jobs:
           ../plugin_template/scripts/update_ci.sh --release
 
       - name: "Create Pull Request for CI files"
-        uses: "peter-evans/create-pull-request@v6"
+        uses: peter-evans/create-pull-request@v7
         id: "create_pr_3_39"
         with:
           token: "${{ secrets.RELEASE_TOKEN }}"
@@ -148,7 +148,7 @@ jobs:
           ../plugin_template/scripts/update_ci.sh --release
 
       - name: "Create Pull Request for CI files"
-        uses: "peter-evans/create-pull-request@v6"
+        uses: peter-evans/create-pull-request@v7
         id: "create_pr_3_49"
         with:
           token: "${{ secrets.RELEASE_TOKEN }}"
@@ -179,7 +179,7 @@ jobs:
           ../plugin_template/scripts/update_ci.sh --release
 
       - name: "Create Pull Request for CI files"
-        uses: "peter-evans/create-pull-request@v6"
+        uses: peter-evans/create-pull-request@v7
         id: "create_pr_3_63"
         with:
           token: "${{ secrets.RELEASE_TOKEN }}"
@@ -210,7 +210,7 @@ jobs:
           ../plugin_template/scripts/update_ci.sh --release
 
       - name: "Create Pull Request for CI files"
-        uses: "peter-evans/create-pull-request@v6"
+        uses: peter-evans/create-pull-request@v7
         id: "create_pr_3_73"
         with:
           token: "${{ secrets.RELEASE_TOKEN }}"
@@ -241,7 +241,7 @@ jobs:
           ../plugin_template/scripts/update_ci.sh --release
 
       - name: "Create Pull Request for CI files"
-        uses: "peter-evans/create-pull-request@v6"
+        uses: peter-evans/create-pull-request@v7
         id: "create_pr_3_84"
         with:
           token: "${{ secrets.RELEASE_TOKEN }}"
