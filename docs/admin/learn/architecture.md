@@ -165,3 +165,12 @@ steps:
 The information above is sent to the collector in the form of metrics. Thus, the data is  emitted
 either based on the user interaction with the system or on a regular basis. Consult
 [OpenTelemetry Metrics](https://opentelemetry.io/docs/concepts/signals/metrics/) to learn more.
+
+By default, the API request duration uses the default bucket boundaries from the OpenTelemetry SDK.
+It's possible to override it by setting a list of floats to the `OTEL_PULP_API_HISTOGRAM_BUCKETS`
+setting. For example:
+
+```
+OTEL_PULP_API_HISTOGRAM_BUCKETS = [0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1.0, 2.5, 5.0, 7.5, 10.0]
+```
+
