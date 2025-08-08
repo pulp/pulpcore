@@ -17,12 +17,9 @@ from logging import getLogger
 from pathlib import Path
 
 from cryptography.fernet import Fernet
-from django.core.files.storage import storages
-from django.conf import global_settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db import connection
-from pulpcore.app.loggers import deprecation_logger
-from dynaconf import DjangoDynaconf, Dynaconf, Validator, get_history
+from dynaconf import DjangoDynaconf, Dynaconf, Validator
 
 from pulpcore import constants
 
@@ -73,16 +70,7 @@ MEDIA_ROOT = str(DEPLOY_ROOT / "media")  # Django 3.1 adds support for pathlib.P
 STATIC_URL = "/assets/"
 STATIC_ROOT = DEPLOY_ROOT / STATIC_URL.strip("/")
 
-# begin compatibility layer for DEFAULT_FILE_STORAGE
-# Remove on pulpcore=3.85 or pulpcore=4.0
-
-# - What is this?
-# We shouldn't use STORAGES or DEFAULT_FILE_STORAGE directly because those are
-# mutually exclusive by django, which constraints users to use whatever we use.
-# This is a hack/workaround to set Pulp's default while still enabling users to choose
-# the legacy or the new storage setting.
-_DEFAULT_FILE_STORAGE = "pulpcore.app.models.storage.FileSystem"
-_STORAGES = {
+STORAGES = {
     "default": {
         "BACKEND": "pulpcore.app.models.storage.FileSystem",
     },
@@ -90,10 +78,6 @@ _STORAGES = {
         "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
 }
-
-setattr(global_settings, "DEFAULT_FILE_STORAGE", _DEFAULT_FILE_STORAGE)
-setattr(global_settings, "STORAGES", _STORAGES)
-# end DEFAULT_FILE_STORAGE deprecation layer
 
 REDIRECT_TO_OBJECT_STORAGE = True
 
@@ -430,19 +414,17 @@ UVLOOP_ENABLED = False
 
 # Validators
 
-storage_keys = ("STORAGES.default.BACKEND", "DEFAULT_FILE_STORAGE")
 storage_validator = (
     Validator("REDIRECT_TO_OBJECT_STORAGE", eq=False)
-    | Validator(*storage_keys, eq="pulpcore.app.models.storage.FileSystem")
-    | Validator(*storage_keys, eq="storages.backends.azure_storage.AzureStorage")
-    | Validator(*storage_keys, eq="storages.backends.s3.S3Storage")
-    | Validator(*storage_keys, eq="storages.backends.s3boto3.S3Boto3Storage")
-    | Validator(*storage_keys, eq="storages.backends.gcloud.GoogleCloudStorage")
+    | Validator("STORAGES.default.BACKEND", eq="pulpcore.app.models.storage.FileSystem")
+    | Validator("STORAGES.default.BACKEND", eq="storages.backends.azure_storage.AzureStorage")
+    | Validator("STORAGES.default.BACKEND", eq="storages.backends.s3.S3Storage")
+    | Validator("STORAGES.default.BACKEND", eq="storages.backends.s3boto3.S3Boto3Storage")
+    | Validator("STORAGES.default.BACKEND", eq="storages.backends.gcloud.GoogleCloudStorage")
 )
 storage_validator.messages["combined"] = (
     "'REDIRECT_TO_OBJECT_STORAGE=True' is only supported with the local file, S3, GCP or Azure "
-    "storage backend configured in STORAGES['default']['BACKEND'] "
-    "(deprecated DEFAULT_FILE_STORAGE)."
+    "storage backend configured in STORAGES['default']['BACKEND']."
 )
 
 cache_enabled_validator = Validator("CACHE_ENABLED", eq=True)
@@ -548,21 +530,6 @@ settings = DjangoDynaconf(
     ],
     post_hooks=(otel_middleware_hook,),
 )
-
-# begin compatibility layer for DEFAULT_FILE_STORAGE
-# Remove on pulpcore=3.85 or pulpcore=4.0
-using_deprecated_storage_settings = len(get_history(settings, key="DEFAULT_FILE_STORAGE")) > 1
-if using_deprecated_storage_settings:
-    deprecation_logger.warning(
-        "[deprecation] DEFAULT_FILE_STORAGE will be removed in pulpcore 3.85. "
-        "Learn how to upgrade to STORAGES:\n"
-        "https://discourse.pulpproject.org/t/"
-        "action-required-upgrade-your-storage-settings-before-pulpcore-3-85/2072/2"
-    )
-# Ensures the cached property storage.backends uses the the right value
-storages._backends = settings.STORAGES.copy()
-storages.backends
-# end compatibility layer
 
 _logger = getLogger(__name__)
 

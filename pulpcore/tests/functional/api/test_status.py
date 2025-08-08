@@ -97,6 +97,27 @@ def test_post_authenticated(
     assert response.status == 405
 
 
+def test_domain_has_settings(domain_factory):
+    domain = domain_factory()
+    print(f"{domain.name=}")
+    # print(domain.storage_settings)
+    assert domain.storage_settings
+
+
+def test_upload_artifact_s3(tmp_path, pulpcore_bindings, domain_factory):
+    size = 32
+    import os
+    import uuid
+
+    domain = domain_factory()
+
+    temp_file = tmp_path / str(uuid.uuid4())
+    temp_file.write_bytes(os.urandom(size))
+    filename = str(temp_file)
+    response = pulpcore_bindings.ArtifactsApi.create(filename, pulp_domain=domain.name)
+    assert response
+
+
 @pytest.mark.parallel
 def test_storage_per_domain(
     pulpcore_bindings,

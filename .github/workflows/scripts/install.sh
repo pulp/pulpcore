@@ -11,7 +11,7 @@
 cd "$(dirname "$(realpath -e "$0")")"/../../..
 REPO_ROOT="$PWD"
 
-set -euv
+# set -euv
 
 source .github/workflows/scripts/utils.sh
 
@@ -110,7 +110,7 @@ minio_access_key: "'$MINIO_ACCESS_KEY'"\
 minio_secret_key: "'$MINIO_SECRET_KEY'"\
 pulp_scenario_settings: {"DISABLED_authentication_backends": "@merge django.contrib.auth.backends.RemoteUserBackend", "DISABLED_authentication_json_header": "HTTP_X_RH_IDENTITY", "DISABLED_authentication_json_header_jq_filter": ".identity.user.username", "DISABLED_authentication_json_header_openapi_security_scheme": {"description": "External OAuth integration", "flows": {"clientCredentials": {"scopes": {"api.console": "grant_access_to_pulp"}, "tokenUrl": "https://your-identity-provider/token/issuer"}}, "type": "oauth2"}, "DISABLED_rest_framework__default_authentication_classes": "@merge pulpcore.app.authentication.JSONHeaderRemoteAuthentication", "domain_enabled": true, "hide_guarded_distributions": true, "rest_framework__default_permission_classes": ["pulpcore.plugin.access_policy.AccessPolicyFromSettings"], "spectacular_settings__oas_version": "3.0.3"}\
 pulp_scenario_env: {}\
-test_storages_compat_layer: true\
+test_storages_compat_layer: false\
 ' vars/main.yaml
   export PULP_API_ROOT="/rerouted/djnd/"
 fi
@@ -139,6 +139,23 @@ cp ~/.config/pulp/cli.toml "${REPO_ROOT}/../pulp-cli/tests/cli.toml"
 
 ansible-playbook build_container.yaml
 ansible-playbook start_container.yaml
+
+cd ../../
+# Developers should be able to reproduce the containers with this config
+echo "CI vars:"
+tail -v -n +1 .ci/ansible/vars/main.yaml
+
+# Developers often want to know the final pulp config
+echo "PULP CONFIG:"
+tail -v -n +1 .ci/ansible/settings/settings.* ~/.config/pulp_smash/settings.json
+
+echo "Containerfile:"
+tail -v -n +1 .ci/ansible/Containerfile
+
+echo "Constraints Files:"
+# The need not even exist.
+tail -v -n +1  ../*/*constraints.txt || true
+
 
 # .config needs to be accessible by the pulp user in the container, but some
 # files will likely be modified on the host by post/pre scripts.
