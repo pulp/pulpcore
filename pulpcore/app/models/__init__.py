@@ -69,7 +69,7 @@ from .repository import (
     RepositoryVersionContentDetails,
 )
 
-from .status import ApiAppStatus, ContentAppStatus
+from .status import AppStatus, ApiAppStatus, ContentAppStatus
 
 from .task import (
     CreatedResource,

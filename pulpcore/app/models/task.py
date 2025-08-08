@@ -33,6 +33,7 @@ _logger = logging.getLogger(__name__)
 class Worker(BaseAppStatus):
     """
     Represents a worker
+    Deprecated, to be removed with 3.87.
     """
 
     APP_TTL = timedelta(seconds=settings.WORKER_TTL)
