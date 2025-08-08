@@ -154,6 +154,11 @@ steps:
   OpenTelemetry Collector instance (e.g.,`http://otel-collector:4318`).
 - Set the `OTEL_EXPORTER_OTLP_PROTOCOL` environment variable to `http/protobuf`.
 
+Pulp's telemetry is built on top of `OpenTelemetry`'s standards, so it will respect its well-known
+environment variables to configure it. For example, you can exclude some URLs from the telemetry by
+setting the `OTEL_PYTHON_EXCLUDED_URLS` environment variable. For more details, please have a look
+at the official [OpenTelemetry Python documentation](https://opentelemetry-python.readthedocs.io).
+
 
 **At the moment, the following data is recorded by Pulp:**
 
