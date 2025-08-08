@@ -20,7 +20,12 @@ def pulpcore_random_file(tmp_path):
 
 def _do_upload_valid_attrs(pulpcore_bindings, file, data):
     """Upload a file with the given attributes."""
-    artifact = pulpcore_bindings.ArtifactsApi.create(str(file), **data)
+    # Create or get artifact if it already exists
+    try:
+        artifact = pulpcore_bindings.ArtifactsApi.create(str(file), **data)
+    except pulpcore_bindings.ApiException:
+        artifact = pulpcore_bindings.ArtifactsApi.list(sha256=data.get("sha256")).results[0]
+
     # assumes ALLOWED_CONTENT_CHECKSUMS does NOT contain "md5"
     assert artifact.md5 is None, "MD5 {}".format(artifact.md5)
     read_artifact = pulpcore_bindings.ArtifactsApi.read(artifact.pulp_href)
