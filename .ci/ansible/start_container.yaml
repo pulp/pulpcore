@@ -25,6 +25,9 @@
         src: smash-config.json
         dest: ~/.config/pulp_smash/settings.json
 
+    - name: "Stop here for debugging"
+      meta: end_play
+
     - name: "Setup docker networking"
       docker_network:
         name: pulp_ci_bridge

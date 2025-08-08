@@ -11,7 +11,7 @@
 cd "$(dirname "$(realpath -e "$0")")"/../../..
 REPO_ROOT="$PWD"
 
-set -euv
+# set -euv
 
 source .github/workflows/scripts/utils.sh
 
@@ -139,6 +139,23 @@ cp ~/.config/pulp/cli.toml "${REPO_ROOT}/../pulp-cli/tests/cli.toml"
 
 ansible-playbook build_container.yaml
 ansible-playbook start_container.yaml
+
+cd ../../
+# Developers should be able to reproduce the containers with this config
+echo "CI vars:"
+tail -v -n +1 .ci/ansible/vars/main.yaml
+
+# Developers often want to know the final pulp config
+echo "PULP CONFIG:"
+tail -v -n +1 .ci/ansible/settings/settings.* ~/.config/pulp_smash/settings.json
+
+echo "Containerfile:"
+tail -v -n +1 .ci/ansible/Containerfile
+
+echo "Constraints Files:"
+# The need not even exist.
+tail -v -n +1  ../*/*constraints.txt || true
+
 
 # .config needs to be accessible by the pulp user in the container, but some
 # files will likely be modified on the host by post/pre scripts.
