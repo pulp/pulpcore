@@ -1,3 +1,0 @@
-Removed support for DEFAULT_FILE_STORAGE and it's corresponding storage options.
-Use STORAGES instead:
-<https://pulpproject.org/pulpcore/docs/admin/reference/settings/#storages>
