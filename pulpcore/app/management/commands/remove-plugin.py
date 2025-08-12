@@ -11,7 +11,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.management import BaseCommand, call_command, CommandError
 
 from pulpcore.app.apps import pulp_plugin_configs
-from pulpcore.app.models import AccessPolicy, ContentAppStatus, Worker
+from pulpcore.app.models import AccessPolicy, AppStatus
 from pulpcore.app.models.role import Role
 from pulpcore.app.util import get_view_urlpattern
 
@@ -53,10 +53,7 @@ class Command(BaseCommand):
             "Checking if Pulp services are running, it can take up to {}s...".format(waiting_time)
         )
         while is_pulp_running and (time.time() - check_started) < waiting_time:
-            is_pulp_running = (
-                ContentAppStatus.objects.online().exists()
-                or Worker.objects.online_workers().exists()
-            )
+            is_pulp_running = AppStatus.objects.online().exists()
             time.sleep(2)
 
         if is_pulp_running:

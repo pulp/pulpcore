@@ -231,25 +231,6 @@ def test_retrieve_task_with_minimal_fields(task, bindings_cfg):
 
 
 @pytest.mark.parallel
-def test_retrieve_task_using_invalid_worker(pulpcore_bindings):
-    """Expects to raise an exception when using invalid worker value as filter."""
-
-    with pytest.raises(ApiException) as ctx:
-        pulpcore_bindings.TasksApi.list(worker=str(uuid4()))
-
-    assert ctx.value.status == 400
-
-
-@pytest.mark.parallel
-def test_retrieve_task_using_valid_worker(task, pulpcore_bindings):
-    """Expects to retrieve a task using a valid worker URI as filter."""
-
-    response = pulpcore_bindings.TasksApi.list(worker=task.worker)
-
-    assert response.results and response.count
-
-
-@pytest.mark.parallel
 def test_retrieve_task_using_valid_date(task, pulpcore_bindings):
     """Expects to retrieve a task using a valid date."""
 
@@ -276,22 +257,6 @@ def test_search_task_using_an_invalid_name(pulpcore_bindings):
     search_results = pulpcore_bindings.TasksApi.list(name=str(uuid4()))
 
     assert not search_results.results and not search_results.count
-
-
-@pytest.mark.parallel
-def test_filter_tasks_using_worker__in_filter(pulpcore_bindings, dispatch_task, monitor_task):
-    task1_href = dispatch_task("pulpcore.app.tasks.test.sleep", args=(0,))
-    task2_href = dispatch_task("pulpcore.app.tasks.test.sleep", args=(0,))
-
-    task1 = monitor_task(task1_href)
-    task2 = monitor_task(task2_href)
-
-    search_results = pulpcore_bindings.TasksApi.list(worker__in=(task1.worker, task2.worker))
-
-    tasks_hrefs = [task.pulp_href for task in search_results.results]
-
-    assert task1_href in tasks_hrefs
-    assert task2_href in tasks_hrefs
 
 
 @pytest.mark.parallel
@@ -487,7 +452,6 @@ class TestImmediateTaskWithNoResource:
         )
         task = pulpcore_bindings.TasksApi.read(task_href)
         assert task.state == "completed"
-        assert task.worker is None
 
     @pytest.mark.parallel
     def test_executes_on_api_worker_when_no_async(
@@ -519,7 +483,7 @@ class TestImmediateTaskWithNoResource:
             "pulpcore.app.tasks.test.asleep", args=(GT_TIMEOUT,), immediate=True
         )
         task = pulpcore_bindings.TasksApi.read(task_href)
-        assert task.worker is None
+        assert task.state == "failed"
         assert "task timed out after" in task.error["description"]
 
 
@@ -555,7 +519,7 @@ class TestImmediateTaskWithBlockedResource:
         """
         GIVEN an async task requiring busy resources
         WHEN dispatching a task as immediate
-        THEN the task completes with a worker
+        THEN the task returns as waiting first
         """
         COMMON_RESOURCE = str(uuid4())
         with resource_blocker(exclusive_resources=[COMMON_RESOURCE]):
@@ -565,9 +529,10 @@ class TestImmediateTaskWithBlockedResource:
                 immediate=True,
                 exclusive_resources=[COMMON_RESOURCE],
             )
+            task = pulpcore_bindings.TasksApi.read(task_href)
+            assert task.state == "waiting"
         task = monitor_task(task_href)
         assert task.state == "completed"
-        assert task.worker is not None
 
     @pytest.mark.parallel
     def test_throws_when_non_deferrable(
@@ -589,7 +554,6 @@ class TestImmediateTaskWithBlockedResource:
             )
             task = pulpcore_bindings.TasksApi.read(task_href)
             assert task.state == "canceled"
-            assert task.worker is None
             assert "Resources temporarily unavailable." in task.error["reason"]
 
     @pytest.mark.parallel

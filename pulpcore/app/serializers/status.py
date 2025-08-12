@@ -2,11 +2,21 @@ from gettext import gettext as _
 
 from rest_framework import serializers
 
-from pulpcore.app.serializers.task import (
-    ApiAppStatusSerializer,
-    ContentAppStatusSerializer,
-    WorkerSerializer,
-)
+from pulpcore.app.models import AppStatus
+
+
+class AppStatusSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(help_text=_("The name of the worker."), read_only=True)
+    last_heartbeat = serializers.DateTimeField(
+        help_text=_("Timestamp of the last time the worker talked to the service."), read_only=True
+    )
+    versions = serializers.HStoreField(
+        help_text=_("Versions of the components installed."), read_only=True
+    )
+
+    class Meta:
+        model = AppStatus
+        fields = ("name", "last_heartbeat", "versions")
 
 
 class VersionSerializer(serializers.Serializer):
@@ -88,7 +98,7 @@ class StatusSerializer(serializers.Serializer):
 
     versions = VersionSerializer(help_text=_("Version information of Pulp components"), many=True)
 
-    online_workers = WorkerSerializer(
+    online_workers = AppStatusSerializer(
         help_text=_(
             "List of online workers known to the application. An online worker is actively "
             "heartbeating and can respond to new work."
@@ -96,7 +106,7 @@ class StatusSerializer(serializers.Serializer):
         many=True,
     )
 
-    online_api_apps = ApiAppStatusSerializer(
+    online_api_apps = AppStatusSerializer(
         help_text=_(
             "List of online api apps known to the application. An online api app "
             "is actively heartbeating and can serve the rest api to clients."
@@ -104,7 +114,7 @@ class StatusSerializer(serializers.Serializer):
         many=True,
     )
 
-    online_content_apps = ContentAppStatusSerializer(
+    online_content_apps = AppStatusSerializer(
         help_text=_(
             "List of online content apps known to the application. An online content app "
             "is actively heartbeating and can serve data to clients."

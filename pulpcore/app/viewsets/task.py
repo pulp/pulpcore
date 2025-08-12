@@ -12,11 +12,11 @@ from rest_framework.serializers import DictField, URLField, ValidationError
 
 from pulpcore.filters import BaseFilterSet
 from pulpcore.app.models import (
+    AppStatus,
     ProfileArtifact,
     Task,
     TaskGroup,
     TaskSchedule,
-    Worker,
     CreatedResource,
     RepositoryVersion,
 )
@@ -48,6 +48,7 @@ from pulpcore.app.role_util import get_objects_for_user
 
 class TaskFilter(BaseFilterSet):
     created_resources = CreatedResourcesFilter()
+    worker = filters.CharFilter(method="worker_filter")
     # Non model field filters
     reserved_resources = ReservedResourcesFilter(exclusive=True, shared=True)
     reserved_resources__in = ReservedResourcesInFilter(exclusive=True, shared=True)
@@ -55,6 +56,13 @@ class TaskFilter(BaseFilterSet):
     exclusive_resources__in = ReservedResourcesInFilter(exclusive=True, shared=False)
     shared_resources = ReservedResourcesFilter(exclusive=False, shared=True)
     shared_resources__in = ReservedResourcesInFilter(exclusive=False, shared=True)
+
+    def worker_filter(self, queryset, name, value):
+        # The worker field on tasks is no longer used.
+        if value is None:
+            return queryset
+        else:
+            return queryset.none()
 
     class Meta:
         model = Task
@@ -354,14 +362,14 @@ class WorkerFilter(BaseFilterSet):
     missing = filters.BooleanFilter(method="filter_missing")
 
     class Meta:
-        model = Worker
+        model = AppStatus
         fields = {
             "name": NAME_FILTER_OPTIONS,
             "last_heartbeat": DATETIME_FILTER_OPTIONS,
         }
 
     def filter_online(self, queryset, name, value):
-        online_workers = Worker.objects.online()
+        online_workers = AppStatus.objects.online()
 
         if value:
             return queryset.filter(pk__in=online_workers)
@@ -369,7 +377,7 @@ class WorkerFilter(BaseFilterSet):
             return queryset.exclude(pk__in=online_workers)
 
     def filter_missing(self, queryset, name, value):
-        missing_workers = Worker.objects.missing()
+        missing_workers = AppStatus.objects.missing()
 
         if value:
             return queryset.filter(pk__in=missing_workers)
@@ -378,7 +386,8 @@ class WorkerFilter(BaseFilterSet):
 
 
 class WorkerViewSet(NamedModelViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin):
-    queryset = Worker.objects.all()
+    queryset = AppStatus.objects.filter(app_type="worker")
+    pulp_model_alias = "Worker"
     serializer_class = WorkerSerializer
     endpoint_name = "workers"
     http_method_names = ["get", "options"]

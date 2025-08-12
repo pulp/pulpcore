@@ -198,34 +198,6 @@ class TaskCancelSerializer(serializers.Serializer):
         fields = ("state",)
 
 
-class ApiAppStatusSerializer(ModelSerializer):
-    name = serializers.CharField(help_text=_("The name of the worker."), read_only=True)
-    last_heartbeat = serializers.DateTimeField(
-        help_text=_("Timestamp of the last time the worker talked to the service."), read_only=True
-    )
-    versions = serializers.HStoreField(
-        help_text=_("Versions of the components installed."), read_only=True
-    )
-
-    class Meta:
-        model = models.ApiAppStatus
-        fields = ("name", "last_heartbeat", "versions")
-
-
-class ContentAppStatusSerializer(ModelSerializer):
-    name = serializers.CharField(help_text=_("The name of the worker."), read_only=True)
-    last_heartbeat = serializers.DateTimeField(
-        help_text=_("Timestamp of the last time the worker talked to the service."), read_only=True
-    )
-    versions = serializers.HStoreField(
-        help_text=_("Versions of the components installed."), read_only=True
-    )
-
-    class Meta:
-        model = models.ContentAppStatus
-        fields = ("name", "last_heartbeat", "versions")
-
-
 class WorkerSerializer(ModelSerializer):
     pulp_href = IdentityField(view_name="workers-detail")
 
@@ -246,7 +218,7 @@ class WorkerSerializer(ModelSerializer):
     )
 
     class Meta:
-        model = models.Worker
+        model = models.AppStatus
         fields = ModelSerializer.Meta.fields + (
             "name",
             "last_heartbeat",
