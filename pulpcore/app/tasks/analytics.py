@@ -19,8 +19,7 @@ from google.protobuf.json_format import MessageToJson
 from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app.models import SystemID, Group, Domain, AccessPolicy
 from pulpcore.app.models.role import Role
-from pulpcore.app.models.status import ContentAppStatus
-from pulpcore.app.models.task import Worker
+from pulpcore.app.models.status import AppStatus
 from pulpcore.app.protobuf.analytics_pb2 import Analytics
 
 
@@ -79,13 +78,13 @@ async def _versions_data(analytics):
 
 
 async def _online_content_apps_data(analytics):
-    online_content_apps_qs = ContentAppStatus.objects.online()
+    online_content_apps_qs = AppStatus.objects.online().filter(app_type="content")
     analytics.online_content_apps.processes = await online_content_apps_qs.acount()
     analytics.online_content_apps.hosts = await _num_hosts(online_content_apps_qs)
 
 
 async def _online_workers_data(analytics):
-    online_workers_qs = Worker.objects.online()
+    online_workers_qs = AppStatus.objects.online().filter(app_type="worker")
     analytics.online_workers.processes = await online_workers_qs.acount()
     analytics.online_workers.hosts = await _num_hosts(online_workers_qs)
 
