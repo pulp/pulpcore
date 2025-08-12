@@ -3,8 +3,6 @@ from packaging.version import parse as parse_version
 from django.conf import settings
 from django.utils import timezone
 from django.db.migrations.operations.base import Operation
-from django.db.models import F
-from django.db.models.functions import Now
 
 
 class RequireVersion(Operation):
@@ -58,7 +56,10 @@ class RequireVersion(Operation):
 
         try:
             AppStatus = from_state.apps.get_model("core", "AppStatus")
-            for worker in AppStatus.objects.filter(F("last_heartbeat") + F("ttl") >= Now()):
+        except LookupError:
+            pass
+        else:
+            for worker in AppStatus.objects.all():
                 present_version = worker.versions.get(self.plugin)
                 if present_version is not None and parse_version(present_version) < needed_version:
                     errors.append(
@@ -67,8 +68,6 @@ class RequireVersion(Operation):
                     )
 
             found_either_table = True
-        except LookupError:
-            pass
 
         assert found_either_table
         if errors:
