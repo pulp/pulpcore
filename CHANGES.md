@@ -8,6 +8,28 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.85.1 (2025-08-12) {: #3.85.1 }
+
+### REST API {: #3.85.1-rest-api }
+
+#### Bugfixes {: #3.85.1-rest-api-bugfix }
+
+- Fixed a bug that prevents migrations from running.
+
+### Plugin API {: #3.85.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.85.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.85.0 (2025-08-12) {: #3.85.0 }
 
 ### REST API {: #3.85.0-rest-api }
