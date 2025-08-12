@@ -61,16 +61,7 @@ class _AppStatusManager(AppStatusManager):
         if self._current_app_status is not None:
             raise RuntimeError("There is already an app status in this process.")
 
-        if app_type == "api":
-            old_obj = ApiAppStatus.objects.create(**kwargs)
-        elif app_type == "worker":
-            from pulpcore.app.models import Worker
-
-            old_obj = Worker.objects.create(**kwargs)
-        else:
-            raise NotImplementedError(f"Invalid app_type: {app_type}")
         obj = super().create(app_type=app_type, **kwargs)
-        obj._old_status = old_obj
         self._current_app_status = obj
         return obj
 
@@ -78,12 +69,7 @@ class _AppStatusManager(AppStatusManager):
         if self._current_app_status is not None:
             raise RuntimeError("There is already an app status in this process.")
 
-        if app_type == "content":
-            old_obj = await ContentAppStatus.objects.acreate(**kwargs)
-        else:
-            raise NotImplementedError(f"Invalid app_type: {app_type}")
         obj = await super().acreate(app_type=app_type, **kwargs)
-        obj._old_status = old_obj
         self._current_app_status = obj
         return obj
 
@@ -133,13 +119,6 @@ class AppStatus(BaseModel):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.ttl = timedelta(seconds=self._APP_TTL[self.app_type])
-        self._old_status = None
-
-    def delete(self, *args, **kwargs):
-        # adelete will call into this, so we should not replicate that one here.
-        if self._old_status is not None:
-            self._old_status.delete(*args, **kwargs)
-        super().delete(*args, **kwargs)
 
     @property
     def online(self) -> bool:
@@ -171,7 +150,6 @@ class AppStatus(BaseModel):
             ValueError: When the model instance has never been saved before. This method can
                 only update an existing database record.
         """
-        self._old_status.save_heartbeat()
         self.save(update_fields=["last_heartbeat"])
 
     async def asave_heartbeat(self):
@@ -184,7 +162,6 @@ class AppStatus(BaseModel):
             ValueError: When the model instance has never been saved before. This method can
                 only update an existing database record.
         """
-        await self._old_status.asave_heartbeat()
         await self.asave(update_fields=["last_heartbeat"])
 
     @property

@@ -11,8 +11,7 @@ from collections import namedtuple
 
 from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app.models.content import Artifact
-from pulpcore.app.models.status import ApiAppStatus, ContentAppStatus
-from pulpcore.app.models.task import Worker
+from pulpcore.app.models.status import AppStatus
 from pulpcore.app.serializers.status import StatusSerializer
 from pulpcore.app.redis_connection import get_redis_connection
 from pulpcore.app.util import get_domain
@@ -79,9 +78,9 @@ class StatusView(APIView):
 
         db_status = {"connected": self._get_db_conn_status()}
 
-        online_workers = Worker.objects.online()
-        online_api_apps = ApiAppStatus.objects.online()
-        online_content_apps = ContentAppStatus.objects.online()
+        online_workers = AppStatus.objects.online().filter(app_type="worker")
+        online_api_apps = AppStatus.objects.online().filter(app_type="api")
+        online_content_apps = AppStatus.objects.online().filter(app_type="content")
 
         content_settings = {
             "content_origin": settings.CONTENT_ORIGIN,
@@ -113,7 +112,7 @@ class StatusView(APIView):
             bool: True if there's a db connection. False otherwise.
         """
         try:
-            Worker.objects.count()
+            AppStatus.objects.count()
         except Exception:
             _logger.exception(_("Cannot connect to database during status check."))
             return False

@@ -260,7 +260,7 @@ class PulpSchemaGenerator(SchemaGenerator):
             prefix (str): Optional prefix to add to the slug
             pulp_model_alias (str): Optional model name to use instead of model.__name__
         Returns:
-            str: *pulp_href where * is the model name in all lower case letters
+            str: '{model_name_snake_case}_href'
         """
         app_label = model._meta.app_label
         model_name = pulp_model_alias or model.__name__
