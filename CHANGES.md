@@ -8,6 +8,81 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.85.1 (2025-08-12) {: #3.85.1 }
+
+### REST API {: #3.85.1-rest-api }
+
+#### Bugfixes {: #3.85.1-rest-api-bugfix }
+
+- Fixed a bug that prevents migrations from running.
+
+### Plugin API {: #3.85.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.85.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.85.0 (2025-08-12) {: #3.85.0 }
+
+### REST API {: #3.85.0-rest-api }
+
+#### Features {: #3.85.0-rest-api-feature }
+
+- Added the ability to configure the openapi schema for remote user authentication via `REMOTE_USER_OPENAPI_SECURITY_SCHEME`.
+  Its type defaults to "mutualTLS" for cert based authentication.
+  [#5437](https://github.com/pulp/pulpcore/issues/5437)
+- Added the vulnerability report data model.
+  [#6773](https://github.com/pulp/pulpcore/issues/6773)
+- Added a new table to track all app status in a common place.
+
+#### Bugfixes {: #3.85.0-rest-api-bugfix }
+
+- Made a failure to update the heartbeat catastrophic, so we can actually rely on workers that claim to be "online".
+  [#heartbeat](https://github.com/pulp/pulpcore/issues/heartbeat)
+- Redirect checkpoint URLs without a trailing slash to add the slash.
+  [#6812](https://github.com/pulp/pulpcore/issues/6812)
+- Fixed worker emitting logs with wrong task's domain names.
+  [#6818](https://github.com/pulp/pulpcore/issues/6818)
+
+#### Removals {: #3.85.0-rest-api-removal }
+
+- Bumped the minimum required python version to 3.11.
+  [#6262](https://github.com/pulp/pulpcore/issues/6262)
+- Removed support for DEFAULT_FILE_STORAGE and it's corresponding storage options.
+  Use STORAGES instead:
+  <https://pulpproject.org/pulpcore/docs/admin/reference/settings/#storages>
+  [#6807](https://github.com/pulp/pulpcore/issues/6807)
+- Switch OpenAPI specification to use version 3.1.
+
+### Plugin API {: #3.85.0-plugin-api }
+
+#### Removals {: #3.85.0-plugin-api-removal }
+
+- Purged migrations that were squashed before.
+  Plugins need to rebase their migrations onto "core:0091_systemid".
+  Removed `BaseDistribution`.
+
+### Pulp File {: #3.85.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.0-pulp-cert-guard }
+
+#### Features {: #3.85.0-pulp-cert-guard-feature }
+
+- Replaced unmaintained rhsm `check_path` with local replacement. Dropped the optional dependency on `python-rhsm`.
+  [#6195](https://github.com/pulp/pulpcore/issues/6195)
+
+---
+
 ## 3.84.0 (2025-07-30) {: #3.84.0 }
 
 ### REST API {: #3.84.0-rest-api }
