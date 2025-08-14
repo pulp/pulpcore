@@ -89,7 +89,6 @@ pulp_settings_s3:
   hide_guarded_distributions: true
   rest_framework__default_permission_classes:
   - pulpcore.plugin.access_policy.AccessPolicyFromSettings
-  spectacular_settings__oas_version: 3.0.3
 pydocstyle: true
 release_email: pulp-infra@redhat.com
 release_user: pulpbot

@@ -328,7 +328,6 @@ CACHE_SETTINGS = {
 REMOTE_CONTENT_FETCH_FAILURE_COOLDOWN = 5 * 60  # 5 minutes
 
 SPECTACULAR_SETTINGS = {
-    "OAS_VERSION": "3.1.1",
     "SERVE_URLCONF": ROOT_URLCONF,
     "DEFAULT_GENERATOR_CLASS": "pulpcore.openapi.PulpSchemaGenerator",
     "DEFAULT_SCHEMA_CLASS": "pulpcore.openapi.PulpAutoSchema",
