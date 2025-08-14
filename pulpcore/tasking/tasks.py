@@ -8,7 +8,6 @@ import sys
 import traceback
 import tempfile
 import threading
-from asgiref.sync import sync_to_async
 from gettext import gettext as _
 
 from django.conf import settings
@@ -17,7 +16,11 @@ from django.db.models import Model
 from django_guid import get_guid
 from pulpcore.app.apps import MODULE_PLUGIN_VERSIONS
 from pulpcore.app.models import Task, TaskGroup
-from pulpcore.app.util import current_task, get_domain, get_prn, deprecation_logger
+from pulpcore.app.util import (
+    current_task,
+    get_domain,
+    get_prn,
+)
 from pulpcore.constants import (
     TASK_FINAL_STATES,
     TASK_INCOMPLETE_STATES,
@@ -81,19 +84,11 @@ def _execute_task(task):
         immediate = task.immediate
         is_coroutine_fn = asyncio.iscoroutinefunction(func)
 
-        if not is_coroutine_fn:
-            if immediate:
-                deprecation_logger.warning(
-                    "Immediate tasks must be coroutine functions. "
-                    "Support for non-coroutine immediate tasks will be dropped "
-                    "in pulpcore 3.85."
-                )
-                func = sync_to_async(func)
-                is_coroutine_fn = True
-            else:
-                func(*args, **kwargs)
+        if immediate and not is_coroutine_fn:
+            raise ValueError("Immediate tasks must be async functions.")
 
         if is_coroutine_fn:
+            # both regular and immediate tasks can be coroutines, but only immediate must timeout
             _logger.debug("Task is coroutine %s", task.pk)
             coro = func(*args, **kwargs)
             if immediate:
@@ -110,6 +105,8 @@ def _execute_task(task):
                         timeout=IMMEDIATE_TIMEOUT,
                     )
                 )
+        else:
+            func(*args, **kwargs)
 
     except Exception:
         exc_type, exc, tb = sys.exc_info()
