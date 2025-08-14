@@ -1,9 +1,28 @@
 # Diagnostics
 
-There is a `TASK_DIAGNOSTICS` setting which, if enabled, provides automatic collection of a number
-of performance diagnostics for all executed tasks. This is intended primarily for developer use as
-some of these diagnostics add significant runtime/memory overhead and therefore should not be
-enabled in production environments (at last not without careful supervision).
+There is a `TASK_DIAGNOSTICS` setting which, if enabled, allows users to request collection of a number
+of performance diagnostics for tasks by submitting an `X-TASK-DIAGNOSTICS` header with their request.
+This is intended primarily for developer use as  some of these diagnostics add significant
+runtime/memory overhead. The header can be submitted using Pulp CLI with the `--header option`. For example:
+
+```bash
+pulp --header X-Task-Diagnostics:memory,pyinstrument rpm repository sync --name foo
+Started background task /api/pulp/default/api/v3/tasks/0198a9c3-5a37-716e-900b-cbdf5399f64f/
+.......Done.
+```
+
+Pulp CLI can also be used to retrieve the URLs for downloading the profiler data.
+
+```bash
+pulp task profile-artifact-urls --href /api/pulp/default/api/v3/tasks/0198a9c3-5a37-716e-900b-cbdf5399f64f/
+{
+  "memory_profile": "https://pulphostname/pulp/content/default/115341ffbc5c32b379142936bd85ab658a83209a0ab03f495d0448bf1f9ffee0/0198a9d6-0680-717c-bed8-c90863b93d5d?expires=1755199643&validate_token=fca7c13e6a93c63086324e42ae63a7ae58da362220c05ac0e1cfe64ce6fc52bd:b346f8fd6846ce8f6e942011e8292c89adc536a306e5c3ca31b8ec9bec894e32",
+  "pyinstrument_profile": "https://pulphostname/pulp/content/default/115341ffbc5c32b379142936bd85ab658a83209a0ab03f495d0448bf1f9ffee0/0198a9d6-069a-78f5-8823-20c87d4de5b8?expires=1755199643&validate_token=f5e288c51cdc50961f62c96ff89b831cc80dbedde8b67f843ab42631f65cd3ae:b96e7c996e1cd59ab22d8b8abdc6f242677f21925729baee5a4dfed60c54ee8a"
+
+}
+```
+
+Eventually these artifacts are removed automatically by orphan cleanup and are no longer accessible.
 
 `TASK_DIAGNOSTICS` is disabled by default.
 
@@ -17,10 +36,6 @@ The following diagnostics are supported currently:
    Dumps a profile which can be processed with `memray`, which shows which lines and functions were
    responsible for the most allocations at the time of peak RSS of the process
 
-When enabled, these are accessed by using HTTP GET requests to the path `${TASK_HREF}profile_artifacts/`
-for the task which is under inspection. The response will contain a set of keys and corresponding URLs
-which provides access to download the artifacts. Eventually these artifacts are removed automatically
-by orphan cleanup and are no longer accessible.
 
 ## Memory Logging
 
@@ -46,7 +61,7 @@ You can plot this with gnuplot by:
 ## Pyinstrument Profiling
 
 If the `pyinstrument` package is installed, a runtime profile of the execution of the task will be
-automatically produced and written to a file.
+produced and written to a file.
 
 When downloaded and opened in a browser, this profile will present an interactive tree showing how
 much time is being spent in various functions relative to the total runtime of the task.
@@ -59,7 +74,7 @@ by tweaking the code manually if required.
 ## Memray Profiling
 
 If the `memray` package is installed, a runtime profile of the execution of the task will be
-automatically produced and written to a file.
+produced and written to a file.
 
 When downloaded and processed using `memray` (see [memray docs]), you can view the details of which
 lines and functions were responsible for the most memory allocations at the time of peak process RSS.
