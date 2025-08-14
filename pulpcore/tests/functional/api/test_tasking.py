@@ -490,22 +490,21 @@ class TestImmediateTaskWithNoResource:
         assert task.worker is None
 
     @pytest.mark.parallel
-    def test_executes_on_api_worker_when_no_async(self, pulpcore_bindings, dispatch_task, capsys):
+    def test_executes_on_api_worker_when_no_async(
+        self, pulpcore_bindings, dispatch_task, monitor_task
+    ):
         """
         GIVEN a task with no resource requirements
         AND the task IS NOT an async function
         WHEN dispatching a task as immediate
-        THEN the task completes with no associated worker
+        THEN the dispatch should throw an error
         """
-        # TODO: on 3.85 this should throw an error
-        task_href = dispatch_task(
-            "pulpcore.app.tasks.test.sleep", args=(LT_TIMEOUT,), immediate=True
-        )
-        stderr_content = capsys.readouterr().err
-        task = pulpcore_bindings.TasksApi.read(task_href)
-        assert task.state == "completed"
-        assert task.worker is None
-        assert "Support for non-coroutine immediate tasks will be dropped" in stderr_content
+        with pytest.raises(PulpTaskError) as ctx:
+            task_href = dispatch_task(
+                "pulpcore.app.tasks.test.sleep", args=(LT_TIMEOUT,), immediate=True
+            )
+            monitor_task(task_href)
+        assert "Immediate tasks must be async functions" in ctx.value.task.error["description"]
 
     @pytest.mark.parallel
     def test_timeouts_on_api_worker(self, pulpcore_bindings, dispatch_task):
