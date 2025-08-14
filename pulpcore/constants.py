@@ -16,6 +16,13 @@ STORAGE_METRICS_LOCK = 72
 TASK_WAKEUP_UNBLOCK = "unblock"
 TASK_WAKEUP_HANDLE = "handle"
 
+#: All valid tasking pubsub channels
+TASK_PUBSUB = SimpleNamespace(
+    WAKEUP_WORKER="pulp_worker_wakeup",
+    CANCEL_TASK="pulp_worker_cancel",
+    WORKER_METRICS="pulp_worker_metrics_heartbeat",
+)
+
 #: All valid task states.
 TASK_STATES = SimpleNamespace(
     WAITING="waiting",
