@@ -13,6 +13,7 @@ from pulpcore.plugin.models import (
 )
 
 from pulp_file.app.models import FilePublication
+from pulp_file.app.serializers import FilePublicationSerializer
 from pulp_file.manifest import Entry, Manifest
 
 
@@ -50,6 +51,10 @@ def publish(manifest, repository_version_pk, checkpoint=False):
                 )
 
         log.info(_("Publication: {publication} created").format(publication=publication.pk))
+
+        publication = FilePublicationSerializer(
+            instance=publication, context={"request": None}
+        ).data
 
         return publication
 

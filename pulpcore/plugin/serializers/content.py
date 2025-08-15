@@ -85,7 +85,7 @@ class UploadSerializerFieldsMixin(Serializer):
 
         data = super().validate(data)
 
-        if "request" in self.context:
+        if self.context.get("request") is not None:
             upload_fields = {
                 field
                 for field in self.Meta.fields
