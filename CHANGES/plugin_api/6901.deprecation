@@ -1,0 +1,2 @@
+Deprecated returning non-JSON-serializable values from tasks.
+Such values will be replaced with `None`, and this workaround will be removed in version 3.100.

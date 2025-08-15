@@ -88,6 +88,10 @@ class TaskSerializer(ModelSerializer):
         help_text=_("A list of resources required by that task."),
         read_only=True,
     )
+    result = serializers.JSONField(
+        read_only=True,
+        help_text=_("The result of this task."),
+    )
 
     def get_created_by(self, obj):
         if task_user_map := self.context.get("task_user_mapping"):
@@ -115,6 +119,7 @@ class TaskSerializer(ModelSerializer):
             "progress_reports",
             "created_resources",
             "reserved_resources_record",
+            "result",
         )
 
 

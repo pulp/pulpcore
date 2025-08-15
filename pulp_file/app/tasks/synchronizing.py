@@ -7,6 +7,7 @@ from urllib.parse import quote, urlparse, urlunparse
 from django.core.files import File
 
 from pulpcore.plugin.models import Artifact, ProgressReport, Remote, PublishedMetadata
+from pulpcore.plugin.serializers import RepositoryVersionSerializer
 from pulpcore.plugin.stages import (
     DeclarativeArtifact,
     DeclarativeContent,
@@ -64,6 +65,9 @@ def synchronize(remote_pk, repository_pk, mirror, url=None):
             publication.save()
 
         log.info(_("Publication: {publication} created").format(publication=publication.pk))
+
+    if rv:
+        rv = RepositoryVersionSerializer(instance=rv, context={"request": None}).data
 
     return rv
 

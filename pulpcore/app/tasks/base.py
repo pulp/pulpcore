@@ -19,7 +19,8 @@ def general_create_from_temp_file(app_label, serializer_name, temp_file_pk, *arg
     context = kwargs.pop("context", {})
     context["pulp_temp_file_pk"] = temp_file_pk
 
-    general_create(app_label, serializer_name, data=data, context=context, *args, **kwargs)
+    data = general_create(app_label, serializer_name, data=data, context=context, *args, **kwargs)
+    return data
 
 
 def general_create(app_label, serializer_name, *args, **kwargs):
@@ -33,6 +34,7 @@ def general_create(app_label, serializer_name, *args, **kwargs):
     data = kwargs.pop("data", None)
 
     context = kwargs.pop("context", {})
+    context.setdefault("request", None)
     serializer_class = get_plugin_config(app_label).named_serializers[serializer_name]
     serializer = serializer_class(data=data, context=context)
 
@@ -42,6 +44,7 @@ def general_create(app_label, serializer_name, *args, **kwargs):
         instance = instance.cast()
     resource = CreatedResource(content_object=instance)
     resource.save()
+    return serializer.data
 
 
 def general_update(instance_id, app_label, serializer_name, *args, **kwargs):
@@ -130,13 +133,17 @@ async def ageneral_update(instance_id, app_label, serializer_name, *args, **kwar
     """
     data = kwargs.pop("data", None)
     partial = kwargs.pop("partial", False)
+    context = kwargs.pop("context", {})
+    context.setdefault("request", None)
+
     serializer_class = get_plugin_config(app_label).named_serializers[serializer_name]
     instance = await serializer_class.Meta.model.objects.aget(pk=instance_id)
     if isinstance(instance, MasterModel):
         instance = await instance.acast()
-    serializer = serializer_class(instance, data=data, partial=partial)
+    serializer = serializer_class(instance, data=data, partial=partial, context=context)
     await sync_to_async(serializer.is_valid)(raise_exception=True)
     await sync_to_async(serializer.save)()
+    return await sync_to_async(lambda: serializer.data)()
 
 
 async def ageneral_delete(instance_id, app_label, serializer_name):

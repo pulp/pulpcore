@@ -2,6 +2,7 @@
 Django models related to the Tasking system
 """
 
+import json
 import logging
 import traceback
 from datetime import timedelta
@@ -114,6 +115,7 @@ class Task(BaseModel, AutoAddObjPermsMixin):
         deferred (models.BooleanField): Whether to allow defer running the task to a
             pulpcore_worker. Both `immediate` and `deferred` cannot both be `False`.
             Defaults to `True`.
+        result (models.JSONField): The result of the task
 
     Relations:
         app_lock (AppStatus): The app holding the lock on this task.
@@ -159,6 +161,8 @@ class Task(BaseModel, AutoAddObjPermsMixin):
 
     immediate = models.BooleanField(default=False, null=True)
     deferred = models.BooleanField(default=True, null=True)
+
+    result = models.JSONField(default=None, null=True, encoder=DjangoJSONEncoder)
 
     def __str__(self):
         return "Task: {name} [{state}]".format(name=self.name, state=self.state)
@@ -229,22 +233,36 @@ class Task(BaseModel, AutoAddObjPermsMixin):
                 )
             )
 
-    def set_completed(self):
+    def set_completed(self, result=None):
         """
         Set this Task to the completed state, save it, and log output in warning cases.
 
         This updates the :attr:`finished_at` and sets the :attr:`state` to :attr:`COMPLETED`.
+        If `result` is provided, the :attr:`result` contains the result of the task.
         """
+        try:
+            json.dumps(result, cls=DjangoJSONEncoder)
+        except (TypeError, ValueError):
+            deprecation_logger.warning(
+                _(
+                    "The result of the {} function is not JSON-serializable and will be "
+                    "replaced with None: {}. This will raise an error in version 3.100."
+                ).format(self.name, result)
+            )
+            result = None
+
         # Only set the state to finished if it's running. This is important for when the task has
         # been canceled, so we don't move the task from canceled to finished.
         finished_at = timezone.now()
         rows = Task.objects.filter(pk=self.pk, state=TASK_STATES.RUNNING).update(
             state=TASK_STATES.COMPLETED,
             finished_at=finished_at,
+            result=result,
         )
         if rows == 1:
             self.state = TASK_STATES.COMPLETED
             self.finished_at = finished_at
+            self.result = result
         else:
             self.refresh_from_db()
             # If the user requested to cancel this task while the worker finished it, we leave it
