@@ -95,7 +95,7 @@ def _execute_task(task):
                 coro = asyncio.wait_for(coro, timeout=IMMEDIATE_TIMEOUT)
             loop = asyncio.get_event_loop()
             try:
-                loop.run_until_complete(coro)
+                result = loop.run_until_complete(coro)
             except asyncio.TimeoutError:
                 _logger.info(
                     "Immediate task %s timed out after %s seconds.", task.pk, IMMEDIATE_TIMEOUT
@@ -106,7 +106,7 @@ def _execute_task(task):
                     )
                 )
         else:
-            func(*args, **kwargs)
+            result = func(*args, **kwargs)
 
     except Exception:
         exc_type, exc, tb = sys.exc_info()
@@ -123,7 +123,7 @@ def _execute_task(task):
         _logger.info("\n".join(traceback.format_list(traceback.extract_tb(tb))))
         send_task_notification(task)
     else:
-        task.set_completed()
+        task.set_completed(result)
         execution_time = task.finished_at - task.started_at
         execution_time_us = int(execution_time.total_seconds() * 1_000_000)  # μs
         _logger.info(

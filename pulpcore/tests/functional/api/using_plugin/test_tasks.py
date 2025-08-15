@@ -169,3 +169,20 @@ def test_reserved_resources_filter(setup_filter_fixture, pulpcore_bindings):
     assert set(h.pulp_href for h in prn_results.results) == task_hrefs
     mixed_results = pulpcore_bindings.TasksApi.list(exclusive_resources__in=[repo_prn, remote_prn])
     assert mixed_results.count == 0
+
+
+def test_task_result(file_bindings, monitor_task):
+    """
+    Test that when performing `general_create` or `ageneral_update`,
+    the result of the task is stored in the `Task.result` field.
+    """
+    # test create
+    body = {"name": "first", "base_path": str(uuid4())}
+    task = monitor_task(file_bindings.DistributionsFileApi.create(body).task)
+    assert task.result["name"] == body["name"]
+
+    # test update
+    dist_href = task.result["pulp_href"]
+    updated_body = {"name": "second", "base_path": str(uuid4())}
+    task_2 = monitor_task(file_bindings.DistributionsFileApi.update(dist_href, updated_body).task)
+    assert task_2.result["name"] == updated_body["name"]
