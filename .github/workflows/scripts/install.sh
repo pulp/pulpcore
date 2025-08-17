@@ -122,6 +122,7 @@ if [ "$TEST" = "azure" ]; then
   sed -i -e '$a azure_test: true\
 pulp_scenario_settings: {"api_root_rewrite_header": "X-API-Root", "content_origin": null, "domain_enabled": true, "rest_framework__default_permission_classes": ["pulpcore.plugin.access_policy.DefaultAccessPolicy"]}\
 pulp_scenario_env: {}\
+test_storages_compat_layer: true\
 ' vars/main.yaml
 fi
 
