@@ -26,10 +26,22 @@ API_ROOT = {{ api_root | repr }}
 {% endfor %}
 {% endif %}
 
-{% if s3_test | default(false) %}
-MEDIA_ROOT: ""
-S3_USE_SIGV4 = True
-{% if test_storages_compat_layer is defined and test_storages_compat_layer %}
+{# =======================================
+Macros for legacy and new storage settings
+========================================== -#}
+
+{%- macro s3_settings(legacy) -%}
+    {%- if legacy %}
+DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+AWS_ACCESS_KEY_ID = "{{ minio_access_key }}"
+AWS_SECRET_ACCESS_KEY = "{{ minio_secret_key }}"
+AWS_S3_REGION_NAME = "eu-central-1"
+AWS_S3_ADDRESSING_STYLE = "path"
+AWS_S3_SIGNATURE_VERSION = "s3v4"
+AWS_STORAGE_BUCKET_NAME = "pulp3"
+AWS_S3_ENDPOINT_URL = "http://minio:9000"
+AWS_DEFAULT_ACL = "@none None"
+    {%- else %}
 STORAGES = {
     "default": {
         "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
@@ -48,22 +60,12 @@ STORAGES = {
       "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
 }
-{% else %}
-DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
-AWS_ACCESS_KEY_ID = "{{ minio_access_key }}"
-AWS_SECRET_ACCESS_KEY = "{{ minio_secret_key }}"
-AWS_S3_REGION_NAME = "eu-central-1"
-AWS_S3_ADDRESSING_STYLE = "path"
-AWS_S3_SIGNATURE_VERSION = "s3v4"
-AWS_STORAGE_BUCKET_NAME = "pulp3"
-AWS_S3_ENDPOINT_URL = "http://minio:9000"
-AWS_DEFAULT_ACL = "@none None"
-{% endif %}
-{% endif %}
+    {%- endif %}
+{%- endmacro -%}
 
-{% if azure_test | default(false) %}
+{%- macro azure_settings(legacy) -%}
+    {%- if legacy %}
 DEFAULT_FILE_STORAGE = "storages.backends.azure_storage.AzureStorage"
-MEDIA_ROOT = ""
 AZURE_ACCOUNT_KEY = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
 AZURE_ACCOUNT_NAME = "devstoreaccount1"
 AZURE_CONTAINER =  "pulp-test"
@@ -71,11 +73,80 @@ AZURE_LOCATION = "pulp3"
 AZURE_OVERWRITE_FILES = True
 AZURE_URL_EXPIRATION_SECS = 120
 AZURE_CONNECTION_STRING = 'DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://ci-azurite:10000/devstoreaccount1;'
-{% endif %}
+    {%- else %}
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.azure_storage.AzureStorage",
+        "OPTIONS": {
+            "account_key": "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==",
+            "account_name": "devstoreaccount1",
+            "location": "pulp3",
+            "azure_container": "pulp-test",
+            "overwrite_files": True,
+            "expiration_secs": 120,
+            "connection_string": "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://ci-azurite:10000/devstoreaccount1;",
+        },
+    },
+    "staticfiles": {
+      "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
+    {%- endif %}
+{%- endmacro -%}
 
-{% if gcp_test | default(false) %}
+{%- macro gcp_settings(legacy) -%}
+    {%- if legacy %}
 DEFAULT_FILE_STORAGE = "storages.backends.gcloud.GoogleCloudStorage"
-MEDIA_ROOT = ""
 GS_BUCKET_NAME = "gcppulp"
 GS_CUSTOM_ENDPOINT = "http://ci-gcp:4443"
+    {%- else %}
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.gcloud.GoogleCloudStorage",
+        "OPTIONS": {
+            "bucket_name": "gcppulp",
+            "custom_endpoint": "http://ci-gcp:4443",
+        },
+    },
+    "staticfiles": {
+      "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
+    {%- endif %}
+{%- endmacro -%}
+
+{#- ==========================================
+Render according to test_storages_compat_layer
+==============================================
+
+Case 1) test_storages_compat_layer is unset
+- All storages render the legacy setting
+- Branches using pulpcore <3.70 must leave this key unset (use legacy)
+
+Case 2) test_storages_compat_layer is True
+- To tests both work, only one setting uses the new storage setting
+- Branches using pulpcore >=3.70,<3.85 must set this key to True (test both)
+
+Case 3) test_storages_compat_layer is False
+- All storages render the new setting
+- Branches using pulpcore >=3.85 must set this key to False (use new)
+-#}
+
+{% if s3_test | default(false) or azure_test | default(false) or gcp_test | default(false)%}
+MEDIA_ROOT=""
 {% endif %}
+{%- if test_storages_compat_layer is not defined -%}
+    {%- if s3_test | default(false) -%}{{ s3_settings(legacy=True) }}{%- endif -%}
+    {%- if azure_test | default(false) -%}{{ azure_settings(legacy=True) }}{%- endif -%}
+    {%- if gcp_test | default(false) -%}{{ gcp_settings(legacy=True) }}{%- endif -%}
+{%- else -%}
+    {%- if test_storages_compat_layer is true -%}
+        {%- if s3_test | default(false) -%}{{ s3_settings(legacy=False) }}{%- endif -%}
+        {%- if azure_test | default(false) -%}{{ azure_settings(legacy=True) }}{%- endif -%}
+        {%- if gcp_test | default(false) -%}{{ gcp_settings(legacy=True) }}{%- endif -%}
+    {%- elif test_storages_compat_layer is false -%}
+        {%- if s3_test | default(false) -%}{{ s3_settings(legacy=False) }}{%- endif -%}
+        {%- if azure_test | default(false) -%}{{ azure_settings(legacy=False) }}{%- endif -%}
+        {%- if gcp_test | default(false) -%}{{ gcp_settings(legacy=False) }}{%- endif -%}
+    {%- endif -%}
+{%- endif -%}
