@@ -116,9 +116,15 @@ def validate_version_paths(version):
     Raises:
         ValueError: If two artifact relative paths overlap
     """
-    paths = ContentArtifact.objects.filter(content__pk__in=version.content).values_list(
-        "relative_path", flat=True
+    # Get unique (path, artifact) pairs to allow artifacts shared across content
+    content_artifacts = (
+        ContentArtifact.objects.filter(content__pk__in=version.content)
+        .values_list("relative_path", "artifact")
+        .distinct()
     )
+
+    paths = [path for path, artifact_id in content_artifacts]
+
     try:
         validate_file_paths(paths)
     except ValueError as e:

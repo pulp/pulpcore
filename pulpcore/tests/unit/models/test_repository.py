@@ -3,7 +3,8 @@ from uuid import uuid4
 
 from itertools import compress
 
-from pulpcore.plugin.models import Content, Repository
+from pulpcore.plugin.models import Artifact, Content, ContentArtifact, Repository
+from pulpcore.plugin.repo_version_utils import validate_version_paths
 
 
 def pks_of_next_qs(qs_generator):
@@ -258,3 +259,85 @@ def test_next_version_with_multiple_versions():
 
     assert repository.next_version == 4
     assert repository.latest_version().number == 1
+
+
+@pytest.mark.django_db
+def test_shared_artifact_same_path_validation(tmp_path):
+    """
+    Test that multiple content units can reference the same artifact with the same
+    relative path without causing validation errors.
+
+    This reproduces scenarios where different content units legitimately share
+    the same artifact (e.g. upstream source files).
+    """
+    # Create a repository
+    repository = Repository.objects.create(name=uuid4())
+    repository.CONTENT_TYPES = [Content]
+
+    # Create a shared artifact using proper test pattern
+    artifact_path = tmp_path / "shared_file.txt"
+    artifact_path.write_text("Shared content data")
+    shared_artifact = Artifact.init_and_validate(str(artifact_path))
+    shared_artifact.save()
+
+    # Create two content units (simulates any content that shares artifacts)
+    content1 = Content.objects.create(pulp_type="core.content")
+    content2 = Content.objects.create(pulp_type="core.content")
+
+    # Both content units reference the same artifact with same path
+    ContentArtifact.objects.create(
+        content=content1, artifact=shared_artifact, relative_path="shared/common_file.txt"
+    )
+    ContentArtifact.objects.create(
+        content=content2, artifact=shared_artifact, relative_path="shared/common_file.txt"
+    )
+
+    # Create a repository version with both content units
+    with repository.new_version() as new_version:
+        new_version.add_content(Content.objects.filter(pk__in=[content1.pk, content2.pk]))
+
+    # This should not raise validation errors with our fix
+    validate_version_paths(new_version)
+
+
+@pytest.mark.django_db
+def test_different_artifacts_same_path_validation_fails(tmp_path):
+    """
+    Test that different artifacts trying to use the same relative path
+    still fail validation (this is a real conflict that should be caught).
+    """
+    # Create a repository
+    repository = Repository.objects.create(name=uuid4())
+    repository.CONTENT_TYPES = [Content]
+
+    # Create two different artifacts using proper test pattern
+    artifact1_path = tmp_path / "artifact1.txt"
+    artifact1_path.write_text("Content of first artifact")
+    artifact1 = Artifact.init_and_validate(str(artifact1_path))
+    artifact1.save()
+
+    artifact2_path = tmp_path / "artifact2.txt"
+    artifact2_path.write_text("Content of second artifact")  # Different content
+    artifact2 = Artifact.init_and_validate(str(artifact2_path))
+    artifact2.save()
+
+    # Create two content units with different artifacts but same path
+    content1 = Content.objects.create(pulp_type="core.content")
+    content2 = Content.objects.create(pulp_type="core.content")
+
+    ContentArtifact.objects.create(
+        content=content1, artifact=artifact1, relative_path="conflicting/file.txt"
+    )
+    ContentArtifact.objects.create(
+        content=content2,
+        artifact=artifact2,
+        relative_path="conflicting/file.txt",  # Same path, different artifact
+    )
+
+    # Create a repository version with both content units
+    with repository.new_version() as new_version:
+        new_version.add_content(Content.objects.filter(pk__in=[content1.pk, content2.pk]))
+
+    # This should raise a validation error due to path conflict
+    with pytest.raises(ValueError, match="Repository version errors"):
+        validate_version_paths(new_version)
