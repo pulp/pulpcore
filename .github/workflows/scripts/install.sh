@@ -105,7 +105,7 @@ if [ "$TEST" = "s3" ]; then
   sed -i -e '$a s3_test: true\
 minio_access_key: "'$MINIO_ACCESS_KEY'"\
 minio_secret_key: "'$MINIO_SECRET_KEY'"\
-pulp_scenario_settings: {"DISABLED_authentication_backends": "@merge django.contrib.auth.backends.RemoteUserBackend", "DISABLED_authentication_json_header": "HTTP_X_RH_IDENTITY", "DISABLED_authentication_json_header_jq_filter": ".identity.user.username", "DISABLED_authentication_json_header_openapi_security_scheme": {"description": "External OAuth integration", "flows": {"clientCredentials": {"scopes": {"api.console": "grant_access_to_pulp"}, "tokenUrl": "https://your-identity-provider/token/issuer"}}, "type": "oauth2"}, "DISABLED_rest_framework__default_authentication_classes": "@merge pulpcore.app.authentication.JSONHeaderRemoteAuthentication", "domain_enabled": true, "hide_guarded_distributions": true}\
+pulp_scenario_settings: {"AWS_ACCESS_KEY_ID": "AKIAIT2Z5TDYPX3ARJBA", "AWS_DEFAULT_ACL": "@none None", "AWS_S3_ADDRESSING_STYLE": "path", "AWS_S3_ENDPOINT_URL": "http://minio:9000", "AWS_S3_REGION_NAME": "eu-central-1", "AWS_S3_SIGNATURE_VERSION": "s3v4", "AWS_SECRET_ACCESS_KEY": "fqRvjWaPU5o0fCqQuUWbj9Fainj2pVZtBCiDiieS", "AWS_STORAGE_BUCKET_NAME": "pulp3", "DEFAULT_FILE_STORAGE": "storages.backends.s3boto3.S3Boto3Storage", "DISABLED_authentication_backends": "@merge django.contrib.auth.backends.RemoteUserBackend", "DISABLED_authentication_json_header": "HTTP_X_RH_IDENTITY", "DISABLED_authentication_json_header_jq_filter": ".identity.user.username", "DISABLED_authentication_json_header_openapi_security_scheme": {"description": "External OAuth integration", "flows": {"clientCredentials": {"scopes": {"api.console": "grant_access_to_pulp"}, "tokenUrl": "https://your-identity-provider/token/issuer"}}, "type": "oauth2"}, "DISABLED_rest_framework__default_authentication_classes": "@merge pulpcore.app.authentication.JSONHeaderRemoteAuthentication", "MEDIA_ROOT": "", "domain_enabled": true, "hide_guarded_distributions": true}\
 pulp_scenario_env: {}\
 ' vars/main.yaml
   export PULP_API_ROOT="/rerouted/djnd/"
@@ -119,7 +119,7 @@ if [ "$TEST" = "azure" ]; then
       - ./azurite:/etc/pulp\
     command: "azurite-blob --blobHost 0.0.0.0"' vars/main.yaml
   sed -i -e '$a azure_test: true\
-pulp_scenario_settings: {"api_root_rewrite_header": "X-API-Root", "domain_enabled": true}\
+pulp_scenario_settings: {"AZURE_ACCOUNT_KEY": "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==", "AZURE_ACCOUNT_NAME": "devstoreaccount1", "AZURE_CONNECTION_STRING": "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://ci-azurite:10000/devstoreaccount1;", "AZURE_CONTAINER": "pulp-test", "AZURE_LOCATION": "pulp3", "AZURE_OVERWRITE_FILES": true, "AZURE_URL_EXPIRATION_SECS": 120, "DEFAULT_FILE_STORAGE": "storages.backends.azure_storage.AzureStorage", "MEDIA_ROOT": "", "api_root_rewrite_header": "X-API-Root", "domain_enabled": true}\
 pulp_scenario_env: {}\
 ' vars/main.yaml
 fi
