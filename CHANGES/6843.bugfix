@@ -1,1 +1,0 @@
-Made DjangoMetricsMiddleware aware of OTEL urls exclusion envvars.
