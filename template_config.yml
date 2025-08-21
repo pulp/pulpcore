@@ -28,7 +28,7 @@ flake8: true
 flake8_ignore:
 - ./pulpcore/app/protobuf/*
 github_org: pulp
-latest_release_branch: '3.85'
+latest_release_branch: '3.86'
 lint_requirements: true
 os_required_packages: []
 parallel_test_workers: 8
@@ -112,6 +112,5 @@ test_lowerbounds: true
 test_performance: false
 test_reroute: true
 test_s3: true
-test_storages_compat_layer: false
 use_issue_template: true
 
