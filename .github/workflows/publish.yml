@@ -150,11 +150,36 @@ jobs:
       - "publish-python-bindings"
       - "publish-ruby-bindings"
 
+    permissions:
+      contents: write
+
+    env:
+      TAG_NAME: "${{ github.ref_name }}"
+
     steps:
+      - uses: "actions/checkout@v4"
+        with:
+          fetch-depth: 0
+          path: "pulpcore"
+
+      - uses: "actions/setup-python@v5"
+        with:
+          python-version: "3.11"
+
+      - name: "Install towncrier"
+        run: |
+          pip install towncrier
+
+      - name: "Get release notes"
+        id: get_release_notes
+        run: |
+          NOTES=$(towncrier build --draft --version $TAG_NAME)
+          echo "body<<EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: "Create release on GitHub"
         uses: "actions/github-script@v7"
-        env:
-          TAG_NAME: "${{ github.ref_name }}"
         with:
           script: |
             const { TAG_NAME } = process.env;
@@ -163,5 +188,6 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               tag_name: TAG_NAME,
+              body: `${{ steps.get_release_notes.outputs.body }}`,
               make_latest: "legacy",
             });

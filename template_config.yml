@@ -1,7 +1,7 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# generated with plugin_template@2021.08.26-420-gf332a34
+# generated with plugin_template
 
 api_root: /pulp/
 black: true
@@ -21,6 +21,7 @@ deploy_to_pypi: true
 disabled_redis_runners:
 - s3
 docker_fixtures: true
+extra_files: []
 flake8: true
 flake8_ignore:
 - ./pulpcore/app/protobuf/*
@@ -58,10 +59,28 @@ pulp_settings:
   tmpfile_protection_time: 10
   upload_protection_time: 10
 pulp_settings_azure:
+  AZURE_ACCOUNT_KEY: Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==
+  AZURE_ACCOUNT_NAME: devstoreaccount1
+  AZURE_CONNECTION_STRING: DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://ci-azurite:10000/devstoreaccount1;
+  AZURE_CONTAINER: pulp-test
+  AZURE_LOCATION: pulp3
+  AZURE_OVERWRITE_FILES: true
+  AZURE_URL_EXPIRATION_SECS: 120
+  DEFAULT_FILE_STORAGE: storages.backends.azure_storage.AzureStorage
+  MEDIA_ROOT: ''
   api_root_rewrite_header: X-API-Root
   domain_enabled: true
 pulp_settings_gcp: null
 pulp_settings_s3:
+  AWS_ACCESS_KEY_ID: AKIAIT2Z5TDYPX3ARJBA
+  AWS_DEFAULT_ACL: '@none None'
+  AWS_S3_ADDRESSING_STYLE: path
+  AWS_S3_ENDPOINT_URL: http://minio:9000
+  AWS_S3_REGION_NAME: eu-central-1
+  AWS_S3_SIGNATURE_VERSION: s3v4
+  AWS_SECRET_ACCESS_KEY: fqRvjWaPU5o0fCqQuUWbj9Fainj2pVZtBCiDiieS
+  AWS_STORAGE_BUCKET_NAME: pulp3
+  DEFAULT_FILE_STORAGE: storages.backends.s3boto3.S3Boto3Storage
   DISABLED_authentication_backends: '@merge django.contrib.auth.backends.RemoteUserBackend'
   DISABLED_authentication_json_header: HTTP_X_RH_IDENTITY
   DISABLED_authentication_json_header_jq_filter: .identity.user.username
@@ -74,6 +93,7 @@ pulp_settings_s3:
         tokenUrl: https://your-identity-provider/token/issuer
     type: oauth2
   DISABLED_rest_framework__default_authentication_classes: '@merge pulpcore.app.authentication.JSONHeaderRemoteAuthentication'
+  MEDIA_ROOT: ''
   domain_enabled: true
   hide_guarded_distributions: true
 pydocstyle: true
@@ -98,6 +118,5 @@ test_lowerbounds: true
 test_performance: false
 test_reroute: true
 test_s3: true
-test_storages_compat_layer: false
 use_issue_template: true
 
