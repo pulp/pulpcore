@@ -71,6 +71,20 @@ pulp_settings_azure:
   - pulpcore.plugin.access_policy.DefaultAccessPolicy
   task_diagnostics:
   - memory
+  MEDIA_ROOT: ""
+  STORAGES:
+    default:
+      BACKEND: "storages.backends.azure_storage.AzureStorage"
+      OPTIONS:
+        account_key: "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
+        account_name: "devstoreaccount1"
+        location: "pulp3"
+        azure_container: "pulp-test"
+        overwrite_files: true
+        expiration_secs: 120
+        connection_string: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://ci-azurite:10000/devstoreaccount1;"
+    staticfiles:
+      BACKEND: "django.contrib.staticfiles.storage.StaticFilesStorage"
 pulp_settings_gcp: null
 pulp_settings_s3:
   DISABLED_authentication_backends: '@merge django.contrib.auth.backends.RemoteUserBackend'
@@ -90,6 +104,21 @@ pulp_settings_s3:
   rest_framework__default_permission_classes:
   - pulpcore.plugin.access_policy.AccessPolicyFromSettings
   spectacular_settings__oas_version: 3.0.3
+  MEDIA_ROOT: ""
+  STORAGES:
+    default:
+      BACKEND: "storages.backends.s3boto3.S3Boto3Storage"
+      OPTIONS:
+        access_key: "AKIAIT2Z5TDYPX3ARJBA"
+        secret_key: "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"
+        region_name: "eu-central-1"
+        addressing_style: "path"
+        signature_version: "s3v4"
+        bucket_name: "pulp3"
+        endpoint_url: "http://minio:9000"
+        default_acl: "@none"
+    staticfiles:
+      BACKEND: "django.contrib.staticfiles.storage.StaticFilesStorage"
 pydocstyle: true
 release_email: pulp-infra@redhat.com
 release_user: pulpbot
