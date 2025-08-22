@@ -8,6 +8,44 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.86.0 (2025-08-21) {: #3.86.0 }
+
+### REST API {: #3.86.0-rest-api }
+
+#### Features {: #3.86.0-rest-api-feature }
+
+- Added a configurable bucket boundary for API request duration metric using the OTEL_PULP_API_HISTOGRAM_BUCKETS setting.
+  [#6845](https://github.com/pulp/pulpcore/issues/6845)
+
+#### Bugfixes {: #3.86.0-rest-api-bugfix }
+
+- Made DjangoMetricsMiddleware aware of OTEL urls exclusion envvars.
+  [#6843](https://github.com/pulp/pulpcore/issues/6843)
+- Fixed repository version validation to allow legitimate shared artifacts between content units.
+  [#6868](https://github.com/pulp/pulpcore/issues/6868)
+- Fixed a bug that prevents migrations from running.
+
+#### Improved Documentation {: #3.86.0-rest-api-doc }
+
+- Updated documentation for the TASK_DIAGNOSTICS setting.
+  [#6854](https://github.com/pulp/pulpcore/issues/6854)
+
+### Plugin API {: #3.86.0-plugin-api }
+
+#### Removals {: #3.86.0-plugin-api-removal }
+
+- Removed support for synchronous immediate tasks.
+
+### Pulp File {: #3.86.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.86.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.85.1 (2025-08-12) {: #3.85.1 }
 
 ### REST API {: #3.85.1-rest-api }
