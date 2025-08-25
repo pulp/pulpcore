@@ -12,11 +12,11 @@ from rest_framework.serializers import DictField, URLField, ValidationError
 
 from pulpcore.filters import BaseFilterSet
 from pulpcore.app.models import (
+    AppStatus,
     ProfileArtifact,
     Task,
     TaskGroup,
     TaskSchedule,
-    Worker,
     CreatedResource,
     RepositoryVersion,
 )
@@ -354,14 +354,14 @@ class WorkerFilter(BaseFilterSet):
     missing = filters.BooleanFilter(method="filter_missing")
 
     class Meta:
-        model = Worker
+        model = AppStatus
         fields = {
             "name": NAME_FILTER_OPTIONS,
             "last_heartbeat": DATETIME_FILTER_OPTIONS,
         }
 
     def filter_online(self, queryset, name, value):
-        online_workers = Worker.objects.online()
+        online_workers = AppStatus.objects.online()
 
         if value:
             return queryset.filter(pk__in=online_workers)
@@ -369,7 +369,7 @@ class WorkerFilter(BaseFilterSet):
             return queryset.exclude(pk__in=online_workers)
 
     def filter_missing(self, queryset, name, value):
-        missing_workers = Worker.objects.missing()
+        missing_workers = AppStatus.objects.missing()
 
         if value:
             return queryset.filter(pk__in=missing_workers)
@@ -378,7 +378,7 @@ class WorkerFilter(BaseFilterSet):
 
 
 class WorkerViewSet(NamedModelViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin):
-    queryset = Worker.objects.all()
+    queryset = AppStatus.objects.filter(app_type="worker")
     serializer_class = WorkerSerializer
     endpoint_name = "workers"
     http_method_names = ["get", "options"]

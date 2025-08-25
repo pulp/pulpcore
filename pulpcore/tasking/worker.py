@@ -77,7 +77,6 @@ class PulpcoreWorker:
             self.app_status = AppStatus.objects.create(
                 name=self.name, app_type="worker", versions=self.versions
             )
-            self.worker = self.app_status._old_status
         except IntegrityError:
             _logger.error(f"A worker with name {self.name} already exists in the database.")
             exit(1)
@@ -184,15 +183,17 @@ class PulpcoreWorker:
         for app_worker in qs:
             _logger.info(_("Clean missing %s worker %s."), app_worker.app_type, app_worker.name)
         qs.delete()
-        for cls, cls_name in (
-            (Worker, "pulp"),
-            (ApiAppStatus, "api"),
-            (ContentAppStatus, "content"),
-        ):
-            qs = cls.objects.missing(age=timedelta(days=7))
-            for app_worker in qs:
-                _logger.info(_("Clean missing %s worker %s."), cls_name, app_worker.name)
-            qs.delete()
+        with contextlib.suppress(DatabaseError):
+            # By now a migration on a newer release may have deleted these tables already.
+            for cls, cls_name in (
+                (Worker, "pulp"),
+                (ApiAppStatus, "api"),
+                (ContentAppStatus, "content"),
+            ):
+                qs = cls.objects.missing(age=timedelta(days=7))
+                for app_worker in qs:
+                    _logger.info(_("Clean missing %s worker %s."), cls_name, app_worker.name)
+                qs.delete()
 
     def beat(self):
         if self.app_status.last_heartbeat < timezone.now() - self.heartbeat_period:
@@ -385,13 +386,13 @@ class PulpcoreWorker:
                         # Check if someone else changed the task before we got the lock.
                         task.refresh_from_db()
 
-                        if task.state == TASK_STATES.CANCELING and task.worker is None:
+                        if task.state == TASK_STATES.CANCELING:
                             # No worker picked this task up before being canceled.
                             if self.cancel_abandoned_task(task, TASK_STATES.CANCELED):
                                 # Continue looking for the next task without considering this
                                 # tasks resources, as we just released them.
                                 continue
-                        if task.state in [TASK_STATES.RUNNING, TASK_STATES.CANCELING]:
+                        if task.state == TASK_STATES.RUNNING:
                             # A running task without a lock must be abandoned.
                             if self.cancel_abandoned_task(
                                 task, TASK_STATES.FAILED, "Worker has gone missing."
@@ -445,8 +446,6 @@ class PulpcoreWorker:
 
         self.cancel_task = False
         self.task = task
-        task.worker = self.worker
-        task.save(update_fields=["worker"])
         cancel_state = None
         cancel_reason = None
         domain = task.pulp_domain
