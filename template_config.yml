@@ -104,6 +104,5 @@ test_lowerbounds: true
 test_performance: false
 test_reroute: true
 test_s3: true
-test_storages_compat_layer: true
 use_issue_template: true
 
