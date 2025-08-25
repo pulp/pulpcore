@@ -208,8 +208,13 @@ class PulpcoreWorker:
                 # to be able to report on a congested tasking system to produce reliable results.
                 self.record_unblocked_waiting_tasks_metric()
 
-    def notify_workers(self, reason="unknown"):
+    def notify_workers(self, reason):
         self.cursor.execute("SELECT pg_notify('pulp_worker_wakeup', %s)", (reason,))
+        # Make sure this worker is notified.
+        if reason == TASK_WAKEUP_UNBLOCK:
+            self.wakeup_unblock = not self.auxiliary
+        elif reason == TASK_WAKEUP_HANDLE:
+            self.wakeup_handle = True
 
     def cancel_abandoned_task(self, task, final_state, reason=None):
         """Cancel and clean up an abandoned task.
@@ -280,7 +285,7 @@ class PulpcoreWorker:
         assert not self.auxiliary
 
         count = 0
-        self.wakeup_unblock_tasks = False
+        self.wakeup_unblock = False
         with contextlib.suppress(AdvisoryLockError), PGAdvisoryLock(TASK_UNBLOCKING_LOCK):
             if count := self._unblock_tasks():
                 self.notify_workers(TASK_WAKEUP_HANDLE)
