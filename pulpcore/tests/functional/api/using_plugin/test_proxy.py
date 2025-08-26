@@ -147,7 +147,7 @@ def test_sync_https_through_https_proxy(
         manifest_path=basic_manifest_path,
         policy="on_demand",
         proxy_url=https_proxy.proxy_url,
-        tls_validation="false",
+        tls_validation=False,
     )
 
     _run_basic_sync_and_assert(file_bindings, monitor_task, remote_on_demand, file_repo)
