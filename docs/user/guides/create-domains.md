@@ -133,10 +133,6 @@ pulp user role-assignment add --username <username> --role <role_name> --domain 
     e.g. You can not add content from one domain to the repository of another domain even if you own both domains.
 
 
-!!! warning
-    Pulp Export and Import are currently not supported with domains enabled.
-
-
 There are notable objects in Pulp like `Roles`, `Users`, and `Groups`, that are not a part of domains and remain global across the system.
 These objects are closely intertwined with the RBAC system and currently do not make sense to be unique on the domain level.
 Objects that are not a part of a domain are readable from any domain (with the correct permissions),

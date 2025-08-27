@@ -130,14 +130,30 @@ def export_artifacts(export, artifact_pks):
                             temp_file.write(artifact.file.read())
                             temp_file.flush()
                             artifact.file.close()
-                            export.tarfile.add(temp_file.name, artifact.file.name)
+                            # If we're domain-enabled, replace our domain-pk with "DOMAIN" in
+                            # the tarfile
+                            if settings.DOMAIN_ENABLED:
+                                tarfile_loc = artifact.file.name.replace(
+                                    str(artifact.pulp_domain_id), "DOMAIN"
+                                )
+                            else:
+                                tarfile_loc = artifact.file.name
+                            export.tarfile.add(temp_file.name, tarfile_loc)
         else:
             for offset in range(0, len(artifact_pks), EXPORT_BATCH_SIZE):
                 batch = artifact_pks[offset : offset + EXPORT_BATCH_SIZE]
                 batch_qs = Artifact.objects.filter(pk__in=batch).only("file")
 
                 for artifact in pb.iter(batch_qs.iterator()):
-                    export.tarfile.add(artifact.file.path, artifact.file.name)
+                    # If we're domain-enabled, replace our domain-pk with "DOMAIN" in
+                    # the tarfile
+                    if settings.DOMAIN_ENABLED:
+                        tarfile_loc = artifact.file.name.replace(
+                            str(artifact.pulp_domain_id), "DOMAIN"
+                        )
+                    else:
+                        tarfile_loc = artifact.file.name
+                    export.tarfile.add(artifact.file.path, tarfile_loc)
 
     resource = ArtifactResource()
     resource.queryset = Artifact.objects.filter(pk__in=artifact_pks)
