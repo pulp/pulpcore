@@ -3,11 +3,11 @@ from gettext import gettext as _
 
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
-from rest_framework.validators import UniqueValidator
 
 from pulpcore.app import models, settings
 from pulpcore.app.serializers import (
     DetailIdentityField,
+    DomainUniqueValidator,
     ImportIdentityField,
     ModelSerializer,
     RelatedField,
@@ -22,7 +22,7 @@ class ImporterSerializer(ModelSerializer):
     pulp_href = DetailIdentityField(view_name_pattern=r"importer(-.*/.*)-detail")
     name = serializers.CharField(
         help_text=_("Unique name of the Importer."),
-        validators=[UniqueValidator(queryset=models.Importer.objects.all())],
+        validators=[DomainUniqueValidator(queryset=models.Importer.objects.all())],
     )
 
     class Meta:

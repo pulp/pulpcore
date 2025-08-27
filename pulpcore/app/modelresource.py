@@ -1,3 +1,6 @@
+import re
+
+from django.conf import settings
 from import_export import fields
 from import_export.widgets import ForeignKeyWidget
 from logging import getLogger
@@ -8,11 +11,15 @@ from pulpcore.app.models.content import (
     ContentArtifact,
 )
 from pulpcore.app.models.repository import Repository
+from pulpcore.app.util import get_domain_pk
 from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS
 from pulpcore.plugin.importexport import QueryModelResource
 
-
 log = getLogger(__name__)
+
+domain_artifact_file_regex = re.compile(
+    r"^artifact/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+)
 
 
 #
@@ -31,6 +38,24 @@ class ArtifactResource(QueryModelResource):
             kwargs: args passed along from the import() call.
 
         """
+        # IF we're domain-enabled:
+        #   REPLACE "their" domain-id with ours, if there is one.
+        #   If not, INSERT "our" domain-id into the path in the right place.
+        # Otherwise:
+        #   REMOVE their domain-id if there is one.
+        # Do this before letting QMR run, since it will replace "their" domain-id with "ours"
+        upstream_domain_enabled = re.match(domain_artifact_file_regex, row["file"])
+        domain = str(get_domain_pk())
+
+        if settings.DOMAIN_ENABLED:  # Replace "their" domain-id with "ours"
+            if upstream_domain_enabled:
+                row["file"] = row["file"].replace(row["pulp_domain"], domain)
+            else:  # Add in our domain-id to the path
+                row["file"] = row["file"].replace("artifact", f"artifact/{domain}")
+        else:  # Strip domain-id out of the artifact-file *if there is one there*
+            if upstream_domain_enabled:
+                row["file"] = row["file"].replace(f'artifact/{row["pulp_domain"]}/', "artifact/")
+
         super().before_import_row(row, **kwargs)
 
         # the export converts None to blank strings but sha384 and sha512 have unique constraints
@@ -39,14 +64,15 @@ class ArtifactResource(QueryModelResource):
             if row[checksum] == "":
                 row[checksum] = None
 
+    def set_up_queryset(self):
+        """
+        :return: Artifacts for a specific domain
+        """
+        return Artifact.objects.filter(pulp_domain_id=get_domain_pk())
+
     class Meta:
         model = Artifact
-        exclude = (
-            "pulp_id",
-            "pulp_created",
-            "pulp_last_updated",
-            "timestamp_of_interest",
-        )
+        exclude = QueryModelResource.Meta.exclude + ("timestamp_of_interest",)
         import_id_fields = (
             "pulp_domain",
             "sha256",
@@ -54,16 +80,20 @@ class ArtifactResource(QueryModelResource):
 
 
 class RepositoryResource(QueryModelResource):
+
+    def set_up_queryset(self):
+        """
+        :return: Repositories for a specific domain
+        """
+        return Repository.objects.filter(pulp_domain_id=get_domain_pk())
+
     class Meta:
         model = Repository
         import_id_fields = (
             "pulp_domain",
             "name",
         )
-        exclude = (
-            "pulp_id",
-            "pulp_created",
-            "pulp_last_updated",
+        exclude = QueryModelResource.Meta.exclude + (
             "content",
             "next_version",
             "repository_ptr",
@@ -72,9 +102,18 @@ class RepositoryResource(QueryModelResource):
         )
 
 
+class ArtifactDomainForeignKeyWidget(ForeignKeyWidget):
+    def get_queryset(self, value, row, *args, **kwargs):
+        qs = self.model.objects.filter(sha256=row["artifact"], pulp_domain_id=get_domain_pk())
+        return qs
+
+    def render(self, value, obj=None, **kwargs):
+        return value.sha256
+
+
 class ContentArtifactResource(QueryModelResource):
     """
-    Handles import/export of the ContentArtifact model.
+    Handles import/export of the ContentArtifact model
 
     ContentArtifact is different from other import-export entities because it has no 'natural key'
     other than a pulp_id, which aren't shared across instances. We do some magic to link up
@@ -85,7 +124,9 @@ class ContentArtifactResource(QueryModelResource):
     """
 
     artifact = fields.Field(
-        column_name="artifact", attribute="artifact", widget=ForeignKeyWidget(Artifact, "sha256")
+        column_name="artifact",
+        attribute="artifact",
+        widget=ArtifactDomainForeignKeyWidget(Artifact, "sha256"),
     )
     linked_content = {}
 
@@ -121,18 +162,21 @@ class ContentArtifactResource(QueryModelResource):
             for content_ids in self.content_mapping.values():
                 content_pks |= set(content_ids)
 
-        return (
+        qs = (
             ContentArtifact.objects.filter(content__in=content_pks)
             .order_by("content", "relative_path")
             .select_related("artifact")
         )
+        return qs
 
     def dehydrate_content(self, content_artifact):
         return str(content_artifact.content_id)
 
     def fetch_linked_content(self):
         linked_content = {}
-        c_qs = Content.objects.filter(upstream_id__isnull=False).values("upstream_id", "pulp_id")
+        c_qs = Content.objects.filter(
+            upstream_id__isnull=False, pulp_domain_id=get_domain_pk()
+        ).values("upstream_id", "pulp_id")
         for c in c_qs.iterator():
             linked_content[str(c["upstream_id"])] = str(c["pulp_id"])
 
@@ -144,9 +188,4 @@ class ContentArtifactResource(QueryModelResource):
             "content",
             "relative_path",
         )
-        exclude = (
-            "pulp_created",
-            "pulp_last_updated",
-            "_artifacts",
-            "pulp_id",
-        )
+        exclude = QueryModelResource.Meta.exclude + ("_artifacts",)

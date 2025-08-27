@@ -35,7 +35,12 @@ from pulpcore.app.modelresource import (
     ContentArtifactResource,
     RepositoryResource,
 )
-from pulpcore.app.util import compute_file_hash, Crc32Hasher
+from pulpcore.app.util import (
+    compute_file_hash,
+    Crc32Hasher,
+    get_domain,
+    get_domain_pk,
+)
 from pulpcore.constants import TASK_STATES
 from pulpcore.tasking.tasks import dispatch
 
@@ -435,7 +440,6 @@ def pulp_import(importer_pk, path, toc, create_repositories):
         create_repositories (bool): Indicates whether missing repositories should be automatically
             created or not.
     """
-
     if toc:
         path = toc
         fileobj = ChunkedFile(toc)
@@ -443,13 +447,12 @@ def pulp_import(importer_pk, path, toc, create_repositories):
         fileobj.validate_chunks()
     else:
         fileobj = nullcontext()
-
     log.info(_("Importing {}.").format(path))
     current_task = Task.current()
     task_group = TaskGroup.current()
     importer = PulpImporter.objects.get(pk=importer_pk)
     the_import = PulpImport.objects.create(
-        importer=importer, task=current_task, params={"path": path}
+        importer=importer, task=current_task, params={"path": path}, pulp_domain=get_domain()
     )
     CreatedResource.objects.create(content_object=the_import)
 
@@ -491,12 +494,39 @@ def pulp_import(importer_pk, path, toc, create_repositories):
             for ar_result in _import_file(os.path.join(temp_dir, ARTIFACT_FILE), ArtifactResource):
                 for row in pb.iter(ar_result.rows):
                     artifact = Artifact.objects.get(pk=row.object_id)
-                    base_path = os.path.join("artifact", artifact.sha256[0:2], artifact.sha256[2:])
-                    src = os.path.join(temp_dir, base_path)
 
-                    if not default_storage.exists(base_path):
-                        with open(src, "rb") as f:
-                            default_storage.save(base_path, f)
+                    # If we are domain-enabled, then the destination is "to the current
+                    # domain's artifact directory". Otherwise, it's just to /artifact/.
+                    if settings.DOMAIN_ENABLED:
+                        destination_path = os.path.join(
+                            "artifact",
+                            str(get_domain_pk()),
+                            artifact.sha256[0:2],
+                            artifact.sha256[2:],
+                        )
+
+                    else:
+                        destination_path = os.path.join(
+                            "artifact", artifact.sha256[0:2], artifact.sha256[2:]
+                        )
+
+                    # If *the upstream* was domain-enabled, the tarfile will have artifact/DOMAIN/
+                    # in its path, and the Artifact will have artifact/current-domain-id in its
+                    # "file" attribute. We need to copy from artifact/DOMAIN/ in the tarfile.
+                    domain_path = os.path.join(
+                        "artifact", "DOMAIN", artifact.sha256[0:2], artifact.sha256[2:]
+                    )
+                    if os.path.exists(os.path.join(temp_dir, domain_path)):
+                        tar_path = domain_path
+                    else:
+                        tar_path = os.path.join(
+                            "artifact", artifact.sha256[0:2], artifact.sha256[2:]
+                        )
+                    src_in_tar = os.path.join(temp_dir, tar_path)
+
+                    if not default_storage.exists(destination_path):
+                        with open(src_in_tar, "rb") as f:
+                            default_storage.save(destination_path, f)
 
         # Now import repositories, in parallel.
 
@@ -529,7 +559,9 @@ def pulp_import(importer_pk, path, toc, create_repositories):
                 worker_rsrc = f"import-worker-{index % import_workers}"
                 exclusive_resources = [worker_rsrc]
                 try:
-                    dest_repo = Repository.objects.get(name=dest_repo_name)
+                    dest_repo = Repository.objects.get(
+                        name=dest_repo_name, pulp_domain=get_domain()
+                    )
                 except Repository.DoesNotExist:
                     if create_repositories:
                         dest_repo_pk = ""
