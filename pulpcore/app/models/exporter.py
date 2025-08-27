@@ -9,6 +9,7 @@ from pulpcore.app.models import (
     MasterModel,
 )
 from pulpcore.app.models.repository import Repository
+from pulpcore.app.util import get_domain_pk
 from pulpcore.constants import FS_EXPORT_CHOICES, FS_EXPORT_METHODS
 
 
@@ -29,6 +30,7 @@ class Export(BaseModel):
     params = models.JSONField(null=True)
     task = models.ForeignKey("Task", on_delete=models.SET_NULL, null=True)
     exporter = models.ForeignKey("Exporter", on_delete=models.CASCADE)
+    pulp_domain = models.ForeignKey("Domain", default=get_domain_pk, on_delete=models.PROTECT)
 
 
 class ExportedResource(GenericRelationModel):
@@ -54,7 +56,11 @@ class Exporter(MasterModel):
         name (models.TextField): The exporter unique name.
     """
 
-    name = models.TextField(db_index=True, unique=True)
+    name = models.TextField()
+    pulp_domain = models.ForeignKey("Domain", default=get_domain_pk, on_delete=models.PROTECT)
+
+    class Meta:
+        unique_together = ("name", "pulp_domain")
 
 
 class FilesystemExport(Export):

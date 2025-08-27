@@ -3,12 +3,12 @@ from gettext import gettext as _
 import re
 
 from rest_framework import serializers
-from rest_framework.validators import UniqueValidator
 
 from pulpcore.app import models, settings
 from pulpcore.app.serializers import (
     DetailIdentityField,
     DetailRelatedField,
+    DomainUniqueValidator,
     ExportIdentityField,
     ExportRelatedField,
     ModelSerializer,
@@ -37,8 +37,8 @@ class ExporterSerializer(ModelSerializer):
 
     pulp_href = DetailIdentityField(view_name_pattern=r"exporter(-.*/.*)-detail")
     name = serializers.CharField(
-        help_text=_("Unique name of the file system exporter."),
-        validators=[UniqueValidator(queryset=models.Exporter.objects.all())],
+        help_text=_("Unique name of the exporter."),
+        validators=[DomainUniqueValidator(queryset=models.Exporter.objects.all())],
     )
 
     @staticmethod
@@ -308,7 +308,7 @@ class FilesystemExportSerializer(ExportSerializer):
             raise serializers.ValidationError(
                 _("publication or repository_version must either be supplied but not both.")
             )
-        return data
+        return super().validate(data)
 
     class Meta:
         model = models.FilesystemExport

@@ -79,7 +79,6 @@ class ArtifactFileField(FileField):
                     "prior to Artifact creation."
                 )
             )
-
         move = file._committed and file.name != artifact_storage_path
         if move:
             if not already_in_place:

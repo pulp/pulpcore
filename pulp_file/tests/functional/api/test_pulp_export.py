@@ -1,13 +1,14 @@
+import json
 import pytest
 import uuid
 
 from pulpcore.client.pulpcore.exceptions import ApiException
+from pulpcore.client.pulpcore.exceptions import BadRequestException
 from pulpcore.app import settings
 from pulpcore.constants import TASK_STATES
 
 
 pytestmark = [
-    pytest.mark.skipif(settings.DOMAIN_ENABLED, reason="Domains do not support export."),
     pytest.mark.skipif(
         "/tmp" not in settings.ALLOWED_EXPORT_PATHS,
         reason="Cannot run export-tests unless /tmp is in ALLOWED_EXPORT_PATHS "
@@ -23,7 +24,10 @@ def pulp_exporter_factory(
     gen_object_with_cleanup,
     add_to_filesystem_cleanup,
 ):
-    def _pulp_exporter_factory(repositories=None):
+    def _pulp_exporter_factory(
+        repositories=None,
+        pulp_domain=None,
+    ):
         if repositories is None:
             repositories = []
         name = str(uuid.uuid4())
@@ -33,7 +37,11 @@ def pulp_exporter_factory(
             "path": path,
             "repositories": [r.pulp_href for r in repositories],
         }
-        exporter = gen_object_with_cleanup(pulpcore_bindings.ExportersPulpApi, body)
+        kwargs = {}
+        if pulp_domain:
+            kwargs["pulp_domain"] = pulp_domain.name
+
+        exporter = gen_object_with_cleanup(pulpcore_bindings.ExportersPulpApi, body, **kwargs)
         add_to_filesystem_cleanup(path)
         assert exporter.name == name
         assert exporter.path == path
@@ -291,3 +299,95 @@ def test_export_incremental(
     with pytest.raises(ApiException):
         body = {"start_versions": [file_repo.latest_version_href], "full": False}
         pulp_export_factory(exporter, body)
+
+
+# Test that cross-domain attempts fail
+# Exporter: repository, last-export : create, update
+# Export: versions, start_versions
+@pytest.mark.skipif(not settings.DOMAIN_ENABLED, reason="Domains not enabled.")
+@pytest.mark.parallel
+def test_cross_domain_exporter(
+    basic_manifest_path,
+    file_bindings,
+    file_remote_factory,
+    gen_object_with_cleanup,
+    pulpcore_bindings,
+    pulp_export_factory,
+    pulp_exporter_factory,
+    monitor_task,
+):
+    # Create two domains
+    #   In each, create and sync a repository, create and export an exporter
+    # Attempt to create an exporter using the *other domain's* repo
+    # Attempt to update the exporter using the *other domain's* repo and last_export
+    # Use the exporter and attempt to export the *other domain's* repo-versions
+
+    entities = [{}, {}]
+    for e in entities:
+        body = {
+            "name": str(uuid.uuid4()),
+            "storage_class": "pulpcore.app.models.storage.FileSystem",
+            "storage_settings": {"MEDIA_ROOT": "/var/lib/pulp/media/"},
+        }
+        e["domain"] = gen_object_with_cleanup(pulpcore_bindings.DomainsApi, body)
+        remote = file_remote_factory(
+            manifest_path=basic_manifest_path, policy="immediate", pulp_domain=e["domain"].name
+        )
+
+        repo_body = {"name": str(uuid.uuid4()), "remote": remote.pulp_href}
+        e["repository"] = gen_object_with_cleanup(
+            file_bindings.RepositoriesFileApi, repo_body, pulp_domain=e["domain"].name
+        )
+        task = file_bindings.RepositoriesFileApi.sync(e["repository"].pulp_href, {}).task
+        monitor_task(task)
+        e["repository"] = file_bindings.RepositoriesFileApi.read(e["repository"].pulp_href)
+        e["exporter"] = pulp_exporter_factory(
+            repositories=[e["repository"]], pulp_domain=e["domain"]
+        )
+        e["export"] = pulp_export_factory(e["exporter"])
+
+    target_domain = entities[1]["domain"]
+    # cross-create
+    with pytest.raises(BadRequestException) as e:
+        pulp_exporter_factory(repositories=[entities[0]["repository"]], pulp_domain=target_domain)
+    assert e.value.status == 400
+    assert json.loads(e.value.body) == {
+        "non_field_errors": [f"Objects must all be a part of the {target_domain.name} domain."]
+    }
+    # cross-update
+    body = {"repositories": [entities[0]["repository"].pulp_href]}
+    with pytest.raises(BadRequestException) as e:
+        pulpcore_bindings.ExportersPulpApi.partial_update(entities[1]["exporter"].pulp_href, body)
+    assert e.value.status == 400
+    assert json.loads(e.value.body) == {
+        "non_field_errors": [f"Objects must all be a part of the {target_domain.name} domain."]
+    }
+
+    body = {"last_export": entities[0]["export"].pulp_href}
+    with pytest.raises(BadRequestException) as e:
+        pulpcore_bindings.ExportersPulpApi.partial_update(entities[1]["exporter"].pulp_href, body)
+    assert e.value.status == 400
+    assert json.loads(e.value.body) == {
+        "non_field_errors": [f"Objects must all be a part of the {target_domain.name} domain."]
+    }
+
+    # cross-export
+    with pytest.raises(BadRequestException) as e:
+        latest_v = entities[0]["repository"].latest_version_href
+        zero_v = latest_v.replace("/1/", "/0/")
+        body = {
+            "start_versions": [latest_v],
+            "versions": [zero_v],
+            "full": False,
+        }
+        pulp_export_factory(entities[1]["exporter"], body)
+    assert e.value.status == 400
+    msgs = json.loads(e.value.body)
+    assert "versions" in msgs
+    assert "start_versions" in msgs
+    assert msgs["versions"] == [
+        "Requested RepositoryVersions must belong to the Repositories named by the Exporter!"
+    ]
+    assert msgs["start_versions"] == [
+        "Requested RepositoryVersions must belong to the Repositories named by the Exporter!"
+    ]
