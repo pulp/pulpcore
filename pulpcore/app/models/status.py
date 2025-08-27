@@ -111,7 +111,7 @@ class AppStatus(BaseModel):
     objects = _AppStatusManager()
 
     app_type = models.CharField(max_length=10, choices=APP_TYPES)
-    name = models.TextField(db_index=True, unique=True)
+    name = models.TextField()
     versions = HStoreField(default=dict)
     ttl = models.DurationField(null=False)
     last_heartbeat = models.DateTimeField(auto_now=True)
