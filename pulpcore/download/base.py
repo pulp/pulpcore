@@ -1,6 +1,7 @@
 from gettext import gettext as _
 
 import asyncio
+from clamav_client import clamd
 from collections import namedtuple
 import concurrent.futures
 from concurrent.futures import ThreadPoolExecutor, ALL_COMPLETED
@@ -8,6 +9,7 @@ import logging
 import os
 import tempfile
 from pathlib import Path
+import struct
 from urllib.parse import urlsplit
 
 from django.conf import settings
@@ -18,6 +20,7 @@ from pulpcore.exceptions import (
     SizeValidationError,
     TimeoutException,
     UnsupportedDigestValidationError,
+    MalwareError,
 )
 
 
@@ -115,6 +118,9 @@ class BaseDownloader:
                     ).format(self.url, Artifact.DIGEST_FIELDS, set(self.expected_digests))
                 )
 
+        self.initialize_clamav_socket_stream()
+        self.scan_repository = False
+
     def _ensure_writer_has_open_file(self):
         """
         Create a temporary file on demand.
@@ -159,6 +165,7 @@ class BaseDownloader:
         self._ensure_writer_has_open_file()
         self._writer.write(data)
         self._record_size_and_digests_for_data(data)
+        self._send_chunk_to_clamav(data)
 
     async def finalize(self):
         """
@@ -182,6 +189,7 @@ class BaseDownloader:
         self._writer = None
         self.validate_digests()
         self.validate_size()
+        self.run_malware_scan()
         log.debug(f"Downloaded file from {self.url}")
 
     def fetch(self, extra_data=None):
@@ -210,6 +218,12 @@ class BaseDownloader:
         ]
         concurrent.futures.wait(futures, timeout=None, return_when=ALL_COMPLETED)
         self._size += len(data)
+
+    def _send_chunk_to_clamav(self, data):
+        if not self.scan_repository:
+            return
+        size = struct.pack(b"!L", len(data))
+        self.clamd_client.clamd_socket.send(size + data)
 
     @property
     def artifact_attributes(self):
@@ -251,6 +265,25 @@ class BaseDownloader:
             expected_size = self.expected_size
             if actual_size != expected_size:
                 raise SizeValidationError(actual_size, expected_size, url=self.url)
+
+    def run_malware_scan(self):
+        if not self.scan_repository:
+            return
+        try:
+            self.clamd_client.clamd_socket.send(struct.pack(b"!L", 0))
+            result = self.clamd_client._recv_response()
+            if len(result) > 0:
+                if result == "INSTREAM size limit exceeded. ERROR":
+                    log.warning(
+                        f"Failed to scan {self.url}. File size exceeded the "
+                        "supported ClamAV limits."
+                    )
+                filename, reason, status = self.clamd_client._parse_response(result)
+                log.info(f"ClamAV Scan results: {filename} {status} {reason}")
+                if status == "FOUND":
+                    raise MalwareError(url=self.url, virus=reason)
+        finally:
+            self.clamd_client._close_socket()
 
     async def run(self, extra_data=None):
         """
@@ -307,3 +340,11 @@ class BaseDownloader:
             :meth:`~pulpcore.plugin.download.BaseDownloader.finalize`.
         """
         raise NotImplementedError("Subclasses must define a _run() method that returns a coroutine")
+
+    def initialize_clamav_socket_stream(self):
+        clamav_host = settings.CLAMAV_HOST
+        clamav_port = settings.CLAMAV_PORT or 3310
+        if clamav_host:
+            self.clamd_client = clamd.ClamdNetworkSocket(host=clamav_host, port=clamav_port)
+            self.clamd_client._init_socket()
+            self.clamd_client._send_command("INSTREAM")

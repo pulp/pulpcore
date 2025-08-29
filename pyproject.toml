@@ -64,6 +64,7 @@ dependencies = [
   "uuid6>=2023.5.2,<=2025.0.1",
   "whitenoise>=5.0,<6.10.0",
   "yarl>=1.9.1,<1.21",  # Seems to follow SemVer https://yarl.aio-libs.org/en/latest/contributing/release_guide/#pre-release-activities .
+  "clamav-client>=0.7.1,<1.0",
 ]
 
 [project.optional-dependencies]
