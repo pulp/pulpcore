@@ -8,6 +8,29 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.87.0 (2025-08-29) {: #3.87.0 }
+
+### REST API {: #3.87.0-rest-api }
+
+#### Bugfixes {: #3.87.0-rest-api-bugfix }
+
+- Fixed apps crashing in a loop on restart with the same name.
+  [#6880](https://github.com/pulp/pulpcore/issues/6880)
+
+### Plugin API {: #3.87.0-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.87.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.87.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.86.0 (2025-08-21) {: #3.86.0 }
 
 ### REST API {: #3.86.0-rest-api }
