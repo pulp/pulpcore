@@ -13,4 +13,5 @@ from .validation import (
     ValidationError,
     MissingDigestValidationError,
     UnsupportedDigestValidationError,
+    MalwareError,
 )

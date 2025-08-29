@@ -413,6 +413,10 @@ VULN_REPORT_TASK_LIMITER = 10
 # Replaces asyncio event loop with uvloop
 UVLOOP_ENABLED = False
 
+# ClamAV default config
+CLAMAV_HOST = None
+CLAMAV_PORT = None
+
 # HERE STARTS DYNACONF EXTENSION LOAD (Keep at the very bottom of settings.py)
 # Read more at https://www.dynaconf.com/django/
 

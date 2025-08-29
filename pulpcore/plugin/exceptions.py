@@ -6,6 +6,7 @@ from pulpcore.exceptions import (
     MissingDigestValidationError,
     TimeoutException,
     UnsupportedDigestValidationError,
+    MalwareError,
 )
 
 
@@ -17,4 +18,5 @@ __all__ = [
     "MissingDigestValidationError",
     "TimeoutException",
     "UnsupportedDigestValidationError",
+    "MalwareError",
 ]

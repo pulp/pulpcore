@@ -16,6 +16,7 @@ from aiohttp.web_exceptions import (
     HTTPFound,
     HTTPMovedPermanently,
     HTTPNotFound,
+    HTTPPreconditionFailed,
     HTTPRequestRangeNotSatisfiable,
 )
 from yarl import URL
@@ -59,8 +60,9 @@ from pulpcore.app.util import (  # noqa: E402: module level not at top of file
 )
 
 from pulpcore.exceptions import (  # noqa: E402
-    UnsupportedDigestValidationError,
     DigestValidationError,
+    UnsupportedDigestValidationError,
+    MalwareError,
 )
 from pulpcore.metrics import artifacts_size_counter  # noqa: E402
 
@@ -934,6 +936,11 @@ class Handler:
                             url=url, r=ce.message
                         )
                         raise Error(reason=reason)
+                    except RuntimeError:
+                        # raise HTTPPreconditionFailed if digest validation failed or 
+                        # found a virus in artifact
+                        raise HTTPPreconditionFailed()
+
 
         if not any([repository, repo_version, publication, distro.remote]):
             reason = _(
@@ -1311,6 +1318,10 @@ class Handler:
         downloader.handle_data = handle_data
         original_finalize = downloader.finalize
         downloader.finalize = finalize
+        if repository:
+            scan_repo = repository.pulp_labels.get("malware_scanning", "false")
+            if scan_repo.lower() == "true":
+                downloader.scan_repository = True
         try:
             download_result = await downloader.run(
                 extra_data={"disable_retry_list": (DigestValidationError,)}
@@ -1332,6 +1343,16 @@ class Handler:
                 "affected Pulp Remote, adding a good one and resyncing.\n"
                 "Learn more on <https://pulpproject.org/pulpcore/docs/user/learn/"
                 "on-demand-downloading/#on-demand-and-streamed-limitations>"
+            )
+        except MalwareError:
+            # remote_artifact.failed_at = timezone.now()
+            # await remote_artifact.asave()
+            close_tcp_connection(request.transport._sock)
+            raise RuntimeError(
+                f"Pulp tried streaming {remote_artifact.url!r} to "
+                "the client, but it identified a virus in it.\n\n"
+                "We can't remove the data already sent so we are "
+                "forcing the connection to close.\n"
             )
 
         if save_artifact and remote.policy != Remote.STREAMED:

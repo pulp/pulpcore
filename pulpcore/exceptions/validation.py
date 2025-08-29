@@ -61,6 +61,25 @@ class SizeValidationError(ValidationError):
             return msg.format(expected=self.expected, actual=self.actual)
 
 
+class MalwareError(ValidationError):
+    """
+    Raised when a virus is found in file.
+    """
+
+    def __init__(self, virus, *args, url=None, **kwargs):
+        super().__init__("PLP0005")
+        self.url = url
+        self.virus = virus
+
+    def __str__(self):
+        if self.url:
+            msg = _("ClamAV detected a virus ({signature}) in {url}.")
+            return msg.format(signature=self.virus, url=self.url)
+        else:
+            msg = _("ClamAV detected a virus ({signature})")
+            return msg.format(signature=self.virus)
+
+
 class MissingDigestValidationError(Exception):
     """
     Raised when attempting to save() an Artifact with an incomplete set of checksums.
