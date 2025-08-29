@@ -368,10 +368,15 @@ class PulpcoreWorker:
             for task in Task.objects.filter(
                 state__in=TASK_INCOMPLETE_STATES,
                 unblocked_at__isnull=False,
+                app_lock__isnull=True,
             ).order_by("-immediate", F("pulp_created") + Value(timedelta(seconds=8)) * Random()):
                 # This code will only be called if we acquired the lock successfully.
                 # The lock will be automatically be released at the end of the block.
                 with contextlib.suppress(AdvisoryLockError), task:
+                    # Check if someone else changed the task before we got the lock.
+                    task.refresh_from_db()
+                    if task.state not in TASK_INCOMPLETE_STATES:
+                        continue
                     # We got the advisory lock (OLD) now try to get the app_lock (NEW).
                     rows = Task.objects.filter(pk=task.pk, app_lock=None).update(
                         app_lock=AppStatus.objects.current()
@@ -380,12 +385,10 @@ class PulpcoreWorker:
                         _logger.error(
                             "Acquired advisory lock but missed the app_lock for the task. "
                             "This should only happen during the upgrade phase to the new app_lock."
+                            f"Task: {task.pk=}, {task.state=}, {task.app_lock=}."
                         )
                         continue
                     try:
-                        # Check if someone else changed the task before we got the lock.
-                        task.refresh_from_db()
-
                         if task.state == TASK_STATES.CANCELING:
                             # No worker picked this task up before being canceled.
                             if self.cancel_abandoned_task(task, TASK_STATES.CANCELED):
