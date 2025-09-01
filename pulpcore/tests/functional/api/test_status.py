@@ -6,7 +6,7 @@ from jsonschema import validate
 
 
 STATUS = {
-    "$schema": "http://json-schema.org/schema#",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "title": "Pulp 3 status API schema",
     "description": ("Derived from Pulp's actual behaviour and various Pulp issues."),
     "type": "object",

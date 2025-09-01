@@ -154,5 +154,5 @@ def get_from_url(url, auth=None, headers=None):
 
 async def _get_from_url(url, auth=None, headers=None):
     async with aiohttp.ClientSession(auth=auth) as session:
-        async with session.get(url, verify_ssl=False, headers=headers) as response:
+        async with session.get(url, ssl=False, headers=headers) as response:
             return response

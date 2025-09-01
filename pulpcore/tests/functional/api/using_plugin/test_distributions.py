@@ -85,7 +85,9 @@ def test_crud_publication_distribution(
     new_name = str(uuid4())
     distribution.name = new_name
     monitor_task(
-        file_bindings.DistributionsFileApi.update(distribution.pulp_href, distribution.dict()).task
+        file_bindings.DistributionsFileApi.update(
+            distribution.pulp_href, distribution.model_dump()
+        ).task
     )
     distribution = file_bindings.DistributionsFileApi.read(distribution.pulp_href)
     assert distribution.name == new_name
@@ -94,7 +96,9 @@ def test_crud_publication_distribution(
     new_base_path = str(uuid4())
     distribution.base_path = new_base_path
     monitor_task(
-        file_bindings.DistributionsFileApi.update(distribution.pulp_href, distribution.dict()).task
+        file_bindings.DistributionsFileApi.update(
+            distribution.pulp_href, distribution.model_dump()
+        ).task
     )
     distribution = file_bindings.DistributionsFileApi.read(distribution.pulp_href)
     assert distribution.base_path == new_base_path

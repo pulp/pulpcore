@@ -158,7 +158,9 @@ def test_upload_response(
         {"offset": 0, "size": 6291456},
         {"offset": 6291456, "size": 4194304},
     ]
-    sorted_chunks_response = sorted([c.dict() for c in upload.chunks], key=lambda i: i["offset"])
+    sorted_chunks_response = sorted(
+        [c.model_dump() for c in upload.chunks], key=lambda i: i["offset"]
+    )
     assert sorted_chunks_response == expected_chunks
 
 

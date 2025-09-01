@@ -1,5 +1,5 @@
 import pytest
-from pytest_django.asserts import assertQuerysetEqual
+from pytest_django.asserts import assertQuerySetEqual
 import unittest
 
 from django.http import Http404, QueryDict
@@ -23,7 +23,7 @@ def test_adds_filters():
     queryset = viewset.get_queryset()
     expected = models.RepositoryVersion.objects.filter(repository__pk=repo.pk)
 
-    assertQuerysetEqual(queryset, expected)
+    assertQuerySetEqual(queryset, expected)
 
 
 @pytest.mark.django_db
@@ -38,7 +38,7 @@ def test_does_not_add_filters():
     queryset = viewset.get_queryset()
     expected = models.Repository.objects.all()
 
-    assertQuerysetEqual(queryset, expected)
+    assertQuerySetEqual(queryset, expected)
 
 
 def test_must_define_serializer_class():

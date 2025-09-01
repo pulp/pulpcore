@@ -7,6 +7,7 @@ import socket
 import struct
 from gettext import gettext as _
 from datetime import datetime, timedelta
+from datetime import timezone as dt_timezone
 
 from aiohttp.client_exceptions import ClientResponseError, ClientConnectionError
 from aiohttp.web import FileResponse, StreamResponse, HTTPOk
@@ -115,7 +116,7 @@ class DistroListings(HTTPOk):
         if path == "":
             path = settings.CONTENT_PATH_PREFIX
         html = Handler.render_html(directory_list, path=path)
-        super().__init__(body=html, headers={"Content-Type": "text/html"})
+        super().__init__(text=html, headers={"Content-Type": "text/html"})
 
 
 class CheckpointListings(HTTPOk):
@@ -137,7 +138,7 @@ class CheckpointListings(HTTPOk):
         dates = {f"{Handler._format_checkpoint_timestamp(s)}/": s for s in checkpoints}
         directory_list = dates.keys()
         html = Handler.render_html(directory_list, dates=dates, path=path)
-        super().__init__(body=html, headers={"Content-Type": "text/html"})
+        super().__init__(text=html, headers={"Content-Type": "text/html"})
 
 
 class ArtifactNotFound(Exception):
@@ -439,9 +440,9 @@ class Handler:
         else:
             raise PathNotResolved(path)
 
-        request_timestamp = request_timestamp.replace(tzinfo=timezone.utc)
+        request_timestamp = request_timestamp.replace(tzinfo=dt_timezone.utc)
         # Future timestamps are not allowed for checkpoints
-        if request_timestamp > datetime.now(tz=timezone.utc):
+        if request_timestamp > datetime.now(tz=dt_timezone.utc):
             raise PathNotResolved(path)
         # The timestamp is truncated to seconds, so we need to cover the whole second
         request_timestamp = request_timestamp.replace(microsecond=999999)
@@ -787,7 +788,7 @@ class Handler:
                 elif dir_list:
                     return HTTPOk(
                         headers={"Content-Type": "text/html"},
-                        body=self.render_html(
+                        text=self.render_html(
                             dir_list, path=request.path, dates=dates, sizes=sizes
                         ),
                     )
@@ -862,7 +863,7 @@ class Handler:
                 elif dir_list:
                     return HTTPOk(
                         headers={"Content-Type": "text/html"},
-                        body=self.render_html(
+                        text=self.render_html(
                             dir_list, path=request.path, dates=dates, sizes=sizes
                         ),
                     )
