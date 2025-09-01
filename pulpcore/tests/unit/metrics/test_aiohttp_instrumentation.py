@@ -10,7 +10,10 @@ def run_middleware(aiohttp_client):
     async def _run_middleware(provider):
         app = web.Application(middlewares=[instrumentation(provider=provider)])
 
-        app.router.add_get("/", lambda req: web.Response())
+        async def handler(req):
+            return web.Response()
+
+        app.router.add_get("/", handler)
 
         client = await aiohttp_client(app)
 

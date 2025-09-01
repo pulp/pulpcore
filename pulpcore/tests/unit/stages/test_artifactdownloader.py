@@ -118,7 +118,7 @@ def queue_dc(in_q, downloader_mock):
 
 
 @pytest_asyncio.fixture
-async def download_task(event_loop, in_q, out_q):
+async def download_task(in_q, out_q):
     async def _download_task():
         """
         A coroutine running the downloader stage with a mocked ProgressReport.
@@ -133,7 +133,7 @@ async def download_task(event_loop, in_q, out_q):
             await ad()
         return pb.return_value.__aenter__.return_value.done
 
-    task = event_loop.create_task(_download_task())
+    task = asyncio.get_event_loop().create_task(_download_task())
     yield task
     if not task.done():
         task.cancel()
