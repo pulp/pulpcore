@@ -1,1 +1,0 @@
-Added a `result` JSONField to the `Task` model to store the task's return value.

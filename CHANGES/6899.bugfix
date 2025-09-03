@@ -1,1 +1,0 @@
-Fixed error case where worker tried to aquire the app_lock for a Task that was already finished.
