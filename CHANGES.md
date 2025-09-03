@@ -8,6 +8,29 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.87.1 (2025-09-03) {: #3.87.1 }
+
+### REST API {: #3.87.1-rest-api }
+
+#### Bugfixes {: #3.87.1-rest-api-bugfix }
+
+- Fixed error case where worker tried to aquire the app_lock for a Task that was already finished.
+  [#6899](https://github.com/pulp/pulpcore/issues/6899)
+
+### Plugin API {: #3.87.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.87.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.87.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.87.0 (2025-08-29) {: #3.87.0 }
 
 ### REST API {: #3.87.0-rest-api }
