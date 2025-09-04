@@ -8,6 +8,64 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.88.0 (2025-09-03) {: #3.88.0 }
+
+### REST API {: #3.88.0-rest-api }
+
+#### Features {: #3.88.0-rest-api-feature }
+
+- Added a `result` JSONField to the `Task` model to store the task's return value.
+  [#6901](https://github.com/pulp/pulpcore/issues/6901)
+
+#### Bugfixes {: #3.88.0-rest-api-bugfix }
+
+- Fixed error case where worker tried to aquire the app_lock for a Task that was already finished.
+  [#6899](https://github.com/pulp/pulpcore/issues/6899)
+
+### Plugin API {: #3.88.0-plugin-api }
+
+#### Deprecations {: #3.88.0-plugin-api-deprecation }
+
+- Deprecated returning non-JSON-serializable values from tasks.
+  Such values will be replaced with `None`, and this workaround will be removed in version 3.100.
+  [#6901](https://github.com/pulp/pulpcore/issues/6901)
+
+### Pulp File {: #3.88.0-pulp-file }
+
+#### Features {: #3.88.0-pulp-file-feature }
+
+- Updated tasks to always return JSON-serializable value.
+  [#6901](https://github.com/pulp/pulpcore/issues/6901)
+
+### Pulp Cert Guard {: #3.88.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.87.1 (2025-09-03) {: #3.87.1 }
+
+### REST API {: #3.87.1-rest-api }
+
+#### Bugfixes {: #3.87.1-rest-api-bugfix }
+
+- Fixed error case where worker tried to aquire the app_lock for a Task that was already finished.
+  [#6899](https://github.com/pulp/pulpcore/issues/6899)
+
+### Plugin API {: #3.87.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.87.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.87.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.87.0 (2025-08-29) {: #3.87.0 }
 
 ### REST API {: #3.87.0-rest-api }
