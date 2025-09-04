@@ -12,7 +12,7 @@ from django.conf import settings
 from django.contrib.postgres.fields import ArrayField, HStoreField
 from django.contrib.postgres.indexes import GinIndex
 from django.core.serializers.json import DjangoJSONEncoder
-from django.db import connection, models
+from django.db import models
 from django.utils import timezone
 from django_lifecycle import hook, AFTER_CREATE
 
@@ -21,10 +21,10 @@ from pulpcore.app.models import (
     BaseModel,
     GenericRelationModel,
 )
-from pulpcore.app.models.status import BaseAppStatus
+from pulpcore.app.models.status import AppStatus, BaseAppStatus
 from pulpcore.app.models.fields import EncryptedJSONField
 from pulpcore.constants import TASK_CHOICES, TASK_INCOMPLETE_STATES, TASK_STATES
-from pulpcore.exceptions import AdvisoryLockError, exception_to_dict
+from pulpcore.exceptions import exception_to_dict
 from pulpcore.app.util import get_domain_pk, current_task
 from pulpcore.app.loggers import deprecation_logger
 
@@ -141,7 +141,7 @@ class Task(BaseModel, AutoAddObjPermsMixin):
     enc_kwargs = EncryptedJSONField(null=True, encoder=DjangoJSONEncoder)
 
     worker = models.ForeignKey("Worker", null=True, related_name="tasks", on_delete=models.SET_NULL)
-    # This field is supposed to replace the session advisory locks to protect tasks.
+    # This field is the lock to protect tasks.
     app_lock = models.ForeignKey(
         "AppStatus", null=True, related_name="tasks", on_delete=models.SET_NULL
     )
@@ -166,22 +166,6 @@ class Task(BaseModel, AutoAddObjPermsMixin):
 
     def __str__(self):
         return "Task: {name} [{state}]".format(name=self.name, state=self.state)
-
-    def __enter__(self):
-        self.lock = _uuid_to_advisory_lock(self.pk.int)
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT pg_try_advisory_lock(%s)", [self.lock])
-            acquired = cursor.fetchone()[0]
-        if not acquired:
-            raise AdvisoryLockError("Could not acquire lock.")
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT pg_advisory_unlock(%s)", [self.lock])
-            released = cursor.fetchone()[0]
-        if not released:
-            raise RuntimeError("Lock not held.")
 
     @staticmethod
     def current_id():
@@ -218,7 +202,11 @@ class Task(BaseModel, AutoAddObjPermsMixin):
         This updates the :attr:`started_at` and sets the :attr:`state` to :attr:`RUNNING`.
         """
         started_at = timezone.now()
-        rows = Task.objects.filter(pk=self.pk, state=TASK_STATES.WAITING).update(
+        rows = Task.objects.filter(
+            pk=self.pk,
+            state=TASK_STATES.WAITING,
+            app_lock=AppStatus.objects.current(),
+        ).update(
             state=TASK_STATES.RUNNING,
             started_at=started_at,
         )
@@ -254,7 +242,11 @@ class Task(BaseModel, AutoAddObjPermsMixin):
         # Only set the state to finished if it's running. This is important for when the task has
         # been canceled, so we don't move the task from canceled to finished.
         finished_at = timezone.now()
-        rows = Task.objects.filter(pk=self.pk, state=TASK_STATES.RUNNING).update(
+        rows = Task.objects.filter(
+            pk=self.pk,
+            state=TASK_STATES.RUNNING,
+            app_lock=AppStatus.objects.current(),
+        ).update(
             state=TASK_STATES.COMPLETED,
             finished_at=finished_at,
             result=result,
@@ -289,7 +281,11 @@ class Task(BaseModel, AutoAddObjPermsMixin):
         finished_at = timezone.now()
         tb_str = "".join(traceback.format_tb(tb))
         error = exception_to_dict(exc, tb_str)
-        rows = Task.objects.filter(pk=self.pk, state=TASK_STATES.RUNNING).update(
+        rows = Task.objects.filter(
+            pk=self.pk,
+            state=TASK_STATES.RUNNING,
+            app_lock=AppStatus.objects.current(),
+        ).update(
             state=TASK_STATES.FAILED,
             finished_at=finished_at,
             error=error,
@@ -336,7 +332,11 @@ class Task(BaseModel, AutoAddObjPermsMixin):
         task_data = {}
         if reason:
             task_data["error"] = {"reason": reason}
-        rows = Task.objects.filter(pk=self.pk, state=TASK_STATES.CANCELING).update(
+        rows = Task.objects.filter(
+            pk=self.pk,
+            state=TASK_STATES.CANCELING,
+            app_lock=AppStatus.objects.current(),
+        ).update(
             state=final_state,
             finished_at=finished_at,
             **task_data,
