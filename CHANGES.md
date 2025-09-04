@@ -19,7 +19,7 @@
 
 #### Bugfixes {: #3.88.0-rest-api-bugfix }
 
-- Fixed error case where worker tried to aquire the app_lock for a Task that was already finished.
+- Fixed error case where worker tried to aquire the app lock for a Task that was already finished.
   [#6899](https://github.com/pulp/pulpcore/issues/6899)
 
 ### Plugin API {: #3.88.0-plugin-api }
@@ -49,7 +49,7 @@ No significant changes.
 
 #### Bugfixes {: #3.87.1-rest-api-bugfix }
 
-- Fixed error case where worker tried to aquire the app_lock for a Task that was already finished.
+- Fixed error case where worker tried to aquire the app lock for a Task that was already finished.
   [#6899](https://github.com/pulp/pulpcore/issues/6899)
 
 ### Plugin API {: #3.87.1-plugin-api }
@@ -95,7 +95,7 @@ No significant changes.
 
 #### Features {: #3.86.0-rest-api-feature }
 
-- Added a configurable bucket boundary for API request duration metric using the OTEL_PULP_API_HISTOGRAM_BUCKETS setting.
+- Added a configurable bucket boundary for API request duration metric using the `OTEL_PULP_API_HISTOGRAM_BUCKETS` setting.
   [#6845](https://github.com/pulp/pulpcore/issues/6845)
 
 #### Bugfixes {: #3.86.0-rest-api-bugfix }
@@ -108,7 +108,7 @@ No significant changes.
 
 #### Improved Documentation {: #3.86.0-rest-api-doc }
 
-- Updated documentation for the TASK_DIAGNOSTICS setting.
+- Updated documentation for the `TASK_DIAGNOSTICS` setting.
   [#6854](https://github.com/pulp/pulpcore/issues/6854)
 
 ### Plugin API {: #3.86.0-plugin-api }

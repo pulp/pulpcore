@@ -1,6 +1,6 @@
 import pytest
 import sys
-from pulpcore.app.models import Task, ProgressReport
+from pulpcore.app.models import AppStatus, Task, ProgressReport
 from pulpcore.constants import TASK_STATES
 
 
@@ -13,8 +13,10 @@ from pulpcore.constants import TASK_STATES
     ],
 )
 @pytest.mark.django_db
-def test_report_state_changes(to_state, use_canceled):
-    task = Task.objects.create(name="test", state=TASK_STATES.RUNNING)
+def test_report_state_changes(monkeypatch, to_state, use_canceled):
+    monkeypatch.setattr(AppStatus.objects, "_current_app_status", None)
+    app_status = AppStatus.objects.create(app_type="worker", name="test_runner")
+    task = Task.objects.create(name="test", state=TASK_STATES.RUNNING, app_lock=app_status)
     reports = {}
     for state in vars(TASK_STATES):
         report = ProgressReport(message="test", code="test", state=state, task=task)
