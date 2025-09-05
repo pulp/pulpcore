@@ -248,7 +248,7 @@ class PulpcoreWorker:
             or parse_version(self.versions[label]) < parse_version(version)
         ]
         if unmatched_versions:
-            domain = task.pulp_domain
+            domain = task.pulp_domain  # Hidden db roundtrip
             _logger.info(
                 _("Incompatible versions to execute task %s in domain: %s by worker %s: %s"),
                 task.pk,
@@ -353,64 +353,6 @@ class PulpcoreWorker:
             taken_shared_resources.update(shared_resources)
 
         return count
-
-    def fetch_task(self):
-        """
-        Fetch an available unblocked task and set the app_lock to this process.
-        """
-        query = """
-            UPDATE core_task
-            SET app_lock_id = %s
-            WHERE pulp_id IN (
-                SELECT pulp_id FROM core_task
-                WHERE state = ANY(%s) AND unblocked_at IS NOT NULL AND app_lock_id IS NULL
-                ORDER BY immediate DESC, pulp_created + '8 s'::interval * random()
-                LIMIT 1
-                FOR UPDATE SKIP LOCKED
-            )
-            RETURNING
-                pulp_id,
-                state,
-                unblocked_at,
-                versions,
-                pulp_domain_id,
-                reserved_resources_record
-        """
-        qs = Task.objects.raw(
-            query,
-            [
-                self.app_status.pulp_id,
-                list(TASK_INCOMPLETE_STATES),
-            ],
-        )
-        return next(iter(qs), None)
-
-    def iter_tasks(self):
-        """Iterate over ready tasks and yield each task while holding the lock."""
-        while not self.shutdown_requested:
-            task = self.fetch_task()
-            if task is None:
-                # No task found
-                break
-            try:
-                if task.state == TASK_STATES.CANCELING:
-                    # No worker picked this task up before being canceled.
-                    self.cancel_abandoned_task(task, TASK_STATES.CANCELED)
-                    continue
-                if task.state == TASK_STATES.RUNNING:
-                    # A running task without a lock must be abandoned.
-                    self.cancel_abandoned_task(task, TASK_STATES.FAILED, "Worker has gone missing.")
-                    continue
-
-                # This statement is using lazy evaluation.
-                if task.state == TASK_STATES.WAITING and self.is_compatible(task):
-                    yield task
-            finally:
-                rows = Task.objects.filter(pk=task.pk, app_lock=AppStatus.objects.current()).update(
-                    app_lock=None
-                )
-                if rows != 1:
-                    raise RuntimeError("Something other than us is messing around with locks.")
 
     def sleep(self):
         """Wait for signals on the wakeup channel while heart beating."""
@@ -520,6 +462,39 @@ class PulpcoreWorker:
             self.notify_workers(TASK_WAKEUP_UNBLOCK)
         self.task = None
 
+    def fetch_task(self):
+        """
+        Fetch an available unblocked task and set the app_lock to this process.
+        """
+        # The PostgreSQL returning logic cannot be represented in Django ORM.
+        # Also I doubt that rewriting this in ORM makes it any more readable.
+        query = """
+            UPDATE core_task
+            SET app_lock_id = %s
+            WHERE pulp_id IN (
+                SELECT pulp_id FROM core_task
+                WHERE state = ANY(%s) AND unblocked_at IS NOT NULL AND app_lock_id IS NULL
+                ORDER BY immediate DESC, pulp_created + '8 s'::interval * random()
+                LIMIT 1
+                FOR UPDATE SKIP LOCKED
+            )
+            RETURNING
+                pulp_id,
+                state,
+                unblocked_at,
+                versions,
+                pulp_domain_id,
+                reserved_resources_record
+        """
+        qs = Task.objects.raw(
+            query,
+            [
+                self.app_status.pulp_id,
+                list(TASK_INCOMPLETE_STATES),
+            ],
+        )
+        return next(iter(qs), None)
+
     def handle_unblocked_tasks(self):
         """Pick and supervise tasks until there are no more available tasks.
 
@@ -527,14 +502,30 @@ class PulpcoreWorker:
         would go to sleep and wouldn't be able to know about the unhandled task until
         an external wakeup event occurs (e.g., new worker startup or new task gets in).
         """
-        keep_looping = True
-        while keep_looping and not self.shutdown_requested:
+        while not self.shutdown_requested:
             # Clear pending wakeups. We are about to handle them anyway.
             self.wakeup_handle = False
-            keep_looping = False
-            for task in self.iter_tasks():
-                keep_looping = True
-                self.supervise_task(task)
+
+            task = self.fetch_task()
+            if task is None:
+                # No task found
+                break
+            try:
+                if task.state == TASK_STATES.CANCELING:
+                    # No worker picked this task up before being canceled.
+                    # Or the worker disappeared before handling the canceling.
+                    self.cancel_abandoned_task(task, TASK_STATES.CANCELED)
+                elif task.state == TASK_STATES.RUNNING:
+                    # A running task without a lock must be abandoned.
+                    self.cancel_abandoned_task(task, TASK_STATES.FAILED, "Worker has gone missing.")
+                elif task.state == TASK_STATES.WAITING and self.is_compatible(task):
+                    self.supervise_task(task)
+            finally:
+                rows = Task.objects.filter(pk=task.pk, app_lock=AppStatus.objects.current()).update(
+                    app_lock=None
+                )
+                if rows != 1:
+                    raise RuntimeError("Something other than us is messing around with locks.")
 
     def _record_unblocked_waiting_tasks_metric(self):
         now = timezone.now()

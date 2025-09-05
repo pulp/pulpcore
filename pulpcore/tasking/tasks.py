@@ -237,7 +237,7 @@ def dispatch(
         profile_options=x_task_diagnostics_var.get(None),
         app_lock=None if not immediate else AppStatus.objects.current(),  # Lazy evaluation...
     )
-    task.refresh_from_db()  # The database may have assigned a timestamp for us.
+    task.refresh_from_db()  # The database will have assigned a timestamp for us.
     if immediate:
         prior_tasks = Task.objects.filter(
             state__in=TASK_INCOMPLETE_STATES, pulp_created__lt=task.pulp_created
