@@ -10,7 +10,7 @@ import threading
 from gettext import gettext as _
 
 from django.conf import settings
-from django.db import connection, transaction
+from django.db import connection
 from django.db.models import Model
 from django_guid import get_guid
 from pulpcore.app.apps import MODULE_PLUGIN_VERSIONS
@@ -222,22 +222,21 @@ def dispatch(
     resources = exclusive_resources + [f"shared:{resource}" for resource in shared_resources]
 
     notify_workers = False
-    with transaction.atomic():
-        task = Task.objects.create(
-            state=TASK_STATES.WAITING,
-            logging_cid=(get_guid()),
-            task_group=task_group,
-            name=function_name,
-            enc_args=args,
-            enc_kwargs=kwargs,
-            parent_task=Task.current(),
-            reserved_resources_record=resources,
-            versions=versions,
-            immediate=immediate,
-            deferred=deferred,
-            profile_options=x_task_diagnostics_var.get(None),
-            app_lock=None if not immediate else AppStatus.objects.current(),  # Lazy evaluation...
-        )
+    task = Task.objects.create(
+        state=TASK_STATES.WAITING,
+        logging_cid=(get_guid()),
+        task_group=task_group,
+        name=function_name,
+        enc_args=args,
+        enc_kwargs=kwargs,
+        parent_task=Task.current(),
+        reserved_resources_record=resources,
+        versions=versions,
+        immediate=immediate,
+        deferred=deferred,
+        profile_options=x_task_diagnostics_var.get(None),
+        app_lock=None if not immediate else AppStatus.objects.current(),  # Lazy evaluation...
+    )
     task.refresh_from_db()  # The database may have assigned a timestamp for us.
     if immediate:
         prior_tasks = Task.objects.filter(
