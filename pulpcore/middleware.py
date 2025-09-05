@@ -6,7 +6,9 @@ from os import environ
 
 from django.http.response import Http404
 from django.conf import settings
-from django.core.exceptions import MiddlewareNotUsed
+from django.core import exceptions as django_exceptions
+
+from rest_framework.versioning import BaseVersioning
 
 from pulpcore.metrics import init_otel_meter
 from pulpcore.app.models import Domain
@@ -72,7 +74,7 @@ class APIRootRewriteMiddleware:
 
     def __init__(self, get_response):
         if not settings.API_ROOT_REWRITE_HEADER:
-            raise MiddlewareNotUsed()
+            raise django_exceptions.MiddlewareNotUsed()
         self.get_response = get_response
 
     def __call__(self, request):
@@ -195,3 +197,51 @@ class TaskProfilerMiddleware:
                 x_task_diagnostics_var.reset(ctx_token)
         else:
             return self.get_response(request)
+
+
+class NamespaceVersioning(BaseVersioning):
+    """
+    To the client this is the same style as `URLPathVersioning`.
+    The difference is in the backend - this implementation uses
+    Django's URL namespaces to determine the version.
+
+    An example URL conf that is namespaced into two separate versions
+
+    # users/urls.py
+    urlpatterns = [
+        path('/users/', users_list, name='users-list'),
+        path('/users/<int:pk>/', users_detail, name='users-detail')
+    ]
+
+    # urls.py
+    urlpatterns = [
+        path('v1/', include('users.urls', namespace='v1')),
+        path('v2/', include('users.urls', namespace='v2'))
+    ]
+
+    GET /1.0/something/ HTTP/1.1
+    Host: example.com
+    Accept: application/json
+    """
+
+    invalid_version_message = "Invalid version in URL path. Does not match any version namespace."
+
+    def determine_version(self, request, *args, **kwargs):
+        resolver_match = getattr(request, "resolver_match", None)
+        if resolver_match is None or not resolver_match.namespace:
+            return self.default_version
+
+        # Allow for possibly nested namespaces.
+        possible_versions = resolver_match.namespace.split(":")
+        for version in possible_versions:
+            if self.is_allowed_version(version):
+                return version
+        raise django_exceptions.NotFound(self.invalid_version_message)
+
+    def reverse(self, viewname, args=None, kwargs=None, request=None, format=None, **extra):
+        if request.version is not None:
+            viewname = self.get_versioned_viewname(viewname, request)
+        return super().reverse(viewname, args, kwargs, request, format, **extra)
+
+    def get_versioned_viewname(self, viewname, request):
+        return request.version + ":" + viewname
