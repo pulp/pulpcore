@@ -1,5 +1,4 @@
 import asyncio
-import contextlib
 import contextvars
 import importlib
 import logging
@@ -11,7 +10,7 @@ import threading
 from gettext import gettext as _
 
 from django.conf import settings
-from django.db import connection, transaction
+from django.db import connection
 from django.db.models import Model
 from django_guid import get_guid
 from pulpcore.app.apps import MODULE_PLUGIN_VERSIONS
@@ -26,6 +25,7 @@ from pulpcore.constants import (
     TASK_INCOMPLETE_STATES,
     TASK_STATES,
     IMMEDIATE_TIMEOUT,
+    TASK_WAKEUP_HANDLE,
     TASK_WAKEUP_UNBLOCK,
 )
 from pulpcore.middleware import x_task_diagnostics_var
@@ -49,7 +49,7 @@ def _validate_and_get_resources(resources):
     return list(resource_set)
 
 
-def wakeup_worker(reason="unknown"):
+def wakeup_worker(reason):
     # Notify workers
     with connection.connection.cursor() as cursor:
         cursor.execute("SELECT pg_notify('pulp_worker_wakeup', %s)", (reason,))
@@ -222,67 +222,61 @@ def dispatch(
     resources = exclusive_resources + [f"shared:{resource}" for resource in shared_resources]
 
     notify_workers = False
-    with contextlib.ExitStack() as stack:
-        with transaction.atomic():
-            task = Task.objects.create(
-                state=TASK_STATES.WAITING,
-                logging_cid=(get_guid()),
-                task_group=task_group,
-                name=function_name,
-                enc_args=args,
-                enc_kwargs=kwargs,
-                parent_task=Task.current(),
-                reserved_resources_record=resources,
-                versions=versions,
-                immediate=immediate,
-                deferred=deferred,
-                profile_options=x_task_diagnostics_var.get(None),
-                app_lock=(immediate and AppStatus.objects.current()) or None,
-            )
-            task.refresh_from_db()  # The database may have assigned a timestamp for us.
-            if immediate:
-                # Grab the advisory lock before the task hits the db.
-                stack.enter_context(task)
-            else:
-                notify_workers = True
-        if immediate:
-            prior_tasks = Task.objects.filter(
-                state__in=TASK_INCOMPLETE_STATES, pulp_created__lt=task.pulp_created
-            )
-            # Compile a list of resources that must not be taken by other tasks.
-            colliding_resources = (
-                shared_resources
-                + exclusive_resources
-                + [f"shared:{resource}" for resource in exclusive_resources]
-            )
-            # Can we execute this task immediately?
-            if (
-                not colliding_resources
-                or not prior_tasks.filter(
-                    reserved_resources_record__overlap=colliding_resources
-                ).exists()
-            ):
-                task.unblock()
+    task = Task.objects.create(
+        state=TASK_STATES.WAITING,
+        logging_cid=(get_guid()),
+        task_group=task_group,
+        name=function_name,
+        enc_args=args,
+        enc_kwargs=kwargs,
+        parent_task=Task.current(),
+        reserved_resources_record=resources,
+        versions=versions,
+        immediate=immediate,
+        deferred=deferred,
+        profile_options=x_task_diagnostics_var.get(None),
+        app_lock=None if not immediate else AppStatus.objects.current(),  # Lazy evaluation...
+    )
+    task.refresh_from_db()  # The database may have assigned a timestamp for us.
+    if immediate:
+        prior_tasks = Task.objects.filter(
+            state__in=TASK_INCOMPLETE_STATES, pulp_created__lt=task.pulp_created
+        )
+        # Compile a list of resources that must not be taken by other tasks.
+        colliding_resources = (
+            shared_resources
+            + exclusive_resources
+            + [f"shared:{resource}" for resource in exclusive_resources]
+        )
+        # Can we execute this task immediately?
+        if (
+            not colliding_resources
+            or not prior_tasks.filter(
+                reserved_resources_record__overlap=colliding_resources
+            ).exists()
+        ):
+            task.unblock()
 
-                cur_dir = os.getcwd()
-                with tempfile.TemporaryDirectory(dir=settings.WORKING_DIRECTORY) as working_dir:
-                    os.chdir(working_dir)
-                    try:
-                        execute_task(task)
-                    finally:
-                        # Whether the task fails or not, we should always restore the workdir.
-                        os.chdir(cur_dir)
+            cur_dir = os.getcwd()
+            with tempfile.TemporaryDirectory(dir=settings.WORKING_DIRECTORY) as working_dir:
+                os.chdir(working_dir)
+                try:
+                    execute_task(task)
+                finally:
+                    # Whether the task fails or not, we should always restore the workdir.
+                    os.chdir(cur_dir)
 
-                if resources:
-                    notify_workers = True
-            elif deferred:
-                # Resources are blocked. Let the others handle it.
+            if resources:
                 notify_workers = True
-                task.app_lock = None
-                task.save()
-            else:
-                task.set_canceling()
-                task.set_canceled(TASK_STATES.CANCELED, "Resources temporarily unavailable.")
+        elif deferred:
+            # Resources are blocked. Let the others handle it.
+            task.app_lock = None
+            task.save()
+        else:
+            task.set_canceling()
+            task.set_canceled(TASK_STATES.CANCELED, "Resources temporarily unavailable.")
+    else:
+        notify_workers = True
     if notify_workers:
         wakeup_worker(TASK_WAKEUP_UNBLOCK)
     return task
@@ -320,7 +314,7 @@ def cancel_task(task_id):
     # Notify the worker that might be running that task and other workers to clean up
     with connection.cursor() as cursor:
         cursor.execute("SELECT pg_notify('pulp_worker_cancel', %s)", (str(task.pk),))
-        cursor.execute("NOTIFY pulp_worker_wakeup")
+        wakeup_worker(TASK_WAKEUP_HANDLE)
     return task
 
 
