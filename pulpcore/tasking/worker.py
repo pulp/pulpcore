@@ -15,7 +15,6 @@ from packaging.version import parse as parse_version
 from django.conf import settings
 from django.db import connection, DatabaseError, IntegrityError
 from django.db.models import Case, Count, F, Max, Value, When
-from django.db.models.functions import Random
 from django.utils import timezone
 
 from pulpcore.constants import (
@@ -217,15 +216,10 @@ class PulpcoreWorker:
 
         This function must only be called while holding the lock for that task. It is a no-op if
         the task is neither in "running" nor "canceling" state.
-
-        Return ``True`` if the task was actually canceled, ``False`` otherwise.
         """
         # A task is considered abandoned when in running state, but no worker holds its lock
         domain = task.pulp_domain
-        try:
-            task.set_canceling()
-        except RuntimeError:
-            return False
+        task.set_canceling()
         if reason:
             _logger.info(
                 "Cleaning up task %s in domain: %s and marking as %s. Reason: %s",
@@ -245,10 +239,8 @@ class PulpcoreWorker:
         task.set_canceled(final_state=final_state, reason=reason)
         if task.reserved_resources_record:
             self.notify_workers(TASK_WAKEUP_UNBLOCK)
-        return True
 
     def is_compatible(self, task):
-        domain = task.pulp_domain
         unmatched_versions = [
             f"task: {label}>={version} worker: {self.versions.get(label)}"
             for label, version in task.versions.items()
@@ -256,6 +248,7 @@ class PulpcoreWorker:
             or parse_version(self.versions[label]) < parse_version(version)
         ]
         if unmatched_versions:
+            domain = task.pulp_domain
             _logger.info(
                 _("Incompatible versions to execute task %s in domain: %s by worker %s: %s"),
                 task.pk,
@@ -361,55 +354,63 @@ class PulpcoreWorker:
 
         return count
 
+    def fetch_task(self):
+        """
+        Fetch an available unblocked task and set the app_lock to this process.
+        """
+        query = """
+            UPDATE core_task
+            SET app_lock_id = %s
+            WHERE pulp_id IN (
+                SELECT pulp_id FROM core_task
+                WHERE state = ANY(%s) AND unblocked_at IS NOT NULL AND app_lock_id IS NULL
+                ORDER BY immediate DESC, pulp_created + '8 s'::interval * random()
+                LIMIT 1
+                FOR UPDATE SKIP LOCKED
+            )
+            RETURNING
+                pulp_id,
+                state,
+                unblocked_at,
+                versions,
+                pulp_domain_id,
+                reserved_resources_record
+        """
+        qs = Task.objects.raw(
+            query,
+            [
+                self.app_status.pulp_id,
+                list(TASK_INCOMPLETE_STATES),
+            ],
+        )
+        return next(iter(qs), None)
+
     def iter_tasks(self):
         """Iterate over ready tasks and yield each task while holding the lock."""
         while not self.shutdown_requested:
-            # When batching this query, be sure to use "pulp_created" as a cursor.
-            for task in Task.objects.filter(
-                state__in=TASK_INCOMPLETE_STATES,
-                unblocked_at__isnull=False,
-                app_lock__isnull=True,
-            ).order_by("-immediate", F("pulp_created") + Value(timedelta(seconds=8)) * Random()):
-                # Acquire an exclusie lock on the task.
-                rows = Task.objects.filter(pk=task.pk, app_lock=None).update(
-                    app_lock=AppStatus.objects.current()
-                )
-                if rows == 0:
-                    continue
-                try:
-                    if task.state == TASK_STATES.CANCELING:
-                        # No worker picked this task up before being canceled.
-                        if self.cancel_abandoned_task(task, TASK_STATES.CANCELED):
-                            # Continue looking for the next task without considering this
-                            # tasks resources, as we just released them.
-                            continue
-                    if task.state == TASK_STATES.RUNNING:
-                        # A running task without a lock must be abandoned.
-                        if self.cancel_abandoned_task(
-                            task, TASK_STATES.FAILED, "Worker has gone missing."
-                        ):
-                            # Continue looking for the next task without considering this
-                            # tasks resources, as we just released them.
-                            continue
-
-                    # This statement is using lazy evaluation.
-                    if (
-                        task.state == TASK_STATES.WAITING
-                        and task.unblocked_at is not None
-                        and self.is_compatible(task)
-                    ):
-                        yield task
-                        # Start from the top of the Task list.
-                        break
-                finally:
-                    rows = Task.objects.filter(
-                        pk=task.pk, app_lock=AppStatus.objects.current()
-                    ).update(app_lock=None)
-                    if rows != 1:
-                        raise RuntimeError("Something other than us is messing around with locks.")
-            else:
-                # No task found in the for-loop
+            task = self.fetch_task()
+            if task is None:
+                # No task found
                 break
+            try:
+                if task.state == TASK_STATES.CANCELING:
+                    # No worker picked this task up before being canceled.
+                    self.cancel_abandoned_task(task, TASK_STATES.CANCELED)
+                    continue
+                if task.state == TASK_STATES.RUNNING:
+                    # A running task without a lock must be abandoned.
+                    self.cancel_abandoned_task(task, TASK_STATES.FAILED, "Worker has gone missing.")
+                    continue
+
+                # This statement is using lazy evaluation.
+                if task.state == TASK_STATES.WAITING and self.is_compatible(task):
+                    yield task
+            finally:
+                rows = Task.objects.filter(pk=task.pk, app_lock=AppStatus.objects.current()).update(
+                    app_lock=None
+                )
+                if rows != 1:
+                    raise RuntimeError("Something other than us is messing around with locks.")
 
     def sleep(self):
         """Wait for signals on the wakeup channel while heart beating."""
