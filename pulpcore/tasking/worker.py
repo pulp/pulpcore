@@ -53,6 +53,8 @@ TASK_GRACE_INTERVAL = settings.TASK_GRACE_INTERVAL
 TASK_KILL_INTERVAL = 1
 # Number of heartbeats between cleaning up worker processes (approx)
 WORKER_CLEANUP_INTERVAL = 100
+# Number of hearbeats between rechecking ignored tasks.
+IGNORED_TASKS_CLEANUP_INTERVAL = 100
 # Threshold time in seconds of an unblocked task before we consider a queue stalled
 THRESHOLD_UNBLOCKED_WAITING_TIME = 5
 
@@ -64,6 +66,9 @@ class PulpcoreWorker:
         self.wakeup_unblock = False
         self.wakeup_handle = False
         self.cancel_task = False
+
+        self.ignored_task_ids = []
+        self.ignored_task_countdown = IGNORED_TASKS_CLEANUP_INTERVAL
 
         self.auxiliary = auxiliary
         self.task = None
@@ -151,6 +156,10 @@ class PulpcoreWorker:
             if notification.payload == str(self.task.pk):
                 self.cancel_task = True
 
+    def shutdown(self):
+        self.app_status.delete()
+        _logger.info(_("Worker %s was shut down."), self.name)
+
     def handle_worker_heartbeat(self):
         """
         Update worker heartbeat records.
@@ -173,9 +182,13 @@ class PulpcoreWorker:
             self.shutdown_requested = True
             self.cancel_task = True
 
-    def shutdown(self):
-        self.app_status.delete()
-        _logger.info(_("Worker %s was shut down."), self.name)
+    def cleanup_ignored_tasks(self):
+        for pk in (
+            Task.objects.filter(pk__in=self.ignored_task_ids)
+            .exclude(state__in=TASK_INCOMPLETE_STATES)
+            .values_list("pk", flat=True)
+        ):
+            self.ignored_task_ids.remove(pk)
 
     def worker_cleanup(self):
         qs = AppStatus.objects.older_than(age=timedelta(days=7))
@@ -197,6 +210,11 @@ class PulpcoreWorker:
     def beat(self):
         if self.app_status.last_heartbeat < timezone.now() - self.heartbeat_period:
             self.handle_worker_heartbeat()
+            if self.ignored_task_ids:
+                self.ignored_task_countdown -= 1
+                if self.ignored_task_countdown <= 0:
+                    self.ignored_task_countdown = IGNORED_TASKS_CLEANUP_INTERVAL
+                    self.cleanup_ignored_tasks()
             if not self.auxiliary:
                 self.worker_cleanup_countdown -= 1
                 if self.worker_cleanup_countdown <= 0:
@@ -473,7 +491,11 @@ class PulpcoreWorker:
             SET app_lock_id = %s
             WHERE pulp_id IN (
                 SELECT pulp_id FROM core_task
-                WHERE state = ANY(%s) AND unblocked_at IS NOT NULL AND app_lock_id IS NULL
+                WHERE
+                    state = ANY(%s)
+                    AND unblocked_at IS NOT NULL
+                    AND app_lock_id IS NULL
+                    AND NOT pulp_id = ANY(%s)
                 ORDER BY immediate DESC, pulp_created + '8 s'::interval * random()
                 LIMIT 1
                 FOR UPDATE SKIP LOCKED
@@ -491,6 +513,7 @@ class PulpcoreWorker:
             [
                 self.app_status.pulp_id,
                 list(TASK_INCOMPLETE_STATES),
+                self.ignored_task_ids,
             ],
         )
         return next(iter(qs), None)
@@ -520,6 +543,10 @@ class PulpcoreWorker:
                     self.cancel_abandoned_task(task, TASK_STATES.FAILED, "Worker has gone missing.")
                 elif task.state == TASK_STATES.WAITING and self.is_compatible(task):
                     self.supervise_task(task)
+                else:
+                    # Probably incompatible, but for whatever reason we didn't pick it up this time,
+                    # we don't need to look at it ever again.
+                    self.ignored_task_ids.append(task.pk)
             finally:
                 rows = Task.objects.filter(pk=task.pk, app_lock=AppStatus.objects.current()).update(
                     app_lock=None
