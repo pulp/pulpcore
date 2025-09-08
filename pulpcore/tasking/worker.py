@@ -77,13 +77,10 @@ class PulpcoreWorker:
         self.last_metric_heartbeat = timezone.now()
         self.versions = {app.label: app.version for app in pulp_plugin_configs()}
         self.cursor = connection.cursor()
-        try:
-            self.app_status = AppStatus.objects.create(
-                name=self.name, app_type="worker", versions=self.versions
-            )
-        except IntegrityError:
-            _logger.error(f"Failed to create worker {self.name} in the database.")
-            exit(1)
+        self.app_status = AppStatus.objects.create(
+            name=self.name, app_type="worker", versions=self.versions
+        )
+
         # This defaults to immediate task cancellation.
         # It will be set into the future on moderately graceful worker shutdown,
         # and set to None for fully graceful shutdown.
