@@ -125,7 +125,9 @@ def test_download_policy(
         f"rc = RepositoryContent.objects.filter(repository='{repo_uuid}', content__in=content);"
         "print(rc[0].pulp_created.strftime('%d-%b-%Y %H:%M'));"
     )
-    process = subprocess.run(["pulpcore-manager", "shell", "-c", commands], capture_output=True)
+    process = subprocess.run(
+        ["pulpcore-manager", "shell", "--no-imports", "-c", commands], capture_output=True
+    )
     assert process.returncode == 0
     content_artifact_created_date = process.stdout.decode().strip()
     # Download the listing page for the 'foo' directory

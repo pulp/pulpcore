@@ -1027,7 +1027,9 @@ def dispatch_task(pulpcore_bindings):
             "print(get_url(task))"
         )
 
-        process = subprocess.run(["pulpcore-manager", "shell", "-c", commands], capture_output=True)
+        process = subprocess.run(
+            ["pulpcore-manager", "shell", "--no-imports", "-c", commands], capture_output=True
+        )
         err_log = process.stderr.decode()
         assert process.returncode == 0, err_log
         task_href = process.stdout.decode().strip()
@@ -1046,10 +1048,12 @@ def dispatch_task_group(dispatch_task):
             "task_group = TaskGroup.objects.create(); "
             "print(task_group.pk, get_url(task_group))"
         )
-        process = subprocess.run(["pulpcore-manager", "shell", "-c", commands], capture_output=True)
+        process = subprocess.run(
+            ["pulpcore-manager", "shell", "--no-imports", "-c", commands], capture_output=True
+        )
         assert process.returncode == 0
-        tgroup_id, tgroup_href = process.stdout.decode().strip().split()
-
+        output = process.stdout.decode().strip()
+        tgroup_id, tgroup_href = output.split()
         dispatch_task(task_name, *args, task_group_id=tgroup_id, **kwargs)
         return tgroup_href
 

@@ -84,7 +84,7 @@ def task_schedule(request):
         "    dispatch_interval=dispatch_interval, next_dispatch=next_dispatch"
         ").save();"
     )
-    process = subprocess.run(["pulpcore-manager", "shell", "-c", schedule_commands])
+    process = subprocess.run(["pulpcore-manager", "shell", "--no-imports", "-c", schedule_commands])
     assert process.returncode == 0
 
     yield {"name": name, "task_name": task_name, "interval": interval}
@@ -93,7 +93,9 @@ def task_schedule(request):
         "from pulpcore.app.models import TaskSchedule;"
         f"TaskSchedule.objects.get(name='{name}').delete();"
     )
-    process = subprocess.run(["pulpcore-manager", "shell", "-c", unschedule_commands])
+    process = subprocess.run(
+        ["pulpcore-manager", "shell", "--no-imports", "-c", unschedule_commands]
+    )
     assert process.returncode == 0
 
 

@@ -222,7 +222,11 @@ def test_crud_remotes_full_workflow(
     remote_update = {"name": temp_remote.name, "url": "http://", "password": "changed"}
     response = file_bindings.RemotesFileApi.update(href, remote_update)
     monitor_task(response.task)
-    exc = run(["pulpcore-manager", "shell", "-c", shell_cmd], text=True, capture_output=True)
+    exc = run(
+        ["pulpcore-manager", "shell", "--no-imports", "-c", shell_cmd],
+        text=True,
+        capture_output=True,
+    )
     assert exc.stdout.rstrip("\n") == "changed"
 
     # Test that password doesn't get unset when not passed with a PUT request.
@@ -237,7 +241,11 @@ def test_crud_remotes_full_workflow(
     remote_update = {"name": temp_remote.name, "url": "http://"}
     response = file_bindings.RemotesFileApi.update(href, remote_update)
     monitor_task(response.task)
-    exc = run(["pulpcore-manager", "shell", "-c", shell_cmd], text=True, capture_output=True)
+    exc = run(
+        ["pulpcore-manager", "shell", "--no-imports", "-c", shell_cmd],
+        text=True,
+        capture_output=True,
+    )
     assert exc.stdout.rstrip("\n") == "new"
 
     # Test valid timeout settings (float >= 0)
