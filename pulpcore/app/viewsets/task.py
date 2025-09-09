@@ -68,7 +68,6 @@ class TaskFilter(BaseFilterSet):
         model = Task
         fields = {
             "state": ["exact", "in", "ne"],
-            "worker": ["exact", "in", "isnull"],
             "name": ["exact", "contains", "in", "ne"],
             "logging_cid": ["exact", "contains"],
             "pulp_created": DATETIME_FILTER_OPTIONS,

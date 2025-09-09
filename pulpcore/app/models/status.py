@@ -15,44 +15,12 @@ from pulpcore.app.models import BaseModel
 
 
 class AppStatusManager(models.Manager):
-    # This should be replaced with 3.87.
-    def online(self):
-        """
-        Returns a queryset of objects that are online.
+    _APP_TTL = {
+        "api": settings.API_APP_TTL,
+        "content": settings.CONTENT_APP_TTL,
+        "worker": settings.WORKER_TTL,
+    }
 
-        To be considered 'online', a AppStatus must have a heartbeat timestamp within
-        ``self.model.APP_TTL`` from now.
-
-        Returns:
-            [django.db.models.query.QuerySet][]:  A query set of the
-                objects which are considered 'online'.
-        """
-        age_threshold = timezone.now() - self.model.APP_TTL
-        return self.filter(last_heartbeat__gte=age_threshold)
-
-    def missing(self, age=None):
-        """
-        Returns a queryset of workers meeting the criteria to be considered 'missing'
-
-        To be considered missing, a AppsStatus must have a stale timestamp.  By default, stale is
-        defined here as longer than the ``self.model.APP_TTL``, or you can specify age as a
-        timedelta.
-
-        Args:
-            age (datetime.timedelta): Objects who have heartbeats older than this time interval are
-                considered missing.
-
-        Returns:
-            [django.db.models.query.QuerySet][]:  A query set of the objects objects which
-                are considered to be 'missing'.
-        """
-        age_threshold = timezone.now() - (age or self.model.APP_TTL)
-        return self.filter(last_heartbeat__lt=age_threshold)
-
-
-class _AppStatusManager(AppStatusManager):
-    # This is an intermediate class in order to allow a ZDU.
-    # It should be made the real thing with 3.87.
     def __init__(self):
         super().__init__()
         self._current_app_status = None
@@ -61,6 +29,7 @@ class _AppStatusManager(AppStatusManager):
         if self._current_app_status is not None:
             raise RuntimeError("There is already an app status in this process.")
 
+        kwargs.setdefault("ttl", timedelta(seconds=self._APP_TTL[app_type]))
         obj = super().create(app_type=app_type, **kwargs)
         self._current_app_status = obj
         return obj
@@ -69,6 +38,7 @@ class _AppStatusManager(AppStatusManager):
         if self._current_app_status is not None:
             raise RuntimeError("There is already an app status in this process.")
 
+        kwargs.setdefault("ttl", timedelta(seconds=self._APP_TTL[app_type]))
         obj = await super().acreate(app_type=app_type, **kwargs)
         self._current_app_status = obj
         return obj
@@ -103,22 +73,13 @@ class AppStatus(BaseModel):
         ("content", "content"),
         ("worker", "worker"),
     ]
-    _APP_TTL = {
-        "api": settings.API_APP_TTL,
-        "content": settings.CONTENT_APP_TTL,
-        "worker": settings.WORKER_TTL,
-    }
-    objects = _AppStatusManager()
+    objects = AppStatusManager()
 
     app_type = models.CharField(max_length=10, choices=APP_TYPES)
     name = models.TextField()
     versions = HStoreField(default=dict)
     ttl = models.DurationField(null=False)
     last_heartbeat = models.DateTimeField(auto_now=True)
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.ttl = timedelta(seconds=self._APP_TTL[self.app_type])
 
     @property
     def online(self) -> bool:
@@ -170,94 +131,3 @@ class AppStatus(BaseModel):
         The task this worker is currently executing, if any.
         """
         return self.tasks.filter(state="running").first()
-
-
-class BaseAppStatus(BaseModel):
-    """
-    Represents an AppStatus.
-    Deprecated, to be removed with 3.87.
-
-    This class is abstract. Subclasses must define `APP_TTL` as a `timedelta`.
-
-    Fields:
-
-        name (models.TextField): The name of the app.
-        last_heartbeat (models.DateTimeField): A timestamp of this worker's last heartbeat.
-        versions (HStoreField): A dictionary with versions of all pulp components.
-    """
-
-    objects = AppStatusManager()
-
-    name = models.TextField(db_index=True, unique=True)
-    last_heartbeat = models.DateTimeField(auto_now=True)
-    versions = HStoreField(default=dict)
-
-    @property
-    def online(self):
-        """
-        Whether an app can be considered 'online'
-
-        To be considered 'online', an app must have a timestamp more recent than ``self.APP_TTL``.
-
-        Returns:
-            bool: True if the app is considered online, otherwise False
-        """
-        age_threshold = timezone.now() - self.APP_TTL
-        return self.last_heartbeat >= age_threshold
-
-    @property
-    def missing(self):
-        """
-        Whether an app can be considered 'missing'
-
-        To be considered 'missing', an App must have a timestamp older than ``self.APP_TTL``.
-
-        Returns:
-            bool: True if the app is considered missing, otherwise False
-        """
-        return not self.online
-
-    def save_heartbeat(self):
-        """
-        Update the last_heartbeat field to now and save it.
-
-        Only the last_heartbeat field will be saved. No other changes will be saved.
-
-        Raises:
-            ValueError: When the model instance has never been saved before. This method can
-                only update an existing database record.
-        """
-        self.save(update_fields=["last_heartbeat"])
-
-    async def asave_heartbeat(self):
-        """
-        Update the last_heartbeat field to now and save it.
-
-        Only the last_heartbeat field will be saved. No other changes will be saved.
-
-        Raises:
-            ValueError: When the model instance has never been saved before. This method can
-                only update an existing database record.
-        """
-        await self.asave(update_fields=["last_heartbeat"])
-
-    class Meta:
-        abstract = True
-
-
-class ApiAppStatus(BaseAppStatus):
-    """
-    Represents a Api App Status
-    Deprecated, to be removed with 3.87.
-    """
-
-    APP_TTL = timedelta(seconds=settings.API_APP_TTL)
-
-
-class ContentAppStatus(BaseAppStatus):
-    """
-    Represents a Content App Status
-    Deprecated, to be removed with 3.87.
-    """
-
-    APP_TTL = timedelta(seconds=settings.CONTENT_APP_TTL)

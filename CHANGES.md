@@ -175,9 +175,8 @@ No significant changes.
 
 - Bumped the minimum required python version to 3.11.
   [#6262](https://github.com/pulp/pulpcore/issues/6262)
-- Removed support for DEFAULT_FILE_STORAGE and it's corresponding storage options.
-  Use STORAGES instead:
-  <https://pulpproject.org/pulpcore/docs/admin/reference/settings/#storages>
+- Removed support for `DEFAULT_FILE_STORAGE` and it's corresponding storage options.
+  [Use STORAGES instead:](https://pulpproject.org/pulpcore/docs/admin/reference/settings/#storages)
   [#6807](https://github.com/pulp/pulpcore/issues/6807)
 - Switch OpenAPI specification to use version 3.1.
 

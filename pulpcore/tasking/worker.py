@@ -28,7 +28,7 @@ from pulpcore.constants import (
 )
 from pulpcore.metrics import init_otel_meter
 from pulpcore.app.apps import pulp_plugin_configs
-from pulpcore.app.models import Worker, Task, AppStatus, ApiAppStatus, ContentAppStatus
+from pulpcore.app.models import Task, AppStatus
 from pulpcore.app.util import PGAdvisoryLock
 from pulpcore.exceptions import AdvisoryLockError
 
@@ -192,17 +192,6 @@ class PulpcoreWorker:
         for app_worker in qs:
             _logger.info(_("Clean missing %s worker %s."), app_worker.app_type, app_worker.name)
         qs.delete()
-        with contextlib.suppress(DatabaseError):
-            # By now a migration on a newer release may have deleted these tables already.
-            for cls, cls_name in (
-                (Worker, "pulp"),
-                (ApiAppStatus, "api"),
-                (ContentAppStatus, "content"),
-            ):
-                qs = cls.objects.missing(age=timedelta(days=7))
-                for app_worker in qs:
-                    _logger.info(_("Clean missing %s worker %s."), cls_name, app_worker.name)
-                qs.delete()
 
     def beat(self):
         if self.app_status.last_heartbeat < timezone.now() - self.heartbeat_period:
