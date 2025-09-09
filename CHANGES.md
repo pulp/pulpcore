@@ -8,6 +8,28 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.89.0 (2025-09-09) {: #3.89.0 }
+
+### REST API {: #3.89.0-rest-api }
+
+#### Features {: #3.89.0-rest-api-feature }
+
+- Stop using advisory locks in favor of a database column for locking on tasks.
+
+### Plugin API {: #3.89.0-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.89.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.89.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.88.0 (2025-09-03) {: #3.88.0 }
 
 ### REST API {: #3.88.0-rest-api }
