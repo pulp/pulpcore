@@ -5,10 +5,8 @@ Django models related to the Tasking system
 import json
 import logging
 import traceback
-from datetime import timedelta
 from gettext import gettext as _
 
-from django.conf import settings
 from django.contrib.postgres.fields import ArrayField, HStoreField
 from django.contrib.postgres.indexes import GinIndex
 from django.core.serializers.json import DjangoJSONEncoder
@@ -21,7 +19,7 @@ from pulpcore.app.models import (
     BaseModel,
     GenericRelationModel,
 )
-from pulpcore.app.models.status import AppStatus, BaseAppStatus
+from pulpcore.app.models.status import AppStatus
 from pulpcore.app.models.fields import EncryptedJSONField
 from pulpcore.constants import TASK_CHOICES, TASK_INCOMPLETE_STATES, TASK_STATES
 from pulpcore.exceptions import exception_to_dict
@@ -29,25 +27,6 @@ from pulpcore.app.util import get_domain_pk, current_task
 from pulpcore.app.loggers import deprecation_logger
 
 _logger = logging.getLogger(__name__)
-
-
-class Worker(BaseAppStatus):
-    """
-    Represents a worker
-    Deprecated, to be removed with 3.87.
-    """
-
-    APP_TTL = timedelta(seconds=settings.WORKER_TTL)
-
-    @property
-    def current_task(self):
-        """
-        The task this worker is currently executing, if any.
-
-        Returns:
-            Task: The currently executing task
-        """
-        return self.tasks.filter(state="running").first()
 
 
 def _uuid_to_advisory_lock(value):
@@ -140,7 +119,6 @@ class Task(BaseModel, AutoAddObjPermsMixin):
     enc_args = EncryptedJSONField(null=True, encoder=DjangoJSONEncoder)
     enc_kwargs = EncryptedJSONField(null=True, encoder=DjangoJSONEncoder)
 
-    worker = models.ForeignKey("Worker", null=True, related_name="tasks", on_delete=models.SET_NULL)
     # This field is the lock to protect tasks.
     app_lock = models.ForeignKey(
         "AppStatus", null=True, related_name="tasks", on_delete=models.SET_NULL
