@@ -8,6 +8,28 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.89.0 (2025-09-09) {: #3.89.0 }
+
+### REST API {: #3.89.0-rest-api }
+
+#### Features {: #3.89.0-rest-api-feature }
+
+- Stop using advisory locks in favor of a database column for locking on tasks.
+
+### Plugin API {: #3.89.0-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.89.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.89.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.88.0 (2025-09-03) {: #3.88.0 }
 
 ### REST API {: #3.88.0-rest-api }
@@ -899,6 +921,26 @@ No significant changes.
   [#6244](https://github.com/pulp/pulpcore/issues/6244)
 
 ### Pulp Cert Guard {: #3.74.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.73.15 (2025-09-09) {: #3.73.15 }
+
+### REST API {: #3.73.15-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.73.15-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.73.15-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.15-pulp-cert-guard }
 
 No significant changes.
 
@@ -1917,6 +1959,26 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.64.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.63.23 (2025-09-09) {: #3.63.23 }
+
+### REST API {: #3.63.23-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.63.23-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.23-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.23-pulp-cert-guard }
 
 No significant changes.
 
@@ -3268,6 +3330,26 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard
+
+No significant changes.
+
+---
+
+## 3.49.45 (2025-09-09) {: #3.49.45 }
+
+### REST API {: #3.49.45-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.49.45-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.45-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.45-pulp-cert-guard }
 
 No significant changes.
 
