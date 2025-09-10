@@ -97,14 +97,26 @@ class DomainViewSet(
     }
     # There is probably more locked roles needed for this feature
     LOCKED_ROLES = {
-        "core.domain_creator": ["core.add_domain"],
-        "core.domain_owner": [
-            "core.view_domain",
-            "core.change_domain",
-            "core.delete_domain",
-            "core.manage_roles_domain",
-        ],
-        "core.domain_viewer": ["core.view_domain"],
+        "core.domain_creator": {
+            "description": "Create new domains.",
+            "permissions": ["core.add_domain"],
+        },
+        "core.domain_owner": {
+            "description": (
+                "Full control over a domain including viewing, updating, deleting, "
+                "and role management."
+            ),
+            "permissions": [
+                "core.view_domain",
+                "core.change_domain",
+                "core.delete_domain",
+                "core.manage_roles_domain",
+            ],
+        },
+        "core.domain_viewer": {
+            "description": "View domain details and settings.",
+            "permissions": ["core.view_domain"],
+        },
     }
 
     @extend_schema(

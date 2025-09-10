@@ -157,11 +157,17 @@ class TaskViewSet(
                 "core.manage_roles_task",
             ],
         },
-        "core.task_viewer": ["core.view_task"],
+        "core.task_viewer": {
+            "description": "View task details and status.",
+            "permissions": ["core.view_task"],
+        },
         # This is a special role to designate the user who dispatched the task, it is assigned to
         # the user on the object-level at task creation. It is not meant to be edited or manually
         # added/removed from users.
-        "core.task_user_dispatcher": ["core.add_task"],
+        "core.task_user_dispatcher": {
+            "description": "Dispatch and create new tasks.",
+            "permissions": ["core.add_task"],
+        },
     }
 
     def get_serializer(self, *args, **kwargs):
@@ -447,5 +453,8 @@ class TaskScheduleViewSet(
                 "core.manage_roles_taskschedule",
             ],
         },
-        "core.taskschedule_viewer": ["core.view_taskschedule"],
+        "core.taskschedule_viewer": {
+            "description": "View task schedule details.",
+            "permissions": ["core.view_taskschedule"],
+        },
     }

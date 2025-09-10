@@ -133,18 +133,27 @@ class GroupViewSet(
     }
 
     LOCKED_ROLES = {
-        "core.group_creator": [
-            "core.add_group",
-        ],
-        "core.group_owner": [
-            "core.view_group",
-            "core.change_group",
-            "core.delete_group",
-            "core.manage_roles_group",
-        ],
-        "core.group_viewer": [
-            "core.view_group",
-        ],
+        "core.group_creator": {
+            "description": "Create user groups.",
+            "permissions": [
+                "core.add_group",
+            ],
+        },
+        "core.group_owner": {
+            "description": "Manage user groups with full access.",
+            "permissions": [
+                "core.view_group",
+                "core.change_group",
+                "core.delete_group",
+                "core.manage_roles_group",
+            ],
+        },
+        "core.group_viewer": {
+            "description": "View user groups.",
+            "permissions": [
+                "core.view_group",
+            ],
+        },
     }
 
 

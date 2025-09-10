@@ -256,15 +256,27 @@ class RBACContentGuardViewSet(ContentGuardViewSet, RolesMixin):
         "queryset_scoping": {"function": "scope_queryset"},
     }
     LOCKED_ROLES = {
-        "core.rbaccontentguard_creator": ["core.add_rbaccontentguard"],
-        "core.rbaccontentguard_owner": [
-            "core.view_rbaccontentguard",
-            "core.change_rbaccontentguard",
-            "core.delete_rbaccontentguard",
-            "core.manage_roles_rbaccontentguard",
-        ],
-        "core.rbaccontentguard_viewer": ["core.view_rbaccontentguard"],
-        "core.rbaccontentguard_downloader": ["core.download_rbaccontentguard"],
+        "core.rbaccontentguard_creator": {
+            "description": "Create RBAC content guards.",
+            "permissions": ["core.add_rbaccontentguard"],
+        },
+        "core.rbaccontentguard_owner": {
+            "description": "Manage RBAC content guards with full access.",
+            "permissions": [
+                "core.view_rbaccontentguard",
+                "core.change_rbaccontentguard",
+                "core.delete_rbaccontentguard",
+                "core.manage_roles_rbaccontentguard",
+            ],
+        },
+        "core.rbaccontentguard_viewer": {
+            "description": "View RBAC content guards.",
+            "permissions": ["core.view_rbaccontentguard"],
+        },
+        "core.rbaccontentguard_downloader": {
+            "description": "Download content protected by RBAC content guards.",
+            "permissions": ["core.download_rbaccontentguard"],
+        },
     }
 
 
@@ -332,14 +344,23 @@ class ContentRedirectContentGuardViewSet(ContentGuardViewSet, RolesMixin):
         "queryset_scoping": {"function": "scope_queryset"},
     }
     LOCKED_ROLES = {
-        "core.contentredirectcontentguard_creator": ["core.add_contentredirectcontentguard"],
-        "core.contentredirectcontentguard_owner": [
-            "core.view_contentredirectcontentguard",
-            "core.change_contentredirectcontentguard",
-            "core.delete_contentredirectcontentguard",
-            "core.manage_roles_contentredirectcontentguard",
-        ],
-        "core.contentredirectcontentguard_viewer": ["core.view_contentredirectcontentguard"],
+        "core.contentredirectcontentguard_creator": {
+            "description": "Create content redirect content guards.",
+            "permissions": ["core.add_contentredirectcontentguard"],
+        },
+        "core.contentredirectcontentguard_owner": {
+            "description": "Manage content redirect content guards with full access.",
+            "permissions": [
+                "core.view_contentredirectcontentguard",
+                "core.change_contentredirectcontentguard",
+                "core.delete_contentredirectcontentguard",
+                "core.manage_roles_contentredirectcontentguard",
+            ],
+        },
+        "core.contentredirectcontentguard_viewer": {
+            "description": "View content redirect content guards.",
+            "permissions": ["core.view_contentredirectcontentguard"],
+        },
     }
 
 
@@ -402,14 +423,23 @@ class HeaderContentGuardViewSet(ContentGuardViewSet, RolesMixin):
         "queryset_scoping": {"function": "scope_queryset"},
     }
     LOCKED_ROLES = {
-        "core.headercontentguard_creator": ["core.add_headercontentguard"],
-        "core.headercontentguard_owner": [
-            "core.view_headercontentguard",
-            "core.change_headercontentguard",
-            "core.delete_headercontentguard",
-            "core.manage_roles_headercontentguard",
-        ],
-        "core.headercontentguard_viewer": ["core.view_headercontentguard"],
+        "core.headercontentguard_creator": {
+            "description": "Create header content guards.",
+            "permissions": ["core.add_headercontentguard"],
+        },
+        "core.headercontentguard_owner": {
+            "description": "Manage header content guards with full access.",
+            "permissions": [
+                "core.view_headercontentguard",
+                "core.change_headercontentguard",
+                "core.delete_headercontentguard",
+                "core.manage_roles_headercontentguard",
+            ],
+        },
+        "core.headercontentguard_viewer": {
+            "description": "View header content guards.",
+            "permissions": ["core.view_headercontentguard"],
+        },
     }
 
 
@@ -472,14 +502,23 @@ class CompositeContentGuardViewSet(ContentGuardViewSet, RolesMixin):
         "queryset_scoping": {"function": "scope_queryset"},
     }
     LOCKED_ROLES = {
-        "core.compositecontentguard_creator": ["core.add_compositecontentguard"],
-        "core.compositecontentguard_owner": [
-            "core.view_compositecontentguard",
-            "core.change_compositecontentguard",
-            "core.delete_compositecontentguard",
-            "core.manage_roles_compositecontentguard",
-        ],
-        "core.compositecontentguard_viewer": ["core.view_compositecontentguard"],
+        "core.compositecontentguard_creator": {
+            "description": "Create composite content guards.",
+            "permissions": ["core.add_compositecontentguard"],
+        },
+        "core.compositecontentguard_owner": {
+            "description": "Manage composite content guards with full access.",
+            "permissions": [
+                "core.view_compositecontentguard",
+                "core.change_compositecontentguard",
+                "core.delete_compositecontentguard",
+                "core.manage_roles_compositecontentguard",
+            ],
+        },
+        "core.compositecontentguard_viewer": {
+            "description": "View composite content guards.",
+            "permissions": ["core.view_compositecontentguard"],
+        },
     }
 
 

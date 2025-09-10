@@ -91,18 +91,27 @@ class UploadViewSet(
     }
 
     LOCKED_ROLES = {
-        "core.upload_creator": [
-            "core.add_upload",
-        ],
-        "core.upload_owner": [
-            "core.view_upload",
-            "core.change_upload",
-            "core.delete_upload",
-            "core.manage_roles_upload",
-        ],
-        "core.upload_viewer": [
-            "core.view_upload",
-        ],
+        "core.upload_creator": {
+            "description": "Create file uploads.",
+            "permissions": [
+                "core.add_upload",
+            ],
+        },
+        "core.upload_owner": {
+            "description": "Manage file uploads with full access.",
+            "permissions": [
+                "core.view_upload",
+                "core.change_upload",
+                "core.delete_upload",
+                "core.manage_roles_upload",
+            ],
+        },
+        "core.upload_viewer": {
+            "description": "View file uploads.",
+            "permissions": [
+                "core.view_upload",
+            ],
+        },
     }
 
     def get_serializer_class(self):

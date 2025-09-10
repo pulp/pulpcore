@@ -197,7 +197,10 @@ class ListContentViewSet(BaseContentViewSet, mixins.ListModelMixin):
     }
     LOCKED_ROLES = {
         # Even with this role, can only label content user has access to
-        "core.content_labeler": ["core.manage_content_labels"],
+        "core.content_labeler": {
+            "description": "Manage content labels on accessible content.",
+            "permissions": ["core.manage_content_labels"],
+        },
     }
 
     @classmethod

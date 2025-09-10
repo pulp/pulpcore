@@ -162,16 +162,28 @@ class OpenPGPKeyringViewSet(RepositoryViewSet, ModifyRepositoryActionMixin, Role
         "queryset_scoping": {"function": "scope_queryset"},
     }
     LOCKED_ROLES = {
-        "core.openpgpkeyring_creator": ["core.add_openpgpkeyring"],
-        "core.openpgpkeyring_owner": [
-            "core.view_openpgpkeyring",
-            "core.change_openpgpkeyring",
-            "core.delete_openpgpkeyring",
-            "core.modify_openpgpkeyring",
-            "core.manage_roles_openpgpkeyring",
-            "core.repair_openpgpkeyring",
-        ],
-        "core.openpgpkeyring_viewer": ["core.view_openpgpkeyring"],
+        "core.openpgpkeyring_creator": {
+            "description": "Create new OpenPGP keyrings.",
+            "permissions": ["core.add_openpgpkeyring"],
+        },
+        "core.openpgpkeyring_owner": {
+            "description": (
+                "Full control over OpenPGP keyrings including viewing, updating, deleting, "
+                "modifying content, role management, and repair operations."
+            ),
+            "permissions": [
+                "core.view_openpgpkeyring",
+                "core.change_openpgpkeyring",
+                "core.delete_openpgpkeyring",
+                "core.modify_openpgpkeyring",
+                "core.manage_roles_openpgpkeyring",
+                "core.repair_openpgpkeyring",
+            ],
+        },
+        "core.openpgpkeyring_viewer": {
+            "description": "View OpenPGP keyring details and contents.",
+            "permissions": ["core.view_openpgpkeyring"],
+        },
     }
 
 
