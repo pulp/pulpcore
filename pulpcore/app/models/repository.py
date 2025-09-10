@@ -1105,6 +1105,7 @@ class RepositoryVersion(BaseModel):
 
         if not content or not content.count():
             return
+
         assert (
             not Content.objects.filter(pk__in=content)
             .exclude(pulp_domain_id=get_domain_pk())

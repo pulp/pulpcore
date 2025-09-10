@@ -1,7 +1,6 @@
-from django.conf import settings
 from django.http import Http404
 from drf_spectacular.utils import extend_schema
-from rest_framework import mixins, exceptions
+from rest_framework import mixins
 
 from pulpcore.app.models import (
     Import,
@@ -24,8 +23,6 @@ from pulpcore.app.viewsets import (
 )
 from pulpcore.app.viewsets.base import NAME_FILTER_OPTIONS
 from pulpcore.tasking.tasks import dispatch
-
-from gettext import gettext as _
 
 
 class ImporterViewSet(
@@ -87,8 +84,6 @@ class PulpImportViewSet(ImportViewSet):
     )
     def create(self, request, importer_pk):
         """Import a Pulp export into Pulp."""
-        if settings.DOMAIN_ENABLED:
-            raise exceptions.ValidationError(_("Import not supported with Domains enabled."))
         try:
             importer = PulpImporter.objects.get(pk=importer_pk)
         except PulpImporter.DoesNotExist:

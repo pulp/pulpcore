@@ -5,6 +5,8 @@ from pulpcore.app.models import (
     BaseModel,
     MasterModel,
 )
+from pulpcore.app.util import get_domain_pk
+
 from .repository import Repository
 
 
@@ -23,6 +25,7 @@ class Import(BaseModel):
     params = models.JSONField(null=True)
     task = models.ForeignKey("Task", on_delete=models.PROTECT)
     importer = models.ForeignKey("Importer", on_delete=models.CASCADE)
+    pulp_domain = models.ForeignKey("Domain", default=get_domain_pk, on_delete=models.PROTECT)
 
 
 class Importer(MasterModel):
@@ -35,7 +38,11 @@ class Importer(MasterModel):
         name (models.TextField): The importer unique name.
     """
 
-    name = models.TextField(db_index=True, unique=True)
+    name = models.TextField()
+    pulp_domain = models.ForeignKey("Domain", default=get_domain_pk, on_delete=models.PROTECT)
+
+    class Meta:
+        unique_together = ("name", "pulp_domain")
 
 
 class PulpImporter(Importer):
