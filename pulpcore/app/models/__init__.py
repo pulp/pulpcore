@@ -31,6 +31,8 @@ from .content import (
 
 from .generic import GenericRelationModel
 
+from .remote_download import RemoteDownload
+
 from .exporter import (
     Export,
     ExportedResource,
@@ -170,4 +172,5 @@ __all__ = [
     "OpenPGPUserAttribute",
     "OpenPGPUserID",
     "VulnerabilityReport",
+    "RemoteDownload",
 ]
