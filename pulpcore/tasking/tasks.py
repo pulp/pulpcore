@@ -309,12 +309,9 @@ async def adispatch(
     versions=None,
 ):
     assert deferred or immediate, "A task must be at least `deferred` or `immediate`."
-    domain_prn = get_prn(get_domain())
     function_name = get_function_name(func)
     versions = get_version(versions, function_name)
-    colliding_resources, resources = get_resources(
-        exclusive_resources, shared_resources, domain_prn, immediate
-    )
+    colliding_resources, resources = get_resources(exclusive_resources, shared_resources, immediate)
     send_wakeup_signal = False
     task_payload = get_task_payload(
         function_name, task_group, args, kwargs, resources, versions, immediate, deferred

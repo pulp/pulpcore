@@ -569,7 +569,9 @@ async def test_async_pull_through_add(ca1, monkeypatch):
     )
     monkeypatch.setattr("pulpcore.tasking.tasks.wakeup_worker", Mock())
 
-    # test
-    repo = await Repository.objects.acreate(name="repo")
-    task = await repo.async_pull_through_add_content(ca1)
-    assert task.state == TASK_STATES.COMPLETED
+    repo = await Repository.objects.acreate(name=str(uuid.uuid4()))
+    try:
+        task = await repo.async_pull_through_add_content(ca1)
+        assert task.state == TASK_STATES.COMPLETED
+    finally:
+        await repo.adelete()

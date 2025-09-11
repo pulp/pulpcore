@@ -13,7 +13,7 @@ from pulpcore.app.tasks import (
     reclaim_space,
 )
 from pulpcore.app.tasks.vulnerability_report import check_content
-from pulpcore.app.tasks.repository import add_and_remove
+from pulpcore.app.tasks.repository import add_and_remove, async_add_and_remove
 
 
 __all__ = [
@@ -30,4 +30,5 @@ __all__ = [
     "orphan_cleanup",
     "reclaim_space",
     "add_and_remove",
+    "async_add_and_remove",
 ]
