@@ -8,6 +8,7 @@ import traceback
 import tempfile
 import threading
 from gettext import gettext as _
+from contextlib import contextmanager
 
 from django.conf import settings
 from django.db import connection
@@ -197,31 +198,10 @@ def dispatch(
     # Can't run short tasks immediately if running from thread pool
     immediate = immediate and not running_from_thread_pool()
     assert deferred or immediate, "A task must be at least `deferred` or `immediate`."
-
-    if callable(func):
-        function_name = f"{func.__module__}.{func.__name__}"
-    else:
-        function_name = func
-
-    if versions is None:
-        versions = MODULE_PLUGIN_VERSIONS[function_name.split(".", maxsplit=1)[0]]
-
-    if exclusive_resources is None:
-        exclusive_resources = []
-    else:
-        exclusive_resources = _validate_and_get_resources(exclusive_resources)
-    if shared_resources is None:
-        shared_resources = []
-    else:
-        shared_resources = _validate_and_get_resources(shared_resources)
-
-    # A task that is exclusive on a domain will block all tasks within that domain
-    domain_prn = get_prn(get_domain())
-    if domain_prn not in exclusive_resources:
-        shared_resources.append(domain_prn)
-    resources = exclusive_resources + [f"shared:{resource}" for resource in shared_resources]
-
-    notify_workers = False
+    send_wakeup_signal = True if not immediate else False
+    function_name = get_function_name(func)
+    versions = get_version(versions, function_name)
+    colliding_resources, resources = get_resources(exclusive_resources, shared_resources, immediate)
     task = Task.objects.create(
         state=TASK_STATES.WAITING,
         logging_cid=(get_guid()),
@@ -239,47 +219,83 @@ def dispatch(
     )
     task.refresh_from_db()  # The database will have assigned a timestamp for us.
     if immediate:
-        prior_tasks = Task.objects.filter(
-            state__in=TASK_INCOMPLETE_STATES, pulp_created__lt=task.pulp_created
-        )
-        # Compile a list of resources that must not be taken by other tasks.
+        if are_resources_available(colliding_resources, task):
+            send_wakeup_signal = True if resources else False
+            task.unblock()
+            with using_workdir():
+                execute_task(task)
+        elif deferred:  # Resources are blocked and can be deferred
+            task.app_lock = None
+            task.save()
+        else:  # Can't be deferred
+            task.set_canceling()
+            task.set_canceled(TASK_STATES.CANCELED, "Resources temporarily unavailable.")
+    if send_wakeup_signal:
+        wakeup_worker(TASK_WAKEUP_UNBLOCK)
+    return task
+
+
+@contextmanager
+def using_workdir():
+    cur_dir = os.getcwd()
+    with tempfile.TemporaryDirectory(dir=settings.WORKING_DIRECTORY) as working_dir:
+        os.chdir(working_dir)
+        try:
+            yield
+        finally:
+            # Whether the task fails or not, we should always restore the workdir.
+            os.chdir(cur_dir)
+
+
+def are_resources_available(colliding_resources, task: Task) -> bool:
+    prior_tasks = Task.objects.filter(
+        state__in=TASK_INCOMPLETE_STATES, pulp_created__lt=task.pulp_created
+    )
+    colliding_resources_taken = prior_tasks.filter(
+        reserved_resources_record__overlap=colliding_resources
+    ).exists()
+    return not (colliding_resources and colliding_resources_taken)
+
+
+def get_function_name(func):
+    if callable(func):
+        function_name = f"{func.__module__}.{func.__name__}"
+    else:
+        function_name = func
+    return function_name
+
+
+def get_version(versions, function_name):
+    if versions is None:
+        versions = MODULE_PLUGIN_VERSIONS[function_name.split(".", maxsplit=1)[0]]
+    return versions
+
+
+def get_resources(exclusive_resources, shared_resources, immediate):
+    domain_prn = get_prn(get_domain())
+    if exclusive_resources is None:
+        exclusive_resources = []
+    else:
+        exclusive_resources = _validate_and_get_resources(exclusive_resources)
+    if shared_resources is None:
+        shared_resources = []
+    else:
+        shared_resources = _validate_and_get_resources(shared_resources)
+
+    # A task that is exclusive on a domain will block all tasks within that domain
+    if domain_prn not in exclusive_resources:
+        shared_resources.append(domain_prn)
+    resources = exclusive_resources + [f"shared:{resource}" for resource in shared_resources]
+
+    # Compile a list of resources that must not be taken by other tasks.
+    colliding_resources = []
+    if immediate:
         colliding_resources = (
             shared_resources
             + exclusive_resources
             + [f"shared:{resource}" for resource in exclusive_resources]
         )
-        # Can we execute this task immediately?
-        if (
-            not colliding_resources
-            or not prior_tasks.filter(
-                reserved_resources_record__overlap=colliding_resources
-            ).exists()
-        ):
-            task.unblock()
-
-            cur_dir = os.getcwd()
-            with tempfile.TemporaryDirectory(dir=settings.WORKING_DIRECTORY) as working_dir:
-                os.chdir(working_dir)
-                try:
-                    execute_task(task)
-                finally:
-                    # Whether the task fails or not, we should always restore the workdir.
-                    os.chdir(cur_dir)
-
-            if resources:
-                notify_workers = True
-        elif deferred:
-            # Resources are blocked. Let the others handle it.
-            task.app_lock = None
-            task.save()
-        else:
-            task.set_canceling()
-            task.set_canceled(TASK_STATES.CANCELED, "Resources temporarily unavailable.")
-    else:
-        notify_workers = True
-    if notify_workers:
-        wakeup_worker(TASK_WAKEUP_UNBLOCK)
-    return task
+    return colliding_resources, resources
 
 
 def cancel_task(task_id):
