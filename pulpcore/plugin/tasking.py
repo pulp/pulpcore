@@ -1,5 +1,5 @@
 # Support plugins dispatching tasks
-from pulpcore.tasking.tasks import dispatch
+from pulpcore.tasking.tasks import dispatch, adispatch
 
 from pulpcore.app.tasks import (
     ageneral_update,
@@ -20,6 +20,7 @@ __all__ = [
     "ageneral_update",
     "check_content",
     "dispatch",
+    "adispatch",
     "fs_publication_export",
     "fs_repo_version_export",
     "general_create",

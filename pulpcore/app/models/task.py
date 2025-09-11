@@ -345,6 +345,18 @@ class Task(BaseModel, AutoAddObjPermsMixin):
                 _("Falied to set task {} unblocked in state '{}'.").format(self.pk, self.state)
             )
 
+    async def aunblock(self):
+        # This should be safe to be called without holding the lock.
+        unblocked_at = timezone.now()
+        rows = await Task.objects.filter(pk=self.pk).aupdate(unblocked_at=unblocked_at)
+        if rows == 1:
+            self.unblocked_at = unblocked_at
+        else:
+            self.arefresh_from_db()
+            raise RuntimeError(
+                _("Falied to set task {} unblocked in state '{}'.").format(self.pk, self.state)
+            )
+
     class Meta:
         indexes = [
             models.Index(fields=["pulp_created"]),
