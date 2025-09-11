@@ -1,9 +1,12 @@
 from datetime import timedelta
 import pytest
 import uuid
+import pytest_asyncio
 
 from unittest.mock import Mock, AsyncMock
 
+from pulpcore.constants import TASK_STATES
+from django_guid import set_guid, clear_guid
 from aiohttp.web_exceptions import HTTPMovedPermanently
 from django.db import IntegrityError
 from pulpcore.content.handler import Handler, CheckpointListings, PathNotResolved
@@ -18,6 +21,7 @@ from pulpcore.plugin.models import (
     RepositoryVersion,
     Publication,
 )
+from pulpcore.app.models import AppStatus
 
 
 @pytest.fixture
@@ -552,3 +556,42 @@ async def test_pull_through_repository_add(request123, monkeypatch):
         await repo.adelete()
         await remote.adelete()
         await distro.adelete()
+
+
+@pytest_asyncio.fixture
+async def app_status(monkeypatch):
+    monkeypatch.setattr(AppStatus.objects, "_current_app_status", None)
+    app_status = await AppStatus.objects.acreate(app_type="content", name="test_runner")
+    yield app_status
+    await app_status.adelete()
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db
+@pytest.mark.parametrize("repeat", (1, 2))
+async def test_app_status_fixture_is_reusable(app_status, repeat):
+    # testing this because AppStatus handles global process state
+    assert app_status
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db
+async def test_async_pull_through_add(ca1, monkeypatch, app_status):
+    set_guid(uuid.uuid4())  # required for creating a task, no easily mockable
+    monkeypatch.setattr(
+        "pulpcore.tasking.tasks.async_are_resources_available", AsyncMock(return_value=True)
+    )
+    monkeypatch.setattr("pulpcore.tasking.tasks.wakeup_worker", Mock())
+
+    repo = await Repository.objects.acreate(name=str(uuid.uuid4()))
+    try:
+        task = await repo.async_pull_through_add_content(ca1)
+        assert task.state == TASK_STATES.COMPLETED
+    except Exception as e:
+        task = None
+        assert e is None
+    finally:
+        clear_guid()
+        await repo.adelete()
+        if task:
+            await task.adelete()

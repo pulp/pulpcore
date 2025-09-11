@@ -381,6 +381,21 @@ class Repository(MasterModel):
         body = {"repository_pk": self.pk, "add_content_units": [cpk], "remove_content_units": []}
         return dispatch(add_and_remove, kwargs=body, exclusive_resources=[self], immediate=True)
 
+    async def async_pull_through_add_content(self, content_artifact):
+        cpk = content_artifact.content_id
+        already_present = RepositoryContent.objects.filter(
+            content__pk=cpk, repository=self, version_removed__isnull=True
+        )
+        if not cpk or await already_present.aexists():
+            return None
+
+        from pulpcore.plugin.tasking import adispatch, aadd_and_remove
+
+        body = {"repository_pk": self.pk, "add_content_units": [cpk], "remove_content_units": []}
+        return await adispatch(
+            aadd_and_remove, kwargs=body, exclusive_resources=[self], immediate=True
+        )
+
     @hook(AFTER_UPDATE, when="retain_repo_versions", has_changed=True)
     def _cleanup_old_versions_hook(self):
         # Do not attempt to clean up anything, while there is a transaction involving repo versions
