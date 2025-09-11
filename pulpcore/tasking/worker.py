@@ -142,7 +142,7 @@ class PulpcoreWorker:
             elif notification.payload == TASK_WAKEUP_HANDLE:
                 self.wakeup_handle = True
             else:
-                _logger.warn("Unknown wakeup call recieved. Reason: '%s'", notification.payload)
+                _logger.warning("Unknown wakeup call recieved. Reason: '%s'", notification.payload)
                 # We cannot be sure so assume everything happened.
                 self.wakeup_unblock = not self.auxiliary
                 self.wakeup_handle = True
@@ -188,9 +188,11 @@ class PulpcoreWorker:
             self.ignored_task_ids.remove(pk)
 
     def worker_cleanup(self):
-        qs = AppStatus.objects.older_than(age=timedelta(days=7))
+        qs = AppStatus.objects.missing()
         for app_worker in qs:
-            _logger.info(_("Clean missing %s worker %s."), app_worker.app_type, app_worker.name)
+            _logger.warning(
+                "Cleanup record of missing %s process %s.", app_worker.app_type, app_worker.name
+            )
         qs.delete()
 
     def beat(self):
@@ -319,8 +321,6 @@ class PulpcoreWorker:
                     )
                     task.unblock()
                     count += 1
-                # Don't consider this task's resources as held.
-                continue
 
             elif (
                 task.state == TASK_STATES.WAITING
