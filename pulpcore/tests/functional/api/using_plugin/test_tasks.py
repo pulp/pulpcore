@@ -104,9 +104,7 @@ def test_filter_tasks_by_reserved_resources(setup_filter_fixture, pulpcore_bindi
 
 def get_prn(uri):
     commands = f"from pulpcore.app.util import get_prn; print(get_prn(uri='{uri}'));"
-    process = subprocess.run(
-        ["pulpcore-manager", "shell", "--no-imports", "-c", commands], capture_output=True
-    )
+    process = subprocess.run(["pulpcore-manager", "shell", "-c", commands], capture_output=True)
 
     assert process.returncode == 0
     prn = process.stdout.decode().strip()

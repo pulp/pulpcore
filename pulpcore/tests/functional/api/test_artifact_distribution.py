@@ -19,9 +19,7 @@ def test_artifact_distribution(random_artifact, pulp_settings):
         "from pulpcore.app.util import get_artifact_url;"
         f"print(get_artifact_url(Artifact.objects.get(pk='{artifact_uuid}')));"
     )
-    process = subprocess.run(
-        ["pulpcore-manager", "shell", "--no-imports", "-c", commands], capture_output=True
-    )
+    process = subprocess.run(["pulpcore-manager", "shell", "-c", commands], capture_output=True)
     assert process.returncode == 0
     artifact_url = process.stdout.decode().strip()
 
