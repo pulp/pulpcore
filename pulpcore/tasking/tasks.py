@@ -102,6 +102,7 @@ async def aexecute_task(task):
         send_task_notification(task)
         log_task_completed(task, domain)
         return result
+    return None
 
 
 def log_task_start(task, domain):
@@ -171,7 +172,7 @@ def get_task_function(task, ensure_coroutine=False):
             if immediate:
                 coro = asyncio.wait_for(coro, timeout=IMMEDIATE_TIMEOUT)
             try:
-                await coro
+                return await coro
             except asyncio.TimeoutError:
                 msg_template = "Immediate task %s timed out after %s seconds."
                 error_msg = msg_template % (task.pk, IMMEDIATE_TIMEOUT)
