@@ -354,7 +354,7 @@ class Task(BaseModel, AutoAddObjPermsMixin):
         else:
             self.arefresh_from_db()
             raise RuntimeError(
-                _("Falied to set task {} unblocked in state '{}'.").format(self.pk, self.state)
+                _("Failed to set task {} unblocked in state '{}'.").format(self.pk, self.state)
             )
 
     class Meta:
