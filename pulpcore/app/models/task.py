@@ -352,7 +352,7 @@ class Task(BaseModel, AutoAddObjPermsMixin):
         if rows == 1:
             self.unblocked_at = unblocked_at
         else:
-            self.arefresh_from_db()
+            await self.arefresh_from_db()
             raise RuntimeError(
                 _("Failed to set task {} unblocked in state '{}'.").format(self.pk, self.state)
             )
