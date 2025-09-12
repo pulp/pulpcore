@@ -389,11 +389,11 @@ class Repository(MasterModel):
         if not cpk or await already_present.aexists():
             return None
 
-        from pulpcore.plugin.tasking import adispatch, async_add_and_remove
+        from pulpcore.plugin.tasking import adispatch, aadd_and_remove
 
         body = {"repository_pk": self.pk, "add_content_units": [cpk], "remove_content_units": []}
         return await adispatch(
-            async_add_and_remove, kwargs=body, exclusive_resources=[self], immediate=True
+            aadd_and_remove, kwargs=body, exclusive_resources=[self], immediate=True
         )
 
     @hook(AFTER_UPDATE, when="retain_repo_versions", has_changed=True)
