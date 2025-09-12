@@ -1,5 +1,5 @@
 # Support plugins dispatching tasks
-from pulpcore.tasking.tasks import dispatch
+from pulpcore.tasking.tasks import dispatch, adispatch
 
 from pulpcore.app.tasks import (
     ageneral_update,
@@ -13,13 +13,14 @@ from pulpcore.app.tasks import (
     reclaim_space,
 )
 from pulpcore.app.tasks.vulnerability_report import check_content
-from pulpcore.app.tasks.repository import add_and_remove
+from pulpcore.app.tasks.repository import add_and_remove, aadd_and_remove
 
 
 __all__ = [
     "ageneral_update",
     "check_content",
     "dispatch",
+    "adispatch",
     "fs_publication_export",
     "fs_repo_version_export",
     "general_create",
@@ -29,4 +30,5 @@ __all__ = [
     "orphan_cleanup",
     "reclaim_space",
     "add_and_remove",
+    "aadd_and_remove",
 ]

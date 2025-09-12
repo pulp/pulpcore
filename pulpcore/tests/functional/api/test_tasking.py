@@ -484,7 +484,7 @@ class TestImmediateTaskWithNoResource:
         )
         task = pulpcore_bindings.TasksApi.read(task_href)
         assert task.state == "failed"
-        assert "task timed out after" in task.error["description"]
+        assert "timed out after" in task.error["description"]
 
 
 @pytest.fixture
@@ -576,4 +576,4 @@ class TestImmediateTaskWithBlockedResource:
                     exclusive_resources=[COMMON_RESOURCE],
                 )
             monitor_task(task_href)
-        assert "task timed out after" in ctx.value.task.error["description"]
+        assert "timed out after" in ctx.value.task.error["description"]

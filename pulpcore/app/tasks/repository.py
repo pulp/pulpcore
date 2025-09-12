@@ -236,3 +236,30 @@ def add_and_remove(repository_pk, add_content_units, remove_content_units, base_
     with repository.new_version(base_version=base_version) as new_version:
         new_version.remove_content(models.Content.objects.filter(pk__in=remove_content_units))
         new_version.add_content(models.Content.objects.filter(pk__in=add_content_units))
+
+
+async def aadd_and_remove(
+    repository_pk, add_content_units, remove_content_units, base_version_pk=None
+):
+    """Aynsc version of add_and_remove."""
+    repository = await models.Repository.objects.aget(pk=repository_pk)
+    repository = await repository.acast()
+
+    if base_version_pk:
+        base_version = await models.RepositoryVersion.objects.aget(pk=base_version_pk)
+    else:
+        base_version = None
+
+    if "*" in remove_content_units:
+        latest = await repository.alatest_version()
+        if latest:
+            remove_content_units = latest.content.values_list("pk", flat=True)
+        else:
+            remove_content_units = []
+
+    def add_to_repository():
+        with repository.new_version(base_version=base_version) as new_version:
+            new_version.remove_content(models.Content.objects.filter(pk__in=remove_content_units))
+            new_version.add_content(models.Content.objects.filter(pk__in=add_content_units))
+
+    await sync_to_async(add_to_repository)()

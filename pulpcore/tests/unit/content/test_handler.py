@@ -4,6 +4,8 @@ import uuid
 
 from unittest.mock import Mock, AsyncMock
 
+from pulpcore.constants import TASK_STATES
+from django_guid import set_guid
 from aiohttp.web_exceptions import HTTPMovedPermanently
 from django.db import IntegrityError
 from pulpcore.content.handler import Handler, CheckpointListings, PathNotResolved
@@ -18,6 +20,7 @@ from pulpcore.plugin.models import (
     RepositoryVersion,
     Publication,
 )
+from pulpcore.app.models import AppStatus
 
 
 @pytest.fixture
@@ -552,3 +555,25 @@ async def test_pull_through_repository_add(request123, monkeypatch):
         await repo.adelete()
         await remote.adelete()
         await distro.adelete()
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db
+async def test_async_pull_through_add(ca1, monkeypatch):
+    # setup dispatch context
+    set_guid(uuid.uuid4())
+    app_status = await AppStatus.objects.acreate(app_type="content", name="test_runner")
+    monkeypatch.setattr(AppStatus.objects, "current", Mock(return_value=app_status))
+    monkeypatch.setattr(
+        "pulpcore.tasking.tasks.async_are_resources_available", AsyncMock(return_value=True)
+    )
+    monkeypatch.setattr("pulpcore.tasking.tasks.wakeup_worker", Mock())
+
+    repo = await Repository.objects.acreate(name=str(uuid.uuid4()))
+    try:
+        task = await repo.async_pull_through_add_content(ca1)
+        assert task.state == TASK_STATES.COMPLETED
+    finally:
+        await task.adelete()
+        await repo.adelete()
+        await app_status.adelete()
