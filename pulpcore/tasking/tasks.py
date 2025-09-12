@@ -243,21 +243,10 @@ def dispatch(
     function_name = get_function_name(func)
     versions = get_version(versions, function_name)
     colliding_resources, resources = get_resources(exclusive_resources, shared_resources, immediate)
-    task = Task.objects.create(
-        state=TASK_STATES.WAITING,
-        logging_cid=(get_guid()),
-        task_group=task_group,
-        name=function_name,
-        enc_args=args,
-        enc_kwargs=kwargs,
-        parent_task=Task.current(),
-        reserved_resources_record=resources,
-        versions=versions,
-        immediate=immediate,
-        deferred=deferred,
-        profile_options=x_task_diagnostics_var.get(None),
-        app_lock=None if not immediate else AppStatus.objects.current(),  # Lazy evaluation...
+    task_payload = get_task_payload(
+        function_name, task_group, args, kwargs, resources, versions, immediate, deferred
     )
+    task = Task.objects.create(**task_payload)
     task.refresh_from_db()  # The database will have assigned a timestamp for us.
     if immediate:
         if are_resources_available(colliding_resources, task):
@@ -268,6 +257,45 @@ def dispatch(
         elif deferred:  # Resources are blocked and can be deferred
             task.app_lock = None
             task.save()
+        else:  # Can't be deferred
+            task.set_canceling()
+            task.set_canceled(TASK_STATES.CANCELED, "Resources temporarily unavailable.")
+    if send_wakeup_signal:
+        wakeup_worker(TASK_WAKEUP_UNBLOCK)
+    return task
+
+
+async def adispatch(
+    func,
+    args=None,
+    kwargs=None,
+    task_group=None,
+    exclusive_resources=None,
+    shared_resources=None,
+    immediate=False,
+    deferred=True,
+    versions=None,
+):
+    """Async version of dispatch."""
+    assert deferred or immediate, "A task must be at least `deferred` or `immediate`."
+    function_name = get_function_name(func)
+    versions = get_version(versions, function_name)
+    colliding_resources, resources = get_resources(exclusive_resources, shared_resources, immediate)
+    send_wakeup_signal = False
+    task_payload = get_task_payload(
+        function_name, task_group, args, kwargs, resources, versions, immediate, deferred
+    )
+    task = await Task.objects.acreate(**task_payload)
+    await task.arefresh_from_db()  # The database will have assigned a timestamp for us.
+    if immediate:
+        if await async_are_resources_available(colliding_resources, task):
+            send_wakeup_signal = True if resources else False
+            await task.aunblock()
+            with using_workdir():
+                await aexecute_task(task)
+        elif deferred:  # Resources are blocked and can be deferred
+            task.app_lock = None
+            await task.asave()
         else:  # Can't be deferred
             task.set_canceling()
             task.set_canceled(TASK_STATES.CANCELED, "Resources temporarily unavailable.")
@@ -295,44 +323,6 @@ def get_task_payload(
         "app_lock": None if not immediate else AppStatus.objects.current(),  # Lazy evaluation...
     }
     return payload
-
-
-async def adispatch(
-    func,
-    args=None,
-    kwargs=None,
-    task_group=None,
-    exclusive_resources=None,
-    shared_resources=None,
-    immediate=False,
-    deferred=True,
-    versions=None,
-):
-    assert deferred or immediate, "A task must be at least `deferred` or `immediate`."
-    function_name = get_function_name(func)
-    versions = get_version(versions, function_name)
-    colliding_resources, resources = get_resources(exclusive_resources, shared_resources, immediate)
-    send_wakeup_signal = False
-    task_payload = get_task_payload(
-        function_name, task_group, args, kwargs, resources, versions, immediate, deferred
-    )
-    task = await Task.objects.acreate(**task_payload)
-    await task.arefresh_from_db()  # The database will have assigned a timestamp for us.
-    if immediate:
-        if await async_are_resources_available(colliding_resources, task):
-            send_wakeup_signal = True if resources else False
-            await task.aunblock()
-            with using_workdir():
-                await aexecute_task(task)
-        elif deferred:  # Resources are blocked and can be deferred
-            task.app_lock = None
-            await task.asave()
-        else:  # Can't be deferred
-            task.set_canceling()
-            task.set_canceled(TASK_STATES.CANCELED, "Resources temporarily unavailable.")
-    if send_wakeup_signal:
-        wakeup_worker(TASK_WAKEUP_UNBLOCK)
-    return task
 
 
 @contextmanager
