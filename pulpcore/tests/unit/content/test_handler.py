@@ -574,4 +574,6 @@ async def test_async_pull_through_add(ca1, monkeypatch):
         task = await repo.async_pull_through_add_content(ca1)
         assert task.state == TASK_STATES.COMPLETED
     finally:
+        await task.adelete()
         await repo.adelete()
+        await app_status.adelete()
