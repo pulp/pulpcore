@@ -341,8 +341,8 @@ class Task(BaseModel, AutoAddObjPermsMixin):
             self.unblocked_at = unblocked_at
         else:
             self.refresh_from_db()
-            raise RuntimeError(
-                _("Falied to set task {} unblocked in state '{}'.").format(self.pk, self.state)
+            raise RuntimeError("Failed to set task {} unblocked in state '{}'.").format(
+                self.pk, self.state
             )
 
     async def aunblock(self):
@@ -353,8 +353,8 @@ class Task(BaseModel, AutoAddObjPermsMixin):
             self.unblocked_at = unblocked_at
         else:
             await self.arefresh_from_db()
-            raise RuntimeError(
-                _("Failed to set task {} unblocked in state '{}'.").format(self.pk, self.state)
+            raise RuntimeError("Failed to set task {} unblocked in state '{}'.").format(
+                self.pk, self.state
             )
 
     class Meta:
