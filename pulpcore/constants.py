@@ -101,14 +101,11 @@ AZURE_RESPONSE_HEADER_MAP = {
     "Content-Language": "content_language",
     "Content-Encoding": "content_encoding",
 }
-# https://gcloud.readthedocs.io/en/latest/storage-blobs.html
+# https://gcloud.readthedocs.io/en/latest/storage-blobs.html#google.cloud.storage.blob.Blob.generate_signed_url
 # response-headers Google Cloud Storage respects, and what they map to in a GCS object
 GCS_RESPONSE_HEADER_MAP = {
-    "Content-Disposition": "content_disposition",
-    "Content-Type": "content_type",
-    "Cache-Control": "cache_control",
-    "Content-Language": "content_language",
-    "Content-Encoding": "content_encoding",
+    "Content-Disposition": "response_disposition",
+    "Content-Type": "response_type",
 }
 
 # Storage-type mapped to storage-response-map
