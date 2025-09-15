@@ -23,6 +23,9 @@ def instrumentation(exporter=None, reader=None, provider=None):
             status_code = response.status
 
             return response
+        except web.HTTPException as exc:
+            status_code = exc.status
+            raise exc
         except Exception as exc:
             status_code = exc.status if hasattr(exc, "status") else 500
             raise exc
