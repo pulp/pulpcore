@@ -2,6 +2,7 @@ import typing as t
 from gettext import gettext as _
 
 from rest_framework import serializers
+from drf_spectacular.utils import extend_schema_serializer
 from drf_spectacular.types import OpenApiTypes
 
 from pulpcore.app import models
@@ -137,11 +138,12 @@ class MinimalTaskSerializer(TaskSerializer):
         )
 
 
+@extend_schema_serializer(deprecate_fields=["all_tasks_dispatched"])
 class TaskGroupSerializer(ModelSerializer):
     pulp_href = IdentityField(view_name="task-groups-detail")
     description = serializers.CharField(help_text=_("A description of the task group."))
     all_tasks_dispatched = serializers.BooleanField(
-        help_text=_("Whether all tasks have been spawned for this task group.")
+        help_text=_("Whether all tasks have been spawned for this task group."),
     )
 
     waiting = TaskGroupStatusCountField(
