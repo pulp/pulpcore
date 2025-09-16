@@ -488,6 +488,7 @@ def pulp_import(importer_pk, path, toc, create_repositories):
             message="Importing Artifacts",
             code="import.artifacts",
         )
+        into_default = "default" == get_domain().name
         with ProgressReport(**data) as pb:
             # Import artifacts, and place their binary blobs, one batch at a time.
             # Skip artifacts that already exist in storage.
@@ -495,9 +496,10 @@ def pulp_import(importer_pk, path, toc, create_repositories):
                 for row in pb.iter(ar_result.rows):
                     artifact = Artifact.objects.get(pk=row.object_id)
 
-                    # If we are domain-enabled, then the destination is "to the current
-                    # domain's artifact directory". Otherwise, it's just to /artifact/.
-                    if settings.DOMAIN_ENABLED:
+                    # If we are domain-enabled, and not importing into "default", then the
+                    # destination is "to the current domain's artifact directory". Otherwise, it's
+                    # just to /artifact/.
+                    if settings.DOMAIN_ENABLED and not into_default:
                         destination_path = os.path.join(
                             "artifact",
                             str(get_domain_pk()),

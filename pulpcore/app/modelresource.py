@@ -11,7 +11,7 @@ from pulpcore.app.models.content import (
     ContentArtifact,
 )
 from pulpcore.app.models.repository import Repository
-from pulpcore.app.util import get_domain_pk
+from pulpcore.app.util import get_domain_pk, get_domain
 from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS
 from pulpcore.plugin.importexport import QueryModelResource
 
@@ -38,16 +38,17 @@ class ArtifactResource(QueryModelResource):
             kwargs: args passed along from the import() call.
 
         """
-        # IF we're domain-enabled:
+        # IF we're domain-enabled *AND NOT IMPORTING INTO DEFAULT*:
         #   REPLACE "their" domain-id with ours, if there is one.
         #   If not, INSERT "our" domain-id into the path in the right place.
         # Otherwise:
         #   REMOVE their domain-id if there is one.
         # Do this before letting QMR run, since it will replace "their" domain-id with "ours"
         upstream_domain_enabled = re.match(domain_artifact_file_regex, row["file"])
+        into_default = "default" == get_domain().name
         domain = str(get_domain_pk())
 
-        if settings.DOMAIN_ENABLED:  # Replace "their" domain-id with "ours"
+        if settings.DOMAIN_ENABLED and not into_default:  # Replace "their" domain-id with "ours"
             if upstream_domain_enabled:
                 row["file"] = row["file"].replace(row["pulp_domain"], domain)
             else:  # Add in our domain-id to the path
