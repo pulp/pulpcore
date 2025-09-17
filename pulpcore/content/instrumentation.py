@@ -21,23 +21,26 @@ def instrumentation(exporter=None, reader=None, provider=None):
         try:
             response = await handler(request)
             status_code = response.status
+
+            return response
         except web.HTTPException as exc:
             status_code = exc.status
-            response = exc
+            raise exc
+        except Exception as exc:
+            status_code = exc.status if hasattr(exc, "status") else 500
+            raise exc
+        finally:
+            duration_ms = (time.time() - start_time) * 1000
 
-        duration_ms = (time.time() - start_time) * 1000
-
-        request_duration_histogram.record(
-            duration_ms,
-            attributes={
-                "http.method": request.method,
-                "http.status_code": normalize_http_status(status_code),
-                "http.route": _get_view_request_handler_func(request),
-                "worker.name": get_worker_name(),
-            },
-        )
-
-        return response
+            request_duration_histogram.record(
+                duration_ms,
+                attributes={
+                    "http.method": request.method,
+                    "http.status_code": normalize_http_status(status_code),
+                    "http.route": _get_view_request_handler_func(request),
+                    "worker.name": get_worker_name(),
+                },
+            )
 
     return middleware
 
