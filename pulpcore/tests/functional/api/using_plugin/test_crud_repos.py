@@ -208,6 +208,11 @@ def test_crud_remotes_full_workflow(
     new_remote = file_bindings.RemotesFileApi.read(remote.pulp_href)
     _compare_results(data, new_remote)
 
+    # An update request with no changes should return a 200 OK (without dispatching a task)
+    response = file_bindings.RemotesFileApi.partial_update_with_http_info(remote.pulp_href, data)
+    assert response.status_code == 204
+    assert response.data is None
+
     # Test that a password can be updated with a PUT request.
     temp_remote = file_remote_factory(
         manifest_path=basic_manifest_path, url="http://", password="new"
@@ -235,8 +240,9 @@ def test_crud_remotes_full_workflow(
 
     # test a PUT request without a password
     remote_update = {"name": temp_remote.name, "url": "http://"}
-    response = file_bindings.RemotesFileApi.update(href, remote_update)
-    monitor_task(response.task)
+    response = file_bindings.RemotesFileApi.update_with_http_info(href, remote_update)
+    assert response.status_code == 204
+    assert response.data is None
     exc = run(["pulpcore-manager", "shell", "-c", shell_cmd], text=True, capture_output=True)
     assert exc.stdout.rstrip("\n") == "new"
 
