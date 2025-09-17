@@ -1,7 +1,7 @@
 from gettext import gettext as _
 
 from drf_spectacular.utils import extend_schema
-from rest_framework import mixins
+from rest_framework import mixins, response
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 
@@ -109,7 +109,7 @@ class DomainViewSet(
 
     @extend_schema(
         description="Trigger an asynchronous update task",
-        responses={202: AsyncOperationResponseSerializer},
+        responses={202: AsyncOperationResponseSerializer, 200: None},
     )
     def update(self, request, pk, **kwargs):
         """Prevent trying to update the default domain."""
@@ -117,7 +117,24 @@ class DomainViewSet(
         if instance.name == "default":
             raise ValidationError(_("Default domain can not be updated."))
 
+        # check if the update operation is going to change anything and
+        # if no actual change is needed return a 200 OK.
+        if not self._domain_modified(request, **kwargs):
+            return response.Response(None, status=200)
+
         return super().update(request, pk, **kwargs)
+
+    def _domain_modified(self, request, **kwargs):
+        """Check if the request data has values different from the current domain instance."""
+        partial = kwargs.pop("partial", False)
+        domain = self.get_object()
+        serializer = self.get_serializer(domain, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+
+        for request_field, request_field_value in serializer.validated_data.items():
+            if getattr(domain, request_field) != request_field_value:
+                return True
+        return False
 
     @extend_schema(
         description="Trigger an asynchronous delete task",
