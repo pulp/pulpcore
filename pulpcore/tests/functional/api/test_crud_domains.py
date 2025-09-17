@@ -44,6 +44,13 @@ def test_crud_domains(pulpcore_bindings, monitor_task):
     valid_settings["location"] = "/testing/"
     assert domain.storage_settings == valid_settings
 
+    # An update request with no changes should return a 200 OK (without dispatching a task)
+    response = pulpcore_bindings.DomainsApi.partial_update_with_http_info(
+        domain.pulp_href, update_body
+    )
+    assert response.status_code == 200
+    assert response.data is None
+
     # Delete the domain
     response = pulpcore_bindings.DomainsApi.delete(domain.pulp_href)
     monitor_task(response.task)
