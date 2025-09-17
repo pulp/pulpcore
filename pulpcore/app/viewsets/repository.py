@@ -5,7 +5,7 @@ from django.db.models import Q, Max
 from django.urls.base import Resolver404, resolve
 from django_filters import Filter
 from drf_spectacular.utils import extend_schema
-from rest_framework import mixins, serializers
+from rest_framework import mixins, response, serializers
 from rest_framework.decorators import action
 from rest_framework.viewsets import GenericViewSet
 from urllib.parse import urlparse
@@ -43,7 +43,7 @@ from pulpcore.app.viewsets.base import (
 from pulpcore.app.viewsets.custom_filters import LabelFilter, WithContentFilter, WithContentInFilter
 from pulpcore.tasking.tasks import dispatch
 from pulpcore.filters import HyperlinkRelatedFilter
-from pulpcore.app.util import resolve_prn
+from pulpcore.app.util import resolve_prn, resource_modified
 
 
 class RepositoryContentFilter(Filter):
@@ -367,6 +367,21 @@ class RemoteViewSet(
     serializer_class = RemoteSerializer
     queryset = Remote.objects.all()
     filterset_class = RemoteFilter
+
+    @extend_schema(
+        description="Trigger an asynchronous update task",
+        responses={202: AsyncOperationResponseSerializer, 204: None},
+    )
+    def update(self, request, pk, **kwargs):
+        """
+        Check if the update operation is going to change anything and if:
+        - no actual change is needed return a 204 No Content
+        - the request contains modifications, trigger an asynchronous update task
+        """
+        if not resource_modified(self, request, **kwargs):
+            return response.Response(None, status=204)
+
+        return super().update(request, pk, **kwargs)
 
 
 # We have to use GenericViewSet as NamedModelViewSet causes

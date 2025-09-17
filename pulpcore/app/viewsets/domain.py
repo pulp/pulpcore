@@ -14,6 +14,7 @@ from pulpcore.app.serializers import (
     AsyncOperationResponseSerializer,
 )
 from pulpcore.app.tasks import migrate_backend
+from pulpcore.app.util import resource_modified
 from pulpcore.app.viewsets import NamedModelViewSet, AsyncRemoveMixin, AsyncUpdateMixin, LabelsMixin
 from pulpcore.app.viewsets.base import NAME_FILTER_OPTIONS
 from pulpcore.app.viewsets.custom_filters import LabelFilter
@@ -109,7 +110,7 @@ class DomainViewSet(
 
     @extend_schema(
         description="Trigger an asynchronous update task",
-        responses={202: AsyncOperationResponseSerializer, 200: None},
+        responses={202: AsyncOperationResponseSerializer, 204: None},
     )
     def update(self, request, pk, **kwargs):
         """Prevent trying to update the default domain."""
@@ -118,23 +119,11 @@ class DomainViewSet(
             raise ValidationError(_("Default domain can not be updated."))
 
         # check if the update operation is going to change anything and
-        # if no actual change is needed return a 200 OK.
-        if not self._domain_modified(request, **kwargs):
-            return response.Response(None, status=200)
+        # if no actual change is needed return a 204 No Content.
+        if not resource_modified(self, request, **kwargs):
+            return response.Response(None, status=204)
 
         return super().update(request, pk, **kwargs)
-
-    def _domain_modified(self, request, **kwargs):
-        """Check if the request data has values different from the current domain instance."""
-        partial = kwargs.pop("partial", False)
-        domain = self.get_object()
-        serializer = self.get_serializer(domain, data=request.data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-
-        for request_field, request_field_value in serializer.validated_data.items():
-            if getattr(domain, request_field) != request_field_value:
-                return True
-        return False
 
     @extend_schema(
         description="Trigger an asynchronous delete task",
