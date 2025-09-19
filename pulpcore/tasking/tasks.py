@@ -6,7 +6,6 @@ import os
 import sys
 import traceback
 import tempfile
-import threading
 from gettext import gettext as _
 from contextlib import contextmanager
 from asgiref.sync import sync_to_async, async_to_sync
@@ -187,14 +186,6 @@ def get_task_function(task, ensure_coroutine=False):
         return async_to_sync(task_wrapper)
 
 
-def running_from_thread_pool() -> bool:
-    # TODO: this needs an alternative approach ASAP!
-    # Currently we rely on the weak fact that ThreadPoolExecutor names threads like:
-    # "ThreadPoolExecutor-0_0"
-    thread_name = threading.current_thread().name
-    return "ThreadPoolExecutor" in thread_name
-
-
 def dispatch(
     func,
     args=None,
@@ -242,8 +233,7 @@ def dispatch(
         ValueError: When `resources` is an unsupported type.
     """
 
-    # Can't run short tasks immediately if running from thread pool
-    immediate = immediate and not running_from_thread_pool()
+    execute_now = immediate and not called_from_content_app()
     assert deferred or immediate, "A task must be at least `deferred` or `immediate`."
     send_wakeup_signal = True if not immediate else False
     function_name = get_function_name(func)
@@ -254,7 +244,7 @@ def dispatch(
     )
     task = Task.objects.create(**task_payload)
     task.refresh_from_db()  # The database will have assigned a timestamp for us.
-    if immediate:
+    if execute_now:
         if are_resources_available(colliding_resources, task):
             send_wakeup_signal = True if resources else False
             task.unblock()
@@ -283,6 +273,7 @@ async def adispatch(
     versions=None,
 ):
     """Async version of dispatch."""
+    execute_now = immediate and not called_from_content_app()
     assert deferred or immediate, "A task must be at least `deferred` or `immediate`."
     function_name = get_function_name(func)
     versions = get_version(versions, function_name)
@@ -293,7 +284,7 @@ async def adispatch(
     )
     task = await Task.objects.acreate(**task_payload)
     await task.arefresh_from_db()  # The database will have assigned a timestamp for us.
-    if immediate:
+    if execute_now:
         if await async_are_resources_available(colliding_resources, task):
             send_wakeup_signal = True if resources else False
             await task.aunblock()
@@ -361,6 +352,11 @@ def are_resources_available(colliding_resources, task: Task) -> bool:
         reserved_resources_record__overlap=colliding_resources
     ).exists()
     return not colliding_resources or not colliding_resources_taken
+
+
+def called_from_content_app() -> bool:
+    current_app = AppStatus.objects.current()
+    return current_app is not None and current_app.app_type == "content"
 
 
 def get_function_name(func):
