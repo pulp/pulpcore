@@ -6,11 +6,10 @@ from types import SimpleNamespace
 # The group will be 0.
 # The numbers are randomly chosen.
 # !!! Never change these values !!!
-TASK_DISPATCH_LOCK = 21
 TASK_SCHEDULING_LOCK = 42
 TASK_UNBLOCKING_LOCK = 84
-TASK_METRICS_HEARTBEAT_LOCK = 74
-STORAGE_METRICS_LOCK = 72
+TASK_METRICS_LOCK = 74
+WORKER_CLEANUP_LOCK = 11
 
 # Reasons to send along a task worker wakeup call.
 TASK_WAKEUP_UNBLOCK = "unblock"
