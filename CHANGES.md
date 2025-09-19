@@ -8,6 +8,29 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.89.1 (2025-09-18) {: #3.89.1 }
+
+### REST API {: #3.89.1-rest-api }
+
+#### Bugfixes {: #3.89.1-rest-api-bugfix }
+
+- Fixed generation of signed URLs when using GCS as the storage backend.
+  [#6917](https://github.com/pulp/pulpcore/issues/6917)
+
+### Plugin API {: #3.89.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.89.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.89.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.89.0 (2025-09-09) {: #3.89.0 }
 
 ### REST API {: #3.89.0-rest-api }
