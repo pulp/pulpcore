@@ -561,7 +561,7 @@ async def test_pull_through_repository_add(request123, monkeypatch):
 @pytest_asyncio.fixture
 async def app_status(monkeypatch):
     monkeypatch.setattr(AppStatus.objects, "_current_app_status", None)
-    app_status = await AppStatus.objects.acreate(app_type="content", name="test_runner")
+    app_status = await AppStatus.objects.acreate(app_type="api", name="test_runner")
     yield app_status
     await app_status.adelete()
 
