@@ -64,10 +64,6 @@ class ResourceImmutableError(PulpException):
         return msg
 
 
-class AdvisoryLockError(Exception):
-    """Exception to signal that a lock could not be acquired."""
-
-
 class TimeoutException(PulpException):
     """
     Exception to signal timeout error.

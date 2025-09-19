@@ -1,19 +1,19 @@
 from gettext import gettext as _
 
+import functools
 import logging
 import os
 import random
 import select
 import signal
 import socket
-import contextlib
 from datetime import datetime, timedelta
 from multiprocessing import Process
 from tempfile import TemporaryDirectory
 from packaging.version import parse as parse_version
 
 from django.conf import settings
-from django.db import connection, DatabaseError, IntegrityError
+from django.db import connection, transaction, DatabaseError, IntegrityError
 from django.db.models import Case, Count, F, Max, Value, When
 from django.utils import timezone
 
@@ -22,15 +22,14 @@ from pulpcore.constants import (
     TASK_INCOMPLETE_STATES,
     TASK_SCHEDULING_LOCK,
     TASK_UNBLOCKING_LOCK,
-    TASK_METRICS_HEARTBEAT_LOCK,
+    TASK_METRICS_LOCK,
+    WORKER_CLEANUP_LOCK,
     TASK_WAKEUP_UNBLOCK,
     TASK_WAKEUP_HANDLE,
 )
 from pulpcore.metrics import init_otel_meter
 from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app.models import Task, AppStatus
-from pulpcore.app.util import PGAdvisoryLock
-from pulpcore.exceptions import AdvisoryLockError
 
 from pulpcore.tasking.storage import WorkerDirectory
 from pulpcore.tasking._util import (
@@ -57,6 +56,30 @@ WORKER_CLEANUP_INTERVAL = 100
 IGNORED_TASKS_CLEANUP_INTERVAL = 100
 # Threshold time in seconds of an unblocked task before we consider a queue stalled
 THRESHOLD_UNBLOCKED_WAITING_TIME = 5
+
+
+def exclusive(lock):
+    """
+    Runs function in a transaction holding the specified lock.
+    Returns None if the lock could not be acquired.
+    It should be used for actions that only need to be performed by a single worker.
+    """
+
+    def _decorator(f):
+        @functools.wraps(f)
+        def _f(self, *args, **kwargs):
+            with transaction.atomic():
+                with connection.cursor() as cursor:
+                    cursor.execute("SELECT pg_try_advisory_xact_lock(%s, %s)", [0, lock])
+                    acquired = cursor.fetchone()[0]
+                if acquired:
+                    return f(self, *args, **kwargs)
+                else:
+                    return None
+
+        return _f
+
+    return _decorator
 
 
 class PulpcoreWorker:
@@ -112,9 +135,9 @@ class PulpcoreWorker:
                 description="The age of the longest waiting task.",
                 unit="seconds",
             )
-            self.record_unblocked_waiting_tasks_metric = self._record_unblocked_waiting_tasks_metric
+            self.otel_enabled = True
         else:
-            self.record_unblocked_waiting_tasks_metric = lambda *args, **kwargs: None
+            self.otel_enabled = False
 
     def _signal_handler(self, thesignal, frame):
         if thesignal in (signal.SIGHUP, signal.SIGTERM):
@@ -187,7 +210,8 @@ class PulpcoreWorker:
         ):
             self.ignored_task_ids.remove(pk)
 
-    def worker_cleanup(self):
+    @exclusive(WORKER_CLEANUP_LOCK)
+    def app_worker_cleanup(self):
         qs = AppStatus.objects.missing()
         for app_worker in qs:
             _logger.warning(
@@ -198,8 +222,45 @@ class PulpcoreWorker:
         # Don't bother the others.
         self.wakeup_unblock = True
 
+    @exclusive(TASK_SCHEDULING_LOCK)
+    def dispatch_scheduled_tasks(self):
+        dispatch_scheduled_tasks()
+
+    @exclusive(TASK_METRICS_LOCK)
+    def record_unblocked_waiting_tasks_metric(self, now):
+        # This "reporting code" must not me moved inside a task, because it is supposed
+        # to be able to report on a congested tasking system to produce reliable results.
+        # For performance reasons we aggregate these statistics on a single database call.
+        unblocked_tasks_stats = (
+            Task.objects.filter(unblocked_at__isnull=False, state=TASK_STATES.WAITING)
+            .annotate(unblocked_for=Value(timezone.now()) - F("unblocked_at"))
+            .aggregate(
+                longest_unblocked_waiting_time=Max("unblocked_for", default=timezone.timedelta(0)),
+                unblocked_tasks_count_gte_threshold=Count(
+                    Case(
+                        When(
+                            unblocked_for__gte=Value(
+                                timezone.timedelta(seconds=THRESHOLD_UNBLOCKED_WAITING_TIME)
+                            ),
+                            then=1,
+                        )
+                    )
+                ),
+            )
+        )
+
+        self.tasks_unblocked_queue_meter.set(
+            unblocked_tasks_stats["unblocked_tasks_count_gte_threshold"]
+        )
+        self.tasks_longest_unblocked_time_meter.set(
+            unblocked_tasks_stats["longest_unblocked_waiting_time"].seconds
+        )
+
+        self.cursor.execute(f"NOTIFY pulp_worker_metrics_heartbeat, '{str(now)}'")
+
     def beat(self):
-        if self.app_status.last_heartbeat < timezone.now() - self.heartbeat_period:
+        now = timezone.now()
+        if self.app_status.last_heartbeat < now - self.heartbeat_period:
             self.handle_worker_heartbeat()
             if self.ignored_task_ids:
                 self.ignored_task_countdown -= 1
@@ -210,12 +271,12 @@ class PulpcoreWorker:
                 self.worker_cleanup_countdown -= 1
                 if self.worker_cleanup_countdown <= 0:
                     self.worker_cleanup_countdown = WORKER_CLEANUP_INTERVAL
-                    self.worker_cleanup()
-                with contextlib.suppress(AdvisoryLockError), PGAdvisoryLock(TASK_SCHEDULING_LOCK):
-                    dispatch_scheduled_tasks()
-                # This "reporting code" must not me moved inside a task, because it is supposed
-                # to be able to report on a congested tasking system to produce reliable results.
-                self.record_unblocked_waiting_tasks_metric()
+                    self.app_worker_cleanup()
+
+                self.dispatch_scheduled_tasks()
+
+                if self.otel_enabled and now > self.last_metric_heartbeat + self.heartbeat_period:
+                    self.record_unblocked_waiting_tasks_metric(now)
 
     def notify_workers(self, reason):
         self.cursor.execute("SELECT pg_notify('pulp_worker_wakeup', %s)", (reason,))
@@ -283,19 +344,20 @@ class PulpcoreWorker:
         assert not self.auxiliary
 
         self.wakeup_unblock = False
-        with contextlib.suppress(AdvisoryLockError), PGAdvisoryLock(TASK_UNBLOCKING_LOCK):
-            self._unblock_tasks()
+        result = self._unblock_tasks()
+        if result is not None and (
+            Task.objects.filter(
+                state__in=[TASK_STATES.WAITING, TASK_STATES.CANCELING], app_lock=None
+            )
+            .exclude(unblocked_at=None)
+            .exists()
+        ):
+            self.notify_workers(TASK_WAKEUP_HANDLE)
+            return True
 
-            if (
-                Task.objects.filter(state__in=TASK_INCOMPLETE_STATES, app_lock=None)
-                .exclude(unblocked_at=None)
-                .exists()
-            ):
-                self.notify_workers(TASK_WAKEUP_HANDLE)
-                return True
-            return False
-        return None
+        return result
 
+    @exclusive(TASK_UNBLOCKING_LOCK)
     def _unblock_tasks(self):
         """Iterate over waiting tasks and mark them unblocked accordingly."""
 
@@ -359,6 +421,7 @@ class PulpcoreWorker:
             # Record the resources of the pending task
             taken_exclusive_resources.update(exclusive_resources)
             taken_shared_resources.update(shared_resources)
+        return False
 
     def sleep(self):
         """Wait for signals on the wakeup channel while heart beating."""
@@ -544,42 +607,6 @@ class PulpcoreWorker:
                 )
                 if rows != 1:
                     raise RuntimeError("Something other than us is messing around with locks.")
-
-    def _record_unblocked_waiting_tasks_metric(self):
-        now = timezone.now()
-        if now > self.last_metric_heartbeat + self.heartbeat_period:
-            with contextlib.suppress(AdvisoryLockError), PGAdvisoryLock(
-                TASK_METRICS_HEARTBEAT_LOCK
-            ):
-                # For performance reasons we aggregate these statistics on a single database call.
-                unblocked_tasks_stats = (
-                    Task.objects.filter(unblocked_at__isnull=False, state=TASK_STATES.WAITING)
-                    .annotate(unblocked_for=Value(timezone.now()) - F("unblocked_at"))
-                    .aggregate(
-                        longest_unblocked_waiting_time=Max(
-                            "unblocked_for", default=timezone.timedelta(0)
-                        ),
-                        unblocked_tasks_count_gte_threshold=Count(
-                            Case(
-                                When(
-                                    unblocked_for__gte=Value(
-                                        timezone.timedelta(seconds=THRESHOLD_UNBLOCKED_WAITING_TIME)
-                                    ),
-                                    then=1,
-                                )
-                            )
-                        ),
-                    )
-                )
-
-                self.tasks_unblocked_queue_meter.set(
-                    unblocked_tasks_stats["unblocked_tasks_count_gte_threshold"]
-                )
-                self.tasks_longest_unblocked_time_meter.set(
-                    unblocked_tasks_stats["longest_unblocked_waiting_time"].seconds
-                )
-
-                self.cursor.execute(f"NOTIFY pulp_worker_metrics_heartbeat, '{str(now)}'")
 
     def run(self, burst=False):
         with WorkerDirectory(self.name):
