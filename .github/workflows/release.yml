@@ -32,10 +32,12 @@ jobs:
         with:
           python-version: "3.11"
 
+      # Click is pinned because of:
+      # https://github.com/pallets/click/issues/3065
       - name: "Install python dependencies"
         run: |
           echo ::group::PYDEPS
-          pip install bump-my-version towncrier
+          pip install bump-my-version towncrier 'click<8.3'
           echo ::endgroup::
 
       - name: "Configure Git with pulpbot name and email"
