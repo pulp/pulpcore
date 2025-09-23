@@ -8,6 +8,44 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.90.0 (2025-09-23) {: #3.90.0 }
+
+### REST API {: #3.90.0-rest-api }
+
+#### Features {: #3.90.0-rest-api-feature }
+
+- Modified the API so that updates do not dispatch a task if no change is needed.
+  [#6896](https://github.com/pulp/pulpcore/issues/6896),
+  [#6897](https://github.com/pulp/pulpcore/issues/6897)
+- Taught pulp-import-export to work in a domain-enabled environment.
+
+  All combinations of domain-state between upstream and downstream are handled.
+  [#6926](https://github.com/pulp/pulpcore/issues/6926)
+- Cleanup missing worker processes records faster.
+
+#### Bugfixes {: #3.90.0-rest-api-bugfix }
+
+- Fixed generation of signed URLs when using GCS as the storage backend.
+  [#6917](https://github.com/pulp/pulpcore/issues/6917)
+
+#### Misc {: #3.90.0-rest-api-misc }
+
+- 
+
+### Plugin API {: #3.90.0-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.90.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.90.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.89.1 (2025-09-18) {: #3.89.1 }
 
 ### REST API {: #3.89.1-rest-api }
