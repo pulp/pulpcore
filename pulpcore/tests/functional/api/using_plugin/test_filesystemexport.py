@@ -8,15 +8,12 @@ the case.
 import pytest
 import uuid
 
-from pulpcore.app import settings
 from pulpcore.client.pulpcore.exceptions import ApiException
 
 from pulpcore.client.pulp_file import RepositorySyncURL
 
 NUM_REPOS = 1
 NUM_EXPORTERS = 4
-
-pytestmark = pytest.mark.skipif(settings.DOMAIN_ENABLED, reason="Domains do not support export.")
 
 
 @pytest.fixture
