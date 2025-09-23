@@ -48,8 +48,8 @@ def test_crud_domains(pulpcore_bindings, monitor_task):
     response = pulpcore_bindings.DomainsApi.partial_update_with_http_info(
         domain.pulp_href, update_body
     )
-    assert response.status_code == 204
-    assert response.data is None
+    assert response.status_code == 200
+    assert response.data == domain
 
     # Delete the domain
     response = pulpcore_bindings.DomainsApi.delete(domain.pulp_href)

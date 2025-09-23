@@ -1,7 +1,7 @@
 from gettext import gettext as _
 
 from drf_spectacular.utils import extend_schema
-from rest_framework import mixins, response
+from rest_framework import mixins
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 
@@ -14,7 +14,6 @@ from pulpcore.app.serializers import (
     AsyncOperationResponseSerializer,
 )
 from pulpcore.app.tasks import migrate_backend
-from pulpcore.app.util import resource_modified
 from pulpcore.app.viewsets import NamedModelViewSet, AsyncRemoveMixin, AsyncUpdateMixin, LabelsMixin
 from pulpcore.app.viewsets.base import NAME_FILTER_OPTIONS
 from pulpcore.app.viewsets.custom_filters import LabelFilter
@@ -110,18 +109,13 @@ class DomainViewSet(
 
     @extend_schema(
         description="Trigger an asynchronous update task",
-        responses={202: AsyncOperationResponseSerializer, 204: None},
+        responses={200: DomainSerializer, 202: AsyncOperationResponseSerializer},
     )
     def update(self, request, pk, **kwargs):
         """Prevent trying to update the default domain."""
         instance = self.get_object()
         if instance.name == "default":
             raise ValidationError(_("Default domain can not be updated."))
-
-        # check if the update operation is going to change anything and
-        # if no actual change is needed return a 204 No Content.
-        if not resource_modified(self, request, **kwargs):
-            return response.Response(None, status=204)
 
         return super().update(request, pk, **kwargs)
 
