@@ -62,8 +62,8 @@ class ArtifactResource(QueryModelResource):
         # the export converts None to blank strings but sha384 and sha512 have unique constraints
         # that get triggered if they are blank. convert checksums back into None if they are blank.
         for checksum in ALL_KNOWN_CONTENT_CHECKSUMS:
-            if row[checksum] == "":
-                row[checksum] = None
+            if row[checksum] == "" or checksum not in settings.ALLOWED_CONTENT_CHECKSUMS:
+                del row[checksum]
 
     def set_up_queryset(self):
         """
@@ -109,7 +109,7 @@ class ArtifactDomainForeignKeyWidget(ForeignKeyWidget):
         return qs
 
     def render(self, value, obj=None, **kwargs):
-        return value.sha256
+        return value.sha256 if value else ""
 
 
 class ContentArtifactResource(QueryModelResource):
