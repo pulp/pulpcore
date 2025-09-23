@@ -21,7 +21,6 @@ NUM_REPOS = 2
 
 
 pytestmark = [
-    pytest.mark.skipif(settings.DOMAIN_ENABLED, reason="Domains do not support import."),
     pytest.mark.skipif(
         "/tmp" not in settings.ALLOWED_IMPORT_PATHS,
         reason="Cannot run import-tests unless /tmp is in ALLOWED_IMPORT_PATHS ({}).".format(
