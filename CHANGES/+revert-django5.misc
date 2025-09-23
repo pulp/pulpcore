@@ -1,0 +1,1 @@
+Reverted Django upperbound bump to 5.2 as it may break plugins.
