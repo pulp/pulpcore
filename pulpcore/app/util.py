@@ -678,16 +678,3 @@ def normalize_http_status(status):
         return "5xx"
     else:
         return ""
-
-
-def resource_modified(resource, request, **kwargs):
-    """Check if the request data has values different from the current resource instance."""
-    partial = kwargs.pop("partial", False)
-    entity = resource.get_object()
-    serializer = resource.get_serializer(entity, data=request.data, partial=partial)
-    serializer.is_valid(raise_exception=True)
-
-    for request_field, request_field_value in serializer.validated_data.items():
-        if getattr(entity, request_field) != request_field_value:
-            return True
-    return False

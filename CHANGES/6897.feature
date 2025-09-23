@@ -1,1 +1,1 @@
-Modified the update Remote API so that it does not dispatch a task if no change is needed.
+Modified the API so that updates do not dispatch a task if no change is needed.

@@ -23,8 +23,8 @@ from drf_spectacular.plumbing import (
 )
 from drf_spectacular.settings import spectacular_settings
 from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import OpenApiParameter, extend_schema_field
-from drf_spectacular.extensions import OpenApiAuthenticationExtension
+from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_field
+from drf_spectacular.extensions import OpenApiViewExtension, OpenApiAuthenticationExtension
 from rest_framework import mixins, serializers
 from rest_framework.exceptions import ParseError
 from rest_framework.request import Request
@@ -46,6 +46,10 @@ API_ROOT_NO_FRONT_SLASH = API_ROOT_NO_FRONT_SLASH.replace("<", "{").replace(">",
 
 # Python does not distinguish integer sizes. The safest assumption is that they are large.
 extend_schema_field(OpenApiTypes.INT64)(serializers.IntegerField)
+
+
+class InheritSerializer(serializers.Serializer):
+    """This is a dummy tracer to allow mixins to refer to the natural serializer of a viewset."""
 
 
 class PulpAutoSchema(AutoSchema):
@@ -238,6 +242,7 @@ class PulpAutoSchema(AutoSchema):
         """
         Handle response status code.
         """
+        # DRF handles this most of the time. But it seems set_label still needs it.
         response = super()._get_response_bodies()
         if (
             self.method == "POST"
@@ -247,6 +252,15 @@ class PulpAutoSchema(AutoSchema):
             response["201"] = response.pop("200")
 
         return response
+
+    def _get_response_for_code(
+        self, serializer, status_code, media_types=None, direction="response"
+    ):
+        """Hack to replace the InheritSerializer with the real deal."""
+        if serializer == InheritSerializer:
+            serializer = self._get_serializer()
+
+        return super()._get_response_for_code(serializer, status_code, media_types, direction)
 
 
 class PulpSchemaGenerator(SchemaGenerator):

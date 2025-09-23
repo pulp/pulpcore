@@ -210,8 +210,8 @@ def test_crud_remotes_full_workflow(
 
     # An update request with no changes should return a 200 OK (without dispatching a task)
     response = file_bindings.RemotesFileApi.partial_update_with_http_info(remote.pulp_href, data)
-    assert response.status_code == 204
-    assert response.data is None
+    assert response.status_code == 200
+    _compare_results(data, response.data)
 
     # Test that a password can be updated with a PUT request.
     temp_remote = file_remote_factory(
@@ -231,6 +231,7 @@ def test_crud_remotes_full_workflow(
     assert exc.stdout.rstrip("\n") == "changed"
 
     # Test that password doesn't get unset when not passed with a PUT request.
+    # QUESTION: Why not? PUT is supposed to replace the whole entity in place.
     temp_remote = file_remote_factory(url="http://", password="new")
     href = temp_remote.pulp_href
     uuid = re.search(r"/api/v3/remotes/file/file/([\w-]+)/", href).group(1)
@@ -241,8 +242,8 @@ def test_crud_remotes_full_workflow(
     # test a PUT request without a password
     remote_update = {"name": temp_remote.name, "url": "http://"}
     response = file_bindings.RemotesFileApi.update_with_http_info(href, remote_update)
-    assert response.status_code == 204
-    assert response.data is None
+    assert response.status_code == 200
+    _compare_results(remote_update, response.data)
     exc = run(["pulpcore-manager", "shell", "-c", shell_cmd], text=True, capture_output=True)
     assert exc.stdout.rstrip("\n") == "new"
 

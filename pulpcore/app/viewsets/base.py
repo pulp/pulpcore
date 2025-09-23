@@ -13,7 +13,7 @@ from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
-from pulpcore.openapi import PulpAutoSchema
+from pulpcore.openapi import PulpAutoSchema, InheritSerializer
 from rest_framework.serializers import ValidationError as DRFValidationError, ListField, CharField
 
 from pulpcore.app import tasks
@@ -482,27 +482,31 @@ class AsyncUpdateMixin(AsyncReservedObjectMixin):
     ALLOW_NON_BLOCKING_UPDATE = True
 
     @extend_schema(
-        description="Trigger an asynchronous update task",
-        responses={202: AsyncOperationResponseSerializer},
+        description="Update the entity and trigger an asynchronous task if necessary",
+        responses={200: InheritSerializer, 202: AsyncOperationResponseSerializer},
     )
     def update(self, request, pk, **kwargs):
         partial = kwargs.pop("partial", False)
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
-        app_label = instance._meta.app_label
-        task = dispatch(
-            tasks.base.ageneral_update,
-            exclusive_resources=self.async_reserved_resources(instance),
-            args=(pk, app_label, serializer.__class__.__name__),
-            kwargs={"data": request.data, "partial": partial},
-            immediate=self.ALLOW_NON_BLOCKING_UPDATE,
-        )
-        return OperationPostponedResponse(task, request)
+
+        if all(getattr(instance, key) == value for key, value in serializer.validated_data.items()):
+            return Response(serializer.data)
+        else:
+            app_label = instance._meta.app_label
+            task = dispatch(
+                tasks.base.ageneral_update,
+                exclusive_resources=self.async_reserved_resources(instance),
+                args=(pk, app_label, serializer.__class__.__name__),
+                kwargs={"data": request.data, "partial": partial},
+                immediate=self.ALLOW_NON_BLOCKING_UPDATE,
+            )
+            return OperationPostponedResponse(task, request)
 
     @extend_schema(
-        description="Trigger an asynchronous partial update task",
-        responses={202: AsyncOperationResponseSerializer},
+        description="Update the entity partially and trigger an asynchronous task if necessary",
+        responses={200: InheritSerializer, 202: AsyncOperationResponseSerializer},
     )
     def partial_update(self, request, *args, **kwargs):
         kwargs["partial"] = True
