@@ -1,1 +1,0 @@
-Fixed generation of signed URLs when using GCS as the storage backend.
