@@ -48,6 +48,10 @@ def _write_export(the_tarfile, resource, dest_dir=None):
     # the data in batches to memory and concatenate the json lists via string manipulation.
     with tempfile.NamedTemporaryFile(dir=".", mode="w", encoding="utf8") as temp_file:
         if isinstance(resource.queryset, QuerySet):
+            # If we don't have any of "these" - skip writing
+            if resource.queryset.count() == 0:
+                return
+
             temp_file.write("[")
 
             def process_batch(batch):
