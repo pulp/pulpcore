@@ -79,7 +79,6 @@ class PulpcoreWorker:
         self.heartbeat_period = timedelta(seconds=settings.WORKER_TTL / 3)
         self.last_metric_heartbeat = timezone.now()
         self.versions = {app.label: app.version for app in pulp_plugin_configs()}
-        self.cursor = connection.cursor()
         self.app_status = AppStatus.objects.create(
             name=self.name, app_type="worker", versions=self.versions
         )

@@ -26,7 +26,6 @@ from pulpcore.constants import (
     TASK_INCOMPLETE_STATES,
     TASK_STATES,
     IMMEDIATE_TIMEOUT,
-    TASK_WAKEUP_HANDLE,
     TASK_WAKEUP_UNBLOCK,
 )
 from pulpcore.middleware import x_task_diagnostics_var
