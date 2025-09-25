@@ -312,6 +312,7 @@ The time, specified in minutes, for how long Pulp will hold orphan Content and A
 before they become candidates for deletion by an orphan cleanup task.
 This should ideally be longer than your longest running task.
 Otherwise any content created during that task could be cleaned up before the task finishes.
+Any value different than 0 instanciates a recurring task schedule for this.
 
 Defaults to 1440 minutes (24 hours).
 
