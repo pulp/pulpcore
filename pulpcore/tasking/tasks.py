@@ -297,7 +297,7 @@ async def adispatch(
             task.set_canceling()
             task.set_canceled(TASK_STATES.CANCELED, "Resources temporarily unavailable.")
     if send_wakeup_signal:
-        wakeup_worker(TASK_WAKEUP_UNBLOCK)
+        await sync_to_async(wakeup_worker)(TASK_WAKEUP_UNBLOCK)
     return task
 
 
