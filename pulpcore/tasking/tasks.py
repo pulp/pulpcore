@@ -26,10 +26,10 @@ from pulpcore.constants import (
     TASK_INCOMPLETE_STATES,
     TASK_STATES,
     IMMEDIATE_TIMEOUT,
-    TASK_WAKEUP_HANDLE,
     TASK_WAKEUP_UNBLOCK,
 )
 from pulpcore.middleware import x_task_diagnostics_var
+from pulpcore.tasking import pubsub
 from pulpcore.tasking.kafka import send_task_notification
 
 _logger = logging.getLogger(__name__)
@@ -48,12 +48,6 @@ def _validate_and_get_resources(resources):
         else:
             raise ValueError(_("Must be (str|Model)"))
     return list(resource_set)
-
-
-def wakeup_worker(reason):
-    # Notify workers
-    with connection.connection.cursor() as cursor:
-        cursor.execute("SELECT pg_notify('pulp_worker_wakeup', %s)", (reason,))
 
 
 def execute_task(task):
@@ -257,7 +251,8 @@ def dispatch(
             task.set_canceling()
             task.set_canceled(TASK_STATES.CANCELED, "Resources temporarily unavailable.")
     if send_wakeup_signal:
-        wakeup_worker(TASK_WAKEUP_UNBLOCK)
+        with pubsub.PostgresPubSub(connection) as pubsub_client:
+            pubsub_client.wakeup_worker(reason=TASK_WAKEUP_UNBLOCK)
     return task
 
 
@@ -297,7 +292,8 @@ async def adispatch(
             task.set_canceling()
             task.set_canceled(TASK_STATES.CANCELED, "Resources temporarily unavailable.")
     if send_wakeup_signal:
-        await sync_to_async(wakeup_worker)(TASK_WAKEUP_UNBLOCK)
+        with pubsub.PostgresPubSub(connection) as pubsub_client:
+            pubsub_client.wakeup_worker(reason=TASK_WAKEUP_UNBLOCK)
     return task
 
 
@@ -429,12 +425,9 @@ def cancel_task(task_id):
 
     # This is the only valid transition without holding the task lock.
     task.set_canceling()
-    # Notify the worker that might be running that task.
-    with connection.cursor() as cursor:
-        if task.app_lock is None:
-            wakeup_worker(TASK_WAKEUP_HANDLE)
-        else:
-            cursor.execute("SELECT pg_notify('pulp_worker_cancel', %s)", (str(task.pk),))
+    # Notify the worker that might be running that task and other workers to clean up
+    pubsub.backend.cancel_task(task_pk=task.pk)
+    pubsub.backend.wakeup_worker()
     return task
 
 
