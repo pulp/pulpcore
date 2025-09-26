@@ -7,7 +7,7 @@ from importlib import import_module
 from django import apps
 from django.core.exceptions import ImproperlyConfigured
 from django.db import connection, transaction
-from django.db.models.signals import post_migrate
+from django.db.models.signals import post_migrate, pre_migrate
 from django.utils.module_loading import module_has_submodule
 
 from pulpcore.exceptions.plugin import MissingPlugin
@@ -258,6 +258,7 @@ class PulpAppConfig(PulpPluginAppConfig):
         super().ready()
         from . import checks  # noqa
 
+        pre_migrate.connect(_clean_app_status, sender=self, dispatch_uid="clean_legacy_app_status")
         post_migrate.connect(
             _ensure_default_domain, sender=self, dispatch_uid="ensure_default_domain"
         )
@@ -269,6 +270,35 @@ class PulpAppConfig(PulpPluginAppConfig):
             sender=self,
             dispatch_uid="populate_artifact_serving_distribution_identifier",
         )
+
+
+def _clean_app_status(sender, apps, verbosity, **kwargs):
+    from django.contrib.postgres.functions import TransactionNow
+    from django.utils import timezone
+
+    settings = sender.settings
+
+    app_ttl_map = [
+        ("ApiAppStatus", settings.API_APP_TTL),
+        ("ContentAppStatus", settings.CONTENT_APP_TTL),
+        ("Worker", settings.WORKER_TTL),
+    ]
+
+    for app_name, app_ttl in app_ttl_map:
+        try:
+            app_cls = apps.get_model("core", "ContentAppStatus")
+        except LookupError:
+            if verbosity >= 1:
+                print(
+                    _(
+                        "{app_name} model does not exist. Skipping initialization.".format(
+                            app_name=app_name
+                        )
+                    )
+                )
+        else:
+            age_threshold = TransactionNow() - timezone.timedelta(seconds=app_ttl)
+            app_cls.objects.filter(last_heartbeat__lt=age_threshold).delete()
 
 
 def _populate_access_policies(sender, apps, verbosity, **kwargs):
