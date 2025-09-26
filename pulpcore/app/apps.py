@@ -8,7 +8,7 @@ from django import apps
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db import connection, transaction
-from django.db.models.signals import post_migrate
+from django.db.models.signals import post_migrate, pre_migrate
 from django.utils.module_loading import module_has_submodule
 
 from pulpcore.exceptions.plugin import MissingPlugin
@@ -250,6 +250,7 @@ class PulpAppConfig(PulpPluginAppConfig):
         super().ready()
         from . import checks  # noqa
 
+        pre_migrate.connect(_clean_app_status, sender=self, dispatch_uid="clean_app_status")
         post_migrate.connect(
             _ensure_default_domain, sender=self, dispatch_uid="ensure_default_domain"
         )
@@ -261,6 +262,19 @@ class PulpAppConfig(PulpPluginAppConfig):
             sender=self,
             dispatch_uid="populate_artifact_serving_distribution_identifier",
         )
+
+
+def _clean_app_status(sender, apps, verbosity, **kwargs):
+    from django.contrib.postgres.functions import TransactionNow
+    from django.db.models import F
+
+    try:
+        AppStatus = apps.get_model("core", "AppStatus")
+    except LookupError:
+        if verbosity >= 1:
+            print(_("AppStatus model does not exist. Skipping pre migrate cleanup."))
+    else:
+        AppStatus.objects.filter(last_heartbeat__lt=TransactionNow() - F("ttl")).delete()
 
 
 def _populate_access_policies(sender, apps, verbosity, **kwargs):
