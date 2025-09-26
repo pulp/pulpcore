@@ -1,5 +1,4 @@
 from .base import (
-    AdvisoryLockError,
     PulpException,
     ResourceImmutableError,
     TimeoutException,
