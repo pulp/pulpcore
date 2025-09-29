@@ -81,6 +81,9 @@ class AppStatus(BaseModel):
     ttl = models.DurationField(null=False)
     last_heartbeat = models.DateTimeField(auto_now=True)
 
+    def __str__(self) -> str:
+        return f"<{self.__class__.__name__}[{self.app_type}] {self.name}>"
+
     @property
     def online(self) -> bool:
         """
@@ -90,7 +93,7 @@ class AppStatus(BaseModel):
         return self.last_heartbeat >= age_threshold
 
     @property
-    def missing(self):
+    def missing(self) -> bool:
         """
         Whether an app can be considered 'missing'
 
@@ -101,7 +104,7 @@ class AppStatus(BaseModel):
         """
         return not self.online
 
-    def save_heartbeat(self):
+    def save_heartbeat(self) -> None:
         """
         Update the last_heartbeat field to now and save it.
 
@@ -113,7 +116,7 @@ class AppStatus(BaseModel):
         """
         self.save(update_fields=["last_heartbeat"])
 
-    async def asave_heartbeat(self):
+    async def asave_heartbeat(self) -> None:
         """
         Update the last_heartbeat field to now and save it.
 
