@@ -8,6 +8,31 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.90.1 (2025-10-01) {: #3.90.1 }
+
+### REST API {: #3.90.1-rest-api }
+
+#### Bugfixes {: #3.90.1-rest-api-bugfix }
+
+- Fix situations with a single worker per installation failing to unblock all tasks that come in quick succession.
+  [#6873](https://github.com/pulp/pulpcore/issues/6873)
+- Fixed exception propagation in the pulp-content instrumentation middleware.
+  [#6925](https://github.com/pulp/pulpcore/issues/6925)
+
+### Plugin API {: #3.90.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.90.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.90.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.90.0 (2025-09-23) {: #3.90.0 }
 
 ### REST API {: #3.90.0-rest-api }
