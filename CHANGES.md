@@ -8,6 +8,29 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.73.16 (2025-10-01) {: #3.73.16 }
+
+### REST API {: #3.73.16-rest-api }
+
+#### Bugfixes {: #3.73.16-rest-api-bugfix }
+
+- Fixed exception propagation in the pulp-content instrumentation middleware.
+  [#6925](https://github.com/pulp/pulpcore/issues/6925)
+
+### Plugin API {: #3.73.16-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.73.16-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.16-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.73.15 (2025-09-09) {: #3.73.15 }
 
 ### REST API {: #3.73.15-rest-api }
