@@ -8,6 +8,29 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.63.24 (2025-10-01) {: #3.63.24 }
+
+### REST API {: #3.63.24-rest-api }
+
+#### Bugfixes {: #3.63.24-rest-api-bugfix }
+
+- Fixed task purge in case no access policy based permission framework is configured for Pulp.
+  [#6380](https://github.com/pulp/pulpcore/issues/6380)
+
+### Plugin API {: #3.63.24-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.24-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.24-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.63.23 (2025-09-09) {: #3.63.23 }
 
 ### REST API {: #3.63.23-rest-api }
