@@ -8,6 +8,61 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.91.0 (2025-10-01) {: #3.91.0 }
+
+### REST API {: #3.91.0-rest-api }
+
+#### Features {: #3.91.0-rest-api-feature }
+
+- Changed orphan cleanup to run as a scheduled task.
+- Removed the use of session scoped advisory locks from workers janitorial work.
+
+#### Bugfixes {: #3.91.0-rest-api-bugfix }
+
+- Fix situations with a single worker per installation failing to unblock all tasks that come in quick succession.
+  [#6873](https://github.com/pulp/pulpcore/issues/6873)
+- Fixed exception propagation in the pulp-content instrumentation middleware.
+  [#6925](https://github.com/pulp/pulpcore/issues/6925)
+
+### Plugin API {: #3.91.0-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.91.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.91.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.90.1 (2025-10-01) {: #3.90.1 }
+
+### REST API {: #3.90.1-rest-api }
+
+#### Bugfixes {: #3.90.1-rest-api-bugfix }
+
+- Fix situations with a single worker per installation failing to unblock all tasks that come in quick succession.
+  [#6873](https://github.com/pulp/pulpcore/issues/6873)
+- Fixed exception propagation in the pulp-content instrumentation middleware.
+  [#6925](https://github.com/pulp/pulpcore/issues/6925)
+
+### Plugin API {: #3.90.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.90.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.90.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.90.0 (2025-09-23) {: #3.90.0 }
 
 ### REST API {: #3.90.0-rest-api }
@@ -982,6 +1037,29 @@ No significant changes.
   [#6244](https://github.com/pulp/pulpcore/issues/6244)
 
 ### Pulp Cert Guard {: #3.74.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.73.16 (2025-10-01) {: #3.73.16 }
+
+### REST API {: #3.73.16-rest-api }
+
+#### Bugfixes {: #3.73.16-rest-api-bugfix }
+
+- Fixed exception propagation in the pulp-content instrumentation middleware.
+  [#6925](https://github.com/pulp/pulpcore/issues/6925)
+
+### Plugin API {: #3.73.16-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.73.16-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.16-pulp-cert-guard }
 
 No significant changes.
 
@@ -2020,6 +2098,29 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.64.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.63.24 (2025-10-01) {: #3.63.24 }
+
+### REST API {: #3.63.24-rest-api }
+
+#### Bugfixes {: #3.63.24-rest-api-bugfix }
+
+- Fixed task purge in case no access policy based permission framework is configured for Pulp.
+  [#6380](https://github.com/pulp/pulpcore/issues/6380)
+
+### Plugin API {: #3.63.24-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.24-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.24-pulp-cert-guard }
 
 No significant changes.
 
