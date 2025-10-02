@@ -100,7 +100,9 @@ class TaskSerializer(ModelSerializer):
             if user_id := task_user_map.get(str(obj.pk)):
                 kwargs = {"pk": user_id}
                 request = self.context.get("request")
-                return reverse("users-detail", kwargs=kwargs, request=request)
+                return reverse(
+                    "users-detail", kwargs=kwargs, request=request
+                )  # TODO: reverse() + namespacing issues
         return None
 
     class Meta:

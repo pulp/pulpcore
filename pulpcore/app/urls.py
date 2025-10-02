@@ -32,10 +32,13 @@ if settings.DOMAIN_ENABLED:
     API_ROOT = settings.V3_DOMAIN_API_ROOT_NO_FRONT_SLASH
 else:
     API_ROOT = settings.V3_API_ROOT_NO_FRONT_SLASH
+
 if settings.API_ROOT_REWRITE_HEADER:
     V3_API_ROOT = settings.V3_API_ROOT.replace("/<path:api_root>/", settings.API_ROOT)
+    V4_API_ROOT = settings.V4_API_ROOT.replace("/<path:api_root>/", settings.API_ROOT)
 else:
     V3_API_ROOT = settings.V3_API_ROOT
+    V4_API_ROOT = settings.V4_API_ROOT
 
 
 class ViewSetNode:
@@ -153,70 +156,83 @@ for viewset in sorted_by_depth:
     vs_tree.add_decendent(ViewSetNode(viewset))
 
 special_views = [
-    path("login/", LoginViewSet.as_view()),
-    path("repair/", RepairView.as_view()),
+    path("login/", LoginViewSet.as_view(), name="login"),
+    path("repair/", RepairView.as_view(), name="repair"),
     path(
         "orphans/cleanup/",
         OrphansCleanupViewset.as_view(actions={"post": "cleanup"}),
+        name="orphan-cleanup",
     ),
-    path("orphans/", OrphansView.as_view()),
+    path("orphans/", OrphansView.as_view(), name="orphans"),
     path(
         "repository_versions/",
         ListRepositoryVersionViewSet.as_view(actions={"get": "list"}),
+        name="repository-versions",
     ),
     path(
         "repositories/reclaim_space/",
         ReclaimSpaceViewSet.as_view(actions={"post": "reclaim"}),
+        name="reclaim",
     ),
     path(
         "importers/core/pulp/import-check/",
         PulpImporterImportCheckView.as_view(),
+        name="pulp-importer-import-check",
     ),
 ]
 
-docs_and_status = [
-    path("livez/", LivezView.as_view()),
-    path("status/", StatusView.as_view()),
-    path(
-        "docs/api.json",
-        SpectacularJSONAPIView.as_view(authentication_classes=[], permission_classes=[]),
-        name="schema",
-    ),
-    path(
-        "docs/api.yaml",
-        SpectacularYAMLAPIView.as_view(authentication_classes=[], permission_classes=[]),
-        name="schema-yaml",
-    ),
-    path(
-        "docs/",
-        SpectacularRedocView.as_view(
-            authentication_classes=[],
-            permission_classes=[],
-            url=f"{V3_API_ROOT}docs/api.json?include_html=1&pk_path=1",
+
+def _docs_and_status(_api_root):
+    paths = [
+        path(
+            "docs/api.json",
+            SpectacularJSONAPIView.as_view(authentication_classes=[], permission_classes=[]),
+            name="schema",
         ),
-        name="schema-redoc",
-    ),
-    path(
-        "swagger/",
-        SpectacularSwaggerView.as_view(
-            authentication_classes=[],
-            permission_classes=[],
-            url=f"{V3_API_ROOT}docs/api.json?include_html=1&pk_path=1",
+        path(
+            "docs/api.yaml",
+            SpectacularYAMLAPIView.as_view(authentication_classes=[], permission_classes=[]),
+            name="schema-yaml",
         ),
-        name="schema-swagger",
-    ),
-]
+        path(
+            "docs/",
+            SpectacularRedocView.as_view(
+                authentication_classes=[],
+                permission_classes=[],
+                url=f"{_api_root}docs/api.json?include_html=1&pk_path=1",
+            ),
+            name="schema-redoc",
+        ),
+        path(
+            "swagger/",
+            SpectacularSwaggerView.as_view(
+                authentication_classes=[],
+                permission_classes=[],
+                url=f"{_api_root}docs/api.json?include_html=1&pk_path=1",
+            ),
+            name="schema-swagger",
+        ),
+        path("livez/", LivezView.as_view(), name="livez"),
+        path("status/", StatusView.as_view(), name="status"),
+    ]
+
+    return paths
+
+
+v3_docs_and_status = _docs_and_status(V3_API_ROOT)
+v4_docs_and_status = _docs_and_status(V4_API_ROOT)
 
 urlpatterns = [
-    path(API_ROOT, include(special_views)),
     path("auth/", include("rest_framework.urls")),
-    path(settings.V3_API_ROOT_NO_FRONT_SLASH, include(docs_and_status)),
+    path(API_ROOT, include(special_views)),
+    path(settings.V3_API_ROOT_NO_FRONT_SLASH, include(v3_docs_and_status)),
 ]
+
 
 if settings.DOMAIN_ENABLED:
     # Ensure Docs and Status endpoints are available within domains, but are not shown in API schema
     docs_and_status_no_schema = []
-    for p in docs_and_status:
+    for p in v3_docs_and_status:
 
         @extend_schema(exclude=True)
         class NoSchema(p.callback.cls):
@@ -226,6 +242,34 @@ if settings.DOMAIN_ENABLED:
         name = p.name + "-domains" if p.name else None
         docs_and_status_no_schema.append(path(str(p.pattern), view, name=name))
     urlpatterns.insert(-1, path(API_ROOT, include(docs_and_status_no_schema)))
+
+
+if settings.ENABLE_V4_API:
+    urlpatterns.extend(
+        [
+            path(V4_API_ROOT, include((special_views, "core"), namespace="v4")),
+            path(
+                settings.V4_API_ROOT_NO_FRONT_SLASH,
+                include((v4_docs_and_status, "core"), namespace="v4"),
+            ),
+        ]
+    )
+
+
+if settings.DOMAIN_ENABLED:
+    # Ensure Docs and Status endpoints are available within domains, but are not shown in API schema
+    docs_and_status_no_schema = []
+    for p in v4_docs_and_status:
+
+        @extend_schema(exclude=True)
+        class NoSchema(p.callback.cls):
+            pass
+
+        view = NoSchema.as_view(**p.callback.initkwargs)
+        name = p.name + "-domains" if p.name else None
+        docs_and_status_no_schema.append(path(str(p.pattern), view, name=name))
+    urlpatterns.insert(-1, path(API_ROOT, include(docs_and_status_no_schema)))
+
 
 if "social_django" in settings.INSTALLED_APPS:
     urlpatterns.append(
@@ -238,6 +282,12 @@ root_router = PulpDefaultRouter()
 all_routers = [root_router] + vs_tree.register_with(root_router)
 for router in all_routers:
     urlpatterns.append(path(API_ROOT, include(router.urls)))
+
+if settings.ENABLE_V4_API:
+    for router in all_routers:
+        urlpatterns.append(
+            path(V4_API_ROOT.lstrip("/"), include((router.urls, "core"), namespace="v4"))
+        )
 
 # If plugins define a urls.py, include them into the root namespace.
 for plugin_pattern in plugin_patterns:
