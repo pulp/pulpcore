@@ -99,19 +99,31 @@ class UpstreamPulpViewSet(
     }
 
     LOCKED_ROLES = {
-        "core.upstreampulp_creator": ["core.add_upstreampulp"],
-        "core.upstreampulp_owner": [
-            "core.view_upstreampulp",
-            "core.change_upstreampulp",
-            "core.delete_upstreampulp",
-            "core.replicate_upstreampulp",
-            "core.manage_roles_upstreampulp",
-        ],
-        "core.upstreampulp_viewer": ["core.view_upstreampulp"],
-        "core.upstreampulp_user": [
-            "core.view_upstreampulp",
-            "core.replicate_upstreampulp",
-        ],
+        "core.upstreampulp_creator": {
+            "description": "Create upstream Pulp servers for replication.",
+            "permissions": ["core.add_upstreampulp"],
+        },
+        "core.upstreampulp_owner": {
+            "description": "Manage upstream Pulp servers with full access including replication.",
+            "permissions": [
+                "core.view_upstreampulp",
+                "core.change_upstreampulp",
+                "core.delete_upstreampulp",
+                "core.replicate_upstreampulp",
+                "core.manage_roles_upstreampulp",
+            ],
+        },
+        "core.upstreampulp_viewer": {
+            "description": "View upstream Pulp server configurations.",
+            "permissions": ["core.view_upstreampulp"],
+        },
+        "core.upstreampulp_user": {
+            "description": "Use upstream Pulp servers for replication tasks.",
+            "permissions": [
+                "core.view_upstreampulp",
+                "core.replicate_upstreampulp",
+            ],
+        },
     }
 
     @extend_schema(
