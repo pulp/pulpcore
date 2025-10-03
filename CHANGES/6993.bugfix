@@ -1,0 +1,2 @@
+Modified the error response ("AttributeError: This QueryDict instance is immutable") raised when a
+file didn't upload properly or was incomplete.
