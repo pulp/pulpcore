@@ -72,7 +72,7 @@ class TaskManager(models.Manager):
         # Always make encrypted args deferred.
         # This will prevent a lot of issues when the fernet key is lost.
         # Only task workers need to be able to read these args anyway.
-        return super().get_queryset().defer("enc_args", "enc_kwargs")
+        return super().get_queryset().defer("enc_args", "enc_kwargs", "worker")
 
 
 class Task(BaseModel, AutoAddObjPermsMixin):
