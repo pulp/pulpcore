@@ -1,0 +1,1 @@
+Stop using the worker field on the task model in order to allow zero downtime upgrades.
