@@ -63,7 +63,7 @@ dependencies = [
   "url-normalize>=1.4.3,<2.3",  # SemVer. https://github.com/niksite/url-normalize/blob/master/CHANGELOG.md#changelog
   "uuid6>=2023.5.2,<=2025.0.1",
   "whitenoise>=5.0,<6.12.0",
-  "yarl>=1.9.1,<1.21",  # Seems to follow SemVer https://yarl.aio-libs.org/en/latest/contributing/release_guide/#pre-release-activities .
+  "yarl>=1.9.1,<1.23",  # Seems to follow SemVer https://yarl.aio-libs.org/en/latest/contributing/release_guide/#pre-release-activities .
 ]
 
 [project.optional-dependencies]
