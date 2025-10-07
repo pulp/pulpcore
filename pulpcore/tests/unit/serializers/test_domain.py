@@ -177,7 +177,7 @@ def test_hidden_settings(storage_class, serializer_class, all_settings):
         storage_settings=all_settings,
     )
     serializer = DomainSerializer(domain)
-    serializer.fields.pop("pulp_href")
+    serializer.fields.pop("pulp_href", None)
     serializer.fields.pop("prn")
     assert "hidden_fields" in serializer.data["storage_settings"]
     hidden_fields = serializer.data["storage_settings"]["hidden_fields"]
