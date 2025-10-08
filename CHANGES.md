@@ -8,6 +8,30 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.91.1 (2025-10-07) {: #3.91.1 }
+
+### REST API {: #3.91.1-rest-api }
+
+#### Bugfixes {: #3.91.1-rest-api-bugfix }
+
+- Modified the error response ("AttributeError: This QueryDict instance is immutable") raised when a
+  file didn't upload properly or was incomplete.
+  [#6993](https://github.com/pulp/pulpcore/issues/6993)
+
+### Plugin API {: #3.91.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.91.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.91.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.91.0 (2025-10-01) {: #3.91.0 }
 
 ### REST API {: #3.91.0-rest-api }
