@@ -8,6 +8,29 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.89.2 (2025-10-08) {: #3.89.2 }
+
+### REST API {: #3.89.2-rest-api }
+
+#### Bugfixes {: #3.89.2-rest-api-bugfix }
+
+- Stop using the worker field on the task model in order to allow zero downtime upgrades.
+  [#6991](https://github.com/pulp/pulpcore/issues/6991)
+
+### Plugin API {: #3.89.2-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.89.2-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.89.2-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.89.1 (2025-09-18) {: #3.89.1 }
 
 ### REST API {: #3.89.1-rest-api }
