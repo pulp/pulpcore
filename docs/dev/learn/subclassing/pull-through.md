@@ -5,17 +5,11 @@ upstream fallback source when an user requests content from Pulp. The content wi
 the remote and saved in Pulp to be served again in future requests. This feature requires plugins to
 provide implementations for the methods below on the subclasses of their Remote and Content objects.
 
-```{eval-rst}
-.. automethod:: pulpcore.app.models.Remote::get_remote_artifact_url
-```
+::: pulpcore.app.models.Remote.get_remote_artifact_url
 
-```{eval-rst}
-.. automethod:: pulpcore.app.models.Remote::get_remote_artifact_content_type
-```
+::: pulpcore.app.models.Remote.get_remote_artifact_content_type
 
-```{eval-rst}
-.. automethod:: pulpcore.app.models.Content::init_from_artifact_and_relative_path
-```
+::: pulpcore.app.models.Content.init_from_artifact_and_relative_path
 
 Finally, plugin writers need to expose the `remote` field on their distribution serializer to allow
 users to add their remotes to their distributions. The `remote` field is already present on the base

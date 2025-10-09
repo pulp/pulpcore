@@ -600,23 +600,25 @@ class Content(MasterModel, QueryMixin):
         instead return a tuple of the unsaved content instance and a dictionary of the content's
         artifacts by their relative paths.
 
-        For example::
-
+        Example:
+            ```python
             if path.isabs(relative_path):
                 raise ValueError(_("Relative path can't start with '/'."))
             return FileContent(relative_path=relative_path, digest=artifact.sha256)
+            ```
 
         Args:
-            artifact (pulpcore.plugin.models.Artifact) An instance of an Artifact
-            relative_path (str): Relative path for the content
+            artifact: An instance of an [pulpcore.plugin.models.Artifact][].
+            relative_path: Relative path for the content
 
         Raises:
             ValueError: If relative_path starts with a '/'.
 
         Returns:
-            An un-saved instance of [pulpcore.plugin.models.Content][] sub-class. Or a
-            tuple of an un-saved instance of [pulpcore.plugin.models.Content][] and a dict
-            of form [relative_path:str, Optional[artifact:`~pulpcore.plugin.models.Artifact`]]
+            Content: An un-saved instance of [pulpcore.plugin.models.Content][] sub-class.
+            ContentAndArtifacts: A tuple of an un-saved instance of
+                [pulpcore.plugin.models.Content][] and a
+                `dict[relative_path:str, Optional[artifact:pulpcore.plugin.models.Artifact]]`
         """
         raise NotImplementedError()
 
