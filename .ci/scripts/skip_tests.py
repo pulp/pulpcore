@@ -25,7 +25,6 @@ import argparse
 DOC_PATTERNS = [
     r"^docs/",
     r"\.md$",
-    r"\.txt$",
     r"LICENSE.*",
     r"CHANGELOG.*",
     r"CHANGES.*",
