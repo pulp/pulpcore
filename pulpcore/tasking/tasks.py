@@ -235,12 +235,13 @@ def dispatch(
 
     execute_now = immediate and not called_from_content_app()
     assert deferred or immediate, "A task must be at least `deferred` or `immediate`."
-    send_wakeup_signal = True if not immediate else False
+    send_wakeup_signal = not execute_now
     function_name = get_function_name(func)
     versions = get_version(versions, function_name)
     colliding_resources, resources = get_resources(exclusive_resources, shared_resources, immediate)
+    app_lock = None if not execute_now else AppStatus.objects.current()  # Lazy evaluation...
     task_payload = get_task_payload(
-        function_name, task_group, args, kwargs, resources, versions, immediate, deferred
+        function_name, task_group, args, kwargs, resources, versions, immediate, deferred, app_lock
     )
     task = Task.objects.create(**task_payload)
     task.refresh_from_db()  # The database will have assigned a timestamp for us.
@@ -278,9 +279,10 @@ async def adispatch(
     function_name = get_function_name(func)
     versions = get_version(versions, function_name)
     colliding_resources, resources = get_resources(exclusive_resources, shared_resources, immediate)
-    send_wakeup_signal = False
+    send_wakeup_signal = not execute_now
+    app_lock = None if not execute_now else AppStatus.objects.current()  # Lazy evaluation...
     task_payload = get_task_payload(
-        function_name, task_group, args, kwargs, resources, versions, immediate, deferred
+        function_name, task_group, args, kwargs, resources, versions, immediate, deferred, app_lock
     )
     task = await Task.objects.acreate(**task_payload)
     await task.arefresh_from_db()  # The database will have assigned a timestamp for us.
@@ -302,7 +304,7 @@ async def adispatch(
 
 
 def get_task_payload(
-    function_name, task_group, args, kwargs, resources, versions, immediate, deferred
+    function_name, task_group, args, kwargs, resources, versions, immediate, deferred, app_lock
 ):
     payload = {
         "state": TASK_STATES.WAITING,
@@ -317,7 +319,7 @@ def get_task_payload(
         "immediate": immediate,
         "deferred": deferred,
         "profile_options": x_task_diagnostics_var.get(None),
-        "app_lock": None if not immediate else AppStatus.objects.current(),  # Lazy evaluation...
+        "app_lock": app_lock,
     }
     return payload
 
