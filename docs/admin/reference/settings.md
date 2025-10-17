@@ -424,6 +424,12 @@ Defaults to `/var/lib/pulp/tmp/`.
     Files are commonly staged in the `WORKING_DIRECTORY` and
     validated before being moved to their permanent home in `MEDIA_ROOT`.
 
+### MAX\_CONCURRENT\_CONTENT
+
+The size of the batch of content processed in one go when syncing content from
+a remote.
+
+Defaults to 200.
 
 ## Redis Settings
 

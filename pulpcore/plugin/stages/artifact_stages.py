@@ -2,6 +2,8 @@ import asyncio
 from collections import defaultdict
 from gettext import gettext as _
 import logging
+from django.conf import settings
+
 
 from aiofiles import os as aos
 from asgiref.sync import sync_to_async
@@ -139,7 +141,7 @@ class GenericDownloader(Stage):
     PROGRESS_REPORTING_MESSAGE = "Downloading"
     PROGRESS_REPORTING_CODE = "sync.downloading"
 
-    def __init__(self, max_concurrent_content=200, *args, **kwargs):
+    def __init__(self, max_concurrent_content=settings.MAX_CONCURRENT_CONTENT, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.max_concurrent_content = max_concurrent_content
 

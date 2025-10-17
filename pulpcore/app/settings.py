@@ -381,6 +381,8 @@ HIDE_GUARDED_DISTRIBUTIONS = False
 
 DOMAIN_ENABLED = False
 
+MAX_CONCURRENT_CONTENT = 200
+
 SHELL_PLUS_IMPORTS = [
     "from pulpcore.app.util import get_domain, get_domain_pk, set_domain, get_url, extract_pk",
     "from pulpcore.tasking.tasks import dispatch, cancel_task, wakeup_worker",
