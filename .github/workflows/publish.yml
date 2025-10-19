@@ -167,8 +167,11 @@ jobs:
           pip install towncrier
 
       - name: "Get release notes"
-        id: get_release_notes
+        id: "get_release_notes"
+        shell: "bash"
         run: |
+          # The last commit before the release commit contains the release CHANGES fragments
+          git checkout "${TAG_NAME}~"
           NOTES=$(towncrier build --draft --version $TAG_NAME)
           echo "body<<EOF" >> $GITHUB_OUTPUT
           echo "$NOTES" >> $GITHUB_OUTPUT
