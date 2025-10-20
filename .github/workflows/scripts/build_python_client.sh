@@ -24,7 +24,7 @@ pushd pulpcore-client
 python setup.py sdist bdist_wheel --python-tag py3
 
 twine check "dist/pulpcore_client-"*"-py3-none-any.whl"
-twine check "dist/pulpcore-client-"*".tar.gz"
+twine check "dist/pulpcore_client-"*".tar.gz"
 
 tar cvf "../../pulpcore/core-python-client.tar" ./dist
 
@@ -59,7 +59,7 @@ pushd pulp_file-client
 python setup.py sdist bdist_wheel --python-tag py3
 
 twine check "dist/pulp_file_client-"*"-py3-none-any.whl"
-twine check "dist/pulp_file-client-"*".tar.gz"
+twine check "dist/pulp_file_client-"*".tar.gz"
 
 tar cvf "../../pulpcore/file-python-client.tar" ./dist
 
@@ -94,7 +94,7 @@ pushd pulp_certguard-client
 python setup.py sdist bdist_wheel --python-tag py3
 
 twine check "dist/pulp_certguard_client-"*"-py3-none-any.whl"
-twine check "dist/pulp_certguard-client-"*".tar.gz"
+twine check "dist/pulp_certguard_client-"*".tar.gz"
 
 tar cvf "../../pulpcore/certguard-python-client.tar" ./dist
 
