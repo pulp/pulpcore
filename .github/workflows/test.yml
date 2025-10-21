@@ -79,7 +79,7 @@ jobs:
       - name: "Install python dependencies"
         run: |
           echo ::group::PYDEPS
-          pip install towncrier twine wheel httpie docker netaddr boto3 'ansible~=10.3.0' mkdocs jq jsonpatch bump-my-version 'click<8.3'
+          pip install build towncrier twine wheel httpie docker netaddr boto3 'ansible~=10.3.0' mkdocs jq jsonpatch bump-my-version 'click<8.3'
           echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/pulpcore/.ci/assets/httpie/" >> $GITHUB_ENV
           echo ::endgroup::
 
