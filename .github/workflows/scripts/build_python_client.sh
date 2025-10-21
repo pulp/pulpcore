@@ -21,7 +21,7 @@ rm -rf "pulpcore-client"
 ./gen-client.sh "../pulpcore/core-api.json" "core" python "pulpcore"
 
 pushd pulpcore-client
-python setup.py sdist bdist_wheel --python-tag py3
+python -m build
 
 twine check "dist/pulpcore_client-"*"-py3-none-any.whl"
 twine check "dist/pulpcore_client-"*".tar.gz"
@@ -56,7 +56,7 @@ rm -rf "pulp_file-client"
 ./gen-client.sh "../pulpcore/file-api.json" "file" python "pulp_file"
 
 pushd pulp_file-client
-python setup.py sdist bdist_wheel --python-tag py3
+python -m build
 
 twine check "dist/pulp_file_client-"*"-py3-none-any.whl"
 twine check "dist/pulp_file_client-"*".tar.gz"
@@ -91,7 +91,7 @@ rm -rf "pulp_certguard-client"
 ./gen-client.sh "../pulpcore/certguard-api.json" "certguard" python "pulp_certguard"
 
 pushd pulp_certguard-client
-python setup.py sdist bdist_wheel --python-tag py3
+python -m build
 
 twine check "dist/pulp_certguard_client-"*"-py3-none-any.whl"
 twine check "dist/pulp_certguard_client-"*".tar.gz"
