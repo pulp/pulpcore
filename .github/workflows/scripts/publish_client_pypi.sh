@@ -22,5 +22,5 @@ fi
 
 twine upload -u __token__ -p "${PYPI_API_TOKEN}" \
 "dist/pulpcore_client-${VERSION}-py3-none-any.whl" \
-"dist/pulpcore-client-${VERSION}.tar.gz" \
+"dist/pulpcore_client-${VERSION}.tar.gz" \
 ;
