@@ -21,10 +21,10 @@ rm -rf "pulpcore-client"
 ./gen-client.sh "../pulpcore/core-api.json" "core" python "pulpcore"
 
 pushd pulpcore-client
-python setup.py sdist bdist_wheel --python-tag py3
+python -m build
 
 twine check "dist/pulpcore_client-"*"-py3-none-any.whl"
-twine check "dist/pulpcore-client-"*".tar.gz"
+twine check "dist/pulpcore_client-"*".tar.gz"
 
 tar cvf "../../pulpcore/core-python-client.tar" ./dist
 
