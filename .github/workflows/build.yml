@@ -26,8 +26,7 @@ jobs:
       - uses: "actions/checkout@v4"
         with:
           fetch-depth: 1
-          repository: "pedro-psb/pulp-openapi-generator"
-          ref: "pin-setuptools-build-version"
+          repository: "pulp/pulp-openapi-generator"
           path: "pulp-openapi-generator"
       - uses: "actions/setup-python@v5"
         with:
