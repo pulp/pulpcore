@@ -347,7 +347,7 @@ def test_reupload_damaged_artifact_chunked(
     pulpcore_bindings.UploadsApi.update(
         upload_href=upload.pulp_href,
         file=str(file_path),
-        content_range=f"bytes 0-{iso_attrs['size']-1}/{iso_attrs['size']}",
+        content_range=f"bytes 0-{iso_attrs['size'] - 1}/{iso_attrs['size']}",
     )
     response = file_bindings.ContentFilesApi.create(upload=upload.pulp_href, relative_path="1.iso")
     monitor_task(response.task)
@@ -361,7 +361,7 @@ def test_reupload_damaged_artifact_chunked(
     pulpcore_bindings.UploadsApi.update(
         upload_href=upload.pulp_href,
         file=str(file_path),
-        content_range=f"bytes 0-{iso_attrs['size']-1}/{iso_attrs['size']}",
+        content_range=f"bytes 0-{iso_attrs['size'] - 1}/{iso_attrs['size']}",
     )
     response = file_bindings.ContentFilesApi.create(upload=upload.pulp_href, relative_path="1.iso")
     monitor_task(response.task)
