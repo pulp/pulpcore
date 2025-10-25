@@ -381,6 +381,8 @@ def pulp_export(exporter_pk, params):
     the_export.validated_start_versions = serializer.validated_data.get("start_versions", None)
     the_export.validated_chunk_size = serializer.validated_data.get("chunk_size", None)
 
+    meta = serializer.validated_data.get("meta", {})
+
     hasher = Crc32Hasher
     checksum_type = "crc32"
     try:
@@ -450,6 +452,7 @@ def pulp_export(exporter_pk, params):
         with open(output_file_info_path, "w") as outfile:
             table_of_contents = {
                 "meta": {
+                    **meta,
                     "checksum_type": checksum_type,
                 },
                 "files": {},
@@ -466,7 +469,7 @@ def pulp_export(exporter_pk, params):
         # store toc info
         toc_hash = compute_file_hash(output_file_info_path)
         the_export.output_file_info[output_file_info_path] = toc_hash
-        the_export.toc_info = {"file": output_file_info_path, "sha256": toc_hash}
+        the_export.toc_info = {"file": output_file_info_path, "sha256": toc_hash, "meta": meta}
     finally:
         # whatever may have happened, make sure we save the export
         the_export.save()

@@ -125,7 +125,7 @@ class PulpExportSerializer(ExportSerializer):
     )
 
     toc_info = fields.JSONDictField(
-        help_text=_("Filename and sha256-checksum of table-of-contents for this export"),
+        help_text=_("Filename, sha256-checksum and meta of table-of-contents for this export"),
         read_only=True,
     )
 
@@ -162,6 +162,12 @@ class PulpExportSerializer(ExportSerializer):
     start_versions = RepositoryVersionRelatedField(
         help_text=_("List of explicit last-exported-repo-version hrefs (replaces last_export)."),
         many=True,
+        required=False,
+        write_only=True,
+    )
+
+    meta = serializers.DictField(
+        help_text=_("Dictionary of meta information about the export. Stored in the TOC JSON."),
         required=False,
         write_only=True,
     )
@@ -248,6 +254,7 @@ class PulpExportSerializer(ExportSerializer):
             "output_file_info",
             "start_versions",
             "toc_info",
+            "meta",
         )
 
 

@@ -391,3 +391,32 @@ def test_cross_domain_exporter(
     assert msgs["start_versions"] == [
         "Requested RepositoryVersions must belong to the Repositories named by the Exporter!"
     ]
+
+
+@pytest.mark.parallel
+def test_export_with_meta(pulpcore_bindings, pulp_export_factory, full_pulp_exporter):
+    exporter = full_pulp_exporter
+    user_meta = {
+        "initiator": "ci",
+        "purpose": "export",
+        "checksum_type": "md5",  # pulp should override only in TOC JSON
+    }
+
+    export = pulp_export_factory(exporter, {"meta": user_meta})
+
+    # toc_info contains exactly user meta (unmodified)
+    meta_info = export.toc_info.get("meta", {})
+    assert meta_info == user_meta
+
+    # Validate TOC JSON file content
+    toc_file_path = export.toc_info.get("file")
+    assert toc_file_path and isinstance(toc_file_path, str)
+
+    with open(toc_file_path, "r") as f:
+        toc_data = json.load(f)
+
+    meta_json = toc_data.get("meta", {})
+    assert meta_json.get("initiator") == "ci"
+    assert meta_json.get("purpose") == "export"
+    # overridden field check
+    assert meta_json.get("checksum_type") == "crc32"
