@@ -9,10 +9,14 @@
 name: "Docs CI"
 on:
   workflow_call:
+    inputs:
+      run_docs:
+        description: "Whether to run docs jobs"
+        required: true
+        type: string
 
 jobs:
   changelog:
-    if: "endsWith(github.base_ref, 'main')"
     runs-on: "ubuntu-latest"
     defaults:
       run:
@@ -34,14 +38,7 @@ jobs:
         run: |
           towncrier build --yes --version 4.0.0.ci
   docs:
-    if: "endsWith(github.base_ref, 'main')"
+    if: ${{ inputs.run_docs == '1' }}
     uses: 'pulp/pulp-docs/.github/workflows/docs-ci.yml@main'
     with:
       pulpdocs_ref: 'main'
-
-  no-test:
-    if: "!endsWith(github.base_ref, 'main')"
-    runs-on: "ubuntu-latest"
-    steps:
-      - run: |
-          echo "Skip docs testing on non-default branches."
