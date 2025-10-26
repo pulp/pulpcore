@@ -47,6 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       run_tests: ${{ steps.check.outputs.run_tests }}
+      run_docs: ${{ steps.check.outputs.run_docs }}
     steps:
       - uses: "actions/checkout@v4"
         with:
@@ -67,6 +68,13 @@ jobs:
         shell: bash
         id: check
         run: |
+          # We only test docs on the default branch (usually main)
+          if [[ "${{ github.base_ref }}" == *"main" ]]; then
+            echo "run_docs=1" >> $GITHUB_OUTPUT
+          else
+            echo "run_docs=0" >> $GITHUB_OUTPUT
+          fi
+
           set +e
           BASE_REF=${{ github.event.pull_request.base.sha }}
           echo "Checking against:"
@@ -80,7 +88,10 @@ jobs:
           echo "run_tests=$exit_code" >> $GITHUB_OUTPUT
 
   docs:
+    needs: "check-changes"
     uses: "./.github/workflows/docs.yml"
+    with:
+      run_docs: ${{ needs.check-changes.outputs.run_docs }}
 
   lint:
     needs:
@@ -133,13 +144,30 @@ jobs:
       - name: "Collect needed jobs results"
         working-directory: "."
         run: |
-          if [ ${{ needs.check-changes.outputs.run_tests }} == "1" ]; then
-            # Full test run - check all jobs
-            echo '${{toJson(needs)}}' | jq -r 'to_entries[]|select(.value.result!="success")|.key + ": " + .value.result'
-            echo '${{toJson(needs)}}' | jq -e 'to_entries|map(select(.value.result!="success"))|length == 0'
-          else
-            # Docs-only run - check only required jobs (exclude lint and test)
-            echo '${{toJson(needs)}}' | jq -r 'to_entries[]|select(.key != "lint" and .key != "test")|select(.value.result!="success")|.key + ": " + .value.result'
-            echo '${{toJson(needs)}}' | jq -e 'to_entries|map(select(.key != "lint" and .key != "test"))|map(select(.value.result!="success"))|length == 0'
+          RUN_TESTS=${{ needs.check-changes.outputs.run_tests }}
+          RUN_DOCS=${{ needs.check-changes.outputs.run_docs }}
+
+          check_jobs() {
+            local filter="$1"
+            local needs_json='${{toJson(needs)}}'
+            # output failed jobs after filter
+            echo "$needs_json" | jq -r "to_entries[]|select($filter)|select(.value.result!=\"success\")|.key + \": \" + .value.result"
+            # fails if not all selected jobs passed
+            echo "$needs_json" | jq -e "to_entries|map(select($filter))|map(select(.value.result!=\"success\"))|length == 0"
+          }
+
+          if [ "$RUN_TESTS" == "1" ] && [ "$RUN_DOCS" == "1" ]; then
+            FILTERS="true"  # check all jobs
+          elif [ "$RUN_TESTS" == "1" ] && [ "$RUN_DOCS" == "0" ]; then
+            echo "Skipping docs: running on non-default branch"
+            FILTERS='.key != "docs"'
+          elif [ "$RUN_TESTS" == "0" ] && [ "$RUN_DOCS" == "1" ]; then
+            echo "Skipping tests: only doc changes"
+            FILTERS='.key != "lint" and .key != "test"'
+          else  # RUN_TESTS=0, RUN_DOCS=0
+            echo "What is this PR doing??"
+            FILTERS='.key != "lint" and .key != "test" and .key != "docs"'
           fi
+
+          check_jobs "$FILTERS"
           echo "CI says: Looks good!"
