@@ -903,7 +903,7 @@ class Handler:
                     ca = ra.content_artifact
                     # Try to add content to repository if present & supported
                     if repository and repository.PULL_THROUGH_SUPPORTED:
-                        await sync_to_async(repository.pull_through_add_content)(ca)
+                        await repository.async_pull_through_add_content(ca)
                     # Try to stream the ContentArtifact if already created
                     if ca.artifact:
                         return await self._serve_content_artifact(ca, headers, request)
@@ -1347,7 +1347,7 @@ class Handler:
                 )
             # Try to add content to repository if present & supported
             if repository and repository.PULL_THROUGH_SUPPORTED:
-                await sync_to_async(repository.pull_through_add_content)(ca)
+                await repository.async_pull_through_add_content(ca)
         await response.write_eof()
 
         if response.status == 404:

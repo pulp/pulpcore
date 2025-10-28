@@ -533,7 +533,7 @@ async def test_pull_through_repository_add(request123, monkeypatch):
     await create_remote_artifact(remote, ca)
     repo = await create_repository()
     monkeypatch.setattr(Remote, "get_remote_artifact_content_type", Mock(return_value=Content))
-    monkeypatch.setattr(Repository, "pull_through_add_content", Mock())
+    monkeypatch.setattr(Repository, "async_pull_through_add_content", AsyncMock())
     distro = await create_distribution(remote, repository=repo)
 
     try:
@@ -541,7 +541,7 @@ async def test_pull_through_repository_add(request123, monkeypatch):
         await handler._match_and_stream(f"{distro.base_path}/c123", request123)
         handler._stream_content_artifact.assert_called_once()
         assert ca in handler._stream_content_artifact.call_args[0]
-        repo.pull_through_add_content.assert_not_called()
+        repo.async_pull_through_add_content.assert_not_called()
 
         # Now set PULL_THROUGH_SUPPORTED=True and see the method is called with CA
         monkeypatch.setattr(Repository, "PULL_THROUGH_SUPPORTED", True)
@@ -549,8 +549,8 @@ async def test_pull_through_repository_add(request123, monkeypatch):
         await handler._match_and_stream(f"{distro.base_path}/c123", request123)
         handler._stream_content_artifact.assert_called_once()
         assert ca in handler._stream_content_artifact.call_args[0]
-        repo.pull_through_add_content.assert_called_once()
-        assert ca in repo.pull_through_add_content.call_args[0]
+        repo.async_pull_through_add_content.assert_called_once()
+        assert ca in repo.async_pull_through_add_content.call_args[0]
     finally:
         await content.adelete()
         await repo.adelete()
