@@ -94,6 +94,7 @@ No significant changes.
 #### Features {: #3.90.0-rest-api-feature }
 
 - Modified the API so that updates do not dispatch a task if no change is needed.
+  Update responses can now respond with either 200 for an immediate result, or issue 202 for a dispatched task.
   [#6896](https://github.com/pulp/pulpcore/issues/6896),
   [#6897](https://github.com/pulp/pulpcore/issues/6897)
 - Taught pulp-import-export to work in a domain-enabled environment.
@@ -109,7 +110,7 @@ No significant changes.
 
 #### Misc {: #3.90.0-rest-api-misc }
 
-- 
+-
 
 ### Plugin API {: #3.90.0-plugin-api }
 
