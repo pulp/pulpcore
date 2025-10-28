@@ -376,10 +376,10 @@ class Repository(MasterModel):
         if not cpk or already_present.exists():
             return None
 
-        from pulpcore.plugin.tasking import dispatch, add_and_remove
+        from pulpcore.plugin.tasking import dispatch, aadd_and_remove
 
         body = {"repository_pk": self.pk, "add_content_units": [cpk], "remove_content_units": []}
-        return dispatch(add_and_remove, kwargs=body, exclusive_resources=[self], immediate=True)
+        return dispatch(aadd_and_remove, kwargs=body, exclusive_resources=[self], immediate=True)
 
     async def async_pull_through_add_content(self, content_artifact):
         cpk = content_artifact.content_id
