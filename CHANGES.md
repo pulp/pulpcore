@@ -8,6 +8,38 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.92.0 (2025-10-28) {: #3.92.0 }
+
+### REST API {: #3.92.0-rest-api }
+
+#### Features {: #3.92.0-rest-api-feature }
+
+- Add MAX_CONCURRENT_CONTENT as a global setting.
+  During sync, this setting will be used to determine the size of batch of
+  content being processed in one go. Default value is 200.
+  [#7024](https://github.com/pulp/pulpcore/issues/7024)
+
+#### Bugfixes {: #3.92.0-rest-api-bugfix }
+
+- Modified the error response ("AttributeError: This QueryDict instance is immutable") raised when a
+  file didn't upload properly or was incomplete.
+  [#6993](https://github.com/pulp/pulpcore/issues/6993)
+- Fixed immediate tasks from the content app getting stuck in waiting.
+
+### Plugin API {: #3.92.0-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.92.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.92.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.91.1 (2025-10-07) {: #3.91.1 }
 
 ### REST API {: #3.91.1-rest-api }
