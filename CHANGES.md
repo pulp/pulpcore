@@ -8,6 +8,28 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.92.1 (2025-10-29) {: #3.92.1 }
+
+### REST API {: #3.92.1-rest-api }
+
+#### Bugfixes {: #3.92.1-rest-api-bugfix }
+
+- Fixed an issue with dispatching repository.add_and_remove tasks for pull-through caching
+
+### Plugin API {: #3.92.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.92.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.92.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.92.0 (2025-10-28) {: #3.92.0 }
 
 ### REST API {: #3.92.0-rest-api }
