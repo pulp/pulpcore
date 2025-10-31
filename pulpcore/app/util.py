@@ -9,7 +9,6 @@ from functools import lru_cache
 from gettext import gettext as _
 from urllib.parse import urlparse
 from contextlib import ExitStack
-from contextvars import ContextVar
 from datetime import timedelta
 from uuid import UUID
 
@@ -25,6 +24,7 @@ from rest_framework.reverse import reverse as drf_reverse
 from pulpcore.app.loggers import deprecation_logger
 from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app import models
+from pulpcore.app.contexts import _current_domain, _current_user_func
 from pulpcore.exceptions.validation import InvalidSignatureError
 
 
@@ -545,10 +545,6 @@ def get_artifact_url(artifact, headers=None, http_method=None):
     return url
 
 
-current_task = ContextVar("current_task", default=None)
-_current_user_func = ContextVar("current_user", default=lambda: None)
-
-
 def get_current_user():
     return _current_user_func.get()()
 
@@ -569,7 +565,6 @@ def set_current_user_lazy(user_func):
 
 
 default_domain = None
-current_domain = ContextVar("current_domain", default=None)
 
 
 def get_default_domain():
@@ -592,7 +587,7 @@ def get_default_domain():
 
 
 def get_domain():
-    return current_domain.get() or get_default_domain()
+    return _current_domain.get() or get_default_domain()
 
 
 def get_domain_pk():
@@ -602,7 +597,7 @@ def get_domain_pk():
     This is ran in plugin migrations so we can not move this implemenation or change its
     semantics, EVER!
     """
-    if domain := current_domain.get():
+    if domain := _current_domain.get():
         return domain.pk
     # Same behavior as get_domain: use currently set domain, else assume default domain
     if default_domain:
@@ -615,7 +610,8 @@ def get_domain_pk():
 
 
 def set_domain(new_domain):
-    current_domain.set(new_domain)
+    # Deprecated
+    _current_domain.set(new_domain)
     return new_domain
 
 
