@@ -38,6 +38,7 @@ from pulpcore.tasking._util import (
     perform_task,
     startup_hook,
 )
+from pulpcore.tasking.tasks import using_workdir, execute_task
 
 _logger = logging.getLogger(__name__)
 random.seed()
@@ -443,6 +444,17 @@ class PulpcoreWorker:
                 os.read(self.sentinel, 256)
         _logger.debug(_("Worker %s leaving sleep state."), self.name)
 
+    def supervise_immediate_task(self, task):
+        """Call and supervise the immediate async task process.
+
+        This function must only be called while holding the lock for that task."""
+        self.task = task
+        with using_workdir():
+            execute_task(task)
+        if task.reserved_resources_record:
+            self.notify_workers(TASK_WAKEUP_UNBLOCK)
+        self.task = None
+
     def supervise_task(self, task):
         """Call and supervise the task process while heart beating.
 
@@ -596,7 +608,10 @@ class PulpcoreWorker:
                     # A running task without a lock must be abandoned.
                     self.cancel_abandoned_task(task, TASK_STATES.FAILED, "Worker has gone missing.")
                 elif task.state == TASK_STATES.WAITING and self.is_compatible(task):
-                    self.supervise_task(task)
+                    if task.immediate:
+                        self.supervise_immediate_task(task)
+                    else:
+                        self.supervise_task(task)
                 else:
                     # Probably incompatible, but for whatever reason we didn't pick it up this time,
                     # we don't need to look at it ever again.

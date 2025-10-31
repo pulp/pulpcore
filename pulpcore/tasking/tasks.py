@@ -18,10 +18,10 @@ from django_guid import get_guid
 from pulpcore.app.apps import MODULE_PLUGIN_VERSIONS
 from pulpcore.app.models import Task, TaskGroup, AppStatus
 from pulpcore.app.util import (
-    current_task,
     get_domain,
     get_prn,
 )
+from pulpcore.app.contexts import with_task_context, awith_task_context
 from pulpcore.constants import (
     TASK_FINAL_STATES,
     TASK_INCOMPLETE_STATES,
@@ -62,52 +62,50 @@ def execute_task(task):
     contextvars.copy_context().run(_execute_task, task)
 
 
+def _execute_task(task):
+    with with_task_context(task):
+        task.set_running()
+        domain = get_domain()
+        try:
+            log_task_start(task, domain)
+            task_function = get_task_function(task)
+            result = task_function()
+        except Exception:
+            exc_type, exc, tb = sys.exc_info()
+            task.set_failed(exc, tb)
+            log_task_failed(task, exc_type, exc, tb, domain)
+            send_task_notification(task)
+        else:
+            task.set_completed(result)
+            log_task_completed(task, domain)
+            send_task_notification(task)
+            return result
+        return None
+
+
 async def aexecute_task(task):
     # This extra stack is needed to isolate the current_task ContextVar
     await contextvars.copy_context().run(_aexecute_task, task)
 
 
-def _execute_task(task):
-    # Store the task id in the context for `Task.current()`.
-    current_task.set(task)
-    task.set_running()
-    domain = get_domain()
-    try:
-        log_task_start(task, domain)
-        task_function = get_task_function(task)
-        result = task_function()
-    except Exception:
-        exc_type, exc, tb = sys.exc_info()
-        task.set_failed(exc, tb)
-        log_task_failed(task, exc_type, exc, tb, domain)
-        send_task_notification(task)
-    else:
-        task.set_completed(result)
-        log_task_completed(task, domain)
-        send_task_notification(task)
-        return result
-    return None
-
-
 async def _aexecute_task(task):
-    # Store the task id in the context for `Task.current()`.
-    current_task.set(task)
-    await sync_to_async(task.set_running)()
-    domain = get_domain()
-    try:
-        task_coroutine_fn = await aget_task_function(task)
-        result = await task_coroutine_fn()
-    except Exception:
-        exc_type, exc, tb = sys.exc_info()
-        await sync_to_async(task.set_failed)(exc, tb)
-        log_task_failed(task, exc_type, exc, tb, domain)
-        send_task_notification(task)
-    else:
-        await sync_to_async(task.set_completed)(result)
-        send_task_notification(task)
-        log_task_completed(task, domain)
-        return result
-    return None
+    async with awith_task_context(task):
+        await sync_to_async(task.set_running)()
+        domain = get_domain()
+        try:
+            task_coroutine_fn = await aget_task_function(task)
+            result = await task_coroutine_fn()
+        except Exception:
+            exc_type, exc, tb = sys.exc_info()
+            await sync_to_async(task.set_failed)(exc, tb)
+            log_task_failed(task, exc_type, exc, tb, domain)
+            send_task_notification(task)
+        else:
+            await sync_to_async(task.set_completed)(result)
+            send_task_notification(task)
+            log_task_completed(task, domain)
+            return result
+        return None
 
 
 def log_task_start(task, domain):
@@ -317,6 +315,7 @@ async def adispatch(
     )
     task = await Task.objects.acreate(**task_payload)
     await task.arefresh_from_db()  # The database will have assigned a timestamp for us.
+    task.pulp_domain = get_domain()
     if execute_now:
         if await async_are_resources_available(colliding_resources, task):
             send_wakeup_signal = True if resources else False
