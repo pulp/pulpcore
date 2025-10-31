@@ -6,6 +6,7 @@ import os
 import sys
 import traceback
 import tempfile
+from functools import partial
 from gettext import gettext as _
 from contextlib import contextmanager
 from asgiref.sync import sync_to_async, async_to_sync
@@ -94,8 +95,8 @@ async def _aexecute_task(task):
     await sync_to_async(task.set_running)()
     domain = get_domain()
     try:
-        coroutine = get_task_function(task, ensure_coroutine=True)
-        result = await coroutine
+        task_coroutine_fn = await aget_task_function(task)
+        result = await task_coroutine_fn()
     except Exception:
         exc_type, exc, tb = sys.exc_info()
         await sync_to_async(task.set_failed)(exc, tb)
@@ -148,42 +149,72 @@ def log_task_failed(task, exc_type, exc, tb, domain):
     _logger.info("\n".join(traceback.format_list(traceback.extract_tb(tb))))
 
 
-def get_task_function(task, ensure_coroutine=False):
+async def aget_task_function(task):
+    """Get and handle task function running from ASYNC context.
+
+    This exists to handle the combinations of:
+    * context: sync | async
+    * Task.function: regular-function | coroutine-function
+    * Task.immediate: True | False
+    """
+    func, is_coroutine_fn = _load_function(task)
+
+    if task.immediate and not is_coroutine_fn:
+        raise ValueError("Immediate tasks must be async functions.")
+    elif not task.immediate:
+        raise ValueError("Non-immediate tasks can't run in async context.")
+
+    return _add_timeout_to(func, task.pk)
+
+
+def get_task_function(task):
+    """Get and handle task function running from SYNC context.
+
+    This exists to handle the combinations of:
+    * context: sync | async
+    * Task.function: regular-function | coroutine-function
+    * Task.immediate: True | False
+    """
+    func, is_coroutine_fn = _load_function(task)
+
+    if task.immediate and not is_coroutine_fn:
+        raise ValueError("Immediate tasks must be async functions.")
+
+    # no sync wrapper required
+    if not is_coroutine_fn:
+        return func
+
+    # async function in sync context requires wrapper
+    if task.immediate:
+        coro_fn_with_timeout = _add_timeout_to(func, task.pk)
+        return async_to_sync(coro_fn_with_timeout)
+    return async_to_sync(func)
+
+
+def _load_function(task):
     module_name, function_name = task.name.rsplit(".", 1)
     module = importlib.import_module(module_name)
     func = getattr(module, function_name)
     args = task.enc_args or ()
     kwargs = task.enc_kwargs or {}
-    immediate = task.immediate
+
+    func_with_args = partial(func, *args, **kwargs)
     is_coroutine_fn = asyncio.iscoroutinefunction(func)
+    return func_with_args, is_coroutine_fn
 
-    if immediate and not is_coroutine_fn:
-        raise ValueError("Immediate tasks must be async functions.")
 
-    if ensure_coroutine:
-        if not is_coroutine_fn:
-            return sync_to_async(func)(*args, **kwargs)
-        coro = func(*args, **kwargs)
-        if immediate:
-            coro = asyncio.wait_for(coro, timeout=IMMEDIATE_TIMEOUT)
-        return coro
-    else:  # ensure normal function
-        if not is_coroutine_fn:
-            return lambda: func(*args, **kwargs)
+def _add_timeout_to(coro_fn, task_pk):
 
-        async def task_wrapper():  # asyncio.wait_for + async_to_sync requires wrapping
-            coro = func(*args, **kwargs)
-            if immediate:
-                coro = asyncio.wait_for(coro, timeout=IMMEDIATE_TIMEOUT)
-            try:
-                return await coro
-            except asyncio.TimeoutError:
-                msg_template = "Immediate task %s timed out after %s seconds."
-                error_msg = msg_template % (task.pk, IMMEDIATE_TIMEOUT)
-                _logger.info(error_msg)
-                raise RuntimeError(error_msg)
+    async def _wrapper():
+        try:
+            return await asyncio.wait_for(coro_fn(), timeout=IMMEDIATE_TIMEOUT)
+        except asyncio.TimeoutError:
+            msg_template = "Immediate task %s timed out after %s seconds."
+            error_msg = msg_template % (task_pk, IMMEDIATE_TIMEOUT)
+            _logger.info(error_msg)
+            raise RuntimeError(error_msg)
 
-        return async_to_sync(task_wrapper)
+    return _wrapper
 
 
 def dispatch(
