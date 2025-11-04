@@ -26,7 +26,9 @@ class PulpException(Exception):
         expected to implement it's own __str__() method. The return value is used by Pulp when
         recording the exception in the database.
         """
-        raise NotImplementedError("Subclasses of PulpException must implement a __str__() method")
+        raise NotImplementedError(
+            "Subclasses of PulpException must implement a __str__() method"
+        )
 
 
 def exception_to_dict(exc, traceback=None):
@@ -44,6 +46,14 @@ def exception_to_dict(exc, traceback=None):
     return {"description": str(exc), "traceback": traceback}
 
 
+class PulpExceptionNoTrace(PulpException):
+    """
+    Base class for PulpExceptions where the traceback should not be logged or recorded.
+    """
+
+    pass
+
+
 class ResourceImmutableError(PulpException):
     """
     Exceptions that are raised due to trying to update an immutable resource
@@ -58,9 +68,9 @@ class ResourceImmutableError(PulpException):
         self.model = model
 
     def __str__(self):
-        msg = _("Cannot update immutable resource {model_pk} of type {model_type}").format(
-            resource=str(self.model.pk), type=type(self.model).__name__
-        )
+        msg = _(
+            "Cannot update immutable resource {model_pk} of type {model_type}"
+        ).format(resource=str(self.model.pk), type=type(self.model).__name__)
         return msg
 
 
@@ -93,4 +103,25 @@ class DomainProtectedError(PulpException):
         super().__init__("PLP0007")
 
     def __str__(self):
-        return _("You cannot delete a domain that still contains repositories with content.")
+        return _(
+            "You cannot delete a domain that still contains repositories with content."
+        )
+
+
+class DnsDomainNameException(PulpExceptionNoTrace):
+    """
+    Exception to signal that dns could not resolve the domain name for specified url.
+    """
+
+    def __init__(self, url):
+        """
+        :param url: the url that dns could not resolve
+        :type url: str
+        """
+        super().__init__("PLP0008")
+        self.url = url
+
+    def __str__(self):
+        return _(
+            "Domain name was not found for {}. Check if specified url is valid."
+        ).format(self.url)
