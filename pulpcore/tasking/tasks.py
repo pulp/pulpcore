@@ -32,6 +32,8 @@ from pulpcore.constants import (
 from pulpcore.middleware import x_task_diagnostics_var
 from pulpcore.tasking.kafka import send_task_notification
 
+from pulpcore.exceptions import PulpExceptionNoTrace
+
 _logger = logging.getLogger(__name__)
 
 
@@ -75,9 +77,13 @@ def _execute_task(task):
         log_task_start(task, domain)
         task_function = get_task_function(task)
         result = task_function()
+    except PulpExceptionNoTrace:
+        exc_type, exc, _ = sys.exc_info()
+        task.set_failed(exc)
+        send_task_notification(task)
     except Exception:
         exc_type, exc, tb = sys.exc_info()
-        task.set_failed(exc, tb)
+        task.set_failed(exc)
         log_task_failed(task, exc_type, exc, tb, domain)
         send_task_notification(task)
     else:
@@ -96,9 +102,13 @@ async def _aexecute_task(task):
     try:
         coroutine = get_task_function(task, ensure_coroutine=True)
         result = await coroutine
+    except PulpExceptionNoTrace:
+        exc_type, exc, _ = sys.exc_info()
+        await sync_to_async(task.set_failed)(exc)
+        send_task_notification(task)
     except Exception:
         exc_type, exc, tb = sys.exc_info()
-        await sync_to_async(task.set_failed)(exc, tb)
+        await sync_to_async(task.set_failed)(exc)
         log_task_failed(task, exc_type, exc, tb, domain)
         send_task_notification(task)
     else:
@@ -145,7 +155,8 @@ def log_task_failed(task, exc_type, exc, tb, domain):
             domain=domain.name,
         )
     )
-    _logger.info("\n".join(traceback.format_list(traceback.extract_tb(tb))))
+    if tb:
+        _logger.info("\n".join(traceback.format_list(traceback.extract_tb(tb))))
 
 
 def get_task_function(task, ensure_coroutine=False):

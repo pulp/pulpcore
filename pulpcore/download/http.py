@@ -9,6 +9,7 @@ from pulpcore.exceptions import (
     DigestValidationError,
     SizeValidationError,
     TimeoutException,
+    DnsDomainNameException,
 )
 
 
@@ -236,6 +237,7 @@ class HttpDownloader(BaseDownloader):
             aiohttp.ClientPayloadError,
             aiohttp.ClientResponseError,
             aiohttp.ServerDisconnectedError,
+            DnsDomainNameException,
             TimeoutError,
             TimeoutException,
             DigestValidationError,
@@ -289,12 +291,15 @@ class HttpDownloader(BaseDownloader):
         """
         if self.download_throttler:
             await self.download_throttler.acquire()
-        async with self.session.get(
-            self.url, proxy=self.proxy, proxy_auth=self.proxy_auth, auth=self.auth
-        ) as response:
-            self.raise_for_status(response)
-            to_return = await self._handle_response(response)
-            await response.release()
+        try:
+            async with self.session.get(
+                self.url, proxy=self.proxy, proxy_auth=self.proxy_auth, auth=self.auth
+            ) as response:
+                self.raise_for_status(response)
+                to_return = await self._handle_response(response)
+                await response.release()
+        except aiohttp.ClientConnectorDNSError:
+            raise DnsDomainNameException(self.url)
         if self._close_session_on_finalize:
             await self.session.close()
         return to_return

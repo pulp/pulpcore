@@ -26,9 +26,7 @@ class PulpException(Exception):
         expected to implement it's own __str__() method. The return value is used by Pulp when
         recording the exception in the database.
         """
-        raise NotImplementedError(
-            "Subclasses of PulpException must implement a __str__() method"
-        )
+        raise NotImplementedError("Subclasses of PulpException must implement a __str__() method")
 
 
 def exception_to_dict(exc, traceback=None):
@@ -68,9 +66,9 @@ class ResourceImmutableError(PulpException):
         self.model = model
 
     def __str__(self):
-        msg = _(
-            "Cannot update immutable resource {model_pk} of type {model_type}"
-        ).format(resource=str(self.model.pk), type=type(self.model).__name__)
+        msg = _("Cannot update immutable resource {model_pk} of type {model_type}").format(
+            resource=str(self.model.pk), type=type(self.model).__name__
+        )
         return msg
 
 
@@ -103,9 +101,7 @@ class DomainProtectedError(PulpException):
         super().__init__("PLP0007")
 
     def __str__(self):
-        return _(
-            "You cannot delete a domain that still contains repositories with content."
-        )
+        return _("You cannot delete a domain that still contains repositories with content.")
 
 
 class DnsDomainNameException(PulpExceptionNoTrace):
@@ -122,6 +118,6 @@ class DnsDomainNameException(PulpExceptionNoTrace):
         self.url = url
 
     def __str__(self):
-        return _(
-            "Domain name was not found for {}. Check if specified url is valid."
-        ).format(self.url)
+        return _("Domain name was not found for {}. Check if specified url is valid.").format(
+            self.url
+        )
