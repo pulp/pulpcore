@@ -1,1 +1,1 @@
-
+dynaconf @ git+https://github.com/dynaconf/dynaconf.git@master
