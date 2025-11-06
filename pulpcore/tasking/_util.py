@@ -10,8 +10,6 @@ import time
 import tempfile
 from gettext import gettext as _
 
-from contextlib import suppress
-
 from django.conf import settings
 from django.db import connection, transaction, IntegrityError
 from django.db.models import Q
@@ -156,11 +154,15 @@ def _memory_diagnostic_decorator(temp_dir, func):
 
         stop_event.set()
         artifact = Artifact.init_and_validate(mem_diagnostics_file_path)
-        with suppress(IntegrityError):
+        try:
+            # it is possible for the diagnostic artifact (memory report) to be identical to
+            # a previous report, in which case we need to handle the case where saving a new
+            # artifact fails.
             artifact.save()
+        except IntegrityError:
+            artifact = Artifact.objects.get(sha256=artifact.sha256)
 
         ProfileArtifact.objects.get_or_create(artifact=artifact, name="memory_profile", task=task)
-
         _logger.info("Created memory diagnostic data.")
 
     return __memory_diagnostic_decorator
@@ -180,13 +182,17 @@ def _pyinstrument_diagnostic_decorator(temp_dir, func):
                 f.flush()
 
             artifact = Artifact.init_and_validate(str(profile_file_path))
-            with suppress(IntegrityError):
+            try:
+                # it is possible for the diagnostic artifact (memory report) to be identical to
+                # a previous report, in which case we need to handle the case where saving a new
+                # artifact fails.
                 artifact.save()
+            except IntegrityError:
+                artifact = Artifact.objects.get(sha256=artifact.sha256)
 
             ProfileArtifact.objects.get_or_create(
-                artifact=artifact, name="pyinstrument_data", task=task
+                artifact=artifact, name="pyinstrument_profile", task=task
             )
-
             _logger.info("Created pyinstrument profile data.")
         else:
             func(task)
