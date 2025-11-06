@@ -32,7 +32,7 @@ from pulpcore.constants import (
 from pulpcore.middleware import x_task_diagnostics_var
 from pulpcore.tasking.kafka import send_task_notification
 
-from pulpcore.exceptions import PulpExceptionNoTrace
+from pulpcore.exceptions import PulpException
 
 _logger = logging.getLogger(__name__)
 
@@ -77,14 +77,16 @@ def _execute_task(task):
         log_task_start(task, domain)
         task_function = get_task_function(task)
         result = task_function()
-    except PulpExceptionNoTrace:
+    except PulpException:
         exc_type, exc, _ = sys.exc_info()
         task.set_failed(exc)
         send_task_notification(task)
     except Exception:
         exc_type, exc, tb = sys.exc_info()
-        task.set_failed(exc)
         log_task_failed(task, exc_type, exc, tb, domain)
+        # Generic exception for user
+        safe_exc = Exception("An internal error occured.")
+        task.set_failed(safe_exc)
         send_task_notification(task)
     else:
         task.set_completed(result)
@@ -102,14 +104,16 @@ async def _aexecute_task(task):
     try:
         coroutine = get_task_function(task, ensure_coroutine=True)
         result = await coroutine
-    except PulpExceptionNoTrace:
+    except PulpException:
         exc_type, exc, _ = sys.exc_info()
         await sync_to_async(task.set_failed)(exc)
         send_task_notification(task)
     except Exception:
         exc_type, exc, tb = sys.exc_info()
-        await sync_to_async(task.set_failed)(exc)
         log_task_failed(task, exc_type, exc, tb, domain)
+        # Generic exception for user
+        safe_exc = Exception("An internal error occured.")
+        await sync_to_async(task.set_failed)(safe_exc)
         send_task_notification(task)
     else:
         await sync_to_async(task.set_completed)(result)

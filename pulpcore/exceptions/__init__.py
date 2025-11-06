@@ -1,6 +1,5 @@
 from .base import (
     PulpException,
-    PulpExceptionNoTrace,
     ResourceImmutableError,
     TimeoutException,
     exception_to_dict,

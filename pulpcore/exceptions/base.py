@@ -44,14 +44,6 @@ def exception_to_dict(exc, traceback=None):
     return {"description": str(exc), "traceback": traceback}
 
 
-class PulpExceptionNoTrace(PulpException):
-    """
-    Base class for PulpExceptions where the traceback should not be logged or recorded.
-    """
-
-    pass
-
-
 class ResourceImmutableError(PulpException):
     """
     Exceptions that are raised due to trying to update an immutable resource
@@ -104,7 +96,7 @@ class DomainProtectedError(PulpException):
         return _("You cannot delete a domain that still contains repositories with content.")
 
 
-class DnsDomainNameException(PulpExceptionNoTrace):
+class DnsDomainNameException(PulpException):
     """
     Exception to signal that dns could not resolve the domain name for specified url.
     """
