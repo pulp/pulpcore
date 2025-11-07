@@ -8,6 +8,33 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.93.0 (2025-11-05) {: #3.93.0 }
+
+### REST API {: #3.93.0-rest-api }
+
+#### Features {: #3.93.0-rest-api-feature }
+
+- Updated API to allow adding custom metadata to exports
+  [#6712](https://github.com/pulp/pulpcore/issues/6712)
+
+#### Bugfixes {: #3.93.0-rest-api-bugfix }
+
+- Fixed an issue with dispatching repository.add_and_remove tasks for pull-through caching
+
+### Plugin API {: #3.93.0-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.93.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.93.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.92.1 (2025-10-29) {: #3.92.1 }
 
 ### REST API {: #3.92.1-rest-api }
