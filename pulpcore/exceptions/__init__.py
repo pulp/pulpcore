@@ -4,6 +4,9 @@ from .base import (
     TimeoutException,
     exception_to_dict,
     DomainProtectedError,
+    DnsDomainNameException,
+    ImmediateTaskTimeoutError,
+    NonAsyncImmediateTaskError,
 )
 from .validation import (
     DigestValidationError,

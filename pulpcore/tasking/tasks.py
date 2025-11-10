@@ -29,8 +29,14 @@ from pulpcore.constants import (
     TASK_WAKEUP_HANDLE,
     TASK_WAKEUP_UNBLOCK,
 )
+from pulpcore.exceptions.base import (
+    PulpException,
+    ImmediateTaskTimeoutError,
+    NonAsyncImmediateTaskError,
+)
 from pulpcore.middleware import x_task_diagnostics_var
 from pulpcore.tasking.kafka import send_task_notification
+
 
 _logger = logging.getLogger(__name__)
 
@@ -75,10 +81,16 @@ def _execute_task(task):
         log_task_start(task, domain)
         task_function = get_task_function(task)
         result = task_function()
+    except PulpException:
+        exc_type, exc, _ = sys.exc_info()
+        task.set_failed(exc)
+        send_task_notification(task)
     except Exception:
         exc_type, exc, tb = sys.exc_info()
-        task.set_failed(exc, tb)
         log_task_failed(task, exc_type, exc, tb, domain)
+        # Generic exception for user
+        safe_exc = Exception("An internal error occured.")
+        task.set_failed(safe_exc)
         send_task_notification(task)
     else:
         task.set_completed(result)
@@ -96,10 +108,16 @@ async def _aexecute_task(task):
     try:
         coroutine = get_task_function(task, ensure_coroutine=True)
         result = await coroutine
+    except PulpException:
+        exc_type, exc, _ = sys.exc_info()
+        await sync_to_async(task.set_failed)(exc)
+        send_task_notification(task)
     except Exception:
         exc_type, exc, tb = sys.exc_info()
-        await sync_to_async(task.set_failed)(exc, tb)
         log_task_failed(task, exc_type, exc, tb, domain)
+        # Generic exception for user
+        safe_exc = Exception("An internal error occured.")
+        await sync_to_async(task.set_failed)(safe_exc)
         send_task_notification(task)
     else:
         await sync_to_async(task.set_completed)(result)
@@ -145,7 +163,8 @@ def log_task_failed(task, exc_type, exc, tb, domain):
             domain=domain.name,
         )
     )
-    _logger.info("\n".join(traceback.format_list(traceback.extract_tb(tb))))
+    if tb:
+        _logger.info("\n".join(traceback.format_list(traceback.extract_tb(tb))))
 
 
 def get_task_function(task, ensure_coroutine=False):
@@ -158,7 +177,7 @@ def get_task_function(task, ensure_coroutine=False):
     is_coroutine_fn = asyncio.iscoroutinefunction(func)
 
     if immediate and not is_coroutine_fn:
-        raise ValueError("Immediate tasks must be async functions.")
+        raise NonAsyncImmediateTaskError(task_name=task.name)
 
     if ensure_coroutine:
         if not is_coroutine_fn:
@@ -181,7 +200,7 @@ def get_task_function(task, ensure_coroutine=False):
                 msg_template = "Immediate task %s timed out after %s seconds."
                 error_msg = msg_template % (task.pk, IMMEDIATE_TIMEOUT)
                 _logger.info(error_msg)
-                raise RuntimeError(error_msg)
+                raise ImmediateTaskTimeoutError(task_pk=task.pk, timeout_seconds=IMMEDIATE_TIMEOUT)
 
         return async_to_sync(task_wrapper)
 
