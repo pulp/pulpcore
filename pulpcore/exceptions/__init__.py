@@ -5,6 +5,8 @@ from .base import (
     exception_to_dict,
     DomainProtectedError,
     DnsDomainNameException,
+    ImmediateTaskTimeoutError,
+    NonAsyncImmediateTaskError,
 )
 from .validation import (
     DigestValidationError,

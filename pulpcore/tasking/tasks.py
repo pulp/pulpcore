@@ -29,10 +29,14 @@ from pulpcore.constants import (
     TASK_WAKEUP_HANDLE,
     TASK_WAKEUP_UNBLOCK,
 )
+from pulpcore.exceptions.base import (
+    PulpException,
+    ImmediateTaskTimeoutError,
+    NonAsyncImmediateTaskError,
+)
 from pulpcore.middleware import x_task_diagnostics_var
 from pulpcore.tasking.kafka import send_task_notification
 
-from pulpcore.exceptions import PulpException
 
 _logger = logging.getLogger(__name__)
 
@@ -173,7 +177,7 @@ def get_task_function(task, ensure_coroutine=False):
     is_coroutine_fn = asyncio.iscoroutinefunction(func)
 
     if immediate and not is_coroutine_fn:
-        raise ValueError("Immediate tasks must be async functions.")
+        raise NonAsyncImmediateTaskError(task_name=task.name)
 
     if ensure_coroutine:
         if not is_coroutine_fn:
@@ -196,7 +200,7 @@ def get_task_function(task, ensure_coroutine=False):
                 msg_template = "Immediate task %s timed out after %s seconds."
                 error_msg = msg_template % (task.pk, IMMEDIATE_TIMEOUT)
                 _logger.info(error_msg)
-                raise RuntimeError(error_msg)
+                raise ImmediateTaskTimeoutError(task_pk=task.pk, timeout_seconds=IMMEDIATE_TIMEOUT)
 
         return async_to_sync(task_wrapper)
 

@@ -113,3 +113,45 @@ class DnsDomainNameException(PulpException):
         return _("Domain name was not found for {}. Check if specified url is valid.").format(
             self.url
         )
+
+
+class ImmediateTaskTimeoutError(PulpException):
+    """
+    Exception to signal that an immediate task timed out.
+    """
+
+    def __init__(self, task_pk, timeout_seconds):
+        """
+        :param task_pk: The PK of the task that timed out.
+        :type task_pk: str
+        :param timeout_seconds: The timeout duration.
+        :type timeout_seconds: int or str
+        """
+        super().__init__("PLP0009")
+        self.task_pk = task_pk
+        self.timeout_seconds = timeout_seconds
+
+    def __str__(self):
+        return _("Immediate task {task_pk} timed out after {timeout_seconds} seconds.").format(
+            task_pk=self.task_pk, timeout_seconds=self.timeout_seconds
+        )
+
+
+class NonAsyncImmediateTaskError(PulpException):
+    """
+    Exception raised when a task is marked as 'immediate' but is not
+    an async coroutine function.
+    """
+
+    def __init__(self, task_name):
+        """
+        :param task_name: The name of the task that caused the error.
+        :type task_name: str
+        """
+        super().__init__("PLP0010")
+        self.task_name = task_name
+
+    def __str__(self):
+        return _("Immediate task '{task_name}' must be an async function.").format(
+            task_name=self.task_name
+        )
