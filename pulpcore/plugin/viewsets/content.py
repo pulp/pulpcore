@@ -71,19 +71,19 @@ class NoArtifactContentUploadViewSet(DefaultDeferredContextMixin, ContentViewSet
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
+        context = self.get_deferred_context(request)
         task_payload = {k: v for k, v in request.data.items()}
 
-        file_content = task_payload.pop("file", None)
-        temp_file = PulpTemporaryFile.init_and_validate(file_content)
-        temp_file.save()
+        if file_content := task_payload.pop("file", None):
+            temp_file = PulpTemporaryFile.init_and_validate(file_content)
+            temp_file.save()
+            context["pulp_temp_file_pk"] = str(temp_file.pk)
 
         exclusive_resources = [
             item for item in (serializer.validated_data.get(key) for key in ("repository",)) if item
         ]
 
         app_label = self.queryset.model._meta.app_label
-        context = self.get_deferred_context(request)
-        context["pulp_temp_file_pk"] = str(temp_file.pk)
         task = dispatch(
             tasks.base.general_create,
             exclusive_resources=exclusive_resources,
