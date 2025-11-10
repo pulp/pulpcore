@@ -1,0 +1,1 @@
+Fixed NoArtifactContentUploadViewSet/Serializer breaking when using the `artifact`, `upload` or `file_url` fields.
