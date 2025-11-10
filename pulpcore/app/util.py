@@ -15,7 +15,7 @@ from uuid import UUID
 from django.apps import apps
 from django.conf import settings
 from django.db import connection
-from django.db.models import Model
+from django.db.models import Model, UUIDField
 from django.urls import Resolver404, resolve
 
 from rest_framework.serializers import ValidationError
@@ -152,10 +152,11 @@ def resolve_prn(prn):
                 full_model_label
             )
         )
-    try:
-        UUID(pk, version=4)
-    except ValueError:
-        raise ValidationError(_("PK invalid: {}").format(pk))
+    if isinstance(model._meta.pk, UUIDField):
+        try:
+            UUID(pk, version=4)
+        except ValueError:
+            raise ValidationError(_("PK invalid: {}").format(pk))
 
     return model, pk
 
