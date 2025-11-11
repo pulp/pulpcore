@@ -83,6 +83,7 @@ def _execute_task(task):
         result = task_function()
     except PulpException:
         exc_type, exc, _ = sys.exc_info()
+        log_task_failed(task, exc_type, exc, None, domain)  # Leave no traceback in logs
         task.set_failed(exc)
         send_task_notification(task)
     except Exception:
@@ -110,6 +111,7 @@ async def _aexecute_task(task):
         result = await coroutine
     except PulpException:
         exc_type, exc, _ = sys.exc_info()
+        log_task_failed(task, exc_type, exc, None, domain)  # Leave no traceback in logs
         await sync_to_async(task.set_failed)(exc)
         send_task_notification(task)
     except Exception:
