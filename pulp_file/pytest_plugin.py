@@ -3,6 +3,8 @@ import uuid
 
 import pytest
 
+from pulpcore.client.pulp_file import ApiClient as FileApiClient, ContentFilesApi
+
 from pulpcore.tests.functional.utils import BindingsNamespace, generate_iso, generate_manifest
 
 # Api Bindings fixtures
@@ -21,6 +23,16 @@ def file_bindings(_api_client_set, bindings_cfg):
     _api_client_set.add(api_client)
     yield BindingsNamespace(file_bindings_module, api_client)
     _api_client_set.remove(api_client)
+
+
+@pytest.fixture(scope="session")
+def file_client(bindings_cfg):
+    return FileApiClient(bindings_cfg)
+
+
+@pytest.fixture(scope="session")
+def file_content_api(file_client):
+    return ContentFilesApi(file_client)
 
 
 # Factory fixtures
