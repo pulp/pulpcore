@@ -1,10 +1,15 @@
 from gettext import gettext as _
+from tempfile import NamedTemporaryFile
 
+from django.conf import settings
+from django.db import DatabaseError
 from rest_framework import serializers
 
+from pulpcore.plugin.files import PulpTemporaryUploadedFile
 from pulpcore.plugin import models
 from pulpcore.plugin.serializers import (
     AlternateContentSourceSerializer,
+    ArtifactSerializer,
     ContentChecksumSerializer,
     DetailRelatedField,
     DistributionSerializer,
@@ -52,6 +57,62 @@ class FileContentSerializer(SingleArtifactContentUploadSerializer, ContentChecks
             + ContentChecksumSerializer.Meta.fields
         )
         model = FileContent
+
+
+class FileContentUploadSerializer(FileContentSerializer):
+    """
+    Serializer for File Content.
+    """
+
+    def validate(self, data):
+        """Validate the FileContent data."""
+        if upload := data.pop("upload", None):
+            # Handle chunked upload
+            chunks = models.UploadChunk.objects.filter(upload=upload).order_by("offset")
+            with NamedTemporaryFile(
+                mode="ab", dir=settings.WORKING_DIRECTORY, delete=False
+            ) as temp_file:
+                for chunk in chunks:
+                    temp_file.write(chunk.file.read())
+                    chunk.file.close()
+                temp_file.flush()
+
+            # Convert to PulpTemporaryUploadedFile for later artifact creation
+            data["file"] = PulpTemporaryUploadedFile.from_file(open(temp_file.name, "rb"))
+        elif file_url := data.pop("file_url", None):
+            expected_digests = data.get("expected_digests", None)
+            expected_size = data.get("expected_size", None)
+            data["file"] = self.download(
+                file_url, expected_digests=expected_digests, expected_size=expected_size
+            )
+        if file := data.pop("file", None):
+            # if artifact already exists, let's use it
+            try:
+                artifact = models.Artifact.objects.get(
+                    sha256=file.hashers["sha256"].hexdigest(), pulp_domain=get_domain_pk()
+                )
+                if not artifact.pulp_domain.get_storage().exists(artifact.file.name):
+                    artifact.file = file
+                    artifact.save()
+                else:
+                    artifact.touch()
+            except (models.Artifact.DoesNotExist, DatabaseError):
+                artifact_data = {"file": file}
+                serializer = ArtifactSerializer(data=artifact_data)
+                serializer.is_valid(raise_exception=True)
+                artifact = serializer.save()
+            data["artifact"] = artifact
+
+        data["digest"] = data["artifact"].sha256
+
+        return data
+
+    class Meta:
+        # This API does not support uploading to a repository.
+        fields = tuple(f for f in FileContentSerializer.Meta.fields if f not in ["repository"])
+        model = FileContent
+        # Name used for the OpenAPI request object
+        ref_name = "FileContentUploadSerializer"
 
 
 class FileRepositorySerializer(RepositorySerializer):

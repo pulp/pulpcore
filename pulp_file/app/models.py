@@ -43,6 +43,9 @@ class FileContent(Content):
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
         unique_together = ("relative_path", "digest", "_pulp_domain")
+        permissions = [
+            ("upload_files", "Can upload File content using synchronous API."),
+        ]
 
 
 class FileRemote(Remote, AutoAddObjPermsMixin):
