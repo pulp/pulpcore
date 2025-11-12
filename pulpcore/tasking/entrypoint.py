@@ -8,6 +8,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pulpcore.app.settings")
 
 django.setup()
 
+from django.conf import settings  # noqa: E402: module level not at top
 from pulpcore.tasking.worker import PulpcoreWorker  # noqa: E402: module level not at top
 
 
@@ -26,12 +27,19 @@ _logger = logging.getLogger(__name__)
     default=False,
     help="Auxiliary workers do not perform housekeeping duties.",
 )
+@click.option(
+    "--name-template",
+    type=str,
+    help="Format string to use for the status name. "
+    "'{pid}', '{hostname}', and '{fqdn} will be substituted.",
+)
 @click.command()
 def worker(
     pid,
     burst,
     reload,
     auxiliary,
+    name_template,
 ):
     """A Pulp worker."""
 
@@ -47,6 +55,9 @@ def worker(
     if pid:
         with open(os.path.expanduser(pid), "w") as fp:
             fp.write(str(os.getpid()))
+
+    if name_template:
+        settings.set("WORKER_NAME_TEMPLATE", name_template)
 
     _logger.info("Starting distributed type worker")
 

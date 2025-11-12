@@ -630,7 +630,9 @@ def cache_key(base_path):
 
 @lru_cache(maxsize=1)
 def get_worker_name():
-    return f"{os.getpid()}@{socket.gethostname()}"
+    return settings.WORKER_NAME_TEMPLATE.format(
+        pid=os.getpid(), hostname=socket.gethostname(), fqdn=socket.getfqdn()
+    )
 
 
 def normalize_http_status(status):
