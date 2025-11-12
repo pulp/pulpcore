@@ -1,11 +1,10 @@
 from contextvars import ContextVar
 from logging import getLogger
 import os
-import socket
+import sys
 
 import click
 import django
-from django.conf import settings
 from django.db import connection
 from django.db.utils import IntegrityError, InterfaceError, DatabaseError
 from gunicorn.arbiter import Arbiter
@@ -18,6 +17,7 @@ from pulpcore.app.pulpcore_gunicorn_application import PulpcoreGunicornApplicati
 logger = getLogger(__name__)
 
 
+name_template_var = ContextVar("name_template_var", default=None)
 using_pulp_api_worker = ContextVar("using_pulp_api_worker", default=False)
 
 
@@ -42,8 +42,14 @@ class PulpApiWorker(SyncWorker):
     def init_process(self):
         os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pulpcore.app.settings")
         django.setup()
-        from pulpcore.app.models import AppStatus
 
+        from django.conf import settings
+        from pulpcore.app.models import AppStatus
+        from pulpcore.app.util import get_worker_name
+
+        name_template = name_template_var.get()
+        if name_template:
+            settings.set("WORKER_NAME_TEMPLATE", name_template)
         if settings.API_APP_TTL < 2 * self.timeout:
             logger.warning(
                 "API_APP_TTL (%s) is smaller than double the gunicorn timeout (%s). "
@@ -52,7 +58,7 @@ class PulpApiWorker(SyncWorker):
                 self.timeout,
             )
 
-        self.name = "{pid}@{hostname}".format(pid=self.pid, hostname=socket.gethostname())
+        self.name = get_worker_name()
         self.versions = {app.label: app.version for app in pulp_plugin_configs()}
         self.beat_msg = (
             "Api App '{name}' heartbeat written, sleeping for '{interarrival}' seconds".format(
@@ -138,7 +144,15 @@ class PulpcoreApiApplication(PulpcoreGunicornApplication):
 @click.option("--chdir")
 @click.option("--user", "-u")
 @click.option("--group", "-g")
+@click.option(
+    "--name-template",
+    type=str,
+    help="Format string to use for the status name. "
+    "'{pid}', '{hostname}', and '{fqdn} will be substituted.",
+)
 @click.command()
-def main(bind, **options):
+def main(bind, name_template, **options):
+    name_template_var.set(name_template)
     options["bind"] = list(bind)
+    sys.argv = sys.argv[:1]
     PulpcoreApiApplication(options).run()
