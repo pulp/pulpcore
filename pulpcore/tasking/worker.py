@@ -5,7 +5,6 @@ import os
 import random
 import select
 import signal
-import socket
 import contextlib
 from datetime import datetime, timedelta
 from multiprocessing import Process
@@ -27,7 +26,7 @@ from pulpcore.constants import (
 from pulpcore.metrics import init_otel_meter
 from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app.models import Worker, Task, ApiAppStatus, ContentAppStatus
-from pulpcore.app.util import PGAdvisoryLock, get_domain
+from pulpcore.app.util import PGAdvisoryLock, get_domain, get_worker_name
 from pulpcore.exceptions import AdvisoryLockError
 
 from pulpcore.tasking.storage import WorkerDirectory
@@ -63,7 +62,7 @@ class PulpcoreWorker:
         self.cancel_task = False
 
         self.task = None
-        self.name = f"{os.getpid()}@{socket.getfqdn()}"
+        self.name = get_worker_name()
         self.heartbeat_period = timedelta(seconds=settings.WORKER_TTL / 3)
         self.last_metric_heartbeat = timezone.now()
         self.versions = {app.label: app.version for app in pulp_plugin_configs()}

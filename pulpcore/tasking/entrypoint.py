@@ -8,6 +8,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pulpcore.app.settings")
 
 django.setup()
 
+from django.conf import settings  # noqa: E402: module level not at top
 from pulpcore.tasking.worker import PulpcoreWorker  # noqa: E402: module level not at top
 
 
@@ -21,8 +22,19 @@ _logger = logging.getLogger(__name__)
 @click.option(
     "--reload/--no-reload", help="Reload worker on code changes. [requires hupper to be installed.]"
 )
+@click.option(
+    "--name-template",
+    type=str,
+    help="Format string to use for the status name. "
+    "'{pid}', '{hostname}', and '{fqdn} will be substituted.",
+)
 @click.command()
-def worker(pid, burst, reload):
+def worker(
+    pid,
+    burst,
+    reload,
+    name_template,
+):
     """A Pulp worker."""
 
     if reload:
@@ -37,6 +49,9 @@ def worker(pid, burst, reload):
     if pid:
         with open(os.path.expanduser(pid), "w") as fp:
             fp.write(str(os.getpid()))
+
+    if name_template:
+        settings.set("WORKER_NAME_TEMPLATE", name_template)
 
     _logger.info("Starting distributed type worker")
 

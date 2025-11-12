@@ -1,0 +1,1 @@
+Allow to specify a template for the status names of the processes using '--name-template` to overcome conflicts in certain containerized environments.
