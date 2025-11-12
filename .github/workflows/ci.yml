@@ -43,10 +43,60 @@ jobs:
         run: |
           .github/workflows/scripts/check_commit.sh
 
+  check-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      run_tests: ${{ steps.check.outputs.run_tests }}
+      run_docs: ${{ steps.check.outputs.run_docs }}
+    steps:
+      - uses: "actions/checkout@v4"
+        with:
+          fetch-depth: 0
+          path: "pulpcore"
+
+      - uses: "actions/setup-python@v5"
+        with:
+          python-version: "3.12"
+
+      - name: "Install python dependencies"
+        run: |
+          echo ::group::PYDEPS
+          pip install gitpython
+          echo ::endgroup::
+
+      - name: Analyze changed files
+        shell: bash
+        id: check
+        run: |
+          # We only test docs on the default branch (usually main)
+          if [[ "${{ github.base_ref }}" == *"main" ]]; then
+            echo "run_docs=1" >> $GITHUB_OUTPUT
+          else
+            echo "run_docs=0" >> $GITHUB_OUTPUT
+          fi
+
+          set +e
+          BASE_REF=${{ github.event.pull_request.base.sha }}
+          echo "Checking against:"
+          git name-rev $BASE_REF
+          python3 .ci/scripts/skip_tests.py . $BASE_REF
+          exit_code=$?
+          if [ $exit_code -ne 0 ] && [ $exit_code -ne 1 ]; then
+            echo "Error: skip_tests.py returned unexpected exit code $exit_code"
+            exit $exit_code
+          fi
+          echo "run_tests=$exit_code" >> $GITHUB_OUTPUT
+
   docs:
+    needs: "check-changes"
     uses: "./.github/workflows/docs.yml"
+    with:
+      run_docs: ${{ needs.check-changes.outputs.run_docs }}
 
   lint:
+    needs:
+      - "check-changes"
+    if: needs.check-changes.outputs.run_tests == '1'
     uses: "./.github/workflows/lint.yml"
 
   build:
@@ -84,6 +134,7 @@ jobs:
     # This is a dummy dependent task to have a single entry for the branch protection rules.
     runs-on: "ubuntu-latest"
     needs:
+      - "check-changes"
       - "check-commits"
       - "lint"
       - "test"
@@ -93,6 +144,30 @@ jobs:
       - name: "Collect needed jobs results"
         working-directory: "."
         run: |
-          echo '${{toJson(needs)}}' | jq -r 'to_entries[]|select(.value.result!="success")|.key + ": " + .value.result'
-          echo '${{toJson(needs)}}' | jq -e 'to_entries|map(select(.value.result!="success"))|length == 0'
+          RUN_TESTS=${{ needs.check-changes.outputs.run_tests }}
+          RUN_DOCS=${{ needs.check-changes.outputs.run_docs }}
+
+          check_jobs() {
+            local filter="$1"
+            local needs_json='${{toJson(needs)}}'
+            # output failed jobs after filter
+            echo "$needs_json" | jq -r "to_entries[]|select($filter)|select(.value.result!=\"success\")|.key + \": \" + .value.result"
+            # fails if not all selected jobs passed
+            echo "$needs_json" | jq -e "to_entries|map(select($filter))|map(select(.value.result!=\"success\"))|length == 0"
+          }
+
+          if [ "$RUN_TESTS" == "1" ] && [ "$RUN_DOCS" == "1" ]; then
+            FILTERS="true"  # check all jobs
+          elif [ "$RUN_TESTS" == "1" ] && [ "$RUN_DOCS" == "0" ]; then
+            echo "Skipping docs: running on non-default branch"
+            FILTERS='.key != "docs"'
+          elif [ "$RUN_TESTS" == "0" ] && [ "$RUN_DOCS" == "1" ]; then
+            echo "Skipping tests: only doc changes"
+            FILTERS='.key != "lint" and .key != "test"'
+          else  # RUN_TESTS=0, RUN_DOCS=0
+            echo "What is this PR doing??"
+            FILTERS='.key != "lint" and .key != "test" and .key != "docs"'
+          fi
+
+          check_jobs "$FILTERS"
           echo "CI says: Looks good!"
