@@ -8,6 +8,39 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.85.2 (2025-11-13) {: #3.85.2 }
+
+### REST API {: #3.85.2-rest-api }
+
+#### Bugfixes {: #3.85.2-rest-api-bugfix }
+
+- Fixed exception propagation in the pulp-content instrumentation middleware.
+  [#6925](https://github.com/pulp/pulpcore/issues/6925)
+- Improve handling of some edge cases in task diagnostics code.
+  [#7020](https://github.com/pulp/pulpcore/issues/7020)
+- Allow to specify a template for the status names of the processes using '--name-template` to overcome conflicts in certain containerized environments.
+
+### Plugin API {: #3.85.2-plugin-api }
+
+#### Bugfixes {: #3.85.2-plugin-api-bugfix }
+
+- Fixed NoArtifactContentUploadViewSet/Serializer breaking when using the `artifact`, `upload` or `file_url` fields.
+- Fixed `resolved_prn` failing when the object's pk wasn't an UUID.
+
+#### Removals {: #3.85.2-plugin-api-removal }
+
+- Removed support for synchronous immediate tasks.
+
+### Pulp File {: #3.85.2-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.2-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.85.1 (2025-08-12) {: #3.85.1 }
 
 ### REST API {: #3.85.1-rest-api }
