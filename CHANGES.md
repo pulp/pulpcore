@@ -8,6 +8,29 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.73.17 (2025-11-13) {: #3.73.17 }
+
+### REST API {: #3.73.17-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.73.17-plugin-api }
+
+#### Bugfixes {: #3.73.17-plugin-api-bugfix }
+
+- Fixed NoArtifactContentUploadViewSet/Serializer breaking when using the `artifact`, `upload` or `file_url` fields.
+- Fixed `resolved_prn` failing when the object's pk wasn't an UUID.
+
+### Pulp File {: #3.73.17-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.17-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.73.16 (2025-10-01) {: #3.73.16 }
 
 ### REST API {: #3.73.16-rest-api }
