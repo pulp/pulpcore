@@ -8,6 +8,28 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.49.46 (2025-11-13) {: #3.49.46 }
+
+### REST API {: #3.49.46-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.49.46-plugin-api }
+
+#### Bugfixes {: #3.49.46-plugin-api-bugfix }
+
+- Fixed NoArtifactContentUploadViewSet/Serializer breaking when using the `artifact`, `upload` or `file_url` fields.
+
+### Pulp File {: #3.49.46-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.46-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.49.45 (2025-09-09) {: #3.49.45 }
 
 ### REST API {: #3.49.45-rest-api }
