@@ -1,1 +1,0 @@
-Fixed `resolved_prn` failing when the object's pk wasn't an UUID.
