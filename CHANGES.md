@@ -8,6 +8,20 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.39.34 (2025-11-13) {: #3.39.34 }
+
+### REST API {: #3.39.34-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.39.34-plugin-api }
+
+#### Bugfixes {: #3.39.34-plugin-api-bugfix }
+
+- Fixed NoArtifactContentUploadViewSet/Serializer breaking when using the `artifact`, `upload` or `file_url` fields.
+
+---
+
 ## 3.39.33 (2025-07-30) {: #3.39.33 }
 
 ### REST API {: #3.39.33-rest-api }
