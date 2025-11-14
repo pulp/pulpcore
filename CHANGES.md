@@ -8,6 +8,33 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.93.1 (2025-11-13) {: #3.93.1 }
+
+### REST API {: #3.93.1-rest-api }
+
+#### Bugfixes {: #3.93.1-rest-api-bugfix }
+
+- Improve handling of some edge cases in task diagnostics code.
+  [#7020](https://github.com/pulp/pulpcore/issues/7020)
+- Allow to specify a template for the status names of the processes using '--name-template` to overcome conflicts in certain containerized environments.
+
+### Plugin API {: #3.93.1-plugin-api }
+
+#### Bugfixes {: #3.93.1-plugin-api-bugfix }
+
+- Fixed NoArtifactContentUploadViewSet/Serializer breaking when using the `artifact`, `upload` or `file_url` fields.
+- Fixed `resolved_prn` failing when the object's pk wasn't an UUID.
+
+### Pulp File {: #3.93.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.93.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.93.0 (2025-11-05) {: #3.93.0 }
 
 ### REST API {: #3.93.0-rest-api }
@@ -389,6 +416,39 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.86.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.85.2 (2025-11-13) {: #3.85.2 }
+
+### REST API {: #3.85.2-rest-api }
+
+#### Bugfixes {: #3.85.2-rest-api-bugfix }
+
+- Fixed exception propagation in the pulp-content instrumentation middleware.
+  [#6925](https://github.com/pulp/pulpcore/issues/6925)
+- Improve handling of some edge cases in task diagnostics code.
+  [#7020](https://github.com/pulp/pulpcore/issues/7020)
+- Allow to specify a template for the status names of the processes using '--name-template` to overcome conflicts in certain containerized environments.
+
+### Plugin API {: #3.85.2-plugin-api }
+
+#### Bugfixes {: #3.85.2-plugin-api-bugfix }
+
+- Fixed NoArtifactContentUploadViewSet/Serializer breaking when using the `artifact`, `upload` or `file_url` fields.
+- Fixed `resolved_prn` failing when the object's pk wasn't an UUID.
+
+#### Removals {: #3.85.2-plugin-api-removal }
+
+- Removed support for synchronous immediate tasks.
+
+### Pulp File {: #3.85.2-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.2-pulp-cert-guard }
 
 No significant changes.
 
@@ -1166,6 +1226,29 @@ No significant changes.
   [#6244](https://github.com/pulp/pulpcore/issues/6244)
 
 ### Pulp Cert Guard {: #3.74.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.73.17 (2025-11-13) {: #3.73.17 }
+
+### REST API {: #3.73.17-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.73.17-plugin-api }
+
+#### Bugfixes {: #3.73.17-plugin-api-bugfix }
+
+- Fixed NoArtifactContentUploadViewSet/Serializer breaking when using the `artifact`, `upload` or `file_url` fields.
+- Fixed `resolved_prn` failing when the object's pk wasn't an UUID.
+
+### Pulp File {: #3.73.17-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.17-pulp-cert-guard }
 
 No significant changes.
 
@@ -2227,6 +2310,29 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.64.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.63.25 (2025-11-13) {: #3.63.25 }
+
+### REST API {: #3.63.25-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.63.25-plugin-api }
+
+#### Bugfixes {: #3.63.25-plugin-api-bugfix }
+
+- Fixed NoArtifactContentUploadViewSet/Serializer breaking when using the `artifact`, `upload` or `file_url` fields.
+- Fixed `resolved_prn` failing when the object's pk wasn't an UUID.
+
+### Pulp File {: #3.63.25-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.25-pulp-cert-guard }
 
 No significant changes.
 
@@ -3621,6 +3727,28 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard
+
+No significant changes.
+
+---
+
+## 3.49.46 (2025-11-13) {: #3.49.46 }
+
+### REST API {: #3.49.46-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.49.46-plugin-api }
+
+#### Bugfixes {: #3.49.46-plugin-api-bugfix }
+
+- Fixed NoArtifactContentUploadViewSet/Serializer breaking when using the `artifact`, `upload` or `file_url` fields.
+
+### Pulp File {: #3.49.46-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.46-pulp-cert-guard }
 
 No significant changes.
 
@@ -5258,6 +5386,20 @@ No significant changes.
 -   Starting from this release pulp_file will be shipped as part of the pulpcore package.
     [#4550](https://github.com/pulp/pulpcore/issues/4550)
 
+## 3.39.34 (2025-11-13) {: #3.39.34 }
+
+### REST API {: #3.39.34-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.39.34-plugin-api }
+
+#### Bugfixes {: #3.39.34-plugin-api-bugfix }
+
+- Fixed NoArtifactContentUploadViewSet/Serializer breaking when using the `artifact`, `upload` or `file_url` fields.
+
+---
+
 ## 3.39.33 (2025-07-30) {: #3.39.33 }
 
 ### REST API {: #3.39.33-rest-api }
@@ -6255,6 +6397,18 @@ No significant changes.
 #### Misc
 
 -   [#3798](https://github.com/pulp/pulpcore/issues/3798)
+
+## 3.28.41 (2025-11-13) {: #3.28.41 }
+
+### REST API {: #3.28.41-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.28.41-plugin-api }
+
+No significant changes.
+
+---
 
 ## 3.28.40 (2025-07-30) {: #3.28.40 }
 
