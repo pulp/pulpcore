@@ -15,6 +15,7 @@ from django_filters.rest_framework import DjangoFilterBackend, filterset, filter
 from django.core.exceptions import FieldDoesNotExist
 from rest_framework import serializers
 
+
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.plumbing import build_basic_type
 from drf_spectacular.contrib.django_filters import DjangoFilterExtension
@@ -73,7 +74,11 @@ class HyperlinkRelatedFilter(filters.Filter):
         return match
 
     def _check_subclass(self, qs, uri, match):
-        fields_model = getattr(qs.model, self.field_name).get_queryset().model
+        field = getattr(qs.model, self.field_name)
+        if hasattr(field, "get_queryset"):
+            fields_model = field.get_queryset().model
+        elif hasattr(field, "field") and hasattr(field.field, "related_model"):
+            fields_model = field.field.related_model
         lookups_model = match.model
         if not issubclass(lookups_model, fields_model):
             raise serializers.ValidationError(
