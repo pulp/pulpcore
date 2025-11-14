@@ -1,9 +1,12 @@
 import os
 
+from django.db import transaction
 from django_filters import CharFilter
 from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
+from rest_framework import status
 from rest_framework.generics import get_object_or_404
+from rest_framework.response import Response
 
 from pulpcore.plugin.actions import ModifyRepositoryActionMixin
 from pulpcore.plugin.models import (
@@ -43,6 +46,7 @@ from .models import (
 from .serializers import (
     FileAlternateContentSourceSerializer,
     FileContentSerializer,
+    FileContentUploadSerializer,
     FileDistributionSerializer,
     FileRemoteSerializer,
     FileRepositorySerializer,
@@ -99,9 +103,42 @@ class FileContentViewSet(SingleArtifactContentUploadViewSet):
                     "has_model_or_domain_perms:core.manage_content_labels",
                 ],
             },
+            {
+                "action": ["upload"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": [
+                    "has_model_or_domain_perms:file.upload_files",
+                ],
+            },
         ],
         "queryset_scoping": {"function": "scope_queryset"},
     }
+
+    LOCKED_ROLES = {
+        "file.file_uploader": [
+            "file.upload_files",
+        ],
+    }
+
+    @extend_schema(
+        description="Synchronously upload a File.",
+        request=FileContentUploadSerializer,
+        responses={201: FileContentUploadSerializer},
+        summary="Upload a File synchronously.",
+    )
+    @action(detail=False, methods=["post"], serializer_class=FileContentUploadSerializer)
+    def upload(self, request):
+        """Create a File."""
+        serializer = self.get_serializer(data=request.data)
+        with transaction.atomic():
+            # Create the artifact
+            serializer.is_valid(raise_exception=True)
+            # Create the Package
+            serializer.save()
+
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 class FileRepositoryViewSet(RepositoryViewSet, ModifyRepositoryActionMixin, RolesMixin):
