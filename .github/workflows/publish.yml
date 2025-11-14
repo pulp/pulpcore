@@ -23,47 +23,28 @@ jobs:
     runs-on: "ubuntu-latest"
     needs:
       - "build"
-
-    env:
-      GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+    environment:
+      name: "pypi"
+      url: "https://pypi.org/p/pulpcore"
+    permissions:
+      id-token: "write"
 
     steps:
-      - uses: "actions/checkout@v4"
-        with:
-          fetch-depth: 1
-          path: "pulpcore"
-
       - uses: "actions/download-artifact@v4"
         with:
           name: "plugin_package"
-          path: "pulpcore/dist/"
+          path: "dist/"
 
-      - uses: "actions/setup-python@v5"
-        with:
-          python-version: "3.11"
-
-      - name: "Install python dependencies"
-        run: |
-          echo ::group::PYDEPS
-          pip install twine
-          echo ::endgroup::
-
-      - name: "Setting secrets"
-        run: |
-          python3 .github/workflows/scripts/secrets.py "$SECRETS_CONTEXT"
-        env:
-          SECRETS_CONTEXT: "${{ toJson(secrets) }}"
-
-      - name: "Deploy plugin to pypi"
-        run: |
-          .github/workflows/scripts/publish_plugin_pypi.sh ${{ github.ref_name }}
+      - name: "Publish package to PyPI"
+        uses: pypa/gh-action-pypi-publish@release/v1
   publish-python-bindings:
     runs-on: "ubuntu-latest"
     needs:
       - "build"
-
-    env:
-      GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+    environment:
+      name: "pypi"
+    permissions:
+      id-token: "write"
 
     steps:
       - uses: "actions/checkout@v4"
@@ -83,32 +64,18 @@ jobs:
           tar -xvf file-python-client.tar
           tar -xvf certguard-python-client.tar
 
-      - uses: "actions/setup-python@v5"
-        with:
-          python-version: "3.11"
-
-      - name: "Install python dependencies"
-        run: |
-          echo ::group::PYDEPS
-          pip install twine
-          echo ::endgroup::
-
-      - name: "Setting secrets"
-        run: |
-          python3 .github/workflows/scripts/secrets.py "$SECRETS_CONTEXT"
-        env:
-          SECRETS_CONTEXT: "${{ toJson(secrets) }}"
-
       - name: "Publish client to pypi"
-        run: |
-          bash .github/workflows/scripts/publish_client_pypi.sh ${{ github.ref_name }}
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: "pulpcore/dist/"
   publish-ruby-bindings:
     runs-on: "ubuntu-latest"
     needs:
       - "build"
-
-    env:
-      GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+    environment:
+      name: "rubygems"
+    permissions:
+      id-token: "write"
 
     steps:
       - uses: "actions/checkout@v4"
@@ -132,15 +99,14 @@ jobs:
         with:
           ruby-version: "2.6"
 
-      - name: "Setting secrets"
-        run: |
-          python3 .github/workflows/scripts/secrets.py "$SECRETS_CONTEXT"
-        env:
-          SECRETS_CONTEXT: "${{ toJson(secrets) }}"
+      - name: "Set RubyGems Credentials"
+        uses: "rubygems/configure-rubygems-credentials@v1.0.0"
 
-      - name: "Publish client to rubygems"
+      - name: "Publish client to RubyGems"
         run: |
-          bash .github/workflows/scripts/publish_client_gem.sh ${{ github.ref_name }}
+          gem push "pulpcore_client-${{ github.ref_name }}.gem"
+          gem push "pulp_file_client-${{ github.ref_name }}.gem"
+          gem push "pulp_certguard_client-${{ github.ref_name }}.gem"
 
   create-gh-release:
     runs-on: "ubuntu-latest"
@@ -183,14 +149,16 @@ jobs:
 
       - name: "Create release on GitHub"
         uses: "actions/github-script@v7"
+        env:
+          RELEASE_BODY: ${{ steps.get_release_notes.outputs.body }}
         with:
           script: |
-            const { TAG_NAME } = process.env;
+            const { TAG_NAME, RELEASE_BODY } = process.env;
 
             await github.rest.repos.createRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
               tag_name: TAG_NAME,
-              body: `${{ steps.get_release_notes.outputs.body }}`,
+              body: RELEASE_BODY,
               make_latest: "legacy",
             });
