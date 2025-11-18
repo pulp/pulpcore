@@ -8,6 +8,29 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.85.3 (2025-11-18) {: #3.85.3 }
+
+### REST API {: #3.85.3-rest-api }
+
+#### Bugfixes {: #3.85.3-rest-api-bugfix }
+
+- Fixed incorrect filtering of vulnerability reports when querying a specific repository version.
+  [#7091](https://github.com/pulp/pulpcore/issues/7091)
+
+### Plugin API {: #3.85.3-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.85.3-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.3-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.85.2 (2025-11-13) {: #3.85.2 }
 
 ### REST API {: #3.85.2-rest-api }
