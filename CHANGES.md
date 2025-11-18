@@ -8,6 +8,28 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.73.18 (2025-11-18) {: #3.73.18 }
+
+### REST API {: #3.73.18-rest-api }
+
+#### Bugfixes {: #3.73.18-rest-api-bugfix }
+
+- Allow to specify a template for the status names of the processes using '--name-template` to overcome conflicts in certain containerized environments.
+
+### Plugin API {: #3.73.18-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.73.18-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.18-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.73.17 (2025-11-13) {: #3.73.17 }
 
 ### REST API {: #3.73.17-rest-api }
