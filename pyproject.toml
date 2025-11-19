@@ -58,7 +58,7 @@ dependencies = [
   "pyparsing>=3.1.0,<3.3",    # Looks like only bugfixes in z-Stream.
   "python-gnupg>=0.5.0,<0.6",  # Looks like only bugfixes in z-Stream [changelog only in git]
   "PyYAML>=5.1.1,<6.1",  # Looks like only bugfixes in z-Stream.
-  "redis>=4.3.0,<7.1",  # Looks like only bugfixes in z-Stream.
+  "redis>=4.3.0,<7.2",  # Looks like only bugfixes in z-Stream.
   "tablib>=3.5.0,<3.6",  # 3.6.0 breaks with import export. Not sure about semver.
   "url-normalize>=1.4.3,<2.3",  # SemVer. https://github.com/niksite/url-normalize/blob/master/CHANGELOG.md#changelog
   "uuid6>=2023.5.2,<=2025.0.1",
