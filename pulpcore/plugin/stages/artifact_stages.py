@@ -269,7 +269,7 @@ class ArtifactSaver(Stage):
         Returns:
             The coroutine for this stage.
         """
-        async for batch in self.batches():
+        async for batch in self.batches(minsize=settings.MAX_CONCURRENT_CONTENT):
             da_to_save = []
             for d_content in batch:
                 for d_artifact in d_content.d_artifacts:
