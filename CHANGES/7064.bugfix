@@ -1,0 +1,1 @@
+Restrict batch processing `minsize` to the settings value defined for `MAX_CONCURRENT_CONTENT`. Smaller values will increase sync times but reduce the amount of outstanding content in the pipeline, which reduces peak resource consumption (memory, temporary disk requirements).
