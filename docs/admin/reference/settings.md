@@ -429,7 +429,7 @@ Defaults to `/var/lib/pulp/tmp/`.
 The size of the batch of content processed in one go when syncing content from
 a remote.
 
-Defaults to 200.
+Defaults to 25.
 
 ## Redis Settings
 
