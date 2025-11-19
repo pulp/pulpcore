@@ -8,6 +8,29 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.93.2 (2025-11-18) {: #3.93.2 }
+
+### REST API {: #3.93.2-rest-api }
+
+#### Bugfixes {: #3.93.2-rest-api-bugfix }
+
+- Fixed incorrect filtering of vulnerability reports when querying a specific repository version.
+  [#7091](https://github.com/pulp/pulpcore/issues/7091)
+
+### Plugin API {: #3.93.2-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.93.2-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.93.2-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.93.1 (2025-11-13) {: #3.93.1 }
 
 ### REST API {: #3.93.1-rest-api }
@@ -416,6 +439,29 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.86.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.85.3 (2025-11-18) {: #3.85.3 }
+
+### REST API {: #3.85.3-rest-api }
+
+#### Bugfixes {: #3.85.3-rest-api-bugfix }
+
+- Fixed incorrect filtering of vulnerability reports when querying a specific repository version.
+  [#7091](https://github.com/pulp/pulpcore/issues/7091)
+
+### Plugin API {: #3.85.3-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.85.3-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.3-pulp-cert-guard }
 
 No significant changes.
 
@@ -1226,6 +1272,28 @@ No significant changes.
   [#6244](https://github.com/pulp/pulpcore/issues/6244)
 
 ### Pulp Cert Guard {: #3.74.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.73.18 (2025-11-18) {: #3.73.18 }
+
+### REST API {: #3.73.18-rest-api }
+
+#### Bugfixes {: #3.73.18-rest-api-bugfix }
+
+- Allow to specify a template for the status names of the processes using '--name-template` to overcome conflicts in certain containerized environments.
+
+### Plugin API {: #3.73.18-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.73.18-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.18-pulp-cert-guard }
 
 No significant changes.
 
