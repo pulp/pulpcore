@@ -15,6 +15,7 @@ import aiohttp
 from pulpcore.app.apps import PulpAppConfig
 from .http import HttpDownloader
 from .file import FileDownloader
+from pulpcore.exceptions import UrlSchemeNotSupportedError
 
 
 PROTOCOL_MAP = {
@@ -177,7 +178,7 @@ class DownloaderFactory:
             builder = self._handler_map[scheme]
             download_class = self._download_class_map[scheme]
         except KeyError:
-            raise ValueError(_("URL: {u} not supported.".format(u=url)))
+            raise UrlSchemeNotSupportedError(url)
         else:
             return builder(download_class, url, **kwargs)
 

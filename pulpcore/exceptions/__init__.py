@@ -7,6 +7,7 @@ from .base import (
     DnsDomainNameException,
     ImmediateTaskTimeoutError,
     NonAsyncImmediateTaskError,
+    UrlSchemeNotSupportedError,
 )
 from .validation import (
     DigestValidationError,

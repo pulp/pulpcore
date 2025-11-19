@@ -155,3 +155,21 @@ class NonAsyncImmediateTaskError(PulpException):
         return _("Immediate task '{task_name}' must be an async function.").format(
             task_name=self.task_name
         )
+
+
+class UrlSchemeNotSupportedError(PulpException):
+    """
+    Exception raised when a URL scheme (e.g. 'ftp://') is provided that
+    Pulp does not have a registered handler for.
+    """
+
+    def __init__(self, url):
+        """
+        :param url: The full URL that failed validation.
+        :type url: str
+        """
+        super().__init__("PLP0011")
+        self.url = url
+
+    def __str__(self):
+        return _("URL: {u} not supported.").format(u=self.url)
