@@ -42,7 +42,6 @@ def worker(
     name_template,
 ):
     """A Pulp worker."""
-
     if reload:
         try:
             import hupper
