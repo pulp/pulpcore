@@ -8,6 +8,29 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.93.3 (2025-11-25) {: #3.93.3 }
+
+### REST API {: #3.93.3-rest-api }
+
+#### Bugfixes {: #3.93.3-rest-api-bugfix }
+
+- Restrict batch processing `minsize` to the settings value defined for `MAX_CONCURRENT_CONTENT`. Smaller values will increase sync times but reduce the amount of outstanding content in the pipeline, which reduces peak resource consumption (memory, temporary disk requirements).
+  [#7064](https://github.com/pulp/pulpcore/issues/7064)
+
+### Plugin API {: #3.93.3-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.93.3-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.93.3-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.93.2 (2025-11-18) {: #3.93.2 }
 
 ### REST API {: #3.93.2-rest-api }
