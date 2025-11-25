@@ -1,5 +1,6 @@
 from gettext import gettext as _
 
+from django.conf import settings
 from django.db import transaction
 from django.db.models import Prefetch
 from django_filters.rest_framework import filters
@@ -42,7 +43,7 @@ from pulpcore.app.viewsets.custom_filters import (
     CreatedResourcesFilter,
 )
 from pulpcore.constants import TASK_INCOMPLETE_STATES, TASK_STATES
-from pulpcore.tasking.tasks import dispatch, cancel_task, cancel_task_group
+from pulpcore.tasking.tasks import dispatch
 from pulpcore.app.role_util import get_objects_for_user
 
 
@@ -227,7 +228,17 @@ class TaskViewSet(
         serializer.is_valid(raise_exception=True)
 
         task = self.get_object()
-        task = cancel_task(task.pk)
+
+        # Call the appropriate cancel_task function based on worker type
+        if settings.WORKER_TYPE == "redis":
+            from pulpcore.tasking.redis_tasks import cancel_task
+
+            task = cancel_task(task.pk)
+        else:
+            from pulpcore.tasking.tasks import cancel_task
+
+            task = cancel_task(task.pk)
+
         # Check whether task is actually canceled
         http_status = (
             None
@@ -346,7 +357,16 @@ class TaskGroupViewSet(mixins.RetrieveModelMixin, mixins.ListModelMixin, NamedMo
                 ).count()
             ):
                 raise PermissionDenied()
-        task_group = cancel_task_group(task_group.pk)
+
+        # Call the appropriate cancel_task_group function based on worker type
+        if settings.WORKER_TYPE == "redis":
+            from pulpcore.tasking.redis_tasks import cancel_task_group
+
+            task_group = cancel_task_group(task_group.pk)
+        else:
+            from pulpcore.tasking.tasks import cancel_task_group
+
+            task_group = cancel_task_group(task_group.pk)
         # Check whether task group is actually canceled
         serializer = TaskGroupSerializer(task_group, context={"request": request})
         task_statuses = (
