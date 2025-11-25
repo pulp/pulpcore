@@ -405,6 +405,20 @@ The number of seconds before a worker should be considered lost.
 
 Defaults to `30` seconds.
 
+### WORKER\_TYPE
+
+The worker implementation to use for task execution.
+
+Available options:
+
+- `"pulpcore"` (default): Uses PostgreSQL advisory locks for task coordination. This is the traditional worker implementation.
+- `"redis"`: Uses Redis distributed locks for task coordination. This implementation produces less load on the DB.
+
+!!! note
+    The Redis worker requires a Redis server to be configured and accessible.
+
+Defaults to `"pulpcore"`.
+
 ### WORKING\_DIRECTORY
 
 The directory used by workers to stage files temporarily.

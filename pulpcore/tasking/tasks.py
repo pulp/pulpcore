@@ -261,7 +261,23 @@ def dispatch(
     Raises:
         ValueError: When `resources` is an unsupported type.
     """
+    # Check WORKER_TYPE setting and delegate to appropriate implementation
+    if settings.WORKER_TYPE == "redis":
+        from pulpcore.tasking.redis_tasks import dispatch as redis_dispatch
 
+        return redis_dispatch(
+            func,
+            args,
+            kwargs,
+            task_group,
+            exclusive_resources,
+            shared_resources,
+            immediate,
+            deferred,
+            versions,
+        )
+
+    # Original pulpcore implementation using PostgreSQL advisory locks
     execute_now = immediate and not called_from_content_app()
     assert deferred or immediate, "A task must be at least `deferred` or `immediate`."
     send_wakeup_signal = not execute_now
@@ -303,6 +319,23 @@ async def adispatch(
     versions=None,
 ):
     """Async version of dispatch."""
+    # Check WORKER_TYPE setting and delegate to appropriate implementation
+    if settings.WORKER_TYPE == "redis":
+        from pulpcore.tasking.redis_tasks import adispatch as redis_adispatch
+
+        return await redis_adispatch(
+            func,
+            args,
+            kwargs,
+            task_group,
+            exclusive_resources,
+            shared_resources,
+            immediate,
+            deferred,
+            versions,
+        )
+
+    # Original pulpcore implementation using PostgreSQL advisory locks
     execute_now = immediate and not called_from_content_app()
     assert deferred or immediate, "A task must be at least `deferred` or `immediate`."
     function_name = get_function_name(func)

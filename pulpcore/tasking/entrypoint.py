@@ -10,6 +10,7 @@ django.setup()
 
 from django.conf import settings  # noqa: E402: module level not at top
 from pulpcore.tasking.worker import PulpcoreWorker  # noqa: E402: module level not at top
+from pulpcore.tasking.redis_worker import RedisWorker  # noqa: E402: module level not at top
 
 
 _logger = logging.getLogger(__name__)
@@ -59,6 +60,16 @@ def worker(
     if name_template:
         settings.set("WORKER_NAME_TEMPLATE", name_template)
 
-    _logger.info("Starting distributed type worker")
+    worker_type = settings.WORKER_TYPE
+    _logger.info("Starting %s worker", worker_type)
 
-    PulpcoreWorker(auxiliary=auxiliary).run(burst=burst)
+    if worker_type == "redis":
+        if auxiliary:
+            _logger.warning(
+                "RedisWorker does not support auxiliary mode, ignoring --auxiliary flag"
+            )
+        RedisWorker().run(burst=burst)
+    elif worker_type == "pulpcore":
+        PulpcoreWorker(auxiliary=auxiliary).run(burst=burst)
+    else:
+        raise ValueError(f"Invalid WORKER_TYPE: {worker_type}. Must be 'pulpcore' or 'redis'.")
