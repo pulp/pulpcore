@@ -143,18 +143,11 @@ class NonAsyncImmediateTaskError(PulpException):
     an async coroutine function.
     """
 
-    def __init__(self, task_name):
-        """
-        :param task_name: The name of the task that caused the error.
-        :type task_name: str
-        """
+    def __init__(self):
         super().__init__("PLP0010")
-        self.task_name = task_name
 
     def __str__(self):
-        return _("Immediate task '{task_name}' must be an async function.").format(
-            task_name=self.task_name
-        )
+        return _("Immediate tasks must be async functions.")
 
 
 class UrlSchemeNotSupportedError(PulpException):

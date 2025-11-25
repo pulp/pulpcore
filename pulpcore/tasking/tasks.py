@@ -179,7 +179,7 @@ def get_task_function(task, ensure_coroutine=False):
     is_coroutine_fn = asyncio.iscoroutinefunction(func)
 
     if immediate and not is_coroutine_fn:
-        raise NonAsyncImmediateTaskError(task_name=task.name)
+        raise NonAsyncImmediateTaskError()
 
     if ensure_coroutine:
         if not is_coroutine_fn:
