@@ -8,6 +8,65 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.94.0 (2025-11-25) {: #3.94.0 }
+
+### REST API {: #3.94.0-rest-api }
+
+#### Features {: #3.94.0-rest-api-feature }
+
+- Added synchronous upload API for Files.
+  [#6898](https://github.com/pulp/pulpcore/issues/6898)
+
+#### Bugfixes {: #3.94.0-rest-api-bugfix }
+
+- Improve handling of some edge cases in task diagnostics code.
+  [#7020](https://github.com/pulp/pulpcore/issues/7020)
+- Restrict batch processing `minsize` to the settings value defined for `MAX_CONCURRENT_CONTENT`. Smaller values will increase sync times but reduce the amount of outstanding content in the pipeline, which reduces peak resource consumption (memory, temporary disk requirements).
+  [#7064](https://github.com/pulp/pulpcore/issues/7064)
+- Fixed incorrect filtering of vulnerability reports when querying a specific repository version.
+  [#7091](https://github.com/pulp/pulpcore/issues/7091)
+- Allow to specify a template for the status names of the processes using '--name-template` to overcome conflicts in certain containerized environments.
+
+### Plugin API {: #3.94.0-plugin-api }
+
+#### Bugfixes {: #3.94.0-plugin-api-bugfix }
+
+- Fixed NoArtifactContentUploadViewSet/Serializer breaking when using the `artifact`, `upload` or `file_url` fields.
+- Fixed `resolved_prn` failing when the object's pk wasn't an UUID.
+
+### Pulp File {: #3.94.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.94.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.93.3 (2025-11-25) {: #3.93.3 }
+
+### REST API {: #3.93.3-rest-api }
+
+#### Bugfixes {: #3.93.3-rest-api-bugfix }
+
+- Restrict batch processing `minsize` to the settings value defined for `MAX_CONCURRENT_CONTENT`. Smaller values will increase sync times but reduce the amount of outstanding content in the pipeline, which reduces peak resource consumption (memory, temporary disk requirements).
+  [#7064](https://github.com/pulp/pulpcore/issues/7064)
+
+### Plugin API {: #3.93.3-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.93.3-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.93.3-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.93.2 (2025-11-18) {: #3.93.2 }
 
 ### REST API {: #3.93.2-rest-api }
