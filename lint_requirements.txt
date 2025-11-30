@@ -6,9 +6,6 @@
 # For more info visit https://github.com/pulp/plugin_template
 
 black==24.3.0
-# Click is pinned because of:
-# https://github.com/pallets/click/issues/3065
-click<8.3
 bump-my-version
 check-manifest
 flake8
