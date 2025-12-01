@@ -495,7 +495,7 @@ class RepositoryVersionSerializer(ModelSerializer, NestedHyperlinkedModelSeriali
     )
 
     def get_vuln_report(self, object):
-        return f"{reverse('vuln_report-list')}?repository_version={get_prn(object)}"
+        return f"{reverse('vuln_report-list')}?repo_versions={get_prn(object)}"
 
     class Meta:
         model = models.RepositoryVersion

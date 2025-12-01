@@ -53,6 +53,8 @@ preload_settings = Dynaconf(
 # Build paths inside the project like this: BASE_DIR / ...
 BASE_DIR = Path(__file__).absolute().parent
 
+WORKER_NAME_TEMPLATE = "{pid}@{hostname}"
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
@@ -381,7 +383,7 @@ HIDE_GUARDED_DISTRIBUTIONS = False
 
 DOMAIN_ENABLED = False
 
-MAX_CONCURRENT_CONTENT = 200
+MAX_CONCURRENT_CONTENT = 25
 
 SHELL_PLUS_IMPORTS = [
     "from pulpcore.app.util import get_domain, get_domain_pk, set_domain, get_url, extract_pk",

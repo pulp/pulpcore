@@ -1,4 +1,4 @@
-pytest<8
+pytest<10
 pytest-custom_exit_code
 pytest-xdist
 python-gnupg

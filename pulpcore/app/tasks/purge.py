@@ -11,7 +11,7 @@ from pulpcore.app.models import (
     Task,
 )
 from pulpcore.app.role_util import get_objects_for_user
-from pulpcore.app.util import current_task, get_domain, get_current_authenticated_user
+from pulpcore.app.util import get_domain, get_current_authenticated_user
 from pulpcore.constants import TASK_STATES, TASK_FINAL_STATES
 
 log = getLogger(__name__)
@@ -82,7 +82,7 @@ def purge(finished_before=None, states=None, **kwargs):
         states (Optional[List[str]]): List of task-states we want to purge.
 
     """
-    scheduled = current_task.get().taskschedule_set.exists()
+    scheduled = Task.current().taskschedule_set.exists()
 
     if finished_before is None:
         assert settings.TASK_PROTECTION_TIME > 0

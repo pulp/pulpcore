@@ -17,10 +17,7 @@ from django.utils import timezone
 from django_guid import set_guid
 from django_guid.utils import generate_guid
 from pulpcore.app.models import Artifact, Content, Task, TaskSchedule, ProfileArtifact
-from pulpcore.app.role_util import get_users_with_perms
 from pulpcore.app.util import (
-    set_current_user,
-    set_domain,
     configure_analytics,
     configure_cleanup,
     configure_periodic_telemetry,
@@ -97,39 +94,17 @@ def perform_task(task_pk, task_working_dir_rel_path):
     connection.connection = None
     # enc_args and enc_kwargs are deferred by default but we actually want them
     task = Task.objects.defer(None).select_related("pulp_domain").get(pk=task_pk)
-    # These queries were specifically constructed and ordered this way to ensure we have the highest
-    # chance of getting the user who dispatched the task since we don't have a user relation on the
-    # task model. The second query acts as a fallback to provide ZDU support. Future changes will
-    # require to keep these around till a breaking change release is planned (3.70 the earliest).
-    user = (
-        get_users_with_perms(
-            task,
-            only_with_perms_in=["core.add_task"],
-            with_group_users=False,
-            include_model_permissions=False,
-            include_domain_permissions=False,
-        ).first()
-        or get_users_with_perms(
-            task,
-            only_with_perms_in=["core.manage_roles_task"],
-            with_group_users=False,
-            include_model_permissions=False,
-            include_domain_permissions=False,
-        ).first()
-    )
     # Isolate from the parent asyncio.
     asyncio.set_event_loop(asyncio.new_event_loop())
     # Set current contexts
-    set_guid(task.logging_cid)
-    set_current_user(user)
-    set_domain(task.pulp_domain)
     os.chdir(task_working_dir_rel_path)
 
     if task.profile_options:
         profilers = set(task.profile_options) & set(settings.TASK_DIAGNOSTICS)
         if unavailable_profilers := set(task.profile_options) - set(settings.TASK_DIAGNOSTICS):
             _logger.warning(
-                "Requested task diagnostic profilers are not available: %s", unavailable_profilers
+                "Requested task diagnostic profilers are not available: %s",
+                unavailable_profilers,
             )
         _execute_task_and_profile(task, profilers)
     else:

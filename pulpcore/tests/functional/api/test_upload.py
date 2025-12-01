@@ -7,6 +7,8 @@ import os
 
 from random import shuffle
 from pulpcore.client.pulpcore import ApiException
+from pulpcore.client.pulp_file import ApiException as FileApiException
+from pulpcore.tests.functional.utils import generate_iso
 
 
 @pytest.fixture
@@ -194,3 +196,36 @@ def test_upload_owner(pulpcore_bindings, gen_user, gen_object_with_cleanup):
             "core.delete_upload",
             "core.manage_roles_upload",
         }
+
+
+def test_upload_synchronous(file_bindings, gen_user, file_fixtures_root):
+    """Test synchronously uploading a File.
+
+    1. Upload a unit
+    2. Attempt to upload same unit with different labels
+    3. Assert that labels don't change.
+    4. Assert that uploading without permissions returns a 403.
+    """
+    # Single unit upload
+    file_path = file_fixtures_root.joinpath("1.iso")
+    generate_iso(file_path)
+    with gen_user(model_roles=["file.file_uploader"]):
+        labels = {"key_1": "value_1"}
+        upload_attrs = {"file": str(file_path), "relative_path": "1.iso", "pulp_labels": labels}
+        package = file_bindings.ContentFilesApi.upload(**upload_attrs)
+        assert package.pulp_labels == labels
+
+        # Duplicate unit
+        new_labels = {"key_2": "value_2"}
+        upload_attrs = {"file": str(file_path), "relative_path": "1.iso", "pulp_labels": new_labels}
+        duplicate_package = file_bindings.ContentFilesApi.upload(**upload_attrs)
+
+        assert duplicate_package.pulp_href == package.pulp_href
+        assert duplicate_package.pulp_labels == package.pulp_labels
+        assert duplicate_package.pulp_labels != new_labels
+
+    with gen_user(model_roles=[]), pytest.raises(FileApiException) as ctx:
+        labels = {"key_1": "value_1"}
+        upload_attrs = {"file": str(file_path), "relative_path": "1.iso", "pulp_labels": labels}
+        file_bindings.ContentFilesApi.upload(**upload_attrs)
+    assert ctx.value.status == 403

@@ -1,3 +1,5 @@
+import sys
+
 import click
 from pulpcore.app.netutil import has_ipv6
 from pulpcore.app.pulpcore_gunicorn_application import PulpcoreGunicornApplication
@@ -48,7 +50,16 @@ class PulpcoreContentApplication(PulpcoreGunicornApplication):
 @click.option("--chdir")
 @click.option("--user", "-u")
 @click.option("--group", "-g")
+@click.option(
+    "--name-template",
+    type=str,
+    help="Format string to use for the status name. "
+    "'{pid}', '{hostname}', and '{fqdn} will be substituted.",
+)
 @click.command()
-def main(bind, **options):
+def main(bind, name_template, **options):
+    if name_template:
+        settings.set("WORKER_NAME_TEMPLATE", name_template)
     options["bind"] = list(bind)
+    sys.argv = sys.argv[:1]
     PulpcoreContentApplication(options).run()

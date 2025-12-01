@@ -156,6 +156,20 @@ class UploadSerializerFieldsMixin(Serializer):
 class NoArtifactContentUploadSerializer(UploadSerializerFieldsMixin, NoArtifactContentSerializer):
     """A serializer for content types with no Artifact."""
 
+    def deferred_validate(self, data):
+        """Ensure file is present in validated_data."""
+        data = super().deferred_validate(data)
+        if "file" not in data:
+            if "artifact" in data:
+                artifact = data.pop("artifact")
+                with NamedTemporaryFile(mode="ab", dir=".", delete=False) as temp_file:
+                    temp_file.write(artifact.file.read())
+                    temp_file.flush()
+                data["file"] = PulpTemporaryUploadedFile.from_file(open(temp_file.name, "rb"))
+            else:
+                raise RuntimeError("No file found for NoArtifactContentUploadSerializer.")
+        return data
+
     def create(self, validated_data):
         """Create a new content and remove the already parsed file from validated_data."""
         validated_data.pop("file", None)
