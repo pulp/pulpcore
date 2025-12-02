@@ -5,8 +5,6 @@ from .base import (
     exception_to_dict,
     DomainProtectedError,
     DnsDomainNameException,
-    ImmediateTaskTimeoutError,
-    NonAsyncImmediateTaskError,
     UrlSchemeNotSupportedError,
     ProxyAuthenticationRequiredError,
     RepositoryVersionDeleteError,

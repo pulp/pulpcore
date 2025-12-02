@@ -7,7 +7,7 @@ import hashlib
 
 from asgiref.sync import sync_to_async
 from django.db import transaction
-from exceptions.base import RepositoryVersionDeleteError
+from pulpcore.exceptions import RepositoryVersionDeleteError
 
 from pulpcore.app import models
 from pulpcore.app.models import ProgressReport

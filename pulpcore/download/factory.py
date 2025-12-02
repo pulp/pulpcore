@@ -2,7 +2,6 @@ from aiohttp import __version__ as aiohttp_version
 import asyncio
 import atexit
 import copy
-from gettext import gettext as _
 from multidict import MultiDict
 import platform
 import ssl

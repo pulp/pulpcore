@@ -32,8 +32,6 @@ from pulpcore.constants import (
 )
 from pulpcore.exceptions.base import (
     PulpException,
-    ImmediateTaskTimeoutError,
-    NonAsyncImmediateTaskError,
 )
 from pulpcore.middleware import x_task_diagnostics_var
 from pulpcore.tasking.kafka import send_task_notification

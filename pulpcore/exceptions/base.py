@@ -115,41 +115,6 @@ class DnsDomainNameException(PulpException):
         )
 
 
-class ImmediateTaskTimeoutError(PulpException):
-    """
-    Exception to signal that an immediate task timed out.
-    """
-
-    def __init__(self, task_pk, timeout_seconds):
-        """
-        :param task_pk: The PK of the task that timed out.
-        :type task_pk: str
-        :param timeout_seconds: The timeout duration.
-        :type timeout_seconds: int or str
-        """
-        super().__init__("PLP0009")
-        self.task_pk = task_pk
-        self.timeout_seconds = timeout_seconds
-
-    def __str__(self):
-        return _("Immediate task {task_pk} timed out after {timeout_seconds} seconds.").format(
-            task_pk=self.task_pk, timeout_seconds=self.timeout_seconds
-        )
-
-
-class NonAsyncImmediateTaskError(PulpException):
-    """
-    Exception raised when a task is marked as 'immediate' but is not
-    an async coroutine function.
-    """
-
-    def __init__(self):
-        super().__init__("PLP0010")
-
-    def __str__(self):
-        return _("Immediate tasks must be async functions.")
-
-
 class UrlSchemeNotSupportedError(PulpException):
     """
     Exception raised when a URL scheme (e.g. 'ftp://') is provided that
@@ -161,7 +126,7 @@ class UrlSchemeNotSupportedError(PulpException):
         :param url: The full URL that failed validation.
         :type url: str
         """
-        super().__init__("PLP0011")
+        super().__init__("PLP0009")
         self.url = url
 
     def __str__(self):
@@ -179,7 +144,7 @@ class ProxyAuthenticationRequiredError(PulpException):
         :param proxy_url: The URL of the proxy server.
         :type proxy_url: str
         """
-        super().__init__("PLP0012")
+        super().__init__("PLP0010")
         self.proxy_url = proxy_url
 
     def __str__(self):
@@ -194,9 +159,10 @@ class RepositoryVersionDeleteError(PulpException):
     """
 
     def __init__(self):
-        super().__init__("PLP0013")
+        super().__init__("PLP0011")
 
     def __str__(self):
         return _(
-            "Cannot delete repository version. Repositories must have at least one repository version."
+            "Cannot delete repository version. Repositories must have at least one "
+            "repository version."
         )
