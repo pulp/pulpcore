@@ -1422,7 +1422,7 @@ class RepositoryVersionContentDetails(models.Model):
         ctype_model = ctypes[self.content_type]
         ctype_view = get_view_name_for_model(ctype_model, "list")
         try:
-            ctype_url = reverse(ctype_view, request=request)
+            ctype_url = reverse(ctype_view, request=request)  # TODO: reverse() + namespacing issues
         except django.urls.exceptions.NoReverseMatch:
             # We've hit a content type for which there is no viewset.
             # There's nothing we can do here, except to skip it.
