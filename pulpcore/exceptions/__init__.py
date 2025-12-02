@@ -8,6 +8,7 @@ from .base import (
     ImmediateTaskTimeoutError,
     NonAsyncImmediateTaskError,
     UrlSchemeNotSupportedError,
+    ProxyAuthenticationRequiredError,
 )
 from .validation import (
     DigestValidationError,

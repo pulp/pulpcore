@@ -10,6 +10,7 @@ from pulpcore.exceptions import (
     SizeValidationError,
     TimeoutException,
     DnsDomainNameException,
+    ProxyAuthenticationRequiredError,
 )
 
 
@@ -300,6 +301,8 @@ class HttpDownloader(BaseDownloader):
                 await response.release()
         except aiohttp.ClientConnectorDNSError:
             raise DnsDomainNameException(self.url)
+        except aiohttp.ClientHttpProxyError:
+            raise ProxyAuthenticationRequiredError(self.proxy)
         if self._close_session_on_finalize:
             await self.session.close()
         return to_return

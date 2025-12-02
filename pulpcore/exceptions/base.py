@@ -166,3 +166,14 @@ class UrlSchemeNotSupportedError(PulpException):
 
     def __str__(self):
         return _("URL: {u} not supported.").format(u=self.url)
+
+
+class ProxyAuthenticationRequiredError(PulpException):
+    def __init__(self, proxy_url):
+        super().__init__("PLP0012")
+        self.proxy_url = proxy_url
+
+    def __str__(self):
+        return _(
+            "Proxy authentication failed for {proxy_url}. Please check your proxy credentials."
+        ).format(proxy_url=self.proxy_url)
