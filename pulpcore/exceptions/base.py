@@ -169,7 +169,16 @@ class UrlSchemeNotSupportedError(PulpException):
 
 
 class ProxyAuthenticationRequiredError(PulpException):
+    """
+    Exception to signal that the proxy server requires authentication
+    but it was not provided or is invalid (HTTP 407).
+    """
+
     def __init__(self, proxy_url):
+        """
+        :param proxy_url: The URL of the proxy server.
+        :type proxy_url: str
+        """
         super().__init__("PLP0012")
         self.proxy_url = proxy_url
 
@@ -177,3 +186,17 @@ class ProxyAuthenticationRequiredError(PulpException):
         return _(
             "Proxy authentication failed for {proxy_url}. Please check your proxy credentials."
         ).format(proxy_url=self.proxy_url)
+
+
+class RepositoryVersionDeleteError(PulpException):
+    """
+    Raised when attempting to delete a repository version that cannot be deleted
+    """
+
+    def __init__(self):
+        super().__init__("PLP0013")
+
+    def __str__(self):
+        return _(
+            "Cannot delete repository version. Repositories must have at least one repository version."
+        )

@@ -9,6 +9,7 @@ from .base import (
     NonAsyncImmediateTaskError,
     UrlSchemeNotSupportedError,
     ProxyAuthenticationRequiredError,
+    RepositoryVersionDeleteError,
 )
 from .validation import (
     DigestValidationError,
