@@ -276,7 +276,7 @@ def _clean_app_status(sender, apps, verbosity, **kwargs):
 
     for app_name, app_ttl in app_ttl_map:
         try:
-            app_cls = apps.get_model("core", "ContentAppStatus")
+            app_cls = apps.get_model("core", app_name)
         except LookupError:
             if verbosity >= 1:
                 print(
