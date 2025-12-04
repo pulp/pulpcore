@@ -8,6 +8,21 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.28.42 (2025-12-04) {: #3.28.42 }
+
+### REST API {: #3.28.42-rest-api }
+
+#### Bugfixes {: #3.28.42-rest-api-bugfix }
+
+- pulp-worker fails to start with "float object cannot be interpreted as an integer" on some versions of python.
+  [#5861](https://github.com/pulp/pulpcore/issues/5861)
+
+### Plugin API {: #3.28.42-plugin-api }
+
+No significant changes.
+
+---
+
 ## 3.28.41 (2025-11-13) {: #3.28.41 }
 
 ### REST API {: #3.28.41-rest-api }
