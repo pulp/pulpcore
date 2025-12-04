@@ -8,6 +8,30 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.49.47 (2025-12-04) {: #3.49.47 }
+
+### REST API {: #3.49.47-rest-api }
+
+#### Bugfixes {: #3.49.47-rest-api-bugfix }
+
+- pulp-worker fails to start with "float object cannot be interpreted as an integer" on some versions of python.
+  [#5861](https://github.com/pulp/pulpcore/issues/5861)
+- Fixed a bug in the pre-migration hook that prevented proper cleanup of all Pulp app db records (content, api, worker).
+
+### Plugin API {: #3.49.47-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.47-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.47-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.49.46 (2025-11-13) {: #3.49.46 }
 
 ### REST API {: #3.49.46-rest-api }
