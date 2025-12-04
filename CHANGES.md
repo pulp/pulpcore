@@ -8,6 +8,28 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.95.0 (2025-12-04) {: #3.95.0 }
+
+### REST API {: #3.95.0-rest-api }
+
+#### Features {: #3.95.0-rest-api-feature }
+
+- Improve touch performance in highly concurrent content operations.
+
+### Plugin API {: #3.95.0-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.95.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.95.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.94.0 (2025-11-25) {: #3.94.0 }
 
 ### REST API {: #3.94.0-rest-api }
