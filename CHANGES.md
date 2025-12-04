@@ -8,6 +8,28 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.63.26 (2025-12-04) {: #3.63.26 }
+
+### REST API {: #3.63.26-rest-api }
+
+#### Bugfixes {: #3.63.26-rest-api-bugfix }
+
+- Fixed a bug in the pre-migration hook that prevented proper cleanup of all Pulp app db records (content, api, worker).
+
+### Plugin API {: #3.63.26-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.26-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.26-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.63.25 (2025-11-13) {: #3.63.25 }
 
 ### REST API {: #3.63.25-rest-api }

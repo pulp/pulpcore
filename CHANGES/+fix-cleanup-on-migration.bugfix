@@ -1,1 +1,0 @@
-Fixed a bug in the pre-migration hook that prevented proper cleanup of all Pulp app db records (content, api, worker).
