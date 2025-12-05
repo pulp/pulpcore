@@ -1,0 +1,2 @@
+Improved the error message for incompatible component versions when doing a migration.
+Now it instructs the user with a safe path to take when the components were improperly shutdown.
