@@ -1,5 +1,6 @@
 import os
 import platform
+from ssl import SSLCertVerificationError
 import sys
 from tempfile import NamedTemporaryFile
 
@@ -9,6 +10,7 @@ from pulpcore.constants import TASK_STATES
 from pulpcore.app.apps import pulp_plugin_configs, PulpAppConfig
 from pulpcore.app.models import UpstreamPulp, Task, TaskGroup
 from pulpcore.app.replica import ReplicaContext
+from pulpcore.exceptions.base import SSLCertificateVerificationError
 from pulpcore.tasking.tasks import dispatch
 
 from pulp_glue.common import __version__ as pulp_glue_version
@@ -68,43 +70,48 @@ def replicate_distributions(server_pk):
 
     task_group = TaskGroup.current()
     supported_replicators = []
-    # Load all the available replicators
-    for config in pulp_plugin_configs():
-        if config.replicator_classes:
-            for replicator_class in config.replicator_classes:
-                req = PluginRequirement(config.label, specifier=replicator_class.required_version)
-                if ctx.has_plugin(req):
-                    replicator = replicator_class(ctx, task_group, tls_settings, server)
-                    supported_replicators.append(replicator)
+    try:
+        # Load all the available replicators
+        for config in pulp_plugin_configs():
+            if config.replicator_classes:
+                for replicator_class in config.replicator_classes:
+                    req = PluginRequirement(
+                        config.label, specifier=replicator_class.required_version
+                    )
+                    if ctx.has_plugin(req):
+                        replicator = replicator_class(ctx, task_group, tls_settings, server)
+                        supported_replicators.append(replicator)
 
-    for replicator in supported_replicators:
-        distros = replicator.upstream_distributions(q=server.q_select)
-        distro_names = []
-        for distro in distros:
-            # Create remote
-            remote = replicator.create_or_update_remote(upstream_distribution=distro)
-            if not remote:
-                # The upstream distribution is not serving any content,
-                # let if fall through the cracks and be cleanup below.
-                continue
-            # Check if there is already a repository
-            repository = replicator.create_or_update_repository(remote=remote)
-            if not repository:
-                # No update occured because server.policy==LABELED and there was
-                # an already existing local repository with the same name
-                continue
+        for replicator in supported_replicators:
+            distros = replicator.upstream_distributions(q=server.q_select)
+            distro_names = []
+            for distro in distros:
+                # Create remote
+                remote = replicator.create_or_update_remote(upstream_distribution=distro)
+                if not remote:
+                    # The upstream distribution is not serving any content,
+                    # let if fall through the cracks and be cleanup below.
+                    continue
+                # Check if there is already a repository
+                repository = replicator.create_or_update_repository(remote=remote)
+                if not repository:
+                    # No update occured because server.policy==LABELED and there was
+                    # an already existing local repository with the same name
+                    continue
 
-            # Dispatch a sync task if needed
-            if replicator.requires_syncing(distro):
-                replicator.sync(repository, remote)
+                # Dispatch a sync task if needed
+                if replicator.requires_syncing(distro):
+                    replicator.sync(repository, remote)
 
-            # Get or create a distribution
-            replicator.create_or_update_distribution(repository, distro)
+                # Get or create a distribution
+                replicator.create_or_update_distribution(repository, distro)
 
-            # Add name to the list of known distribution names
-            distro_names.append(distro["name"])
+                # Add name to the list of known distribution names
+                distro_names.append(distro["name"])
 
-        replicator.remove_missing(distro_names)
+            replicator.remove_missing(distro_names)
+    except SSLCertVerificationError:
+        raise SSLCertificateVerificationError(server.base_url)  # Custom PulpException for this case
 
     dispatch(
         finalize_replication,

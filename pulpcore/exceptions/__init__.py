@@ -4,6 +4,11 @@ from .base import (
     TimeoutException,
     exception_to_dict,
     DomainProtectedError,
+    DnsDomainNameException,
+    UrlSchemeNotSupportedError,
+    ProxyAuthenticationRequiredError,
+    RepositoryVersionDeleteError,
+    SSLCertificateVerificationError,
 )
 from .validation import (
     DigestValidationError,
