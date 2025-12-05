@@ -8,6 +8,7 @@ from .base import (
     UrlSchemeNotSupportedError,
     ProxyAuthenticationRequiredError,
     RepositoryVersionDeleteError,
+    SSLCertificateVerificationError,
 )
 from .validation import (
     DigestValidationError,

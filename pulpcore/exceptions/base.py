@@ -166,3 +166,24 @@ class RepositoryVersionDeleteError(PulpException):
             "Cannot delete repository version. Repositories must have at least one "
             "repository version."
         )
+
+
+class SSLCertificateVerificationError(PulpException):
+    """
+    Exception raised when SSL certificate verification fails due to incorrect
+    CA certificate configuration by the user.
+    """
+
+    def __init__(self, url):
+        """
+        :param url: The URL where certificate verification failed.
+        :type url: str
+        """
+        super().__init__("PLP0012")
+        self.url = url
+
+    def __str__(self):
+        return _(
+            "SSL certificate verification failed for {url}. "
+            "The configured CA certificate does not match the server's certificate. "
+        ).format(url=self.url)
