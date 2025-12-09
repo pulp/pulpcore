@@ -1177,6 +1177,12 @@ class Handler:
             response.headers["X-PULP-ARTIFACT-SIZE"] = str(size)
             artifacts_size_counter.add(size)
 
+        # manually close the DownloadFactory's (HTTP-)session, the next artifact-download will
+        # create a new DownloadFactory anyway because it will use a new remote-object.
+        # Leaving it open also left open file-descriptors to /dev/urandom. Most likely these FDs are
+        # held by the underlying SSL library.
+        await downloader.session.close()
+
         if save_artifact and remote.policy != Remote.STREAMED:
             await asyncio.shield(
                 sync_to_async(self._save_artifact)(download_result, remote_artifact, request)
