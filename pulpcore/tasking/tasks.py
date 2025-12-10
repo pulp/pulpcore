@@ -30,9 +30,9 @@ from pulpcore.constants import (
     TASK_WAKEUP_HANDLE,
     TASK_WAKEUP_UNBLOCK,
 )
-from pulpcore.exceptions.base import (
-    PulpException,
-)
+from pulpcore.exceptions.base import PulpException
+from pulp_glue.common.exceptions import PulpException as PulpGlueException
+
 from pulpcore.middleware import x_task_diagnostics_var
 from pulpcore.tasking.kafka import send_task_notification
 
@@ -74,7 +74,7 @@ def _execute_task(task):
             log_task_start(task, domain)
             task_function = get_task_function(task)
             result = task_function()
-        except PulpException:
+        except (PulpException, PulpGlueException):
             exc_type, exc, _ = sys.exc_info()
             log_task_failed(task, exc_type, exc, None, domain)  # Leave no traceback in logs
             task.set_failed(exc)
@@ -106,7 +106,7 @@ async def _aexecute_task(task):
         try:
             task_coroutine_fn = await aget_task_function(task)
             result = await task_coroutine_fn()
-        except PulpException:
+        except (PulpException, PulpGlueException):
             exc_type, exc, _ = sys.exc_info()
             log_task_failed(task, exc_type, exc, None, domain)  # Leave no traceback in logs
             await sync_to_async(task.set_failed)(exc)
