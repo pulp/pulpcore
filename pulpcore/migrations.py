@@ -78,7 +78,10 @@ class RequireVersion(Operation):
                         f"({self.plugin} >= {self.version} needed):",
                         *errors,
                         "Please shutdown or upgrade the outdated components before you "
-                        "continue the migration.",
+                        "continue the migration. \n"
+                        "If the components were not gracefully shutdown, wait for the "
+                        "larger component TTL period before running the migration ",
+                        "(API_APP_TTL, CONTENT_APP_TTL or WORKER_TTL).",
                     ]
                 )
             )

@@ -8,6 +8,50 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.95.1 (2025-12-09) {: #3.95.1 }
+
+### REST API {: #3.95.1-rest-api }
+
+#### Misc {: #3.95.1-rest-api-misc }
+
+- 
+
+### Plugin API {: #3.95.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.95.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.95.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.95.0 (2025-12-04) {: #3.95.0 }
+
+### REST API {: #3.95.0-rest-api }
+
+#### Features {: #3.95.0-rest-api-feature }
+
+- Improve touch performance in highly concurrent content operations.
+
+### Plugin API {: #3.95.0-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.95.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.95.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.94.0 (2025-11-25) {: #3.94.0 }
 
 ### REST API {: #3.94.0-rest-api }
@@ -498,6 +542,28 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.86.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.85.4 (2025-12-09) {: #3.85.4 }
+
+### REST API {: #3.85.4-rest-api }
+
+#### Misc {: #3.85.4-rest-api-misc }
+
+- 
+
+### Plugin API {: #3.85.4-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.85.4-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.4-pulp-cert-guard }
 
 No significant changes.
 
@@ -1331,6 +1397,50 @@ No significant changes.
   [#6244](https://github.com/pulp/pulpcore/issues/6244)
 
 ### Pulp Cert Guard {: #3.74.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.73.20 (2025-12-09) {: #3.73.20 }
+
+### REST API {: #3.73.20-rest-api }
+
+#### Misc {: #3.73.20-rest-api-misc }
+
+- 
+
+### Plugin API {: #3.73.20-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.73.20-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.20-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.73.19 (2025-12-04) {: #3.73.19 }
+
+### REST API {: #3.73.19-rest-api }
+
+#### Bugfixes {: #3.73.19-rest-api-bugfix }
+
+- Fixed a bug in the pre-migration hook that prevented proper cleanup of all Pulp app db records (content, api, worker).
+
+### Plugin API {: #3.73.19-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.73.19-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.19-pulp-cert-guard }
 
 No significant changes.
 
@@ -2437,6 +2547,50 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.64.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.63.27 (2025-12-09) {: #3.63.27 }
+
+### REST API {: #3.63.27-rest-api }
+
+#### Misc {: #3.63.27-rest-api-misc }
+
+- 
+
+### Plugin API {: #3.63.27-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.27-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.27-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.63.26 (2025-12-04) {: #3.63.26 }
+
+### REST API {: #3.63.26-rest-api }
+
+#### Bugfixes {: #3.63.26-rest-api-bugfix }
+
+- Fixed a bug in the pre-migration hook that prevented proper cleanup of all Pulp app db records (content, api, worker).
+
+### Plugin API {: #3.63.26-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.26-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.26-pulp-cert-guard }
 
 No significant changes.
 
@@ -3854,6 +4008,52 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard
+
+No significant changes.
+
+---
+
+## 3.49.48 (2025-12-09) {: #3.49.48 }
+
+### REST API {: #3.49.48-rest-api }
+
+#### Misc {: #3.49.48-rest-api-misc }
+
+- 
+
+### Plugin API {: #3.49.48-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.48-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.48-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.49.47 (2025-12-04) {: #3.49.47 }
+
+### REST API {: #3.49.47-rest-api }
+
+#### Bugfixes {: #3.49.47-rest-api-bugfix }
+
+- pulp-worker fails to start with "float object cannot be interpreted as an integer" on some versions of python.
+  [#5861](https://github.com/pulp/pulpcore/issues/5861)
+- Fixed a bug in the pre-migration hook that prevented proper cleanup of all Pulp app db records (content, api, worker).
+
+### Plugin API {: #3.49.47-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.47-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.47-pulp-cert-guard }
 
 No significant changes.
 
@@ -5513,6 +5713,18 @@ No significant changes.
 -   Starting from this release pulp_file will be shipped as part of the pulpcore package.
     [#4550](https://github.com/pulp/pulpcore/issues/4550)
 
+## 3.39.35 (2025-12-09) {: #3.39.35 }
+
+### REST API {: #3.39.35-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.39.35-plugin-api }
+
+No significant changes.
+
+---
+
 ## 3.39.34 (2025-11-13) {: #3.39.34 }
 
 ### REST API {: #3.39.34-rest-api }
@@ -6524,6 +6736,33 @@ No significant changes.
 #### Misc
 
 -   [#3798](https://github.com/pulp/pulpcore/issues/3798)
+
+## 3.28.43 (2025-12-09) {: #3.28.43 }
+
+### REST API {: #3.28.43-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.28.43-plugin-api }
+
+No significant changes.
+
+---
+
+## 3.28.42 (2025-12-04) {: #3.28.42 }
+
+### REST API {: #3.28.42-rest-api }
+
+#### Bugfixes {: #3.28.42-rest-api-bugfix }
+
+- pulp-worker fails to start with "float object cannot be interpreted as an integer" on some versions of python.
+  [#5861](https://github.com/pulp/pulpcore/issues/5861)
+
+### Plugin API {: #3.28.42-plugin-api }
+
+No significant changes.
+
+---
 
 ## 3.28.41 (2025-11-13) {: #3.28.41 }
 
