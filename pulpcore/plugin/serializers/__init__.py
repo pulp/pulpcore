@@ -29,6 +29,7 @@ from pulpcore.app.serializers import (
     RepositorySerializer,
     RepositorySyncURLSerializer,
     RepositoryVersionRelatedField,
+    RepositoryVersionSerializer,
     SingleArtifactContentSerializer,
     SingleContentArtifactField,
     TaskGroupOperationResponseSerializer,
