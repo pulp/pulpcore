@@ -1,3 +1,0 @@
-Exposed `RepositoryVersionSerializer` to the plugin API.
-In some cases a plugin might have used that serializer for a newer pulpcore version
-but it could also be installed with a lower pulpcore version.
