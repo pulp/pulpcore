@@ -36,7 +36,7 @@ jobs:
 
       - name: "Lint workflow files"
         run: |
-          yamllint -s -d '{extends: relaxed, rules: {line-length: disable}}' .github/workflows
+          yamllint
 
       - name: "Verify bump version config"
         run: |
