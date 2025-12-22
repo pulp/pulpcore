@@ -24,3 +24,7 @@ repos:
     rev: v1.37.1
     hooks:
       - id: yamllint
+  - repo: 'https://github.com/mgedmin/check-manifest'
+    rev: "0.51"
+    hooks:
+      - id: check-manifest
