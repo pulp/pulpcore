@@ -8,6 +8,30 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.49.49 (2025-12-22) {: #3.49.49 }
+
+### REST API {: #3.49.49-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.49.49-plugin-api }
+
+#### Bugfixes {: #3.49.49-plugin-api-bugfix }
+
+- Exposed `RepositoryVersionSerializer` to the plugin API.
+  In some cases a plugin might have used that serializer for a newer pulpcore version
+  but it could also be installed with a lower pulpcore version.
+
+### Pulp File {: #3.49.49-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.49-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.49.48 (2025-12-09) {: #3.49.48 }
 
 ### REST API {: #3.49.48-rest-api }
