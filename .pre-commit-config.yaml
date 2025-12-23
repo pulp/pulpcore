@@ -28,3 +28,25 @@ repos:
     rev: "0.51"
     hooks:
       - id: check-manifest
+  - repo: local
+    hooks:
+      - id: check-requirements
+        name: check-requirements
+        language: python
+        entry: python .ci/scripts/check_requirements.py
+        pass_filenames: false
+        additional_dependencies: ["packaging"]
+  - repo: local
+    hooks:
+      - id: check-gettext
+        name: check-gettext
+        language: unsupported_script
+        types: [python]
+        entry: .ci/scripts/check_gettext.sh
+  - repo: local
+    hooks:
+      - id: extra-lint
+        name: extra-lint
+        language: unsupported
+        entry: sh -c "[ ! -x .ci/scripts/extra_linting.sh ] || .ci/scripts/extra_linting.sh"
+        pass_filenames: false

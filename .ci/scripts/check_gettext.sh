@@ -10,11 +10,17 @@
 # make sure this script runs at the repo root
 cd "$(dirname "$(realpath -e "$0")")"/../..
 
-set -uv
+set -u
 
-MATCHES=$(grep -n -r --include \*.py "_(f")
+if [ $# -gt 0 ]; then
+  MATCHES=$(grep -n "_(f" "$@" 2>/dev/null || true)
+else
+  # fallback to original behavior if no files are provided
+  set -v
+  MATCHES=$(grep -n -r --include \*.py "_(f")
+fi
 
-if [ $? -ne 1 ]; then
+if [ -n "$MATCHES" ]; then
   printf "\nERROR: Detected mix of f-strings and gettext:\n"
   echo "$MATCHES"
   exit 1
