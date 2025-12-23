@@ -30,21 +30,23 @@ repos:
       - id: check-manifest
   - repo: local
     hooks:
+      - id: check-bump
+        name: check-bump
+        language: python
+        entry: .ci/scripts/check_bump.sh
+        pass_filenames: false
+        additional_dependencies: ["bump-my-version"]
       - id: check-requirements
         name: check-requirements
         language: python
         entry: python .ci/scripts/check_requirements.py
         pass_filenames: false
         additional_dependencies: ["packaging"]
-  - repo: local
-    hooks:
       - id: check-gettext
         name: check-gettext
         language: unsupported_script
         types: [python]
         entry: .ci/scripts/check_gettext.sh
-  - repo: local
-    hooks:
       - id: extra-lint
         name: extra-lint
         language: unsupported
