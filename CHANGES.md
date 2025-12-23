@@ -590,6 +590,30 @@ No significant changes.
 
 ---
 
+## 3.85.7 (2025-12-22) {: #3.85.7 }
+
+### REST API {: #3.85.7-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.85.7-plugin-api }
+
+#### Bugfixes {: #3.85.7-plugin-api-bugfix }
+
+- Exposed `RepositoryVersionSerializer` to the plugin API.
+  In some cases a plugin might have used that serializer for a newer pulpcore version
+  but it could also be installed with a lower pulpcore version.
+
+### Pulp File {: #3.85.7-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.7-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.85.6 (2025-12-17) {: #3.85.6 }
 
 ### REST API {: #3.85.6-rest-api }
@@ -1483,6 +1507,30 @@ No significant changes.
   [#6244](https://github.com/pulp/pulpcore/issues/6244)
 
 ### Pulp Cert Guard {: #3.74.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.73.21 (2025-12-22) {: #3.73.21 }
+
+### REST API {: #3.73.21-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.73.21-plugin-api }
+
+#### Bugfixes {: #3.73.21-plugin-api-bugfix }
+
+- Exposed `RepositoryVersionSerializer` to the plugin API.
+  In some cases a plugin might have used that serializer for a newer pulpcore version
+  but it could also be installed with a lower pulpcore version.
+
+### Pulp File {: #3.73.21-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.21-pulp-cert-guard }
 
 No significant changes.
 
@@ -2633,6 +2681,30 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.64.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.63.28 (2025-12-22) {: #3.63.28 }
+
+### REST API {: #3.63.28-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.63.28-plugin-api }
+
+#### Bugfixes {: #3.63.28-plugin-api-bugfix }
+
+- Exposed `RepositoryVersionSerializer` to the plugin API.
+  In some cases a plugin might have used that serializer for a newer pulpcore version
+  but it could also be installed with a lower pulpcore version.
+
+### Pulp File {: #3.63.28-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.28-pulp-cert-guard }
 
 No significant changes.
 
@@ -4094,6 +4166,30 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard
+
+No significant changes.
+
+---
+
+## 3.49.49 (2025-12-22) {: #3.49.49 }
+
+### REST API {: #3.49.49-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.49.49-plugin-api }
+
+#### Bugfixes {: #3.49.49-plugin-api-bugfix }
+
+- Exposed `RepositoryVersionSerializer` to the plugin API.
+  In some cases a plugin might have used that serializer for a newer pulpcore version
+  but it could also be installed with a lower pulpcore version.
+
+### Pulp File {: #3.49.49-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.49-pulp-cert-guard }
 
 No significant changes.
 
