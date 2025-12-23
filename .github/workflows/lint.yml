@@ -23,49 +23,26 @@ jobs:
         with:
           fetch-depth: 1
           path: "pulpcore"
-
       - uses: "actions/setup-python@v5"
         with:
           python-version: "3.11"
-
-      - name: "Install python dependencies"
+      # cache example from:
+      # https://pre-commit.com/#github-actions-example
+      - name: set PY
+        run: echo "PY=$(python -VV | sha256sum | cut -d' ' -f1)" >> $GITHUB_ENV
+      - uses: actions/cache@v5
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit|${{ env.PY }}|${{ hashFiles('.pre-commit-config.yaml') }}
+      - name: Install pre-commit
         run: |
-          echo ::group::PYDEPS
-          pip install -r lint_requirements.txt
-          echo ::endgroup::
-
-      - name: "Lint workflow files"
+          pip install pre-commit
+      - name: Run pre-commit
+        shell: "bash"
+        env:
+          PY_COLORS: "1"
+          FORCE_COLOR: "1"
+          PRE_COMMIT_COLOR: "always"
+          TERM: "xterm-256color"
         run: |
-          yamllint
-
-      - name: "Verify bump version config"
-        run: |
-          bump-my-version bump --dry-run release
-          bump-my-version show-bump
-
-      # run black separately from flake8 to get a diff
-      - name: "Run black"
-        run: |
-          black --version
-          black --check --diff .
-
-      # Lint code.
-      - name: "Run flake8"
-        run: |
-          flake8
-
-      - name: "Run extra lint checks"
-        run: |
-          [ ! -x .ci/scripts/extra_linting.sh ] || .ci/scripts/extra_linting.sh
-
-      - name: "Check for any files unintentionally left out of MANIFEST.in"
-        run: |
-          check-manifest
-
-      - name: "Verify requirements files"
-        run: |
-          python .ci/scripts/check_requirements.py
-
-      - name: "Check for common gettext problems"
-        run: |
-          sh .ci/scripts/check_gettext.sh
+          pre-commit run --all-files -v
