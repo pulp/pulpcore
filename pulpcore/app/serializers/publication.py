@@ -221,6 +221,7 @@ class DistributionSerializer(ModelSerializer):
                     overlap with other distribution base paths (e.g. "foo" and "foo/bar")'
         ),
         validators=[DomainUniqueValidator(queryset=models.Distribution.objects.all())],
+        allow_blank=True,
     )
     base_url = BaseURLField(
         source="*",

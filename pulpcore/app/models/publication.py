@@ -615,7 +615,7 @@ class Distribution(MasterModel):
 
     name = models.TextField(db_index=True)
     pulp_labels = HStoreField(default=dict)
-    base_path = models.TextField()
+    base_path = models.TextField(blank=True)
     pulp_domain = models.ForeignKey("Domain", default=get_domain_pk, on_delete=models.PROTECT)
     hidden = models.BooleanField(default=False, null=True)
     checkpoint = models.BooleanField(default=False)
