@@ -15,6 +15,8 @@ __all__ = ["ModifyRepositoryActionMixin"]
 
 
 class ModifyRepositoryActionMixin:
+    modify_task = tasks.repository.add_and_remove
+
     @extend_schema(
         description="Trigger an asynchronous task to create a new repository version.",
         summary="Modify Repository Content",
@@ -35,7 +37,7 @@ class ModifyRepositoryActionMixin:
             base_version_pk = None
 
         task = dispatch(
-            tasks.repository.add_and_remove,
+            self.modify_task,
             exclusive_resources=[repository],
             kwargs={
                 "repository_pk": pk,
