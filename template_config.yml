@@ -128,7 +128,6 @@ stalebot_days_until_stale: 90
 stalebot_limit_to_pulls: true
 supported_release_branches:
 - '3.28'
-- '3.39'
 - '3.49'
 - '3.63'
 - '3.73'

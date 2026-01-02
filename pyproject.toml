@@ -48,15 +48,14 @@ dependencies = [
   "json_stream>=2.3.2,<2.5",
   "jq>=1.6.0,<1.11.0",
   "PyOpenSSL<26.0",
-  "opentelemetry-api>=1.27.0,<1.39",
-  "opentelemetry-sdk>=1.27.0,<1.39",
-  "opentelemetry-exporter-otlp-proto-http>=1.27.0,<1.39",
+  "opentelemetry-api>=1.27.0,<1.40",
+  "opentelemetry-sdk>=1.27.0,<1.40",
+  "opentelemetry-exporter-otlp-proto-http>=1.27.0,<1.40",
   "protobuf>=4.21.1,<7.0",
   "pulp-glue>=0.30.0,<0.37",
   "pygtrie>=2.5,<=2.5.0",
   "psycopg[binary]>=3.1.8,<3.4",  # SemVer, not explicitely stated, but mentioned on multiple changes.
-  "pycares>=4.0.0,<5.0",  # Explicit dependency to ensure compatibility with aiodns.
-  "pyparsing>=3.1.0,<3.3",    # Looks like only bugfixes in z-Stream.
+  "pyparsing>=3.1.0,<3.4",    # Looks like only bugfixes in z-Stream.
   "python-gnupg>=0.5.0,<0.6",  # Looks like only bugfixes in z-Stream [changelog only in git]
   "PyYAML>=5.1.1,<6.1",  # Looks like only bugfixes in z-Stream.
   "redis>=4.3.0,<7.2",  # Looks like only bugfixes in z-Stream.
