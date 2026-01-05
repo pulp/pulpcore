@@ -1,0 +1,2 @@
+Removed the fallback for unserializable task return values.
+Tasks resulting from an api action should use the corresponding serializer to produce useful output. Maintenance tasks should return nothing.

@@ -2,7 +2,6 @@
 Django models related to the Tasking system
 """
 
-import json
 import logging
 import traceback
 from gettext import gettext as _
@@ -233,16 +232,6 @@ class Task(BaseModel, AutoAddObjPermsMixin):
         This updates the :attr:`finished_at` and sets the :attr:`state` to :attr:`COMPLETED`.
         If `result` is provided, the :attr:`result` contains the result of the task.
         """
-        try:
-            json.dumps(result, cls=DjangoJSONEncoder)
-        except (TypeError, ValueError):
-            deprecation_logger.warning(
-                _(
-                    "The result of the {} function is not JSON-serializable and will be "
-                    "replaced with None: {}. This will raise an error in version 3.100."
-                ).format(self.name, result)
-            )
-            result = None
 
         # Only set the state to finished if it's running. This is important for when the task has
         # been canceled, so we don't move the task from canceled to finished.
