@@ -75,7 +75,7 @@ prometheus = ["django-prometheus"]
 kafka = [
   # Pinned because project warns "things might (and will) break with every update"
   "cloudevents==1.11.0",
-  "confluent-kafka>=2.4.0,<2.13.0",
+  "confluent-kafka>=2.4.0,<2.14.0",
 ]
 diagnostics = ["pyinstrument~=5.0", "memray~=1.17"]
 uvloop = ["uvloop>=0.20,<0.23"]
