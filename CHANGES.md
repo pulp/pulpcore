@@ -8,6 +8,44 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.100.0 (2026-01-06) {: #3.100.0 }
+
+### REST API {: #3.100.0-rest-api }
+
+#### Features {: #3.100.0-rest-api-feature }
+
+- Adapted PulpImport/Export to allow update django-import-export==4.x.
+  [#5324](https://github.com/pulp/pulpcore/issues/5324)
+- Allow use of Django5 as well as Django4.
+  [#6988](https://github.com/pulp/pulpcore/issues/6988)
+
+#### Bugfixes {: #3.100.0-rest-api-bugfix }
+
+- Fixed file handle leak when content app access triggers downloads due to on_demand or streamed policy.
+  [#7157](https://github.com/pulp/pulpcore/issues/7157)
+
+#### Misc {: #3.100.0-rest-api-misc }
+
+- 
+
+### Plugin API {: #3.100.0-plugin-api }
+
+#### Removals {: #3.100.0-plugin-api-removal }
+
+- Removed the fallback for unserializable task return values.
+  Tasks resulting from an api action should use the corresponding serializer to produce useful output. Maintenance tasks should return nothing.
+  [#6079](https://github.com/pulp/pulpcore/issues/6079)
+
+### Pulp File {: #3.100.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.100.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.95.3 (2025-12-17) {: #3.95.3 }
 
 ### REST API {: #3.95.3-rest-api }
