@@ -32,8 +32,8 @@ def test_report_state_changes(monkeypatch, to_state, use_canceled):
             try:
                 raise ValueError("test")
             except ValueError:
-                exc_type, exc, tb = sys.exc_info()
-                task.set_failed(exc, tb)
+                exc_type, exc, _ = sys.exc_info()
+                task.set_failed(exc)
     elif TASK_STATES.CANCELED == to_state:
         task.set_canceling()
         task.set_canceled()

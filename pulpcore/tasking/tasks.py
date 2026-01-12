@@ -30,8 +30,12 @@ from pulpcore.constants import (
     TASK_WAKEUP_HANDLE,
     TASK_WAKEUP_UNBLOCK,
 )
+from pulpcore.exceptions.base import PulpException, InternalErrorException
+from pulp_glue.common.exceptions import PulpException as PulpGlueException
+
 from pulpcore.middleware import x_task_diagnostics_var
 from pulpcore.tasking.kafka import send_task_notification
+
 
 _logger = logging.getLogger(__name__)
 
@@ -70,17 +74,22 @@ def _execute_task(task):
             log_task_start(task, domain)
             task_function = get_task_function(task)
             result = task_function()
+        except (PulpException, PulpGlueException):
+            # Log expected ways to fail without a stacktrace.
+            exc_type, exc, _ = sys.exc_info()
+            log_task_failed(task, exc_type, exc, None, domain)
+            task.set_failed(exc)
         except Exception:
+            # Unexpected Exceptions are most probably a programming error.
+            # Log error with stack trace and return generic error (HTTP 500).
             exc_type, exc, tb = sys.exc_info()
-            task.set_failed(exc, tb)
             log_task_failed(task, exc_type, exc, tb, domain)
-            send_task_notification(task)
+            safe_exc = InternalErrorException()
+            task.set_failed(safe_exc)
         else:
             task.set_completed(result)
             log_task_completed(task, domain)
-            send_task_notification(task)
-            return result
-        return None
+        send_task_notification(task)
 
 
 async def aexecute_task(task):
@@ -95,17 +104,23 @@ async def _aexecute_task(task):
         try:
             task_coroutine_fn = await aget_task_function(task)
             result = await task_coroutine_fn()
+        except (PulpException, PulpGlueException):
+            # Log expected ways to fail without a stacktrace.
+            exc_type, exc, _ = sys.exc_info()
+            log_task_failed(task, exc_type, exc, None, domain)
+            await sync_to_async(task.set_failed)(exc)
         except Exception:
+            # Unexpected Exceptions are most probably a programming error.
+            # Log error with stack trace and return generic error (HTTP 500).
             exc_type, exc, tb = sys.exc_info()
-            await sync_to_async(task.set_failed)(exc, tb)
             log_task_failed(task, exc_type, exc, tb, domain)
-            send_task_notification(task)
+            safe_exc = InternalErrorException()
+            await sync_to_async(task.set_failed)(safe_exc)
         else:
             await sync_to_async(task.set_completed)(result)
             send_task_notification(task)
             log_task_completed(task, domain)
-            return result
-        return None
+        send_task_notification(task)
 
 
 def log_task_start(task, domain):
@@ -144,7 +159,8 @@ def log_task_failed(task, exc_type, exc, tb, domain):
             domain=domain.name,
         )
     )
-    _logger.info("\n".join(traceback.format_list(traceback.extract_tb(tb))))
+    if tb:
+        _logger.info("\n".join(traceback.format_list(traceback.extract_tb(tb))))
 
 
 async def aget_task_function(task):
