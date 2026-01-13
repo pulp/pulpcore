@@ -8,6 +8,32 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.101.0 (2026-01-13) {: #3.101.0 }
+
+### REST API {: #3.101.0-rest-api }
+
+#### Improved Documentation {: #3.101.0-rest-api-doc }
+
+- Re-introduced "Hardware Requirements" page to the docs.
+  [#7063](https://github.com/pulp/pulpcore/issues/7063)
+
+### Plugin API {: #3.101.0-plugin-api }
+
+#### Features {: #3.101.0-plugin-api-feature }
+
+- Added `modify_task` property to `ModifyRepositoryActionMixin` so plugin writers can override the
+  task that Pulp calls.
+
+### Pulp File {: #3.101.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.101.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.100.0 (2026-01-06) {: #3.100.0 }
 
 ### REST API {: #3.100.0-rest-api }
