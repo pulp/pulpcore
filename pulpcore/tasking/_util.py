@@ -121,6 +121,8 @@ def _execute_task_and_profile(task, profile_options):
             _execute_task = _pyinstrument_diagnostic_decorator(temp_dir, _execute_task)
         if "memray" in profile_options:
             _execute_task = _memray_diagnostic_decorator(temp_dir, _execute_task)
+        if "logs" in profile_options:
+            _execute_task = _logging_decorator(temp_dir, _execute_task)
 
         _execute_task(task)
 
@@ -216,6 +218,49 @@ def _memray_diagnostic_decorator(temp_dir, func):
             func(task)
 
     return __memray_diagnostic_decorator
+
+
+def _logging_decorator(temp_dir, func):
+    def __logging_decorator(task):
+        log_file_path = os.path.join(temp_dir, "task_logs.log")
+
+        # Create a file handler that captures all logging levels
+        file_handler = logging.FileHandler(log_file_path, mode="w", encoding="utf-8")
+        file_handler.setLevel(logging.NOTSET)  # Capture all levels
+
+        # Create a formatter for consistent log formatting
+        formatter = logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+        )
+        file_handler.setFormatter(formatter)
+
+        # Get the root logger to capture all logs
+        root_logger = logging.getLogger()
+
+        try:
+            # Add the handler to the root logger
+            root_logger.addHandler(file_handler)
+
+            # Execute the task
+            func(task)
+        finally:
+            # Always remove the handler and restore original level
+            root_logger.removeHandler(file_handler)
+            file_handler.close()
+
+        # Save the log file as a ProfileArtifact
+        artifact = Artifact.init_and_validate(log_file_path)
+        try:
+            # it's unlikely for a log file to be identical, but we retain the same check as the
+            # other decorators
+            artifact.save()
+        except IntegrityError:
+            artifact = Artifact.objects.get(sha256=artifact.sha256)
+
+        ProfileArtifact.objects.get_or_create(artifact=artifact, name="task_logs", task=task)
+        _logger.info("Created task logging diagnostic data.")
+
+    return __logging_decorator
 
 
 def dispatch_scheduled_tasks():
