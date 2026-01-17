@@ -35,7 +35,9 @@ The following diagnostics are supported currently:
 - memray:
    Dumps a profile which can be processed with `memray`, which shows which lines and functions were
    responsible for the most allocations at the time of peak RSS of the process
-
+- logs:
+   Dumps all logs specific to the task, including DEBUG logs, regardless of whether DEBUG logging
+   is otherwise enabled
 
 ## Memory Logging
 
