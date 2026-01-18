@@ -11,4 +11,8 @@ multidict!=6.3.0
 
 
 azure-storage-blob!=12.28.*
-# Apperently does not work with current azurite.
+# Apparently does not work with current azurite.
+
+
+pycares<5
+# older aiodns versions don't pin pycares UB, and are broken by pycares>=5
