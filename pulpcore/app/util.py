@@ -3,6 +3,12 @@ import zlib
 import os
 import socket
 import tempfile
+from _hashlib import HASH
+from io import RawIOBase
+from pathlib import Path
+from types import TracebackType
+from typing import Self, IO, Callable
+
 import gnupg
 
 from functools import lru_cache
@@ -649,3 +655,153 @@ def normalize_http_status(status):
         return "5xx"
     else:
         return ""
+
+
+class HashingFileWriter(RawIOBase):
+    """
+    A file-like object that handles writing data to disk with simultaneous
+    hashing. It supports both single-file writing and chunk-based splitting.
+    """
+
+    def __init__(
+        self,
+        base_path: str | Path,
+        hasher_cls: Callable[[], HASH],
+        chunk_size: int = 0,
+        suffix_length: int = 4,
+        dir_mode: int = 0o775,
+    ) -> None:
+        """
+        Args:
+            base_path: The target file path.
+            hasher_cls: The hashing class to use (e.g., hashlib.sha256).
+            chunk_size: Max bytes per file. 0 (or less) disables splitting.
+            suffix_length: Length of the numeric suffix for split files (e.g., .0001).
+            dir_mode: The octal file permissions to use when creating parent
+                directories (e.g., 0o775).
+        """
+        super().__init__()
+
+        self.base_path = Path(base_path)
+        self.chunk_size = max(0, chunk_size)
+        self.hasher_cls = hasher_cls
+        self.suffix_length = suffix_length
+        self.dir_mode = dir_mode
+
+        self._file_index: int = 0
+        self._current_file: IO[bytes] | None = None
+        self._current_hasher: HASH | None = None
+        self._current_file_path: Path | None = None
+
+        self._current_chunk_written: int = 0
+        self._total_written: int = 0
+
+        # Maps file_path string -> hash digest
+        self.results: dict[str, str] = {}
+
+    @property
+    def is_splitting(self) -> bool:
+        return self.chunk_size > 0
+
+    def _get_filename(self) -> Path:
+        """Determines the filename based on splitting mode."""
+        if not self.is_splitting:
+            return self.base_path
+
+        suffix = f".{self._file_index:0{self.suffix_length}d}"
+        return self.base_path.with_name(f"{self.base_path.name}{suffix}")
+
+    def _rotate_file(self) -> None:
+        """Closes the current file and opens the next one."""
+        self._close_current_file()
+
+        self._current_file_path = self._get_filename()
+        self._current_file_path.parent.mkdir(parents=True, exist_ok=True, mode=self.dir_mode)
+
+        self._current_file = self._current_file_path.open("wb")
+        self._current_hasher = self.hasher_cls()
+        self._current_chunk_written = 0
+
+        if self.is_splitting:
+            self._file_index += 1
+
+    def _close_current_file(self) -> None:
+        """Finalizes the current file and stores its hash."""
+        if self._current_file:
+            self._current_file.close()
+
+            if self._current_hasher and self._current_file_path:
+                self.results[str(self._current_file_path)] = self._current_hasher.hexdigest()
+
+            self._current_file = None
+            self._current_hasher = None
+
+    def write(self, data: bytes) -> int:
+        # Early exit for empty writes to prevent creating empty files
+        if not data:
+            return 0
+
+        if not self._current_file:
+            self._rotate_file()
+
+        # If splitting is disabled, strict write without rotation logic
+        if not self.is_splitting:
+            assert self._current_file is not None
+            assert self._current_hasher is not None
+            self._current_file.write(data)
+            self._current_hasher.update(data)
+            self._total_written += len(data)
+            return len(data)
+
+        # Splitting logic
+        buffer = memoryview(data)
+        bytes_remaining = len(buffer)
+        cursor = 0
+
+        while bytes_remaining > 0:
+            assert self._current_file is not None
+            assert self._current_hasher is not None
+
+            space_left = self.chunk_size - self._current_chunk_written
+
+            # If the current file is full, rotate immediately before writing more
+            if space_left <= 0:
+                self._rotate_file()
+                space_left = self.chunk_size
+
+            to_write = min(bytes_remaining, space_left)
+            chunk = buffer[cursor : cursor + to_write]
+
+            self._current_file.write(chunk)
+            self._current_hasher.update(chunk)
+
+            self._current_chunk_written += to_write
+            self._total_written += to_write
+            cursor += to_write
+            bytes_remaining -= to_write
+
+        return len(data)
+
+    def writable(self) -> bool:
+        return True
+
+    def tell(self) -> int:
+        return self._total_written
+
+    def flush(self) -> None:
+        if self._current_file:
+            self._current_file.flush()
+
+    def close(self) -> None:
+        self._close_current_file()
+
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
+        self.close()

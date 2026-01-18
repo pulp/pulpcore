@@ -1,4 +1,6 @@
 import json
+from pathlib import Path
+
 import pytest
 import uuid
 
@@ -420,3 +422,43 @@ def test_export_with_meta(pulpcore_bindings, pulp_export_factory, full_pulp_expo
     assert meta_json.get("purpose") == "export"
     # overridden field check
     assert meta_json.get("checksum_type") == "crc32"
+
+
+@pytest.mark.parallel
+def test_export_chunk_ordering_and_naming(
+    pulp_exporter_factory,
+    pulp_export_factory,
+    three_synced_repositories,
+):
+    exporter = pulp_exporter_factory(repositories=[three_synced_repositories[0]])
+    chunk_size_bytes = 100
+    body = {"chunk_size": f"{chunk_size_bytes}B"}
+    export = pulp_export_factory(exporter, body)
+
+    all_paths = [Path(p) for p in export.output_file_info.keys()]
+    tar_chunks = [p for p in all_paths if ".tar." in p.name]
+
+    assert len(tar_chunks) > 1, f"Expected multiple chunks for {chunk_size_bytes}B limit."
+
+    for index, path in enumerate(tar_chunks):
+        expected_suffix = f"{index:04d}"
+
+        assert path.name.endswith(expected_suffix), f"Chunk {path} missing suffix {expected_suffix}"
+        assert path.exists(), f"Chunk file {path} was not found on disk."
+
+        if index < len(tar_chunks) - 1:
+            assert path.stat().st_size == chunk_size_bytes
+
+    toc_path = Path(export.toc_info["file"])
+    with toc_path.open("r", encoding="utf-8") as f:
+        toc_data = json.load(f)
+
+    toc_filenames = list(toc_data["files"].keys())
+    expected_filenames = [p.name for p in tar_chunks]
+
+    assert (
+        toc_filenames == expected_filenames
+    ), f"TOC order mismatch.\nExpected: {expected_filenames}\nActual: {toc_filenames}"
+
+    assert toc_data["meta"]["chunk_size"] == chunk_size_bytes
+    assert toc_data["meta"]["checksum_type"] == "crc32"
