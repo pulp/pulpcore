@@ -29,6 +29,7 @@ from pulpcore.app.models import (
     Repository,
     RepositoryVersion,
 )
+from pulpcore.app.serializers.repository import validate_certificate
 from pulpcore.app.util import (
     get_view_name_for_model,
     get_viewset_for_model,
@@ -581,4 +582,164 @@ class UnsetLabelSerializer(serializers.Serializer):
     def validate(self, data):
         data = super().validate(data)
         data["value"] = self.context["content_object"].pulp_labels[data["key"]]
+        return data
+
+
+class RemoteNetworkConfigSerializer(serializers.Serializer):
+    """
+    Shared network configuration fields and validation logic used by both
+    RemoteSerializer and UploadSerializerFieldsMixin.
+    """
+
+    ca_cert = serializers.CharField(
+        help_text="A PEM encoded CA certificate used to validate the server "
+        "certificate presented by the remote server.",
+        required=False,
+        allow_null=True,
+    )
+    client_cert = serializers.CharField(
+        help_text="A PEM encoded client certificate used for authentication.",
+        required=False,
+        allow_null=True,
+    )
+    client_key = serializers.CharField(
+        help_text="A PEM encoded private key used for authentication.",
+        required=False,
+        allow_null=True,
+        write_only=True,
+    )
+    tls_validation = serializers.BooleanField(
+        help_text="If True, TLS peer validation must be performed.", required=False
+    )
+    proxy_url = serializers.CharField(
+        help_text="The proxy URL. Format: scheme://host:port",
+        required=False,
+        allow_null=True,
+    )
+    proxy_username = serializers.CharField(
+        help_text="The username to authenticte to the proxy.",
+        required=False,
+        allow_null=True,
+        write_only=True,
+    )
+    proxy_password = serializers.CharField(
+        help_text=_(
+            "The password to authenticate to the proxy. Extra leading and trailing whitespace "
+            "characters are not trimmed."
+        ),
+        required=False,
+        allow_null=True,
+        write_only=True,
+        trim_whitespace=False,
+        style={"input_type": "password"},
+    )
+    username = serializers.CharField(
+        help_text="The username to be used for authentication when syncing.",
+        required=False,
+        allow_null=True,
+        write_only=True,
+    )
+    password = serializers.CharField(
+        help_text=_(
+            "The password to be used for authentication when syncing. Extra leading and trailing "
+            "whitespace characters are not trimmed."
+        ),
+        required=False,
+        allow_null=True,
+        write_only=True,
+        trim_whitespace=False,
+        style={"input_type": "password"},
+    )
+    max_retries = serializers.IntegerField(
+        help_text=(
+            "Maximum number of retry attempts after a download failure. If not set then the "
+            "default value (3) will be used."
+        ),
+        required=False,
+        allow_null=True,
+    )
+    total_timeout = serializers.FloatField(
+        allow_null=True,
+        required=False,
+        help_text=(
+            "aiohttp.ClientTimeout.total (q.v.) for download-connections. The default is null, "
+            "which will cause the default from the aiohttp library to be used."
+        ),
+        min_value=0.0,
+    )
+    connect_timeout = serializers.FloatField(
+        allow_null=True,
+        required=False,
+        help_text=(
+            "aiohttp.ClientTimeout.connect (q.v.) for download-connections. The default is null, "
+            "which will cause the default from the aiohttp library to be used."
+        ),
+        min_value=0.0,
+    )
+    sock_connect_timeout = serializers.FloatField(
+        allow_null=True,
+        required=False,
+        help_text=(
+            "aiohttp.ClientTimeout.sock_connect (q.v.) for download-connections. The default is "
+            "null, which will cause the default from the aiohttp library to be used."
+        ),
+        min_value=0.0,
+    )
+    sock_read_timeout = serializers.FloatField(
+        allow_null=True,
+        required=False,
+        help_text=(
+            "aiohttp.ClientTimeout.sock_read (q.v.) for download-connections. The default is "
+            "null, which will cause the default from the aiohttp library to be used."
+        ),
+        min_value=0.0,
+    )
+    headers = serializers.ListField(
+        child=serializers.DictField(),
+        help_text=_("Headers for aiohttp.Clientsession"),
+        required=False,
+    )
+
+    def validate_proxy_url(self, value):
+        """
+        Check, that the proxy_url does not contain credentials.
+        """
+        if value and "@" in value:
+            raise serializers.ValidationError(_("proxy_url must not contain credentials"))
+        return value
+
+    def validate_ca_cert(self, value):
+        return validate_certificate("ca_cert", value)
+
+    def validate_client_cert(self, value):
+        return validate_certificate("client_cert", value)
+
+    def validate(self, data):
+        """
+        Check that proxy credentials are only provided completely and if a proxy is configured.
+        Adapted to work for both ModelSerializers (Remotes) and standard Serializers (Uploads).
+        """
+        # Handle cases where we don't have an instance (e.g. Uploads)
+        instance = getattr(self, "instance", None)
+        partial = getattr(self, "partial", False)
+
+        proxy_url = instance.proxy_url if instance and partial else None
+        proxy_url = data.get("proxy_url", proxy_url)
+
+        proxy_username = instance.proxy_username if instance and partial else None
+        proxy_username = data.get("proxy_username", proxy_username)
+
+        proxy_password = instance.proxy_password if instance and partial else None
+        proxy_password = data.get("proxy_password", proxy_password)
+
+        if (proxy_username or proxy_password) and not proxy_url:
+            raise serializers.ValidationError(
+                _("proxy credentials cannot be specified without a proxy")
+            )
+
+        if bool(proxy_username) is not bool(proxy_password):
+            raise serializers.ValidationError(
+                _("proxy username and password can only be specified together")
+            )
+
         return data

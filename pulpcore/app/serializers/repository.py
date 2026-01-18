@@ -7,6 +7,7 @@ from rest_framework import fields, serializers
 from rest_framework_nested.serializers import NestedHyperlinkedModelSerializer
 
 from pulpcore.app import models, settings
+from pulpcore.app.serializers.base import RemoteNetworkConfigSerializer
 from pulpcore.app.util import get_prn, reverse
 from pulpcore.app.serializers import (
     DetailIdentityField,
@@ -113,7 +114,7 @@ def validate_certificate(which_cert, value):
             )
 
 
-class RemoteSerializer(ModelSerializer, HiddenFieldsMixin):
+class RemoteSerializer(RemoteNetworkConfigSerializer, ModelSerializer, HiddenFieldsMixin):
     """
     Every remote defined by a plugin should have a Remote serializer that inherits from this
     class. Please import from `pulpcore.plugin.serializers` rather than from this module directly.
@@ -126,65 +127,6 @@ class RemoteSerializer(ModelSerializer, HiddenFieldsMixin):
         validators=[DomainUniqueValidator(queryset=models.Remote.objects.all())],
     )
     url = serializers.CharField(help_text="The URL of an external content source.")
-    ca_cert = serializers.CharField(
-        help_text="A PEM encoded CA certificate used to validate the server "
-        "certificate presented by the remote server.",
-        required=False,
-        allow_null=True,
-    )
-    client_cert = serializers.CharField(
-        help_text="A PEM encoded client certificate used for authentication.",
-        required=False,
-        allow_null=True,
-    )
-    client_key = serializers.CharField(
-        help_text="A PEM encoded private key used for authentication.",
-        required=False,
-        allow_null=True,
-        write_only=True,
-    )
-    tls_validation = serializers.BooleanField(
-        help_text="If True, TLS peer validation must be performed.", required=False
-    )
-    proxy_url = serializers.CharField(
-        help_text="The proxy URL. Format: scheme://host:port",
-        required=False,
-        allow_null=True,
-    )
-    proxy_username = serializers.CharField(
-        help_text="The username to authenticte to the proxy.",
-        required=False,
-        allow_null=True,
-        write_only=True,
-    )
-    proxy_password = serializers.CharField(
-        help_text=_(
-            "The password to authenticate to the proxy. Extra leading and trailing whitespace "
-            "characters are not trimmed."
-        ),
-        required=False,
-        allow_null=True,
-        write_only=True,
-        trim_whitespace=False,
-        style={"input_type": "password"},
-    )
-    username = serializers.CharField(
-        help_text="The username to be used for authentication when syncing.",
-        required=False,
-        allow_null=True,
-        write_only=True,
-    )
-    password = serializers.CharField(
-        help_text=_(
-            "The password to be used for authentication when syncing. Extra leading and trailing "
-            "whitespace characters are not trimmed."
-        ),
-        required=False,
-        allow_null=True,
-        write_only=True,
-        trim_whitespace=False,
-        style={"input_type": "password"},
-    )
     pulp_last_updated = serializers.DateTimeField(
         help_text="Timestamp of the most recent update of the remote.", read_only=True
     )
@@ -197,18 +139,13 @@ class RemoteSerializer(ModelSerializer, HiddenFieldsMixin):
         required=False,
         min_value=1,
     )
-    max_retries = serializers.IntegerField(
-        help_text=(
-            "Maximum number of retry attempts after a download failure. If not set then the "
-            "default value (3) will be used."
-        ),
-        required=False,
-        allow_null=True,
-    )
     policy = serializers.ChoiceField(
         help_text="The policy to use when downloading content.",
         choices=(
-            (models.Remote.IMMEDIATE, "When syncing, download all metadata and content now."),
+            (
+                models.Remote.IMMEDIATE,
+                "When syncing, download all metadata and content now.",
+            ),
         ),
         default=models.Remote.IMMEDIATE,
     )
@@ -304,72 +241,37 @@ class RemoteSerializer(ModelSerializer, HiddenFieldsMixin):
             _("The path '{}' does not start with any of the allowed import paths").format(user_path)
         )
 
-    def validate_proxy_url(self, value):
-        """
-        Check, that the proxy_url does not contain credentials.
-        """
-        if value and "@" in value:
-            raise serializers.ValidationError(_("proxy_url must not contain credentials"))
-        return value
-
-    def validate_ca_cert(self, value):
-        return validate_certificate("ca_cert", value)
-
-    def validate_client_cert(self, value):
-        return validate_certificate("client_cert", value)
-
-    def validate(self, data):
-        """
-        Check, that proxy credentials are only provided completely and if a proxy is configured.
-        """
-        data = super().validate(data)
-
-        proxy_url = self.instance.proxy_url if self.partial else None
-        proxy_url = data.get("proxy_url", proxy_url)
-        proxy_username = self.instance.proxy_username if self.partial else None
-        proxy_username = data.get("proxy_username", proxy_username)
-        proxy_password = self.instance.proxy_password if self.partial else None
-        proxy_password = data.get("proxy_password", proxy_password)
-
-        if (proxy_username or proxy_password) and not proxy_url:
-            raise serializers.ValidationError(
-                _("proxy credentials cannot be specified without a proxy")
-            )
-
-        if bool(proxy_username) is not bool(proxy_password):
-            raise serializers.ValidationError(
-                _("proxy username and password can only be specified together")
-            )
-
-        return data
-
     class Meta:
         abstract = True
         model = models.Remote
-        fields = ModelSerializer.Meta.fields + (
-            "name",
-            "url",
-            "ca_cert",
-            "client_cert",
-            "client_key",
-            "tls_validation",
-            "proxy_url",
-            "proxy_username",
-            "proxy_password",
-            "username",
-            "password",
-            "pulp_labels",
-            "pulp_last_updated",
-            "download_concurrency",
-            "max_retries",
-            "policy",
-            "total_timeout",
-            "connect_timeout",
-            "sock_connect_timeout",
-            "sock_read_timeout",
-            "headers",
-            "rate_limit",
-            "hidden_fields",
+        fields = (
+            ModelSerializer.Meta.fields
+            + (
+                "name",
+                "url",
+                "ca_cert",
+                "client_cert",
+                "client_key",
+                "tls_validation",
+                "proxy_url",
+                "proxy_username",
+                "proxy_password",
+                "username",
+                "password",
+                "pulp_labels",
+                "pulp_last_updated",
+                "download_concurrency",
+                "max_retries",
+                "policy",
+                "total_timeout",
+                "connect_timeout",
+                "sock_connect_timeout",
+                "sock_read_timeout",
+                "headers",
+                "rate_limit",
+                "hidden_fields",
+            )
+            + tuple(RemoteNetworkConfigSerializer().get_fields().keys())
         )
 
 
