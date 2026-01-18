@@ -66,6 +66,8 @@ class FileContentUploadSerializer(FileContentSerializer):
 
     def validate(self, data):
         """Validate the FileContent data."""
+        data = super().validate(data)
+
         if upload := data.pop("upload", None):
             # Handle chunked upload
             chunks = models.UploadChunk.objects.filter(upload=upload).order_by("offset")
