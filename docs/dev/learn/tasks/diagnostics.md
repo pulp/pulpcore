@@ -37,6 +37,8 @@ The following diagnostics are supported currently:
    responsible for the most allocations at the time of peak RSS of the process
 - logs:
    Dumps all logs specific to the task. Formatting not guaranteed to be identical.
+- debug-logs:
+   Same as the `logs` option except it exports logs at a DEBUG level, whether or not the system is configured to print DEBUG logs otherwise.
 
 ## Memory Logging
 

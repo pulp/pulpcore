@@ -1,0 +1,1 @@
+Added a "debug-logs" option to the TASK_DIAGNOSTICS / X-Task-Diagnostics feature - dumps task-specific logs into a profile artifact at a DEBUG level.
