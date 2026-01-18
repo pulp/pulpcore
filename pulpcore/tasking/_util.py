@@ -121,8 +121,10 @@ def _execute_task_and_profile(task, profile_options):
             _execute_task = _pyinstrument_diagnostic_decorator(temp_dir, _execute_task)
         if "memray" in profile_options:
             _execute_task = _memray_diagnostic_decorator(temp_dir, _execute_task)
-        if "logs" in profile_options:
-            _execute_task = _logging_decorator(temp_dir, _execute_task)
+
+        is_debug = "debug-logs" in profile_options
+        if "logs" in profile_options or is_debug:
+            _execute_task = _logging_decorator(temp_dir, is_debug, _execute_task)
 
         _execute_task(task)
 
@@ -220,7 +222,7 @@ def _memray_diagnostic_decorator(temp_dir, func):
     return __memray_diagnostic_decorator
 
 
-def _logging_decorator(temp_dir, func):
+def _logging_decorator(temp_dir, is_debug, func):
     def __logging_decorator(task):
         log_file_path = os.path.join(temp_dir, "task_logs.log")
 
@@ -236,15 +238,23 @@ def _logging_decorator(temp_dir, func):
 
         # Get the root logger to capture all logs
         root_logger = logging.getLogger()
+        original_level = root_logger.level
 
         try:
             # Add the handler to the root logger
             root_logger.addHandler(file_handler)
 
+            if is_debug:
+                # Temporarily lower the root logger level to allow all messages through
+                # The existing handlers maintain their own levels, so they won't be affected
+                root_logger.setLevel(logging.NOTSET)
+
             # Execute the task
             func(task)
         finally:
-            # Always remove the handler and restore original level
+            # Always restore original level and remove the handler
+            if is_debug:
+                root_logger.setLevel(original_level)
             root_logger.removeHandler(file_handler)
             file_handler.close()
 
