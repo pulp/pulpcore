@@ -180,6 +180,8 @@ class TaskProfilerMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
+        # import logging
+        # logging.error(request.META)
         if "HTTP_X_TASK_DIAGNOSTICS" in request.META:
             task_diagnostics = request.META["HTTP_X_TASK_DIAGNOSTICS"]
             ctx_token = x_task_diagnostics_var.set(task_diagnostics.split(","))

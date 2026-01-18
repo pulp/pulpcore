@@ -236,15 +236,21 @@ def _logging_decorator(temp_dir, func):
 
         # Get the root logger to capture all logs
         root_logger = logging.getLogger()
+        original_level = root_logger.level
 
         try:
             # Add the handler to the root logger
             root_logger.addHandler(file_handler)
 
+            # Temporarily lower the root logger level to allow all messages through
+            # The existing handlers maintain their own levels, so they won't be affected
+            root_logger.setLevel(logging.NOTSET)
+
             # Execute the task
             func(task)
         finally:
-            # Always remove the handler and restore original level
+            # Always restore original level and remove the handler
+            root_logger.setLevel(original_level)
             root_logger.removeHandler(file_handler)
             file_handler.close()
 

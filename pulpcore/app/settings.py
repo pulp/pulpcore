@@ -260,6 +260,7 @@ LOGGING = {
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
+            "level": "INFO",
             "formatter": "simple",
             "filters": ["correlation_id"],
         }
