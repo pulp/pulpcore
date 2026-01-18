@@ -20,6 +20,7 @@ from pulpcore.app.serializers import (
     NoArtifactContentSerializer,
     SingleArtifactContentSerializer,
 )
+from pulpcore.app.serializers.base import RemoteNetworkConfigSerializer
 from pulpcore.app.util import get_domain_pk
 
 
@@ -85,6 +86,15 @@ class UploadSerializerFieldsMixin(Serializer):
 
         data = super().validate(data)
 
+        network_keys = set(RemoteNetworkConfigSerializer().get_fields().keys())
+        remote_kwargs = self.context.get("remote_kwargs", {})
+
+        for key in network_keys:
+            if key in data:
+                remote_kwargs[key] = data.pop(key)
+
+        self.context["remote_kwargs"] = remote_kwargs
+
         if self.context.get("request") is not None:
             upload_fields = {
                 field
@@ -146,10 +156,8 @@ class UploadSerializerFieldsMixin(Serializer):
         return result
 
     class Meta:
-        fields = (
-            "file",
-            "upload",
-            "file_url",
+        fields = ("file", "upload", "file_url") + tuple(
+            RemoteNetworkConfigSerializer().get_fields().keys()
         )
 
 
@@ -251,7 +259,8 @@ class SingleArtifactContentUploadSerializer(
             # if artifact already exists, let's use it
             try:
                 artifact = Artifact.objects.get(
-                    sha256=file.hashers["sha256"].hexdigest(), pulp_domain=get_domain_pk()
+                    sha256=file.hashers["sha256"].hexdigest(),
+                    pulp_domain=get_domain_pk(),
                 )
                 if not artifact.pulp_domain.get_storage().exists(artifact.file.name):
                     artifact.file = file
