@@ -1,17 +1,16 @@
 import json
-
 from gettext import gettext as _
-
 from tempfile import NamedTemporaryFile
+from urllib.parse import urlparse
 
 from django.db import DatabaseError
 from rest_framework.serializers import (
     CharField,
     FileField,
-    Serializer,
     ValidationError,
+    Serializer,
 )
-from urllib.parse import urlparse
+
 from pulpcore.app.files import PulpTemporaryUploadedFile
 from pulpcore.app.models import Artifact, PulpTemporaryFile, Remote, Upload, UploadChunk
 from pulpcore.app.serializers import (
@@ -20,6 +19,7 @@ from pulpcore.app.serializers import (
     NoArtifactContentSerializer,
     SingleArtifactContentSerializer,
 )
+from pulpcore.app.serializers.base import RemoteNetworkConfigSerializer
 from pulpcore.app.util import get_domain_pk
 
 
@@ -44,6 +44,16 @@ class UploadSerializerFieldsMixin(Serializer):
         help_text=_("A url that Pulp can download and turn into the content unit."),
         required=False,
         write_only=True,
+    )
+
+    downloader_config = RemoteNetworkConfigSerializer(
+        help_text=_(
+            "Configuration for the download process (e.g., proxies, auth, timeouts). "
+            "Only applicable when providing a 'file_url."
+        ),
+        required=False,
+        write_only=True,
+        default={},
     )
 
     def validate_file_url(self, value):
@@ -73,7 +83,7 @@ class UploadSerializerFieldsMixin(Serializer):
         Returns:
             PulpTemporaryUploadedFile: the downloaded file
         """
-        remote = self.REMOTE_CLASS(url=url, **self.context.get("remote_kwargs", {}))
+        remote = self.REMOTE_CLASS(url=url, **self.context.get("remote_kwargs"))
         downloader = remote.get_downloader(
             url=url, expected_digests=expected_digests, expected_size=expected_size
         )
@@ -84,6 +94,7 @@ class UploadSerializerFieldsMixin(Serializer):
         """Validate that we have an Artifact/File or can create one."""
 
         data = super().validate(data)
+        self.context["remote_kwargs"] = data.pop("downloader_config")
 
         if self.context.get("request") is not None:
             upload_fields = {
@@ -146,11 +157,7 @@ class UploadSerializerFieldsMixin(Serializer):
         return result
 
     class Meta:
-        fields = (
-            "file",
-            "upload",
-            "file_url",
-        )
+        fields = ("file", "upload", "file_url", "downloader_config")
 
 
 class NoArtifactContentUploadSerializer(UploadSerializerFieldsMixin, NoArtifactContentSerializer):
@@ -251,7 +258,8 @@ class SingleArtifactContentUploadSerializer(
             # if artifact already exists, let's use it
             try:
                 artifact = Artifact.objects.get(
-                    sha256=file.hashers["sha256"].hexdigest(), pulp_domain=get_domain_pk()
+                    sha256=file.hashers["sha256"].hexdigest(),
+                    pulp_domain=get_domain_pk(),
                 )
                 if not artifact.pulp_domain.get_storage().exists(artifact.file.name):
                     artifact.file = file
