@@ -2,7 +2,6 @@ import json
 import logging
 import os
 import os.path
-import subprocess
 import tarfile
 
 from distutils.util import strtobool
@@ -28,7 +27,7 @@ from pulpcore.app.models import (
 from pulpcore.app.models.content import ContentArtifact
 from pulpcore.app.serializers import PulpExportSerializer
 
-from pulpcore.app.util import compute_file_hash, Crc32Hasher
+from pulpcore.app.util import compute_file_hash, Crc32Hasher, HashingFileWriter
 from pulpcore.app.importexport import (
     export_versions,
     export_artifacts,
@@ -394,55 +393,24 @@ def pulp_export(exporter_pk, params):
         if not path.is_dir():
             path.mkdir(mode=0o775, parents=True)
 
-        rslts = {}
-        if the_export.validated_chunk_size:
-            # write it into chunks
-            with subprocess.Popen(
-                [
-                    "split",
-                    "-a",
-                    "4",
-                    "-b",
-                    str(the_export.validated_chunk_size),
-                    "-d",
-                    "-",
-                    tarfile_fp + ".",
-                ],
-                stdin=subprocess.PIPE,
-            ) as split_process:
-                try:
-                    with tarfile.open(
-                        tarfile_fp,
-                        "w|",
-                        fileobj=split_process.stdin,
-                    ) as tar:
-                        _do_export(pulp_exporter, tar, the_export)
-                except Exception:
-                    # no matter what went wrong, we can't trust the files we (may have) created.
-                    # Delete the ones we can find and pass the problem up.
-                    for pathname in glob(tarfile_fp + ".*"):
-                        os.remove(pathname)
-                    raise
-            # compute the hashes
-            paths = sorted([str(Path(p)) for p in glob(tarfile_fp + ".*")])
-            for a_file in paths:
-                a_hash = compute_file_hash(a_file, hasher=hasher())
-                rslts[a_file] = a_hash
+        writer = HashingFileWriter(
+            base_path=tarfile_fp,
+            chunk_size=the_export.validated_chunk_size or 0,
+            hasher_cls=hasher,  # type: ignore
+        )
 
-        else:
-            # write into the file
-            try:
-                with tarfile.open(tarfile_fp, "w") as tar:
+        try:
+            with writer:
+                with tarfile.open(fileobj=writer, mode="w|") as tar:
                     _do_export(pulp_exporter, tar, the_export)
-            except Exception:
-                # no matter what went wrong, we can't trust the file we created.
-                # Delete it if it exists and pass the problem up.
-                if os.path.exists(tarfile_fp):
-                    os.remove(tarfile_fp)
-                raise
-            # compute the hash
-            tarfile_hash = compute_file_hash(tarfile_fp, hasher=hasher())
-            rslts[tarfile_fp] = tarfile_hash
+        except Exception:
+            # no matter what went wrong, we can't trust the files we (may have) created.
+            # Delete the ones we can find and pass the problem up.
+            for pathname in glob(tarfile_fp + ".*"):
+                os.remove(pathname)
+            raise
+
+        rslts = writer.results
 
         # store the outputfile/hash info
         the_export.output_file_info = rslts
