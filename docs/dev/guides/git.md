@@ -99,7 +99,7 @@ Attention and care must be given not to merge PRs that require custom CI images.
 
 
 
-### Changelog update
+### Changelog Update
 
 The CHANGES.rst file is managed using the [towncrier tool](https://github.com/hawkowl/towncrier)
 and all non trivial changes must be accompanied by a news entry.
