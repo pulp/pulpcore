@@ -66,7 +66,7 @@ class ResourceImmutableError(PulpException):
         Args:
             model (pulpcore.app.models.Model): that the user is trying to update
         """
-        super().__init__("PLP0003")
+        super().__init__("PLP0006")
         self.model = model
 
     def __str__(self):
