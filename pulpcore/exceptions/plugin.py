@@ -20,4 +20,4 @@ class MissingPlugin(PulpException):
 
     def __str__(self):
         msg = _("Plugin with Django app label %s is not installed.") % self.plugin_app_label
-        return msg
+        return f"[{self.error_code}] {msg}"

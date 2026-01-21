@@ -28,12 +28,14 @@ class DigestValidationError(ValidationError):
                 "A file located at the url {url} failed validation due to checksum. "
                 "Expected '{expected}', Actual '{actual}'"
             )
-            return msg.format(url=self.url, expected=self.expected, actual=self.actual)
+            return f"[{self.error_code}] " + msg.format(
+                url=self.url, expected=self.expected, actual=self.actual
+            )
         else:
             msg = _(
                 "A file failed validation due to checksum. Expected '{expected}', Actual '{actual}'"
             )
-            return msg.format(expected=self.expected, actual=self.actual)
+            return f"[{self.error_code}] " + msg.format(expected=self.expected, actual=self.actual)
 
 
 class SizeValidationError(ValidationError):
@@ -53,12 +55,14 @@ class SizeValidationError(ValidationError):
                 "A file located at the url {url} failed validation due to size. "
                 "Expected '{expected}', Actual '{actual}'"
             )
-            return msg.format(url=self.url, expected=self.expected, actual=self.actual)
+            return f"[{self.error_code}] " + msg.format(
+                url=self.url, expected=self.expected, actual=self.actual
+            )
         else:
             msg = _(
                 "A file failed validation due to size. Expected '{expected}', Actual '{actual}'"
             )
-            return msg.format(expected=self.expected, actual=self.actual)
+            return f"[{self.error_code}] " + msg.format(expected=self.expected, actual=self.actual)
 
 
 class MissingDigestValidationError(Exception):

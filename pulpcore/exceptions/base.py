@@ -29,19 +29,17 @@ class PulpException(Exception):
         raise NotImplementedError("Subclasses of PulpException must implement a __str__() method")
 
 
-def exception_to_dict(exc, traceback=None):
+def exception_to_dict(exc):
     """
     Return a dictionary representation of an Exception.
 
     :param exc: Exception that is being serialized
     :type exc: Exception
-    :param traceback: String representation of a traceback generated when the exception occurred.
-    :type traceback: str
 
     :return: dictionary representing the Exception
     :rtype: dict
     """
-    return {"description": str(exc), "traceback": traceback}
+    return {"description": str(exc)}
 
 
 class InternalErrorException(PulpException):
@@ -53,7 +51,7 @@ class InternalErrorException(PulpException):
         super().__init__("PLP0000")
 
     def __str__(self):
-        return _("An internal error occurred.")
+        return f"[{self.error_code}] " + _("An internal error occurred.")
 
 
 class ResourceImmutableError(PulpException):
@@ -73,7 +71,7 @@ class ResourceImmutableError(PulpException):
         msg = _("Cannot update immutable resource {model_pk} of type {model_type}").format(
             resource=str(self.model.pk), type=type(self.model).__name__
         )
-        return msg
+        return f"[{self.error_code}] {msg}"
 
 
 class TimeoutException(PulpException):
@@ -90,7 +88,7 @@ class TimeoutException(PulpException):
         self.url = url
 
     def __str__(self):
-        return _(
+        return f"[{self.error_code}] " + _(
             "Request timed out for {}. Increasing the total_timeout value on the remote might help."
         ).format(self.url)
 
@@ -105,7 +103,9 @@ class DomainProtectedError(PulpException):
         super().__init__("PLP0007")
 
     def __str__(self):
-        return _("You cannot delete a domain that still contains repositories with content.")
+        return f"[{self.error_code}] " + _(
+            "You cannot delete a domain that still contains repositories with content."
+        )
 
 
 class DnsDomainNameException(PulpException):
@@ -122,7 +122,7 @@ class DnsDomainNameException(PulpException):
         self.url = url
 
     def __str__(self):
-        return _("URL lookup failed.")
+        return f"[{self.error_code}] " + _("URL lookup failed.")
 
 
 class UrlSchemeNotSupportedError(PulpException):
@@ -140,7 +140,7 @@ class UrlSchemeNotSupportedError(PulpException):
         self.url = url
 
     def __str__(self):
-        return _("URL: {u} not supported.").format(u=self.url)
+        return f"[{self.error_code}] " + _("URL: {u} not supported.").format(u=self.url)
 
 
 class ProxyAuthenticationError(PulpException):
@@ -158,7 +158,7 @@ class ProxyAuthenticationError(PulpException):
         self.proxy_url = proxy_url
 
     def __str__(self):
-        return _(
+        return f"[{self.error_code}] " + _(
             "Proxy authentication failed for {proxy_url}. Please check your proxy credentials."
         ).format(proxy_url=self.proxy_url)
 
@@ -172,7 +172,7 @@ class RepositoryVersionDeleteError(PulpException):
         super().__init__("PLP0011")
 
     def __str__(self):
-        return _(
+        return f"[{self.error_code}] " + _(
             "Cannot delete repository version. Repositories must have at least one "
             "repository version."
         )
