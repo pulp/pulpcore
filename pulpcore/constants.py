@@ -101,6 +101,7 @@ GCS_RESPONSE_HEADER_MAP = {
 # Storage-type mapped to storage-response-map
 STORAGE_RESPONSE_MAP = {
     "storages.backends.s3boto3.S3Boto3Storage": S3_RESPONSE_HEADER_MAP,
+    "storages.backends.s3.S3Storage": S3_RESPONSE_HEADER_MAP,
     "storages.backends.azure_storage.AzureStorage": AZURE_RESPONSE_HEADER_MAP,
     "storages.backends.gcloud.GoogleCloudStorage": GCS_RESPONSE_HEADER_MAP,
 }
