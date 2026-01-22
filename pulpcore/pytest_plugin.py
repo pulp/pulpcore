@@ -597,7 +597,7 @@ def backend_settings_factory(pulp_settings):
             pytest.skip("Domains not enabled")
         keys = dict()
         keys["pulpcore.app.models.storage.FileSystem"] = ["MEDIA_ROOT", "MEDIA_URL"]
-        keys["storages.backends.s3boto3.S3Boto3Storage"] = [
+        keys["storages.backends.s3.S3Storage"] = [
             "access_key",
             "secret_key",
             "endpoint_url",
@@ -606,6 +606,7 @@ def backend_settings_factory(pulp_settings):
             "region_name",
             "bucket_name",
         ]
+        keys["storages.backends.s3boto3.S3Boto3Storage"] = keys["storages.backends.s3.S3Storage"]
         keys["storages.backends.azure_storage.AzureStorage"] = [
             "AZURE_ACCOUNT_NAME",
             "AZURE_CONTAINER",

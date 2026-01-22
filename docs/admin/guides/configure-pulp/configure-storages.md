@@ -103,7 +103,7 @@ When creating a `Domain` you can use the following payload:
 ```json
 {
   "name": "cloudfront_storage",
-  "storage_class": "storages.backends.s3boto3.S3Boto3Storage",
+  "storage_class": "storages.backends.s3.S3Storage",
   "storage_settings": {
     "access_key": "{aws_access_key}",
     "secret_key": "{aws_secret_key}",
@@ -124,14 +124,14 @@ When creating a `Domain` you can use the following payload:
 # We need to format our key to a JSON friendly format
 export CLOUDFRONT_KEY=$(cat keyfile.pem | jq -sR .)
 
-curl -X POST $BASE_HREF/pulp/default/api/v3/domains/ -d '{"name": "cloudfront_storage", "storage_class": "storages.backends.s3boto3.S3Boto3Storage", "storage_settings": {"access_key": "{aws_access_key}", "secret_key": "{aws_secret_key}", "bucket_name": "{aws_bucket_name}", "region_name": "{aws_region_name}", "default_acl": "private", "cloudfront_key_id": "{aws_cloudfront_key_id}", "cloudfront_key": '"$CLOUDFRONT_KEY"', "custom_domain": "{aws_cloudfront_custom_domain}"}, "redirect_to_object_storage": true, "hide_guarded_distributions": false}' -H 'Content-Type: application/json'
+curl -X POST $BASE_HREF/pulp/default/api/v3/domains/ -d '{"name": "cloudfront_storage", "storage_class": "storages.backends.s3.S3Storage", "storage_settings": {"access_key": "{aws_access_key}", "secret_key": "{aws_secret_key}", "bucket_name": "{aws_bucket_name}", "region_name": "{aws_region_name}", "default_acl": "private", "cloudfront_key_id": "{aws_cloudfront_key_id}", "cloudfront_key": '"$CLOUDFRONT_KEY"', "custom_domain": "{aws_cloudfront_custom_domain}"}, "redirect_to_object_storage": true, "hide_guarded_distributions": false}' -H 'Content-Type: application/json'
 ```
 
 === Create a new Domain using pulp-cli
 ```bash
 export CLOUDFRONT_KEY=$(cat keyfile.pem | jq -sR .)
 
-pulp domain create --name cloudfront_test --storage-class storages.backends.s3boto3.S3Boto3Storage --storage-settings '{"access_key": "{aws_access_key}", "secret_key": "{aws_secret_key}", "bucket_name": "{aws_bucket_name}", "region_name": "{aws_region_name}", "default_acl": "private", "cloudfront_key_id": "{aws_cloudfront_key_id}", "cloudfront_key": '"$CLOUDFRONT_KEY"', "custom_domain": "{aws_cloudfront_custom_domain}"}'
+pulp domain create --name cloudfront_test --storage-class storages.backends.s3.S3Storage --storage-settings '{"access_key": "{aws_access_key}", "secret_key": "{aws_secret_key}", "bucket_name": "{aws_bucket_name}", "region_name": "{aws_region_name}", "default_acl": "private", "cloudfront_key_id": "{aws_cloudfront_key_id}", "cloudfront_key": '"$CLOUDFRONT_KEY"', "custom_domain": "{aws_cloudfront_custom_domain}"}'
 ```
 
 Create your remotes, repositories, and distributions under this domain and the requests will be redirected to the

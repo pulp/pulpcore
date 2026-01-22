@@ -1021,7 +1021,10 @@ class Handler:
             return FileResponse(path, headers=headers)
         elif not domain.redirect_to_object_storage:
             return ArtifactResponse(content_artifact.artifact, headers=headers)
-        elif domain.storage_class == "storages.backends.s3boto3.S3Boto3Storage":
+        elif domain.storage_class in (
+            "storages.backends.s3boto3.S3Boto3Storage",
+            "storages.backends.s3.S3Storage",
+        ):
             raise HTTPFound(_build_url(http_method=request.method), headers=headers)
         elif domain.storage_class in (
             "storages.backends.azure_storage.AzureStorage",
