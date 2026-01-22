@@ -30,6 +30,7 @@ def _no_validate_storage_backend(monkeypatch):
     params=[
         "pulpcore.app.models.storage.FileSystem",
         "storages.backends.s3boto3.S3Boto3Storage",
+        "storages.backends.s3.S3Storage",
         "storages.backends.azure_storage.AzureStorage",
     ]
 )
@@ -41,7 +42,10 @@ def storage_class(request):
 def serializer_class(storage_class):
     if storage_class == "pulpcore.app.models.storage.FileSystem":
         return FileSystemSettingsSerializer
-    elif storage_class == "storages.backends.s3boto3.S3Boto3Storage":
+    elif storage_class in (
+        "storages.backends.s3boto3.S3Boto3Storage",
+        "storages.backends.s3.S3Storage",
+    ):
         return AmazonS3SettingsSerializer
     elif storage_class == "storages.backends.azure_storage.AzureStorage":
         return AzureSettingsSerializer
@@ -51,7 +55,10 @@ def serializer_class(storage_class):
 def required_settings(storage_class):
     if storage_class == "pulpcore.app.models.storage.FileSystem":
         return {"location": "/var/lib/pulp/media/"}
-    elif storage_class == "storages.backends.s3boto3.S3Boto3Storage":
+    elif storage_class in (
+        "storages.backends.s3boto3.S3Boto3Storage",
+        "storages.backends.s3.S3Storage",
+    ):
         return {"access_key": "testing", "secret_key": "secret", "bucket_name": "test"}
     elif storage_class == "storages.backends.azure_storage.AzureStorage":
         return {"account_name": "test", "account_key": "secret", "azure_container": "test"}
