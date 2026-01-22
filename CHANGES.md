@@ -1596,6 +1596,29 @@ No significant changes.
 
 ---
 
+## 3.73.23 (2026-01-21) {: #3.73.23 }
+
+### REST API {: #3.73.23-rest-api }
+
+#### Bugfixes {: #3.73.23-rest-api-bugfix }
+
+- Improve handling of some edge cases in task diagnostics code.
+  [#7020](https://github.com/pulp/pulpcore/issues/7020)
+
+### Plugin API {: #3.73.23-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.73.23-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.23-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.73.22 (2026-01-14) {: #3.73.22 }
 
 ### REST API {: #3.73.22-rest-api }
