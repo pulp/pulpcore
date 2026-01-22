@@ -22,7 +22,8 @@ from pulpcore.app.serializers import (
 BACKEND_CHOICES = (
     ("pulpcore.app.models.storage.FileSystem", "Use local filesystem as storage"),
     # ("pulpcore.app.models.storage.PulpSFTPStorage", "Use SFTP server as storage"),
-    ("storages.backends.s3boto3.S3Boto3Storage", "Use Amazon S3 as storage"),
+    ("storages.backends.s3boto3.S3Boto3Storage", "Use Amazon S3 as storage [deprecated]"),
+    ("storages.backends.s3.S3Storage", "Use Amazon S3 as storage"),
     ("storages.backends.azure_storage.AzureStorage", "Use Azure Blob as storage"),
     # ("storages.backends.gcloud.GoogleCloudStorage", "Use Google Cloud as storage"),
 )
@@ -159,7 +160,7 @@ class TransferConfigSerializer(serializers.Serializer):
 class AmazonS3SettingsSerializer(BaseSettingsClass):
     """A Serializer for Amazon S3 storage settings."""
 
-    STORAGE_CLASS = "storages.backends.s3boto3.S3Boto3Storage"
+    STORAGE_CLASS = "storages.backends.s3.S3Storage"
     SETTING_MAPPING = {
         "aws_s3_access_key_id": "access_key",
         "aws_access_key_id": "access_key",

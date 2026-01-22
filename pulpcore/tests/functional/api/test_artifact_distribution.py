@@ -5,6 +5,7 @@ from hashlib import sha256
 
 OBJECT_STORAGES = (
     "storages.backends.s3boto3.S3Boto3Storage",
+    "storages.backends.s3.S3Storage",
     "storages.backends.azure_storage.AzureStorage",
     "storages.backends.gcloud.GoogleCloudStorage",
 )
