@@ -392,7 +392,10 @@ def get_artifact_url(artifact, headers=None, http_method=None):
         or not artifact_domain.redirect_to_object_storage
     ):
         return _artifact_serving_distribution().artifact_url(artifact)
-    elif artifact_domain.storage_class == "storages.backends.s3boto3.S3Boto3Storage":
+    elif artifact_domain.storage_class in (
+        "storages.backends.s3boto3.S3Boto3Storage",
+        "storages.backends.s3.S3Storage",
+    ):
         parameters = {"ResponseContentDisposition": content_disposition}
         if headers and headers.get("Content-Type"):
             parameters["ResponseContentType"] = headers.get("Content-Type")
