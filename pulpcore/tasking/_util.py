@@ -121,8 +121,9 @@ def _execute_task_and_profile(task, profile_options):
             _execute_task = _pyinstrument_diagnostic_decorator(temp_dir, _execute_task)
         if "memray" in profile_options:
             _execute_task = _memray_diagnostic_decorator(temp_dir, _execute_task)
-        if "logs" in profile_options or "debug-logs" in profile_options:
-            is_debug = "debug-logs" in profile_options
+
+        is_debug = "debug-logs" in profile_options
+        if "logs" in profile_options or is_debug:
             _execute_task = _logging_decorator(temp_dir, is_debug, _execute_task)
 
         _execute_task(task)

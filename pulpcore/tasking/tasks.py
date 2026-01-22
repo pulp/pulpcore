@@ -70,7 +70,11 @@ def _execute_task(task):
     with with_task_context(task):
         task.set_running()
         domain = get_domain()
+
         try:
+            # If this task is being spawned by another task, we should inherit the profile options
+            # from the current task.
+            ctx_token = x_task_diagnostics_var.set(task.profile_options)
             log_task_start(task, domain)
             task_function = get_task_function(task)
             result = task_function()
@@ -89,6 +93,7 @@ def _execute_task(task):
         else:
             task.set_completed(result)
             log_task_completed(task, domain)
+            x_task_diagnostics_var.reset(ctx_token)
         send_task_notification(task)
 
 
@@ -353,12 +358,6 @@ def get_task_payload(
     function_name, task_group, args, kwargs, resources, versions, immediate, deferred, app_lock
 ):
     """Create arguments for creation of a new task"""
-    current_task = Task.current()
-    profile_options = x_task_diagnostics_var.get(None)
-    # If this task is being spawned by another task, we should inherit the profile options
-    # from the current task.
-    if current_task:
-        profile_options = current_task.profile_options
     payload = {
         "state": TASK_STATES.WAITING,
         "logging_cid": (get_guid()),
@@ -366,12 +365,12 @@ def get_task_payload(
         "name": function_name,
         "enc_args": args,
         "enc_kwargs": kwargs,
-        "parent_task": current_task,
+        "parent_task": Task.current(),
         "reserved_resources_record": resources,
         "versions": versions,
         "immediate": immediate,
         "deferred": deferred,
-        "profile_options": profile_options,
+        "profile_options": x_task_diagnostics_var.get(None),
         "app_lock": app_lock,
     }
     return payload
