@@ -7,6 +7,11 @@ def add_info_hook(result, generator, request, **kwargs):
         "url": "https://pulpproject.org/pulp-docs/docs/assets/pulp_logo_icon.svg"
     }
 
+    if result["openapi"].split(".", maxsplit=2)[:-1] == ["3", "0"]:
+        result["info"]["license"].pop("identifier", None)
+    else:
+        result["info"]["license"].pop("url", None)
+
     # Adding plugin version config
     result["info"]["x-pulp-app-versions"] = {app.label: app.version for app in request.apps}
 

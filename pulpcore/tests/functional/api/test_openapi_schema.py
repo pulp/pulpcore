@@ -119,3 +119,13 @@ def test_content_in_filter_is_array(pulp_openapi_schema):
             else:
                 assert False, "Couldn't find the content__in filter!"
     assert len(tested) == 2, "Couldn't test both the Publication and RepositoryVersion endpoints"
+
+
+@pytest.mark.parallel
+def test_license_version_is_valid_spdx_specifier(pulp_openapi_schema):
+    assert (
+        pulp_openapi_schema["info"]["license"]["name"] == "GNU General Public License v2.0 or later"
+    )
+    schema_version = pulp_openapi_schema["openapi"]
+    if schema_version.startswith("3.1"):
+        assert pulp_openapi_schema["info"]["license"]["identifier"] == "GPL-2.0-or-later"
