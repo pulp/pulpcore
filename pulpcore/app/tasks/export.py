@@ -396,7 +396,7 @@ def pulp_export(exporter_pk, params):
         writer = HashingFileWriter(
             base_path=tarfile_fp,
             chunk_size=the_export.validated_chunk_size or 0,
-            hasher_cls=hasher,  # type: ignore
+            hasher_cls=hasher,
         )
 
         try:

@@ -3,11 +3,10 @@ import zlib
 import os
 import socket
 import tempfile
-from _hashlib import HASH
 from io import RawIOBase
 from pathlib import Path
 from types import TracebackType
-from typing import Self, IO, Callable
+from typing import Self, IO, Any
 
 import gnupg
 
@@ -666,7 +665,7 @@ class HashingFileWriter(RawIOBase):
     def __init__(
         self,
         base_path: str | Path,
-        hasher_cls: Callable[[], HASH],
+        hasher_cls: Any,
         chunk_size: int = 0,
         suffix_length: int = 4,
         dir_mode: int = 0o775,
@@ -690,7 +689,7 @@ class HashingFileWriter(RawIOBase):
 
         self._file_index: int = 0
         self._current_file: IO[bytes] | None = None
-        self._current_hasher: HASH | None = None
+        self._current_hasher: Any | None = None
         self._current_file_path: Path | None = None
 
         self._current_chunk_written: int = 0
