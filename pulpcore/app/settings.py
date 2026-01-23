@@ -350,8 +350,9 @@ SPECTACULAR_SETTINGS = {
         "url": "https://pulpproject.org",
     },
     "LICENSE": {
-        "name": "GPLv2+",
         "url": "https://raw.githubusercontent.com/pulp/pulpcore/master/LICENSE",
+        "name": "GNU General Public License v2.0 or later",
+        "identifier": "GPL-2.0-or-later",
     },
 }
 

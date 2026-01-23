@@ -13,8 +13,8 @@ readme = "README.md"
 authors = [
   {name="Pulp Team", email="pulp-list@redhat.com"},
 ]
+license = "GPL-2.0-or-later"
 classifiers=[
-  "License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)",
   "Operating System :: POSIX :: Linux",
   "Development Status :: 5 - Production/Stable",
   "Framework :: Django",
