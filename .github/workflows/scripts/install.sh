@@ -117,7 +117,7 @@ if [ "$TEST" = "azure" ]; then
     image: mcr.microsoft.com/azure-storage/azurite\
     volumes:\
       - ./azurite:/etc/pulp\
-    command: "azurite-blob --blobHost 0.0.0.0"' vars/main.yaml
+    command: "azurite-blob --skipApiVersionCheck --blobHost 0.0.0.0"' vars/main.yaml
   sed -i -e '$a azure_test: true\
 pulp_scenario_settings: {"AZURE_ACCOUNT_KEY": "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==", "AZURE_ACCOUNT_NAME": "devstoreaccount1", "AZURE_CONNECTION_STRING": "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://ci-azurite:10000/devstoreaccount1;", "AZURE_CONTAINER": "pulp-test", "AZURE_LOCATION": "pulp3", "AZURE_OVERWRITE_FILES": true, "AZURE_URL_EXPIRATION_SECS": 120, "DEFAULT_FILE_STORAGE": "storages.backends.azure_storage.AzureStorage", "MEDIA_ROOT": "", "api_root_rewrite_header": "X-API-Root", "content_origin": null, "domain_enabled": true, "rest_framework__default_permission_classes": ["pulpcore.plugin.access_policy.DefaultAccessPolicy"]}\
 pulp_scenario_env: {}\
