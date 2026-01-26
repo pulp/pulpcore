@@ -343,6 +343,7 @@ class StorageSettingsSerializer(serializers.Serializer):
     STORAGE_MAPPING = {
         "pulpcore.app.models.storage.FileSystem": FileSystemSettingsSerializer,
         "pulpcore.app.models.storage.PulpSFTPStorage": SFTPSettingsSerializer,
+        "storages.backends.s3.S3Storage": AmazonS3SettingsSerializer,
         "storages.backends.s3boto3.S3Boto3Storage": AmazonS3SettingsSerializer,
         "storages.backends.azure_storage.AzureStorage": AzureSettingsSerializer,
         "storages.backends.gcloud.GoogleCloudStorage": GoogleSettingsSerializer,
