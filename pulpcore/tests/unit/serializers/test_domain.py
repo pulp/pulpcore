@@ -59,24 +59,13 @@ def required_settings(storage_class):
         "storages.backends.s3boto3.S3Boto3Storage",
         "storages.backends.s3.S3Storage",
     ):
-        return {"access_key": "testing", "bucket_name": "test"}
+        return {"access_key": "testing", "secret_key": "secret", "bucket_name": "test"}
     elif storage_class == "storages.backends.azure_storage.AzureStorage":
         return {"account_name": "test", "account_key": "secret", "azure_container": "test"}
 
 
 @pytest.fixture
-def extra_required_settings(storage_class):
-    """For fields required in the serializer's validate, but not on the field itself."""
-    if storage_class in (
-        "storages.backends.s3boto3.S3Boto3Storage",
-        "storages.backends.s3.S3Storage",
-    ):
-        return {"secret_key": "secret"}
-    return {}
-
-
-@pytest.fixture
-def all_settings(serializer_class, required_settings, extra_required_settings):
+def all_settings(serializer_class, required_settings):
     serializer = serializer_class()
     fields = serializer.get_fields()
     default_settings = {
