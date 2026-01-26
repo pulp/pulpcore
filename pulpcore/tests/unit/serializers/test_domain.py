@@ -131,8 +131,6 @@ def test_using_setting_names(storage_class, serializer_class, all_settings):
     assert storage_settings == all_settings
 
 
-<<<<<<< HEAD
-=======
 @pytest.mark.django_db
 def test_cloudfront_s3_storage_settings(storage_class, required_settings):
     if storage_class not in (
