@@ -59,7 +59,7 @@ def required_settings(storage_class):
         "storages.backends.s3boto3.S3Boto3Storage",
         "storages.backends.s3.S3Storage",
     ):
-        return {"access_key": "testing", "bucket_name": "test"}
+        return {"access_key": "testing", "secret_key": "secret", "bucket_name": "test"}
     elif storage_class == "storages.backends.azure_storage.AzureStorage":
         return {"account_name": "test", "account_key": "secret", "azure_container": "test"}
 
