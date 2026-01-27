@@ -8,6 +8,29 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.85.9 (2026-01-27) {: #3.85.9 }
+
+### REST API {: #3.85.9-rest-api }
+
+#### Bugfixes {: #3.85.9-rest-api-bugfix }
+
+- Fixed not supporting the new rename of the S3 storage backend.
+  [#7228](https://github.com/pulp/pulpcore/issues/7228)
+
+### Plugin API {: #3.85.9-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.85.9-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.9-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.85.8 (2026-01-14) {: #3.85.8 }
 
 ### REST API {: #3.85.8-rest-api }
