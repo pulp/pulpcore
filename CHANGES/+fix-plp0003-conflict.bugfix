@@ -1,1 +1,0 @@
-Fixed duplicate error code PLP0003 used by both ResourceImmutableError and DigestValidationError. ResourceImmutableError now uses PLP0006.
