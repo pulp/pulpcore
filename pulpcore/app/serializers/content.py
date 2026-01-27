@@ -11,7 +11,7 @@ from pulpcore.app.util import get_domain
 
 class NoArtifactContentSerializer(base.ModelSerializer):
     pulp_href = base.DetailIdentityField(view_name_pattern=r"contents(-.*/.*)-detail")
-    pulp_labels = serializers.HStoreField(
+    pulp_labels = fields.PulpLabelsField(
         help_text=_(
             "A dictionary of arbitrary key/value pairs used to describe a specific "
             "Content instance."
