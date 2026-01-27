@@ -8,6 +8,31 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.63.29 (2026-01-27) {: #3.63.29 }
+
+### REST API {: #3.63.29-rest-api }
+
+#### Bugfixes {: #3.63.29-rest-api-bugfix }
+
+- Improve handling of some edge cases in task diagnostics code.
+  [#7020](https://github.com/pulp/pulpcore/issues/7020)
+- Fixed not supporting the new rename of the S3 storage backend.
+  [#7228](https://github.com/pulp/pulpcore/issues/7228)
+
+### Plugin API {: #3.63.29-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.29-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.29-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.63.28 (2025-12-22) {: #3.63.28 }
 
 ### REST API {: #3.63.28-rest-api }
