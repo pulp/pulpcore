@@ -8,6 +8,45 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.102.0 (2026-01-27) {: #3.102.0 }
+
+### REST API {: #3.102.0-rest-api }
+
+#### Features {: #3.102.0-rest-api-feature }
+
+- Added a `pulpcore-manager list-signing-services` command.
+
+#### Bugfixes {: #3.102.0-rest-api-bugfix }
+
+- Implement atomic hashing and chunking in PulpExport
+  [#7218](https://github.com/pulp/pulpcore/issues/7218)
+- Fixed not supporting the new rename of the S3 storage backend.
+  [#7228](https://github.com/pulp/pulpcore/issues/7228)
+- Fixed duplicate error code PLP0003 used by both ResourceImmutableError and DigestValidationError. ResourceImmutableError now uses PLP0006.
+- Use a proper spdx license identifier in the openapi docs.
+
+#### Improved Documentation {: #3.102.0-rest-api-doc }
+
+- Updated error handling documentation with all PulpException classes and usage examples.
+
+#### Removals {: #3.102.0-rest-api-removal }
+
+- Stopped leaking sensitive information of failures in the task API.
+
+### Plugin API {: #3.102.0-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.102.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.102.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.101.0 (2026-01-13) {: #3.101.0 }
 
 ### REST API {: #3.101.0-rest-api }
