@@ -76,7 +76,6 @@ class Stage:
             content = await self._in_q.get()
             if content is None:
                 break
-            log.debug("%(name)s - next: %(content)s.", {"name": self, "content": content})
             yield content
 
     async def batches(self, minsize=500):
@@ -171,7 +170,6 @@ class Stage:
         if item is None:
             raise ValueError(_("(None) not permitted."))
         await self._out_q.put(item)
-        log.debug("{name} - put: {content}".format(name=self, content=item))
 
     def __str__(self):
         return "[{id}] {name}".format(id=id(self), name=self.__class__.__name__)

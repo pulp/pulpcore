@@ -14,9 +14,9 @@ Please be sure to follow the [Pulp policy on AI Usage](site:help/more/governance
 
 1. Add `functional tests` or `unit tests` where appropriate and ensure tests
    are passing on the CI.
-2. Add a [`CHANGES entry`](site:pulpcore/docs/dev/guides/git/#markdown-header-changelog-update).
+2. Add a [`CHANGES entry`](site:pulpcore/docs/dev/guides/git/#changelog-update).
 3. Update relevent `documentation`. Please build the docs to test!
-4. If the PR is a simple feature or a bugfix, [`rebase and squash`](site:pulpcore/docs/dev/guides/git/#markdown-header-rebasing-and-squashing) to a single commit.
+4. If the PR is a simple feature or a bugfix, [`rebase and squash`](site:pulpcore/docs/dev/guides/git/#rebasing-and-squashing) to a single commit.
    If the PR is a complex feature, make sure that all commits are cleanly separated and have meaningful commit messages.
 5. Make sure you tag commits with `closes #IssueNumber` or `ref #IssueNumber` when working on a tracked issue.
 6. If AI was used, make sure you are following the [Pulp policy on AI Usage](site:help/more/governance/ai_policy/)

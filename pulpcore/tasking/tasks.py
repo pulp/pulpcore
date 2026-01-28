@@ -70,7 +70,11 @@ def _execute_task(task):
     with with_task_context(task):
         task.set_running()
         domain = get_domain()
+
         try:
+            # If this task is being spawned by another task, we should inherit the profile options
+            # from the current task.
+            ctx_token = x_task_diagnostics_var.set(task.profile_options)
             log_task_start(task, domain)
             task_function = get_task_function(task)
             result = task_function()
@@ -89,6 +93,7 @@ def _execute_task(task):
         else:
             task.set_completed(result)
             log_task_completed(task, domain)
+            x_task_diagnostics_var.reset(ctx_token)
         send_task_notification(task)
 
 
@@ -352,6 +357,7 @@ async def adispatch(
 def get_task_payload(
     function_name, task_group, args, kwargs, resources, versions, immediate, deferred, app_lock
 ):
+    """Create arguments for creation of a new task"""
     payload = {
         "state": TASK_STATES.WAITING,
         "logging_cid": (get_guid()),
