@@ -199,6 +199,8 @@ ignore = [
     "lint_requirements.txt",
     ".flake8",
     "pulpcore/tests/functional/assets/**",
+    ".yamllint.yaml",
+    ".pre-commit-config.yaml",
 ]
 
 [tool.bumpversion]

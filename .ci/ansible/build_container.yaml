@@ -23,5 +23,5 @@
 
     - name: "Clean image cache"
       docker_prune:
-        images : true
+        images: true
 ...
