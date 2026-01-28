@@ -198,6 +198,8 @@ ignore = [
     ".github/**",
     "lint_requirements.txt",
     ".flake8",
+    ".yamllint.yaml",
+    ".pre-commit-config.yaml",
     "pulpcore/tests/functional/assets/**",
 ]
 
