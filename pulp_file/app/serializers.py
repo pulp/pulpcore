@@ -65,6 +65,8 @@ class FileContentUploadSerializer(FileContentSerializer):
     """
 
     def validate(self, data):
+        data = super().validate(data)
+
         """Validate the FileContent data."""
         if upload := data.pop("upload", None):
             # Handle chunked upload

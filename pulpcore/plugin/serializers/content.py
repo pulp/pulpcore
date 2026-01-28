@@ -1,17 +1,15 @@
 import json
-
 from gettext import gettext as _
-
 from tempfile import NamedTemporaryFile
+from urllib.parse import urlparse
 
 from django.db import DatabaseError
 from rest_framework.serializers import (
     CharField,
     FileField,
-    Serializer,
     ValidationError,
 )
-from urllib.parse import urlparse
+
 from pulpcore.app.files import PulpTemporaryUploadedFile
 from pulpcore.app.models import Artifact, PulpTemporaryFile, Remote, Upload, UploadChunk
 from pulpcore.app.serializers import (
@@ -20,10 +18,11 @@ from pulpcore.app.serializers import (
     NoArtifactContentSerializer,
     SingleArtifactContentSerializer,
 )
+from pulpcore.app.serializers.base import RemoteNetworkConfigSerializer
 from pulpcore.app.util import get_domain_pk
 
 
-class UploadSerializerFieldsMixin(Serializer):
+class UploadSerializerFieldsMixin(RemoteNetworkConfigSerializer):
     """A mixin class that contains fields and methods common to content upload serializers."""
 
     REMOTE_CLASS = Remote
@@ -45,6 +44,14 @@ class UploadSerializerFieldsMixin(Serializer):
         required=False,
         write_only=True,
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        network_fields = RemoteNetworkConfigSerializer().get_fields()
+        for field_name, field_obj in network_fields.items():
+            field_obj.write_only = True
+            self.fields[field_name] = field_obj
 
     def validate_file_url(self, value):
         """Parse out the auth if provided."""
@@ -74,9 +81,11 @@ class UploadSerializerFieldsMixin(Serializer):
             PulpTemporaryUploadedFile: the downloaded file
         """
         remote = self.REMOTE_CLASS(url=url, **self.context.get("remote_kwargs", {}))
+
         downloader = remote.get_downloader(
             url=url, expected_digests=expected_digests, expected_size=expected_size
         )
+
         result = downloader.fetch()
         return PulpTemporaryUploadedFile.from_file(open(result.path, "rb"))
 
@@ -84,6 +93,15 @@ class UploadSerializerFieldsMixin(Serializer):
         """Validate that we have an Artifact/File or can create one."""
 
         data = super().validate(data)
+
+        network_keys = set(RemoteNetworkConfigSerializer().get_fields().keys())
+        remote_kwargs = self.context.get("remote_kwargs", {})
+
+        for key in network_keys:
+            if key in data:
+                remote_kwargs[key] = data.pop(key)
+
+        self.context["remote_kwargs"] = remote_kwargs
 
         if self.context.get("request") is not None:
             upload_fields = {
@@ -146,10 +164,8 @@ class UploadSerializerFieldsMixin(Serializer):
         return result
 
     class Meta:
-        fields = (
-            "file",
-            "upload",
-            "file_url",
+        fields = ("file", "upload", "file_url") + tuple(
+            RemoteNetworkConfigSerializer().get_fields().keys()
         )
 
 
@@ -251,7 +267,8 @@ class SingleArtifactContentUploadSerializer(
             # if artifact already exists, let's use it
             try:
                 artifact = Artifact.objects.get(
-                    sha256=file.hashers["sha256"].hexdigest(), pulp_domain=get_domain_pk()
+                    sha256=file.hashers["sha256"].hexdigest(),
+                    pulp_domain=get_domain_pk(),
                 )
                 if not artifact.pulp_domain.get_storage().exists(artifact.file.name):
                     artifact.file = file
