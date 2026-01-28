@@ -15,4 +15,4 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         SigningService = apps.get_model("core", "SigningService")
         results = list(SigningService.objects.all().values_list("name", flat=True))
-        self.stdout.write(results)
+        self.stdout.write("\n".join(results))
