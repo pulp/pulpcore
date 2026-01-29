@@ -79,8 +79,9 @@ def test_invalid_url(file_bindings, file_repo, gen_object_with_cleanup, monitor_
     remote = gen_object_with_cleanup(file_bindings.RemotesFileApi, remote_kwargs)
 
     body = RepositorySyncURL(remote=remote.pulp_href)
-    with pytest.raises(PulpTaskError):
+    with pytest.raises(PulpTaskError) as e:
         monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task)
+    assert "[PLP0008] URL lookup failed." in e.value.task.error["description"]
 
 
 @pytest.mark.parallel
@@ -90,8 +91,36 @@ def test_invalid_file(
     """Sync a repository using an invalid file repository."""
     remote = file_remote_factory(manifest_path=invalid_manifest_path, policy="immediate")
     body = RepositorySyncURL(remote=remote.pulp_href)
-    with pytest.raises(PulpTaskError):
+    with pytest.raises(PulpTaskError) as e:
         monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task)
+    assert "[PLP0003]" in e.value.task.error["description"]
+
+
+@pytest.mark.parallel
+def test_missing_file(
+    file_repo, file_bindings, missing_file_path, file_remote_factory, monitor_task
+):
+    """Sync a repository using a manifest file with a missing file."""
+    remote = file_remote_factory(manifest_path=missing_file_path, policy="immediate")
+    body = RepositorySyncURL(remote=remote.pulp_href)
+    with pytest.raises(PulpTaskError) as e:
+        monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task)
+    assert "[PLP0013] Sync failed: Error downloading artifact" in e.value.task.error["description"]
+
+
+@pytest.mark.parallel
+def test_missing_manifest(
+    file_repo, file_bindings, basic_manifest_path, file_remote_factory, monitor_task
+):
+    """Sync a repository using a missing manifest file."""
+    remote = file_remote_factory(manifest_path="/MISSING_MANIFEST", policy="immediate")
+    body = RepositorySyncURL(remote=remote.pulp_href)
+    with pytest.raises(PulpTaskError) as e:
+        monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task)
+    assert (
+        "[PLP0013] Sync failed: Error downloading manifest file"
+        in e.value.task.error["description"]
+    )
 
 
 @pytest.mark.parallel

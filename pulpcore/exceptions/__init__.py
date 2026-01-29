@@ -9,6 +9,13 @@ from .base import (
     ProxyAuthenticationError,
     InternalErrorException,
     RepositoryVersionDeleteError,
+    ExternalServiceError,
+    ExportError,
+    ImportError,
+    SystemStateError,
+    ReplicateError,
+    SyncError,
+    PublishError,
 )
 from .validation import (
     DigestValidationError,
@@ -18,3 +25,4 @@ from .validation import (
     MissingDigestValidationError,
     UnsupportedDigestValidationError,
 )
+from .plugin import MissingPlugin
