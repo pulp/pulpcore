@@ -1,9 +1,11 @@
 from gettext import gettext as _
 from logging import getLogger
 from tempfile import NamedTemporaryFile
+from rest_framework.exceptions import ValidationError as DRFValidationError
 
 from pulpcore.app import files, models
 from pulpcore.app.serializers import ArtifactSerializer
+from pulpcore.exceptions import ValidationError
 
 log = getLogger(__name__)
 
@@ -34,7 +36,10 @@ def commit(upload_id, sha256):
 
         data = {"file": file, "sha256": sha256}
         serializer = ArtifactSerializer(data=data)
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except DRFValidationError as e:
+            raise ValidationError(e.detail)
         artifact = serializer.save()
 
     resource = models.CreatedResource(content_object=artifact)

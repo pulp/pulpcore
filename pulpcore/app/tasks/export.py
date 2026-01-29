@@ -34,6 +34,8 @@ from pulpcore.app.importexport import (
     export_content,
 )
 from pulpcore.constants import FS_EXPORT_METHODS
+from pulpcore.exceptions import ExportError
+from rest_framework.exceptions import ValidationError as DRFValidationError
 
 log = logging.getLogger(__name__)
 
@@ -66,14 +68,14 @@ def _export_to_file_system(path, relative_paths_to_artifacts, method=FS_EXPORT_M
         relative_paths_to_artifacts: A dict with {relative_path: artifact} mapping
 
     Raises:
-        ValidationError: When path is not in the ALLOWED_EXPORT_PATHS setting
+        ExportError: When path is not in the ALLOWED_EXPORT_PATHS setting
     """
     using_filesystem_storage = (
         settings.STORAGES["default"]["BACKEND"] == "pulpcore.app.models.storage.FileSystem"
     )
 
     if method != FS_EXPORT_METHODS.WRITE and not using_filesystem_storage:
-        raise RuntimeError(_("Only write is supported for non-filesystem storage."))
+        raise ExportError(_("Only write is supported for non-filesystem storage."))
 
     os.makedirs(path)
     export_not_on_same_filesystem = (
@@ -101,7 +103,7 @@ def _export_to_file_system(path, relative_paths_to_artifacts, method=FS_EXPORT_M
                 for chunk in af.chunks(1024 * 1024):
                     f.write(chunk)
         else:
-            raise RuntimeError(_("Unsupported export method '{}'.").format(method))
+            raise ExportError(_("Unsupported export method '{}'.").format(method))
 
 
 def _export_publication_to_file_system(
@@ -218,7 +220,7 @@ def fs_publication_export(exporter_pk, publication_pk, start_repo_version_pk=Non
     )
 
     if not _export_location_is_clean(exporter.path):
-        raise RuntimeError(_("Cannot export to directories that contain existing data."))
+        raise ExportError(_("Cannot export to directories that contain existing data."))
 
     _export_publication_to_file_system(
         exporter.path, publication, start_repo_version=start_repo_version, method=exporter.method
@@ -369,12 +371,15 @@ def pulp_export(exporter_pk, params):
         params (dict): request data
 
     Raises:
-        ValidationError: When path is not in the ALLOWED_EXPORT_PATHS setting,
+        ExportError: When path is not in the ALLOWED_EXPORT_PATHS setting,
             OR path exists and is not a directory
     """
     pulp_exporter = PulpExporter.objects.get(pk=exporter_pk)
     serializer = PulpExportSerializer(data=params, context={"exporter": pulp_exporter})
-    serializer.is_valid(raise_exception=True)
+    try:
+        serializer.is_valid(raise_exception=True)
+    except DRFValidationError as e:
+        raise ExportError(e.detail)
     the_export = PulpExport.objects.create(exporter=pulp_exporter, params=params)
     the_export.validated_versions = serializer.validated_data.get("versions", None)
     the_export.validated_start_versions = serializer.validated_data.get("start_versions", None)
@@ -470,7 +475,7 @@ def _do_export(pulp_exporter, tar, the_export):
         # an on_demand repo
         content_artifacts = ContentArtifact.objects.filter(content__in=version.content)
         if content_artifacts.filter(artifact=None).exists():
-            raise RuntimeError(_("Remote artifacts cannot be exported."))
+            raise ExportError(_("Remote artifacts cannot be exported."))
 
         if do_incremental:
             vers_artifacts = version.artifacts.difference(vers_match[version].artifacts)

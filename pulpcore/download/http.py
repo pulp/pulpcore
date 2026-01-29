@@ -3,7 +3,6 @@ import logging
 import aiohttp
 import asyncio
 import backoff
-import socket
 
 from .base import BaseDownloader, DownloadResult
 from pulpcore.exceptions import (
@@ -300,11 +299,8 @@ class HttpDownloader(BaseDownloader):
                 self.raise_for_status(response)
                 to_return = await self._handle_response(response)
                 await response.release()
-        except aiohttp.ClientConnectorError as e:
-            # Check if this is a DNS error
-            if isinstance(e.os_error, socket.gaierror):
-                raise DnsDomainNameException(self.url)
-            raise
+        except aiohttp.ClientConnectorDNSError:
+            raise DnsDomainNameException(self.url)
         if self._close_session_on_finalize:
             await self.session.close()
         return to_return

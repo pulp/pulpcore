@@ -1,9 +1,8 @@
 import pytest
 
-from rest_framework.serializers import ValidationError
-
 import pulpcore.app.apps
 from pulpcore.app.tasks.importer import _check_versions
+from pulpcore.exceptions import ImportError
 
 
 def _pulp_plugin_configs():
@@ -34,20 +33,20 @@ def test_vers_check(monkeypatch):
     _check_versions(export_json)
 
     export_json = [{"component": "123", "version": "1.4.3"}]
-    with pytest.raises(ValidationError):
+    with pytest.raises(ImportError):
         _check_versions(export_json)
 
     export_json = [{"component": "123", "version": "2.2.3"}]
-    with pytest.raises(ValidationError):
+    with pytest.raises(ImportError):
         _check_versions(export_json)
 
     export_json = [{"component": "non_existent", "version": "1.2.3"}]
-    with pytest.raises(ValidationError):
+    with pytest.raises(ImportError):
         _check_versions(export_json)
 
     export_json = [
         {"component": "123", "version": "1.2.3"},
         {"component": "non_existent", "version": "1.2.3"},
     ]
-    with pytest.raises(ValidationError):
+    with pytest.raises(ImportError):
         _check_versions(export_json)

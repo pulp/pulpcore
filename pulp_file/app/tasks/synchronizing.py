@@ -4,8 +4,10 @@ import os
 from gettext import gettext as _
 from urllib.parse import quote, urlparse, urlunparse
 
+import aiohttp.client_exceptions
 from django.core.files import File
 
+from pulpcore.plugin.exceptions import SyncError
 from pulpcore.plugin.models import Artifact, ProgressReport, Remote, PublishedMetadata
 from pulpcore.plugin.serializers import RepositoryVersionSerializer
 from pulpcore.plugin.stages import (
@@ -38,14 +40,14 @@ def synchronize(remote_pk, repository_pk, mirror, url=None):
         url (str): The url to synchronize. If omitted, the url of the remote is used.
 
     Raises:
-        ValueError: If the remote does not specify a URL to sync.
+        SyncError: If the remote does not specify a URL to sync.
 
     """
     remote = FileRemote.objects.get(pk=remote_pk)
     repository = FileRepository.objects.get(pk=repository_pk)
 
     if not remote.url:
-        raise ValueError(_("A remote must have a url specified to synchronize."))
+        raise SyncError(_("A remote must have a url specified to synchronize."))
 
     first_stage = FileFirstStage(remote, url)
     dv = DeclarativeVersion(first_stage, repository, mirror=mirror, acs=True)
@@ -103,7 +105,10 @@ class FileFirstStage(Stage):
             parsed_url = urlparse(self.url)
             root_dir = os.path.dirname(parsed_url.path)
             downloader = self.remote.get_downloader(url=self.url)
-            result = await downloader.run()
+            try:
+                result = await downloader.run()
+            except aiohttp.client_exceptions.ClientResponseError as e:
+                raise SyncError(_("Error downloading manifest file: {error}").format(error=e))
             await pb.aincrement()
             metadata_files.append((result.path, self.url.split("/")[-1]))
 
@@ -111,7 +116,10 @@ class FileFirstStage(Stage):
             message="Parsing Metadata Lines", code="sync.parsing.metadata"
         ) as pb:
             manifest = Manifest(result.path)
-            entries = list(manifest.read())
+            try:
+                entries = list(manifest.read())
+            except ValueError as e:
+                raise SyncError(_("Error parsing manifest file: {error}").format(error=e))
 
             pb.total = len(entries)
             await pb.asave()
