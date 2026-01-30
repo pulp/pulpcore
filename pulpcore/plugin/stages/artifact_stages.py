@@ -4,12 +4,12 @@ from gettext import gettext as _
 import logging
 from django.conf import settings
 
-
+import aiohttp.client_exceptions
 from aiofiles import os as aos
 from asgiref.sync import sync_to_async
 from django.db.models import Prefetch, prefetch_related_objects
 
-from pulpcore.plugin.exceptions import UnsupportedDigestValidationError
+from pulpcore.plugin.exceptions import UnsupportedDigestValidationError, SyncError
 from pulpcore.plugin.models import (
     Artifact,
     ContentArtifact,
@@ -240,7 +240,10 @@ class ArtifactDownloader(GenericDownloader):
             and not d_artifact.artifact.file
         ]
         if downloaders_for_content:
-            await asyncio.gather(*downloaders_for_content)
+            try:
+                await asyncio.gather(*downloaders_for_content)
+            except aiohttp.client_exceptions.ClientResponseError as e:
+                raise SyncError(_("Error downloading artifact: {error}").format(error=e))
         await self.put(d_content)
         return len(downloaders_for_content)
 
@@ -407,7 +410,7 @@ class RemoteArtifactSaver(Stage):
                                 "No declared artifact with relative path '{rp}' for content '{c}'"
                                 " from remote '{rname}', and no paths available."
                             )
-                            raise ValueError(
+                            raise SyncError(
                                 msg.format(
                                     rp=d_artifact.relative_path,
                                     c=d_content.content.natural_key(),
@@ -416,7 +419,7 @@ class RemoteArtifactSaver(Stage):
                             )
                     else:
                         msg = _('No declared artifact with relative path "{rp}" for content "{c}"')
-                        raise ValueError(
+                        raise SyncError(
                             msg.format(rp=d_artifact.relative_path, c=d_content.content)
                         )
 

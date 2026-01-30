@@ -27,7 +27,7 @@ requires-python = ">=3.11"
 dependencies = [
   "aiodns>=3.3.0,<3.7",  # Looks like only bugfixes in z-Stream.
   "aiofiles>=22.1,<=25.1.0",  # Uses sort of CalVer, luckily not released often https://github.com/Tinche/aiofiles/issues/144 .
-  "aiohttp>=3.8.3,<3.14",  # SemVer https://docs.aiohttp.org/en/stable/faq.html#what-is-the-api-stability-and-deprecation-policy .
+  "aiohttp>=3.10.10,<3.14",  # SemVer https://docs.aiohttp.org/en/stable/faq.html#what-is-the-api-stability-and-deprecation-policy .
   "asyncio-throttle>=1.0,<=1.0.2",  # Unsure about versioning, but not released often anyway.
   "backoff>=2.1.2,<2.3",  # Looks like only bugfixes in z-Stream.
   "click>=8.1.0,<8.4",  # Uses milestone.feature.fix https://palletsprojects.com/versions .
@@ -63,7 +63,7 @@ dependencies = [
   "url-normalize>=1.4.3,<2.3",  # SemVer. https://github.com/niksite/url-normalize/blob/master/CHANGELOG.md#changelog
   "uuid6>=2023.5.2,<=2025.0.1",
   "whitenoise>=5.0,<6.12.0",
-  "yarl>=1.9.1,<1.23",  # Seems to follow SemVer https://yarl.aio-libs.org/en/latest/contributing/release_guide/#pre-release-activities .
+  "yarl>=1.12.0,<1.23",  # Seems to follow SemVer https://yarl.aio-libs.org/en/latest/contributing/release_guide/#pre-release-activities .
 ]
 
 [project.optional-dependencies]

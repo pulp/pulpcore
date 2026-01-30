@@ -16,7 +16,6 @@ from django.core.validators import MinValueValidator
 from django.db import models, transaction
 from django.db.models import F, Func, Q, Value
 from django_lifecycle import AFTER_UPDATE, BEFORE_CREATE, BEFORE_DELETE, hook
-from rest_framework.exceptions import APIException
 
 from pulpcore.app.util import (
     batch_qs,
@@ -28,7 +27,7 @@ from pulpcore.app.util import (
 )
 from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS, PROTECTED_REPO_VERSION_MESSAGE
 from pulpcore.download.factory import DownloaderFactory
-from pulpcore.exceptions import ResourceImmutableError
+from pulpcore.exceptions import ResourceImmutableError, RepositoryVersionDeleteError
 
 from pulpcore.cache import Cache
 
@@ -1249,7 +1248,7 @@ class RepositoryVersion(BaseModel):
     def check_protected(self):
         """Check if a repo version is protected before trying to delete it."""
         if self in self.repository.protected_versions():
-            raise Exception(PROTECTED_REPO_VERSION_MESSAGE)
+            raise RepositoryVersionDeleteError(PROTECTED_REPO_VERSION_MESSAGE)
 
     def delete(self, **kwargs):
         """
@@ -1263,7 +1262,7 @@ class RepositoryVersion(BaseModel):
         """
         if self.complete:
             if self.repository.versions.complete().count() <= 1:
-                raise APIException(_("Attempt to delete the last remaining version."))
+                raise RepositoryVersionDeleteError()
             if settings.CACHE_ENABLED:
                 base_paths = self.distribution_set.values_list("base_path", flat=True)
                 if base_paths:
@@ -1335,9 +1334,7 @@ class RepositoryVersion(BaseModel):
             RepositoryVersion: self
         """
         if self.complete:
-            raise RuntimeError(
-                _("This Repository version is complete. It cannot be modified further.")
-            )
+            raise ResourceImmutableError(self)
         repository = self.repository.cast()
         repository.initialize_new_version(self)
         return self

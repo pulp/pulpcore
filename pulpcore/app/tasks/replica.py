@@ -9,6 +9,7 @@ from pulpcore.constants import TASK_STATES
 from pulpcore.app.apps import pulp_plugin_configs, PulpAppConfig
 from pulpcore.app.models import UpstreamPulp, Task, TaskGroup
 from pulpcore.app.replica import ReplicaContext
+from pulpcore.exceptions import ReplicateError
 from pulpcore.tasking.tasks import dispatch
 
 from pulp_glue.common import __version__ as pulp_glue_version
@@ -119,7 +120,7 @@ def finalize_replication(server_pk):
     task_group = TaskGroup.current()
     server = UpstreamPulp.objects.get(pk=server_pk)
     if task_group.tasks.exclude(pk=task.pk).exclude(state=TASK_STATES.COMPLETED).exists():
-        raise Exception("Replication failed.")
+        raise ReplicateError()
 
     # Record timestamp of last successful replication.
     started_at = task_group.tasks.aggregate(Min("started_at"))["started_at__min"]

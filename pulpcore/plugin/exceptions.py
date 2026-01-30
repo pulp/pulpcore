@@ -1,4 +1,5 @@
 from pulpcore.exceptions import (
+    ValidationError,
     DigestValidationError,
     InvalidSignatureError,
     PulpException,
@@ -6,10 +7,16 @@ from pulpcore.exceptions import (
     MissingDigestValidationError,
     TimeoutException,
     UnsupportedDigestValidationError,
+    PublishError,
+    SyncError,
+    ExternalServiceError,
+    SystemStateError,
+    ReplicateError,
 )
 
 
 __all__ = [
+    "ValidationError",
     "DigestValidationError",
     "InvalidSignatureError",
     "PulpException",
@@ -17,4 +24,9 @@ __all__ = [
     "MissingDigestValidationError",
     "TimeoutException",
     "UnsupportedDigestValidationError",
+    "PublishError",
+    "SyncError",
+    "ExternalServiceError",
+    "SystemStateError",
+    "ReplicateError",
 ]
