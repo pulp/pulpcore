@@ -119,3 +119,21 @@ class InvalidSignatureError(ValidationError):
 
     def __str__(self):
         return f"[{self.error_code}] {self.message}"
+
+
+class DuplicateContentInRepositoryError(ValidationError):
+    """
+    Raised when duplicate content is detected within a Repository (Version).
+    """
+
+    error_code = "PLP0022"
+
+    def __init__(self, duplicate_count: int, correlation_id: str):
+        self.dup_count = duplicate_count
+        self.cid = correlation_id
+
+    def __str__(self):
+        return f"[{self.error_code}] " + _(
+            "Found {n} duplicate contents in repository version"
+            "(see the logs (cid={cid}) for details).".format(n=self.dup_count, cid=self.cid)
+        )
