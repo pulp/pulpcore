@@ -77,8 +77,8 @@ async def _heartbeat():
                 try:
                     await app_status.asave_heartbeat()
                     log.debug(msg)
-                except (InterfaceError, DatabaseError):
-                    log.error(fail_msg)
+                except (InterfaceError, DatabaseError) as e:
+                    log.error(f"{fail_msg} Exception: {str(e)}")
                     exit(Arbiter.WORKER_BOOT_ERROR)
     finally:
         if app_status:

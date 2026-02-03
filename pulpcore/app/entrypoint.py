@@ -35,8 +35,8 @@ class PulpApiWorker(SyncWorker):
             try:
                 self.app_status.save_heartbeat()
                 logger.debug(self.beat_msg)
-            except (InterfaceError, DatabaseError):
-                logger.error(self.fail_beat_msg)
+            except (InterfaceError, DatabaseError) as e:
+                logger.error(f"{self.fail_beat_msg} Exception: {str(e)}")
                 exit(Arbiter.WORKER_BOOT_ERROR)
 
     def init_process(self):
