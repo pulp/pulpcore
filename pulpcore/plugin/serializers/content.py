@@ -53,7 +53,6 @@ class UploadSerializerFieldsMixin(Serializer):
         ),
         required=False,
         write_only=True,
-        default={},
     )
 
     def validate_file_url(self, value):
@@ -94,7 +93,11 @@ class UploadSerializerFieldsMixin(Serializer):
         """Validate that we have an Artifact/File or can create one."""
 
         data = super().validate(data)
-        self.context["remote_kwargs"] = data.pop("downloader_config")
+        downloader_config = data.pop("downloader_config", {})
+        if self.context.get("remote_kwargs") is None:
+            self.context["remote_kwargs"] = downloader_config
+        else:
+            self.context["remote_kwargs"].update(downloader_config)
 
         if self.context.get("request") is not None:
             upload_fields = {
