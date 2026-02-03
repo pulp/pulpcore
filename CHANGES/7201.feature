@@ -1,1 +1,0 @@
-Add network configuration support for synchronous file uploads
