@@ -1,1 +1,0 @@
-Improve the logging for heartbeat failures by including the actual Exception. It helps with troubleshooting.
