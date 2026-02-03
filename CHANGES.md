@@ -8,6 +8,28 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.103.1 (2026-02-03) {: #3.103.1 }
+
+### REST API {: #3.103.1-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.103.1-plugin-api }
+
+#### Bugfixes {: #3.103.1-plugin-api-bugfix }
+
+- Fixed new downloader config field breaking plugins with synchronous uploads.
+
+### Pulp File {: #3.103.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.103.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.103.0 (2026-02-03) {: #3.103.0 }
 
 ### REST API {: #3.103.0-rest-api }

@@ -1,1 +1,0 @@
-Fixed new downloader config field breaking plugins with synchronous uploads.
