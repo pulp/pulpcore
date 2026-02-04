@@ -169,6 +169,10 @@ class PRNField(serializers.StringRelatedField):
         super().__init__(**kwargs)
 
     def to_representation(self, value):
+        if isinstance(value, MasterModel):
+            # Cast optimization to avoid performing a database query
+            model = value.get_model_for_pulp_type(value.pulp_type)
+            value = model(pk=value.pk)
         return get_prn(instance=value)
 
 
