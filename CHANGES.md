@@ -8,6 +8,64 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.103.1 (2026-02-03) {: #3.103.1 }
+
+### REST API {: #3.103.1-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.103.1-plugin-api }
+
+#### Bugfixes {: #3.103.1-plugin-api-bugfix }
+
+- Fixed new downloader config field breaking plugins with synchronous uploads.
+
+### Pulp File {: #3.103.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.103.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.103.0 (2026-02-03) {: #3.103.0 }
+
+### REST API {: #3.103.0-rest-api }
+
+#### Features {: #3.103.0-rest-api-feature }
+
+- Add network configuration support for synchronous file uploads
+  [#7201](https://github.com/pulp/pulpcore/issues/7201)
+- Improve the logging for heartbeat failures by including the actual Exception. It helps with troubleshooting.
+  [#7235](https://github.com/pulp/pulpcore/issues/7235)
+
+#### Bugfixes {: #3.103.0-rest-api-bugfix }
+
+- Fix an error when running `pulpcore-manager list-signing-services`.
+
+### Plugin API {: #3.103.0-plugin-api }
+
+#### Features {: #3.103.0-plugin-api-feature }
+
+- Added more useful error exceptions for general tasks.
+  [#7270](https://github.com/pulp/pulpcore/issues/7270)
+
+#### Bugfixes {: #3.103.0-plugin-api-bugfix }
+
+- Exposed `PulpLabelsField` and `pulp_labels_validator` to the plugin API.
+
+### Pulp File {: #3.103.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.103.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.102.0 (2026-01-27) {: #3.102.0 }
 
 ### REST API {: #3.102.0-rest-api }
