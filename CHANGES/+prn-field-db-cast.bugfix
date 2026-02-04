@@ -1,0 +1,1 @@
+Fixed PRNField slowing down the generic list endpoints with extra database queries.
