@@ -62,6 +62,25 @@ class FileRemote(Remote, AutoAddObjPermsMixin):
         ]
 
 
+class FileGitRemote(Remote, AutoAddObjPermsMixin):
+    """
+    Remote for syncing files from a Git repository (without PULP_MANIFEST).
+
+    The URL should point to a Git repository. The ``git_ref`` field can be used to specify a
+    branch, tag, or commit to sync from (defaults to ``HEAD``).
+    """
+
+    TYPE = "git"
+
+    git_ref = models.TextField(default="HEAD")
+
+    class Meta:
+        default_related_name = "%(app_label)s_%(model_name)s"
+        permissions = [
+            ("manage_roles_filegitremote", "Can manage roles on file git remotes"),
+        ]
+
+
 class FileRepository(Repository, AutoAddObjPermsMixin):
     """
     The "file" repository type.
@@ -69,7 +88,7 @@ class FileRepository(Repository, AutoAddObjPermsMixin):
 
     TYPE = "file"
     CONTENT_TYPES = [FileContent]
-    REMOTE_TYPES = [FileRemote]
+    REMOTE_TYPES = [FileRemote, FileGitRemote]
 
     manifest = models.TextField(default="PULP_MANIFEST", null=True)
     autopublish = models.BooleanField(default=False)

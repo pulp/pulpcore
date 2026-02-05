@@ -24,6 +24,7 @@ from pulp_file.app.models import (
     FileAlternateContentSource,
     FileContent,
     FileDistribution,
+    FileGitRemote,
     FileRemote,
     FileRepository,
     FilePublication,
@@ -158,6 +159,24 @@ class FileRemoteSerializer(RemoteSerializer):
     class Meta:
         fields = RemoteSerializer.Meta.fields
         model = FileRemote
+
+
+class FileGitRemoteSerializer(RemoteSerializer):
+    """
+    Serializer for File Git Remotes.
+    """
+
+    git_ref = serializers.CharField(
+        help_text=_("The git ref (branch, tag, or commit hash) to sync from. Defaults to HEAD."),
+        default="HEAD",
+        required=False,
+    )
+
+    policy = serializers.HiddenField(default=models.Remote.IMMEDIATE)
+
+    class Meta:
+        fields = RemoteSerializer.Meta.fields + ("git_ref",)
+        model = FileGitRemote
 
 
 class FilePublicationSerializer(PublicationSerializer):
