@@ -39,6 +39,7 @@ from .models import (
     FileAlternateContentSource,
     FileContent,
     FileDistribution,
+    FileGitRemote,
     FileRemote,
     FileRepository,
     FilePublication,
@@ -48,6 +49,7 @@ from .serializers import (
     FileContentSerializer,
     FileContentUploadSerializer,
     FileDistributionSerializer,
+    FileGitRemoteSerializer,
     FileRemoteSerializer,
     FileRepositorySerializer,
     FilePublicationSerializer,
@@ -200,7 +202,8 @@ class FileRepositoryViewSet(RepositoryViewSet, ModifyRepositoryActionMixin, Role
                 "effect": "allow",
                 "condition": [
                     "has_model_or_domain_or_obj_perms:file.sync_filerepository",
-                    "has_remote_param_model_or_domain_or_obj_perms:file.view_fileremote",
+                    "has_remote_param_model_or_domain_or_obj_perms:file.view_fileremote,"
+                    "file.view_filegitremote",
                     "has_model_or_domain_or_obj_perms:file.view_filerepository",
                 ],
             },
@@ -390,6 +393,84 @@ class FileRemoteViewSet(RemoteViewSet, RolesMixin):
             "file.manage_roles_fileremote",
         ],
         "file.fileremote_viewer": ["file.view_fileremote"],
+    }
+
+
+class FileGitRemoteViewSet(RemoteViewSet, RolesMixin):
+    """
+    <!-- User-facing documentation, rendered as html-->
+    FileGitRemote represents a Git repository as an external source of
+    <a href="#operation/content_file_files_list">File Content</a>.
+    The target url of a FileGitRemote must point to a Git repository. Syncing will perform a
+    bare clone and extract file metadata from the specified git ref.
+    """
+
+    endpoint_name = "git"
+    queryset = FileGitRemote.objects.all()
+    serializer_class = FileGitRemoteSerializer
+    queryset_filtering_required_permission = "file.view_filegitremote"
+
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["list", "my_permissions"],
+                "principal": "authenticated",
+                "effect": "allow",
+            },
+            {
+                "action": ["create"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_model_or_domain_perms:file.add_filegitremote",
+            },
+            {
+                "action": ["retrieve"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_model_or_domain_or_obj_perms:file.view_filegitremote",
+            },
+            {
+                "action": ["update", "partial_update", "set_label", "unset_label"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": [
+                    "has_model_or_domain_or_obj_perms:file.change_filegitremote",
+                    "has_model_or_domain_or_obj_perms:file.view_filegitremote",
+                ],
+            },
+            {
+                "action": ["destroy"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": [
+                    "has_model_or_domain_or_obj_perms:file.delete_filegitremote",
+                    "has_model_or_domain_or_obj_perms:file.view_filegitremote",
+                ],
+            },
+            {
+                "action": ["list_roles", "add_role", "remove_role"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": ["has_model_or_domain_or_obj_perms:file.manage_roles_filegitremote"],
+            },
+        ],
+        "creation_hooks": [
+            {
+                "function": "add_roles_for_object_creator",
+                "parameters": {"roles": "file.filegitremote_owner"},
+            },
+        ],
+        "queryset_scoping": {"function": "scope_queryset"},
+    }
+    LOCKED_ROLES = {
+        "file.filegitremote_creator": ["file.add_filegitremote"],
+        "file.filegitremote_owner": [
+            "file.view_filegitremote",
+            "file.change_filegitremote",
+            "file.delete_filegitremote",
+            "file.manage_roles_filegitremote",
+        ],
+        "file.filegitremote_viewer": ["file.view_filegitremote"],
     }
 
 
