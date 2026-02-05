@@ -306,3 +306,16 @@ def generate_server_and_remote(
         return server, remote
 
     yield _generate_server_and_remote
+
+
+# Git remote fixtures
+
+
+@pytest.fixture
+def file_git_remote_factory(file_bindings, gen_object_with_cleanup):
+    def _file_git_remote_factory(url, git_ref="HEAD", **kwargs):
+        body = {"name": str(uuid.uuid4()), "url": url, "git_ref": git_ref}
+        body.update(kwargs)
+        return gen_object_with_cleanup(file_bindings.RemotesGitApi, body)
+
+    return _file_git_remote_factory

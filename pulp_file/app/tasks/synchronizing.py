@@ -1,23 +1,38 @@
+import hashlib
 import logging
 import os
+import tempfile
 
 from gettext import gettext as _
 from urllib.parse import quote, urlparse, urlunparse
 
 import aiohttp.client_exceptions
+import git as gitpython
 from django.core.files import File
 
+from pulpcore.app import pulp_hashlib
 from pulpcore.plugin.exceptions import SyncError
 from pulpcore.plugin.models import Artifact, ProgressReport, Remote, PublishedMetadata
 from pulpcore.plugin.serializers import RepositoryVersionSerializer
 from pulpcore.plugin.stages import (
+    ArtifactSaver,
     DeclarativeArtifact,
     DeclarativeContent,
     DeclarativeVersion,
+    QueryExistingArtifacts,
+    QueryExistingContents,
+    ContentSaver,
+    RemoteArtifactSaver,
+    ResolveContentFutures,
     Stage,
 )
 
-from pulp_file.app.models import FileContent, FileRemote, FileRepository, FilePublication
+from pulp_file.app.models import (
+    FileContent,
+    FileGitRemote,
+    FileRepository,
+    FilePublication,
+)
 from pulp_file.manifest import Manifest
 
 
@@ -43,14 +58,18 @@ def synchronize(remote_pk, repository_pk, mirror, url=None):
         SyncError: If the remote does not specify a URL to sync.
 
     """
-    remote = FileRemote.objects.get(pk=remote_pk)
+    remote = Remote.objects.get(pk=remote_pk).cast()
     repository = FileRepository.objects.get(pk=repository_pk)
 
     if not remote.url:
         raise SyncError(_("A remote must have a url specified to synchronize."))
 
-    first_stage = FileFirstStage(remote, url)
-    dv = DeclarativeVersion(first_stage, repository, mirror=mirror, acs=True)
+    if isinstance(remote, FileGitRemote):
+        first_stage = GitFirstStage(remote)
+        dv = GitDeclarativeVersion(first_stage, repository, mirror=mirror)
+    else:
+        first_stage = FileFirstStage(remote, url)
+        dv = DeclarativeVersion(first_stage, repository, mirror=mirror, acs=True)
     rv = dv.create()
     if rv and mirror:
         # TODO: this is awful, we really should rewrite the DeclarativeVersion API to
@@ -146,3 +165,251 @@ def _get_safe_path(root_dir, entry, scheme):
     relative_path = entry.relative_path.lstrip("/")
     path = os.path.join(root_dir, relative_path)
     return path if scheme == "file" else quote(path, safe=":/")
+
+
+class GitBlobExtractStage(Stage):
+    """
+    A stage that replaces ``ArtifactDownloader`` for Git-based syncing.
+
+    For each ``DeclarativeContent`` whose artifact is unsaved, this stage reads the blob
+    from the bare git clone, writes it to a temp file, and computes all required digests.
+    Artifacts that already exist in Pulp (matched by ``QueryExistingArtifacts``) are
+    skipped.
+    """
+
+    async def run(self):
+        async for batch in self.batches():
+            for d_content in batch:
+                for d_artifact in d_content.d_artifacts:
+                    if not d_artifact.artifact._state.adding:
+                        # Artifact already exists in Pulp, nothing to extract.
+                        continue
+
+                    extra = d_artifact.extra_data
+                    clone_dir = extra["git_clone_dir"]
+                    blob_path = extra["git_blob_path"]
+                    git_ref = extra["git_ref"]
+
+                    repo = gitpython.Repo(clone_dir)
+                    commit = repo.commit(git_ref)
+                    blob = commit.tree[blob_path]
+
+                    # Write blob to temp file and compute all digests in a single pass.
+                    digests = {n: pulp_hashlib.new(n) for n in Artifact.DIGEST_FIELDS}
+                    size = 0
+                    tmp_file = tempfile.NamedTemporaryFile(dir=".", delete=False)
+                    stream = blob.data_stream
+                    while True:
+                        chunk = stream.read(1048576)  # 1 MB
+                        if not chunk:
+                            break
+                        tmp_file.write(chunk)
+                        for hasher in digests.values():
+                            hasher.update(chunk)
+                        size += len(chunk)
+                    tmp_file.flush()
+                    os.fsync(tmp_file.fileno())
+                    tmp_file.close()
+
+                    artifact_attrs = {"size": size}
+                    for alg, hasher in digests.items():
+                        artifact_attrs[alg] = hasher.hexdigest()
+
+                    d_artifact.artifact = Artifact(file=tmp_file.name, **artifact_attrs)
+
+                await self.put(d_content)
+
+
+class GitDeclarativeVersion(DeclarativeVersion):
+    """
+    A DeclarativeVersion with a custom pipeline for Git-based syncing.
+
+    Replaces ``ArtifactDownloader`` with ``GitBlobExtractStage`` which reads blobs
+    directly from the bare git clone instead of performing HTTP downloads.
+    """
+
+    def pipeline_stages(self, new_version):
+        return [
+            self.first_stage,
+            QueryExistingArtifacts(),
+            GitBlobExtractStage(),
+            ArtifactSaver(),
+            QueryExistingContents(),
+            ContentSaver(),
+            RemoteArtifactSaver(),
+            ResolveContentFutures(),
+        ]
+
+
+def _build_clone_env(remote):
+    """
+    Build environment variables for git clone that apply the remote's auth and proxy settings.
+
+    Args:
+        remote (FileGitRemote): The remote with auth/proxy/TLS configuration.
+
+    Returns:
+        dict: Environment variables to pass to git commands.
+    """
+    env = os.environ.copy()
+
+    # Proxy configuration
+    if remote.proxy_url:
+        proxy_url = remote.proxy_url
+        if remote.proxy_username and remote.proxy_password:
+            parsed = urlparse(proxy_url)
+            proxy_url = urlunparse(
+                parsed._replace(
+                    netloc=f"{remote.proxy_username}:{remote.proxy_password}@{parsed.hostname}"
+                    + (f":{parsed.port}" if parsed.port else "")
+                )
+            )
+        env["http_proxy"] = proxy_url
+        env["https_proxy"] = proxy_url
+
+    # TLS validation
+    if not remote.tls_validation:
+        env["GIT_SSL_NO_VERIFY"] = "true"
+
+    # CA certificate
+    if remote.ca_cert:
+        ca_cert_file = tempfile.NamedTemporaryFile(dir=".", suffix=".pem", delete=False, mode="w")
+        ca_cert_file.write(remote.ca_cert)
+        ca_cert_file.close()
+        env["GIT_SSL_CAINFO"] = ca_cert_file.name
+
+    # Client certificate and key
+    if remote.client_cert:
+        client_cert_file = tempfile.NamedTemporaryFile(
+            dir=".", suffix=".pem", delete=False, mode="w"
+        )
+        client_cert_file.write(remote.client_cert)
+        client_cert_file.close()
+        env["GIT_SSL_CERT"] = client_cert_file.name
+
+    if remote.client_key:
+        client_key_file = tempfile.NamedTemporaryFile(
+            dir=".", suffix=".key", delete=False, mode="w"
+        )
+        client_key_file.write(remote.client_key)
+        client_key_file.close()
+        env["GIT_SSL_KEY"] = client_key_file.name
+
+    return env
+
+
+def _build_clone_url(remote):
+    """
+    Build the clone URL, embedding basic auth credentials if present on the remote.
+
+    Args:
+        remote (FileGitRemote): The remote with URL and optional credentials.
+
+    Returns:
+        str: The URL to use for git clone.
+    """
+    url = remote.url
+    if remote.username and remote.password:
+        parsed = urlparse(url)
+        if parsed.scheme in ("http", "https"):
+            url = urlunparse(
+                parsed._replace(
+                    netloc=f"{remote.username}:{remote.password}@{parsed.hostname}"
+                    + (f":{parsed.port}" if parsed.port else "")
+                )
+            )
+    return url
+
+
+class GitFirstStage(Stage):
+    """
+    The first stage of a pulp_file sync pipeline for Git repositories.
+
+    Performs a bare clone of the Git repository, resolves the specified git_ref, and
+    walks the tree to emit ``DeclarativeContent`` for each blob. Computes sha256 for
+    each blob so that ``QueryExistingArtifacts`` can match already-known artifacts and
+    ``FileContent.digest`` is available for content matching.
+    """
+
+    def __init__(self, remote):
+        """
+        Args:
+            remote (FileGitRemote): The git remote data to be used when syncing.
+        """
+        super().__init__()
+        self.remote = remote
+
+    async def run(self):
+        """
+        Build and emit `DeclarativeContent` from the Git repository tree.
+        """
+        remote = self.remote
+        git_ref = remote.git_ref or "HEAD"
+        clone_url = _build_clone_url(remote)
+        clone_env = _build_clone_env(remote)
+
+        clone_dir = tempfile.mkdtemp(dir=".", prefix="pulp_file_git_")
+
+        async with ProgressReport(message="Cloning Git Repository", code="sync.git.cloning") as pb:
+            try:
+                try:
+                    repo = gitpython.Repo.clone_from(
+                        clone_url,
+                        clone_dir,
+                        bare=True,
+                        depth=1,
+                        branch=git_ref,
+                        env=clone_env,
+                    )
+                except gitpython.exc.GitCommandError:
+                    # depth/branch fails for commit hashes; retry with full bare clone
+                    repo = gitpython.Repo.clone_from(clone_url, clone_dir, bare=True, env=clone_env)
+            except gitpython.exc.GitCommandError as e:
+                raise SyncError(
+                    _("Failed to clone git repository '{url}': {error}").format(
+                        url=remote.url, error=str(e)
+                    )
+                )
+            await pb.aincrement()
+
+        async with ProgressReport(message="Resolving Git ref", code="sync.git.resolving_ref") as pb:
+            try:
+                commit = repo.commit(git_ref)
+            except Exception as e:
+                raise SyncError(
+                    _("Could not resolve git ref '{ref}': {error}").format(
+                        ref=git_ref, error=str(e)
+                    )
+                )
+            await pb.aincrement()
+
+        async with ProgressReport(
+            message="Parsing Git tree",
+            code="sync.git.parsing_tree",
+        ) as pb:
+            blobs = [item for item in commit.tree.traverse() if item.type == "blob"]
+            pb.total = len(blobs)
+            await pb.asave()
+
+            for blob in blobs:
+                relative_path = blob.path
+                size = blob.size
+                sha256 = hashlib.sha256(blob.data_stream.read()).hexdigest()
+
+                file_content = FileContent(relative_path=relative_path, digest=sha256)
+                artifact = Artifact(size=size, sha256=sha256)
+                da = DeclarativeArtifact(
+                    artifact=artifact,
+                    url=remote.url,
+                    relative_path=relative_path,
+                    remote=remote,
+                    deferred_download=False,
+                    extra_data={
+                        "git_clone_dir": clone_dir,
+                        "git_blob_path": blob.path,
+                        "git_ref": git_ref,
+                    },
+                )
+                dc = DeclarativeContent(content=file_content, d_artifacts=[da])
+                await pb.aincrement()
+                await self.put(dc)
