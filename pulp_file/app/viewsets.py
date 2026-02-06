@@ -202,17 +202,8 @@ class FileRepositoryViewSet(RepositoryViewSet, ModifyRepositoryActionMixin, Role
                 "effect": "allow",
                 "condition": [
                     "has_model_or_domain_or_obj_perms:file.sync_filerepository",
-                    "has_remote_param_model_or_domain_or_obj_perms:file.view_fileremote",
-                    "has_model_or_domain_or_obj_perms:file.view_filerepository",
-                ],
-            },
-            {
-                "action": ["sync"],
-                "principal": "authenticated",
-                "effect": "allow",
-                "condition": [
-                    "has_model_or_domain_or_obj_perms:file.sync_filerepository",
-                    "has_remote_param_model_or_domain_or_obj_perms:file.view_filegitremote",
+                    "has_remote_param_model_or_domain_or_obj_perms:file.view_fileremote,"
+                    "file.view_filegitremote",
                     "has_model_or_domain_or_obj_perms:file.view_filerepository",
                 ],
             },

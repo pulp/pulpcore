@@ -1,6 +1,6 @@
-import hashlib
 import logging
 import os
+import shutil
 import tempfile
 
 from gettext import gettext as _
@@ -10,20 +10,15 @@ import aiohttp.client_exceptions
 import git as gitpython
 from django.core.files import File
 
-from pulpcore.app import pulp_hashlib
 from pulpcore.plugin.exceptions import SyncError
 from pulpcore.plugin.models import Artifact, ProgressReport, Remote, PublishedMetadata
 from pulpcore.plugin.serializers import RepositoryVersionSerializer
 from pulpcore.plugin.stages import (
-    ArtifactSaver,
+    ArtifactDownloader,
     DeclarativeArtifact,
     DeclarativeContent,
     DeclarativeVersion,
-    QueryExistingArtifacts,
-    QueryExistingContents,
-    ContentSaver,
     RemoteArtifactSaver,
-    ResolveContentFutures,
     Stage,
 )
 
@@ -66,7 +61,13 @@ def synchronize(remote_pk, repository_pk, mirror, url=None):
 
     if isinstance(remote, FileGitRemote):
         first_stage = GitFirstStage(remote)
-        dv = GitDeclarativeVersion(first_stage, repository, mirror=mirror)
+        dv = DeclarativeVersion(first_stage, repository, mirror=mirror)
+        old_pipeline_stages = dv.pipeline_stages
+        dv.pipeline_stages = lambda new_version: [
+            stage
+            for stage in old_pipeline_stages(new_version)
+            if not isinstance(stage, (ArtifactDownloader, RemoteArtifactSaver))
+        ]
     else:
         first_stage = FileFirstStage(remote, url)
         dv = DeclarativeVersion(first_stage, repository, mirror=mirror, acs=True)
@@ -165,80 +166,6 @@ def _get_safe_path(root_dir, entry, scheme):
     relative_path = entry.relative_path.lstrip("/")
     path = os.path.join(root_dir, relative_path)
     return path if scheme == "file" else quote(path, safe=":/")
-
-
-class GitBlobExtractStage(Stage):
-    """
-    A stage that replaces ``ArtifactDownloader`` for Git-based syncing.
-
-    For each ``DeclarativeContent`` whose artifact is unsaved, this stage reads the blob
-    from the bare git clone, writes it to a temp file, and computes all required digests.
-    Artifacts that already exist in Pulp (matched by ``QueryExistingArtifacts``) are
-    skipped.
-    """
-
-    async def run(self):
-        async for batch in self.batches():
-            for d_content in batch:
-                for d_artifact in d_content.d_artifacts:
-                    if not d_artifact.artifact._state.adding:
-                        # Artifact already exists in Pulp, nothing to extract.
-                        continue
-
-                    extra = d_artifact.extra_data
-                    clone_dir = extra["git_clone_dir"]
-                    blob_path = extra["git_blob_path"]
-                    git_ref = extra["git_ref"]
-
-                    repo = gitpython.Repo(clone_dir)
-                    commit = repo.commit(git_ref)
-                    blob = commit.tree[blob_path]
-
-                    # Write blob to temp file and compute all digests in a single pass.
-                    digests = {n: pulp_hashlib.new(n) for n in Artifact.DIGEST_FIELDS}
-                    size = 0
-                    tmp_file = tempfile.NamedTemporaryFile(dir=".", delete=False)
-                    stream = blob.data_stream
-                    while True:
-                        chunk = stream.read(1048576)  # 1 MB
-                        if not chunk:
-                            break
-                        tmp_file.write(chunk)
-                        for hasher in digests.values():
-                            hasher.update(chunk)
-                        size += len(chunk)
-                    tmp_file.flush()
-                    os.fsync(tmp_file.fileno())
-                    tmp_file.close()
-
-                    artifact_attrs = {"size": size}
-                    for alg, hasher in digests.items():
-                        artifact_attrs[alg] = hasher.hexdigest()
-
-                    d_artifact.artifact = Artifact(file=tmp_file.name, **artifact_attrs)
-
-                await self.put(d_content)
-
-
-class GitDeclarativeVersion(DeclarativeVersion):
-    """
-    A DeclarativeVersion with a custom pipeline for Git-based syncing.
-
-    Replaces ``ArtifactDownloader`` with ``GitBlobExtractStage`` which reads blobs
-    directly from the bare git clone instead of performing HTTP downloads.
-    """
-
-    def pipeline_stages(self, new_version):
-        return [
-            self.first_stage,
-            QueryExistingArtifacts(),
-            GitBlobExtractStage(),
-            ArtifactSaver(),
-            QueryExistingContents(),
-            ContentSaver(),
-            RemoteArtifactSaver(),
-            ResolveContentFutures(),
-        ]
 
 
 def _build_clone_env(remote):
@@ -343,6 +270,7 @@ class GitFirstStage(Stage):
         """
         Build and emit `DeclarativeContent` from the Git repository tree.
         """
+
         remote = self.remote
         git_ref = remote.git_ref or "HEAD"
         clone_url = _build_clone_url(remote)
@@ -394,21 +322,17 @@ class GitFirstStage(Stage):
             for blob in blobs:
                 relative_path = blob.path
                 size = blob.size
-                sha256 = hashlib.sha256(blob.data_stream.read()).hexdigest()
+                with tempfile.NamedTemporaryFile(dir=".", delete=False, mode="wb") as file:
+                    shutil.copyfileobj(blob.data_stream, file)
 
-                file_content = FileContent(relative_path=relative_path, digest=sha256)
-                artifact = Artifact(size=size, sha256=sha256)
+                artifact = Artifact.init_and_validate(file.name, expected_size=size)
+                file_content = FileContent(relative_path=relative_path, digest=artifact.sha256)
                 da = DeclarativeArtifact(
                     artifact=artifact,
                     url=remote.url,
                     relative_path=relative_path,
                     remote=remote,
                     deferred_download=False,
-                    extra_data={
-                        "git_clone_dir": clone_dir,
-                        "git_blob_path": blob.path,
-                        "git_ref": git_ref,
-                    },
                 )
                 dc = DeclarativeContent(content=file_content, d_artifacts=[da])
                 await pb.aincrement()
