@@ -1,5 +1,6 @@
 import http.client
 from gettext import gettext as _
+from pulpcore.app.loggers import deprecation_logger
 
 
 class PulpException(Exception):
@@ -10,7 +11,14 @@ class PulpException(Exception):
     http_status_code = http.client.INTERNAL_SERVER_ERROR
     error_code = None
 
-    def __init__(self):
+    def __init__(self, error_code=None):
+        if error_code:
+            deprecation_logger.warning(
+                "Constructing a PulpException with argument `error_code` is deprecated and will "
+                "be removed in a future release. Instead please create a new error Subclass with "
+                "predefined `error_code` attribute"
+            )
+            self.error_code = error_code
         if not isinstance(self.error_code, str):
             raise NotImplementedError("ABC error. Subclass must define a unique error code.")
 
