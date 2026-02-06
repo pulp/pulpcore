@@ -7,6 +7,7 @@ import socket
 import struct
 from gettext import gettext as _
 from datetime import datetime, timedelta
+from datetime import timezone as dt_timezone
 
 from aiohttp.client_exceptions import ClientResponseError, ClientConnectionError
 from aiohttp.web import FileResponse, StreamResponse, HTTPOk
@@ -439,9 +440,9 @@ class Handler:
         else:
             raise PathNotResolved(path)
 
-        request_timestamp = request_timestamp.replace(tzinfo=timezone.utc)
+        request_timestamp = request_timestamp.replace(tzinfo=dt_timezone.utc)
         # Future timestamps are not allowed for checkpoints
-        if request_timestamp > datetime.now(tz=timezone.utc):
+        if request_timestamp > datetime.now(tz=dt_timezone.utc):
             raise PathNotResolved(path)
         # The timestamp is truncated to seconds, so we need to cover the whole second
         request_timestamp = request_timestamp.replace(microsecond=999999)
