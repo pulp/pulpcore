@@ -1,15 +1,10 @@
-# This config represents the latest values used when running the plugin-template. Any settings that
-# were not present before running plugin-template have been added with their default values.
-
-# generated with plugin_template
-
 api_root: /pulp/
 black: true
 check_commit_message: true
 check_gettext: true
 check_manifest: true
 check_stray_pulpcore_imports: false
-ci_base_image: ghcr.io/pulp/pulp-ci-centos
+ci_base_image: ghcr.io/pulp/pulp-ci-centos9
 ci_env: {}
 ci_trigger: '{pull_request: {branches: [''*'']}}'
 cli_package: pulp-cli
@@ -51,30 +46,40 @@ pulp_settings:
   - /tmp
   orphan_protection_time: 0
 pulp_settings_azure:
-  AZURE_ACCOUNT_KEY: Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==
-  AZURE_ACCOUNT_NAME: devstoreaccount1
-  AZURE_CONNECTION_STRING: DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://ci-azurite:10000/devstoreaccount1;
-  AZURE_CONTAINER: pulp-test
-  AZURE_LOCATION: pulp3
-  AZURE_OVERWRITE_FILES: true
-  AZURE_URL_EXPIRATION_SECS: 120
-  DEFAULT_FILE_STORAGE: storages.backends.azure_storage.AzureStorage
   MEDIA_ROOT: ''
+  STORAGES:
+    default:
+      BACKEND: storages.backends.azure_storage.AzureStorage
+      OPTIONS:
+        account_key: Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==
+        account_name: devstoreaccount1
+        connection_string: DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://ci-azurite:10000/devstoreaccount1;
+        azure_container: pulp-test
+        location: pulp3
+        overwrite_files: true
+        expiration_secs: 120
+    staticfiles:
+      BACKEND: django.contrib.staticfiles.storage.StaticFilesStorage
   domain_enabled: true
 pulp_settings_gcp: null
 pulp_settings_s3:
-  AWS_ACCESS_KEY_ID: AKIAIT2Z5TDYPX3ARJBA
-  AWS_DEFAULT_ACL: '@none None'
-  AWS_S3_ADDRESSING_STYLE: path
-  AWS_S3_ENDPOINT_URL: http://minio:9000
-  AWS_S3_REGION_NAME: eu-central-1
-  AWS_S3_SIGNATURE_VERSION: s3v4
-  AWS_SECRET_ACCESS_KEY: fqRvjWaPU5o0fCqQuUWbj9Fainj2pVZtBCiDiieS
-  AWS_STORAGE_BUCKET_NAME: pulp3
-  DEFAULT_FILE_STORAGE: storages.backends.s3boto3.S3Boto3Storage
   MEDIA_ROOT: ''
   domain_enabled: true
   hide_guarded_distributions: true
+  STORAGES:
+    default:
+      BACKEND: storages.backends.s3boto3.S3Boto3Storage
+      OPTIONS:
+        access_key: AKIAIT2Z5TDYPX3ARJBA
+        secret_key: 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
+        bucket_name: pulp3
+        endpoint_url: http://minio:9000
+        region_name: eu-central-1
+        signature_version: s3v4
+        addressing_style: path
+        default_acl: '@none'
+    staticfiles:
+      BACKEND: django.contrib.staticfiles.storage.StaticFilesStorage
 pydocstyle: true
 release_email: pulp-infra@redhat.com
 release_user: pulpbot
@@ -99,4 +104,3 @@ test_performance: false
 test_reroute: true
 test_s3: true
 use_issue_template: true
-

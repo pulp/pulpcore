@@ -47,6 +47,10 @@ def _write_export(the_tarfile, resource, dest_dir=None):
     # the data in batches to memory and concatenate the json lists via string manipulation.
     with tempfile.NamedTemporaryFile(dir=".", mode="w", encoding="utf8") as temp_file:
         if isinstance(resource.queryset, QuerySet):
+            # If we don't have any of "these" - skip writing
+            if resource.queryset.count() == 0:
+                return
+
             temp_file.write("[")
 
             def process_batch(batch):
@@ -117,7 +121,7 @@ def export_artifacts(export, artifacts):
     with ProgressReport(**data) as pb:
         pb.BATCH_INTERVAL = 5000
 
-        if settings.DEFAULT_FILE_STORAGE != "pulpcore.app.models.storage.FileSystem":
+        if settings.STORAGES["default"]["BACKEND"] != "pulpcore.app.models.storage.FileSystem":
             with tempfile.TemporaryDirectory(dir=".") as temp_dir:
                 for artifact in pb.iter(artifacts.only("file").iterator()):
                     with tempfile.NamedTemporaryFile(dir=temp_dir) as temp_file:

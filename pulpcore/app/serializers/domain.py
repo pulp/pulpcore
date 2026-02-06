@@ -1,7 +1,7 @@
 from gettext import gettext as _
 
 from django.conf import settings
-from django.core.files.storage import import_string
+from django.utils.module_loading import import_string
 from django.core.exceptions import ImproperlyConfigured
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema_field

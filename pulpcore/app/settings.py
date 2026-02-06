@@ -17,6 +17,8 @@ from pathlib import Path
 from pkg_resources import iter_entry_points
 
 from cryptography.fernet import Fernet
+from django.conf import global_settings
+from django.core.files.storage import storages  # noqa: F401
 from django.core.exceptions import ImproperlyConfigured
 from django.db import connection
 
@@ -42,7 +44,23 @@ MEDIA_ROOT = str(DEPLOY_ROOT / "media")  # Django 3.1 adds support for pathlib.P
 STATIC_URL = "/assets/"
 STATIC_ROOT = DEPLOY_ROOT / STATIC_URL.strip("/")
 
-DEFAULT_FILE_STORAGE = "pulpcore.app.models.storage.FileSystem"
+# begin compatibility layer for DEFAULT_FILE_STORAGE
+# Django does not allow STORAGES and DEFAULT_FILE_STORAGE in the same settings module
+# (they are mutually exclusive). We set both on global_settings as defaults so that
+# users can override either one via dynaconf, and Django picks the right one for its version.
+_DEFAULT_FILE_STORAGE = "pulpcore.app.models.storage.FileSystem"
+_STORAGES = {
+    "default": {
+        "BACKEND": "pulpcore.app.models.storage.FileSystem",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
+setattr(global_settings, "DEFAULT_FILE_STORAGE", _DEFAULT_FILE_STORAGE)
+setattr(global_settings, "STORAGES", _STORAGES)
+# end DEFAULT_FILE_STORAGE compatibility layer
+
 REDIRECT_TO_OBJECT_STORAGE = True
 
 WORKING_DIRECTORY = DEPLOY_ROOT / "tmp"
@@ -317,16 +335,18 @@ IMPORT_WORKERS_PERCENT = 100
 from dynaconf import DjangoDynaconf, Validator  # noqa
 
 # Validators
+storage_keys = ("STORAGES.default.BACKEND", "DEFAULT_FILE_STORAGE")
 storage_validator = (
     Validator("REDIRECT_TO_OBJECT_STORAGE", eq=False)
-    | Validator("DEFAULT_FILE_STORAGE", eq="pulpcore.app.models.storage.FileSystem")
-    | Validator("DEFAULT_FILE_STORAGE", eq="storages.backends.azure_storage.AzureStorage")
-    | Validator("DEFAULT_FILE_STORAGE", eq="storages.backends.s3boto3.S3Boto3Storage")
-    | Validator("DEFAULT_FILE_STORAGE", eq="storages.backends.gcloud.GoogleCloudStorage")
+    | Validator(*storage_keys, eq="pulpcore.app.models.storage.FileSystem")
+    | Validator(*storage_keys, eq="storages.backends.azure_storage.AzureStorage")
+    | Validator(*storage_keys, eq="storages.backends.s3boto3.S3Boto3Storage")
+    | Validator(*storage_keys, eq="storages.backends.gcloud.GoogleCloudStorage")
 )
 storage_validator.messages["combined"] = (
-    "'REDIRECT_TO_OBJECT_STORAGE=True' is only supported with the local file, S3, GCP or Azure"
-    "storage backend configured in DEFAULT_FILE_STORAGE."
+    "'REDIRECT_TO_OBJECT_STORAGE=True' is only supported with the local file, S3, GCP or Azure "
+    "storage backend configured in STORAGES['default']['BACKEND'] "
+    "(deprecated DEFAULT_FILE_STORAGE)."
 )
 
 cache_enabled_validator = Validator("CACHE_ENABLED", eq=True)
@@ -472,6 +492,10 @@ if not (len(sys.argv) >= 2 and sys.argv[1] in _SKIPPED_COMMANDS_FOR_CONTENT_CHEC
         pass
     finally:
         connection.close()
+
+# Ensures the cached property storage.backends uses the right value after dynaconf init
+storages._backends = settings.STORAGES.copy()
+storages.backends
 
 settings.set("V3_API_ROOT", settings.API_ROOT + "api/v3/")  # Not user configurable
 settings.set("V3_DOMAIN_API_ROOT", settings.API_ROOT + "<slug:pulp_domain>/api/v3/")

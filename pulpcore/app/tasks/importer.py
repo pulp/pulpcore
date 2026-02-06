@@ -101,6 +101,9 @@ def _import_file(fpath, resource_class, retry=False):
     """
     try:
         log.info(f"Importing file {fpath}.")
+        if not os.path.isfile(fpath):
+            log.info("...empty - skipping.")
+            return []
         with open(fpath, "r") as json_file:
             resource = resource_class()
             log.info(f"...Importing resource {resource.__class__.__name__}.")
@@ -109,6 +112,8 @@ def _import_file(fpath, resource_class, retry=False):
             # overlapping content.
             for batch_str in _impfile_iterator(json_file):
                 data = Dataset().load(StringIO(batch_str))
+                if not data:
+                    return []
                 if retry:
                     curr_attempt = 1
 
@@ -140,6 +145,7 @@ def _import_file(fpath, resource_class, retry=False):
                         try:
                             a_result = resource.import_data(data, raise_errors=True)
                         except Exception as e:  # noqa log on ANY exception and then re-raise
+                            log.error(e)
                             log.error(f"FATAL import-failure importing {fpath}")
                             raise
                 else:

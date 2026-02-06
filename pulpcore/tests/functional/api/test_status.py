@@ -2,7 +2,6 @@
 
 import pytest
 
-from django.conf import settings
 from jsonschema import validate
 from pulpcore.client.pulpcore import ApiException
 
@@ -59,9 +58,9 @@ STATUS = {
 
 
 @pytest.fixture(scope="module")
-def expected_pulp_status_schema():
+def expected_pulp_status_schema(pulp_settings):
     """Returns the expected status response."""
-    if settings.DEFAULT_FILE_STORAGE != "pulpcore.app.models.storage.FileSystem":
+    if pulp_settings.STORAGES["default"]["BACKEND"] != "pulpcore.app.models.storage.FileSystem":
         STATUS["properties"]["storage"].pop("properties")
         STATUS["properties"]["storage"]["type"] = "null"
 

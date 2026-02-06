@@ -16,3 +16,11 @@ azure-storage-blob!=12.28.*
 
 pycares<5
 # older aiodns versions don't pin pycares UB, and are broken by pycares>=5
+
+
+aiohttp>=3.9.0
+# aiohttp<3.9.0 fails to compile C extensions on Python 3.11 (missing longintrepr.h)
+
+
+yarl>=1.9.0
+# yarl<1.9.0 fails to compile C extensions on Python 3.11 (incompatible _PyErr_StackItem)
