@@ -8,6 +8,29 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.103.2 (2026-02-06) {: #3.103.2 }
+
+### REST API {: #3.103.2-rest-api }
+
+#### Bugfixes {: #3.103.2-rest-api-bugfix }
+
+- Fixed PRNField slowing down the generic list endpoints with extra database queries.
+- Fixed an accidental API-breaking change to `PulpException` in the previous release.
+
+### Plugin API {: #3.103.2-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.103.2-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.103.2-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.103.1 (2026-02-03) {: #3.103.1 }
 
 ### REST API {: #3.103.1-rest-api }
