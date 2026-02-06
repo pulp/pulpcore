@@ -1,8 +1,3 @@
-# This config represents the latest values used when running the plugin-template. Any settings that
-# were not present before running plugin-template have been added with their default values.
-
-# generated with plugin_template
-
 api_root: /pulp/
 black: true
 check_commit_message: true
@@ -59,15 +54,20 @@ pulp_settings:
   tmpfile_protection_time: 10
   upload_protection_time: 10
 pulp_settings_azure:
-  AZURE_ACCOUNT_KEY: Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==
-  AZURE_ACCOUNT_NAME: devstoreaccount1
-  AZURE_CONNECTION_STRING: DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://ci-azurite:10000/devstoreaccount1;
-  AZURE_CONTAINER: pulp-test
-  AZURE_LOCATION: pulp3
-  AZURE_OVERWRITE_FILES: true
-  AZURE_URL_EXPIRATION_SECS: 120
-  DEFAULT_FILE_STORAGE: storages.backends.azure_storage.AzureStorage
   MEDIA_ROOT: ''
+  STORAGES:
+    default:
+      BACKEND: storages.backends.azure_storage.AzureStorage
+      OPTIONS:
+        account_key: Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==
+        account_name: devstoreaccount1
+        connection_string: DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://ci-azurite:10000/devstoreaccount1;
+        azure_container: pulp-test
+        location: pulp3
+        overwrite_files: true
+        expiration_secs: 120
+    staticfiles:
+      BACKEND: django.contrib.staticfiles.storage.StaticFilesStorage
   api_root_rewrite_header: X-API-Root
   content_origin: null
   domain_enabled: true

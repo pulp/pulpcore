@@ -41,6 +41,9 @@ class QueryModelResource(resources.ModelResource):
     def dehydrate_pulp_domain(self, content):
         return str(content.pulp_domain_id)
 
+    def render(self, value, obj=None, **kwargs):
+        return super().render(value, obj, coerce_to_string=False, **kwargs)
+
     def __init__(self, repo_version=None):
         self.repo_version = repo_version
         if repo_version:
