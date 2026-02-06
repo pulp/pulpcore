@@ -5,7 +5,6 @@ from gettext import gettext as _
 from importlib import import_module
 
 from django import apps
-from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db import connection, transaction
 from django.db.models.signals import post_migrate, pre_migrate
@@ -68,6 +67,12 @@ class PulpPluginAppConfig(apps.AppConfig):
 
     def __init__(self, app_name, app_module):
         super().__init__(app_name, app_module)
+        # begin compatibility layer for DEFAULT_FILE_STORAGE deprecation
+        # Workaround for getting the up-to-date settings instance
+        from django.conf import settings
+
+        self.settings = settings
+        # end
 
         try:
             self.version
@@ -268,6 +273,8 @@ def _clean_app_status(sender, apps, verbosity, **kwargs):
     from django.contrib.postgres.functions import TransactionNow
     from django.utils import timezone
 
+    settings = sender.settings
+
     app_ttl_map = [
         ("ApiAppStatus", settings.API_APP_TTL),
         ("ContentAppStatus", settings.CONTENT_APP_TTL),
@@ -340,6 +347,7 @@ def _populate_system_id(sender, apps, verbosity, **kwargs):
 
 
 def _ensure_default_domain(sender, **kwargs):
+    settings = sender.settings
     table_names = connection.introspection.table_names()
     if "core_domain" in table_names:
         from pulpcore.app.util import get_default_domain
@@ -349,11 +357,11 @@ def _ensure_default_domain(sender, **kwargs):
         if (
             settings.HIDE_GUARDED_DISTRIBUTIONS != default.hide_guarded_distributions
             or settings.REDIRECT_TO_OBJECT_STORAGE != default.redirect_to_object_storage
-            or settings.DEFAULT_FILE_STORAGE != default.storage_class
+            or settings.STORAGES["default"]["BACKEND"] != default.storage_class
         ):
             default.hide_guarded_distributions = settings.HIDE_GUARDED_DISTRIBUTIONS
             default.redirect_to_object_storage = settings.REDIRECT_TO_OBJECT_STORAGE
-            default.storage_class = settings.DEFAULT_FILE_STORAGE
+            default.storage_class = settings.STORAGES["default"]["BACKEND"]
             default.save(skip_hooks=True)
 
 
@@ -419,8 +427,9 @@ def adjust_roles(apps, role_prefix, desired_roles, verbosity=1):
 
 
 def _populate_artifact_serving_distribution(sender, apps, verbosity, **kwargs):
+    settings = sender.settings
     if (
-        settings.DEFAULT_FILE_STORAGE == "pulpcore.app.models.storage.FileSystem"
+        settings.STORAGES["default"]["BACKEND"] == "pulpcore.app.models.storage.FileSystem"
         or not settings.REDIRECT_TO_OBJECT_STORAGE
     ):
         try:
