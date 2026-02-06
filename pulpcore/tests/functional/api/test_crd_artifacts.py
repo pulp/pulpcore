@@ -6,7 +6,6 @@ import os
 import uuid
 import pytest
 
-from django.conf import settings
 from pulpcore.client.pulpcore import ApiException
 
 
@@ -144,11 +143,11 @@ def test_upload_mixed_attrs(artifacts_api_client, pulpcore_random_file):
 
 
 @pytest.mark.parallel
-def test_delete_artifact(artifacts_api_client, pulpcore_random_file):
+def test_delete_artifact(artifacts_api_client, pulpcore_random_file, pulp_settings):
     """Delete an artifact, it is removed from the filesystem."""
-    if settings.DEFAULT_FILE_STORAGE != "pulpcore.app.models.storage.FileSystem":
+    if pulp_settings.STORAGES["default"]["BACKEND"] != "pulpcore.app.models.storage.FileSystem":
         pytest.skip("this test only works for filesystem storage")
-    media_root = settings.MEDIA_ROOT
+    media_root = pulp_settings.MEDIA_ROOT
 
     artifact = artifacts_api_client.create(pulpcore_random_file["name"])
     path_to_file = os.path.join(media_root, artifact.file)

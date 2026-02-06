@@ -16,3 +16,4 @@ azure-storage-blob!=12.28.*
 
 pycares<5
 # older aiodns versions don't pin pycares UB, and are broken by pycares>=5
+

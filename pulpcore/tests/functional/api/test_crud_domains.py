@@ -4,7 +4,6 @@ import pytest
 import random
 import json
 from pulpcore.client.pulpcore import ApiException
-from pulpcore.app import settings
 
 from pulpcore.tests.functional.utils import PulpTaskError
 
@@ -50,7 +49,7 @@ def test_crud_domains(domains_api_client, monitor_task):
 
 
 @pytest.mark.parallel
-def test_default_domain(domains_api_client):
+def test_default_domain(domains_api_client, pulp_settings):
     """Test properties around the default domain."""
     domains = domains_api_client.list(name="default")
     assert domains.count == 1
@@ -58,9 +57,9 @@ def test_default_domain(domains_api_client):
     # Read the default domain, ensure storage is set to default
     default_domain = domains.results[0]
     assert default_domain.name == "default"
-    assert default_domain.storage_class == settings.DEFAULT_FILE_STORAGE
-    assert default_domain.redirect_to_object_storage == settings.REDIRECT_TO_OBJECT_STORAGE
-    assert default_domain.hide_guarded_distributions == settings.HIDE_GUARDED_DISTRIBUTIONS
+    assert default_domain.storage_class == pulp_settings.STORAGES["default"]["BACKEND"]
+    assert default_domain.redirect_to_object_storage == pulp_settings.REDIRECT_TO_OBJECT_STORAGE
+    assert default_domain.hide_guarded_distributions == pulp_settings.HIDE_GUARDED_DISTRIBUTIONS
 
     # Try to create another default domain
     body = {
@@ -91,9 +90,11 @@ def test_default_domain(domains_api_client):
 
 
 @pytest.mark.parallel
-def test_active_domain_deletion(domains_api_client, rbac_contentguard_api_client, monitor_task):
+def test_active_domain_deletion(
+    domains_api_client, rbac_contentguard_api_client, monitor_task, pulp_settings
+):
     """Test trying to delete a domain that is in use, has objects in it."""
-    if not settings.DOMAIN_ENABLED:
+    if not pulp_settings.DOMAIN_ENABLED:
         pytest.skip("Domains not enabled")
     name = str(uuid.uuid4())
     body = {
@@ -133,9 +134,10 @@ def test_orphan_domain_deletion(
     gen_object_with_cleanup,
     monitor_task,
     tmp_path,
+    pulp_settings,
 ):
     """Test trying to delete a domain that is in use, has objects in it."""
-    if not settings.DOMAIN_ENABLED:
+    if not pulp_settings.DOMAIN_ENABLED:
         pytest.skip("Domains not enabled")
     body = {
         "name": str(uuid.uuid4()),
@@ -177,9 +179,9 @@ def test_orphan_domain_deletion(
 
 
 @pytest.mark.parallel
-def test_special_domain_creation(domains_api_client, gen_object_with_cleanup):
+def test_special_domain_creation(domains_api_client, gen_object_with_cleanup, pulp_settings):
     """Test many possible domain creation scenarios."""
-    if not settings.DOMAIN_ENABLED:
+    if not pulp_settings.DOMAIN_ENABLED:
         pytest.skip("Domains not enabled")
     # This test needs to account for which environment it is running in
     storage_types = {

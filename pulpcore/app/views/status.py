@@ -18,7 +18,7 @@ _logger = logging.getLogger(__name__)
 
 
 def _disk_usage():
-    if settings.DEFAULT_FILE_STORAGE == "pulpcore.app.models.storage.FileSystem":
+    if settings.STORAGES["default"]["BACKEND"] == "pulpcore.app.models.storage.FileSystem":
         try:
             return shutil.disk_usage(default_storage.location)
         except Exception:

@@ -1076,28 +1076,37 @@ def domain_factory(domains_api_client, pulp_settings, gen_object_with_cleanup):
         keys = dict()
         keys["pulpcore.app.models.storage.FileSystem"] = ["MEDIA_ROOT"]
         keys["storages.backends.s3boto3.S3Boto3Storage"] = [
-            "AWS_ACCESS_KEY_ID",
-            "AWS_SECRET_ACCESS_KEY",
-            "AWS_S3_ENDPOINT_URL",
-            "AWS_S3_ADDRESSING_STYLE",
-            "AWS_S3_SIGNATURE_VERSION",
-            "AWS_S3_REGION_NAME",
-            "AWS_STORAGE_BUCKET_NAME",
+            "access_key",
+            "secret_key",
+            "endpoint_url",
+            "addressing_style",
+            "signature_version",
+            "region_name",
+            "bucket_name",
         ]
         keys["storages.backends.azure_storage.AzureStorage"] = [
-            "AZURE_ACCOUNT_NAME",
-            "AZURE_CONTAINER",
-            "AZURE_ACCOUNT_KEY",
-            "AZURE_URL_EXPIRATION_SECS",
-            "AZURE_OVERWRITE_FILES",
-            "AZURE_LOCATION",
+            "account_name",
+            "azure_container",
+            "account_key",
+            "expiration_secs",
+            "overwrite_files",
+            "location",
         ]
         settings = dict()
-        for key in keys[pulp_settings.DEFAULT_FILE_STORAGE]:
-            settings[key] = getattr(pulp_settings, key, None)
+        backend = pulp_settings.STORAGES["default"]["BACKEND"]
+        not_defined_settings = (k for k in keys[backend] if k not in settings)
+        # Read storage settings from STORAGES.default.OPTIONS
+        storages_dict = getattr(pulp_settings, "STORAGES", {})
+        storage_options = storages_dict.get("default", {}).get("OPTIONS", {})
+        if storage_options:
+            for key in not_defined_settings:
+                settings[key] = storage_options.get(key)
+        else:
+            for key in not_defined_settings:
+                settings[key] = getattr(pulp_settings, key, None)
         body = {
             "name": str(uuid.uuid4()),
-            "storage_class": pulp_settings.DEFAULT_FILE_STORAGE,
+            "storage_class": backend,
             "storage_settings": settings,
         }
         return gen_object_with_cleanup(domains_api_client, body)

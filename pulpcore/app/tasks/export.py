@@ -71,7 +71,7 @@ def _export_to_file_system(path, relative_paths_to_artifacts, method=FS_EXPORT_M
         ValidationError: When path is not in the ALLOWED_EXPORT_PATHS setting
     """
     using_filesystem_storage = (
-        settings.DEFAULT_FILE_STORAGE == "pulpcore.app.models.storage.FileSystem"
+        settings.STORAGES["default"]["BACKEND"] == "pulpcore.app.models.storage.FileSystem"
     )
 
     if method != FS_EXPORT_METHODS.WRITE and not using_filesystem_storage:

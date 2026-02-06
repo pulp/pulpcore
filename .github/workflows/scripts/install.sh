@@ -79,7 +79,7 @@ cat >> vars/main.yaml << VARSYAML
 pulp_env: {"PULP_CA_BUNDLE": "/etc/pulp/certs/pulp_webserver.crt"}
 pulp_settings: {"allowed_export_paths": ["/tmp"], "allowed_import_paths": ["/tmp"], "orphan_protection_time": 0}
 pulp_scheme: https
-pulp_default_container: ghcr.io/pulp/pulp-ci-centos:latest
+pulp_default_container: ghcr.io/pulp/pulp-ci-centos9:latest
 VARSYAML
 
 SCENARIOS=("pulp" "performance" "azure" "gcp" "s3" "generate-bindings" "lowerbounds")
@@ -105,7 +105,7 @@ if [ "$TEST" = "s3" ]; then
   sed -i -e '$a s3_test: true\
 minio_access_key: "'$MINIO_ACCESS_KEY'"\
 minio_secret_key: "'$MINIO_SECRET_KEY'"\
-pulp_scenario_settings: {"AWS_ACCESS_KEY_ID": "AKIAIT2Z5TDYPX3ARJBA", "AWS_DEFAULT_ACL": "@none None", "AWS_S3_ADDRESSING_STYLE": "path", "AWS_S3_ENDPOINT_URL": "http://minio:9000", "AWS_S3_REGION_NAME": "eu-central-1", "AWS_S3_SIGNATURE_VERSION": "s3v4", "AWS_SECRET_ACCESS_KEY": "fqRvjWaPU5o0fCqQuUWbj9Fainj2pVZtBCiDiieS", "AWS_STORAGE_BUCKET_NAME": "pulp3", "DEFAULT_FILE_STORAGE": "storages.backends.s3boto3.S3Boto3Storage", "MEDIA_ROOT": "", "domain_enabled": true, "hide_guarded_distributions": true}\
+pulp_scenario_settings: {"MEDIA_ROOT": "", "STORAGES": {"default": {"BACKEND": "storages.backends.s3boto3.S3Boto3Storage", "OPTIONS": {"access_key": "AKIAIT2Z5TDYPX3ARJBA", "addressing_style": "path", "bucket_name": "pulp3", "default_acl": "@none", "endpoint_url": "http://minio:9000", "region_name": "eu-central-1", "secret_key": "fqRvjWaPU5o0fCqQuUWbj9Fainj2pVZtBCiDiieS", "signature_version": "s3v4"}}, "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"}}, "domain_enabled": true, "hide_guarded_distributions": true}\
 pulp_scenario_env: {}\
 ' vars/main.yaml
   export PULP_API_ROOT="/rerouted/djnd/"
@@ -119,7 +119,7 @@ if [ "$TEST" = "azure" ]; then
       - ./azurite:/etc/pulp\
     command: "azurite-blob --skipApiVersionCheck --blobHost 0.0.0.0"' vars/main.yaml
   sed -i -e '$a azure_test: true\
-pulp_scenario_settings: {"AZURE_ACCOUNT_KEY": "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==", "AZURE_ACCOUNT_NAME": "devstoreaccount1", "AZURE_CONNECTION_STRING": "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://ci-azurite:10000/devstoreaccount1;", "AZURE_CONTAINER": "pulp-test", "AZURE_LOCATION": "pulp3", "AZURE_OVERWRITE_FILES": true, "AZURE_URL_EXPIRATION_SECS": 120, "DEFAULT_FILE_STORAGE": "storages.backends.azure_storage.AzureStorage", "MEDIA_ROOT": "", "domain_enabled": true}\
+pulp_scenario_settings: {"MEDIA_ROOT": "", "STORAGES": {"default": {"BACKEND": "storages.backends.azure_storage.AzureStorage", "OPTIONS": {"account_key": "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==", "account_name": "devstoreaccount1", "azure_container": "pulp-test", "connection_string": "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://ci-azurite:10000/devstoreaccount1;", "expiration_secs": 120, "location": "pulp3", "overwrite_files": true}}, "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"}}, "domain_enabled": true}\
 pulp_scenario_env: {}\
 ' vars/main.yaml
 fi

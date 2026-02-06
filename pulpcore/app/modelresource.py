@@ -1,3 +1,4 @@
+from django.conf import settings
 from import_export import fields
 from import_export.widgets import ForeignKeyWidget
 from logging import getLogger
@@ -36,8 +37,8 @@ class ArtifactResource(QueryModelResource):
         # the export converts None to blank strings but sha384 and sha512 have unique constraints
         # that get triggered if they are blank. convert checksums back into None if they are blank.
         for checksum in ALL_KNOWN_CONTENT_CHECKSUMS:
-            if row[checksum] == "":
-                row[checksum] = None
+            if row[checksum] == "" or checksum not in settings.ALLOWED_CONTENT_CHECKSUMS:
+                del row[checksum]
 
     class Meta:
         model = Artifact
