@@ -329,7 +329,7 @@ def test_file_remote_url_validation(file_bindings, gen_object_with_cleanup):
         """Check if Pulp returns HTTP 400 after issuing an invalid request."""
         with pytest.raises(ApiException) as ae:
             file_bindings.RemotesFileApi.create(remote_attrs)
-            assert ae.value.status == 400
+        assert ae.value.status == 400
 
     # Test the validation of an invalid absolute pathname.
     remote_attrs = {

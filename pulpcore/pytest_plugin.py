@@ -597,28 +597,36 @@ def backend_settings_factory(pulp_settings):
         keys = dict()
         keys["pulpcore.app.models.storage.FileSystem"] = ["MEDIA_ROOT", "MEDIA_URL"]
         keys["storages.backends.s3boto3.S3Boto3Storage"] = [
-            "AWS_ACCESS_KEY_ID",
-            "AWS_SECRET_ACCESS_KEY",
-            "AWS_S3_ENDPOINT_URL",
-            "AWS_S3_ADDRESSING_STYLE",
-            "AWS_S3_SIGNATURE_VERSION",
-            "AWS_S3_REGION_NAME",
-            "AWS_STORAGE_BUCKET_NAME",
+            "access_key",
+            "secret_key",
+            "endpoint_url",
+            "addressing_style",
+            "signature_version",
+            "region_name",
+            "bucket_name",
         ]
         keys["storages.backends.s3.S3Storage"] = keys["storages.backends.s3boto3.S3Boto3Storage"]
         keys["storages.backends.azure_storage.AzureStorage"] = [
-            "AZURE_ACCOUNT_NAME",
-            "AZURE_CONTAINER",
-            "AZURE_ACCOUNT_KEY",
-            "AZURE_URL_EXPIRATION_SECS",
-            "AZURE_OVERWRITE_FILES",
-            "AZURE_LOCATION",
-            "AZURE_CONNECTION_STRING",
+            "account_name",
+            "azure_container",
+            "account_key",
+            "expiration_secs",
+            "overwrite_files",
+            "location",
+            "connection_string",
         ]
         settings = storage_settings or dict()
-        backend = storage_class or pulp_settings.DEFAULT_FILE_STORAGE
-        for key in keys[backend]:
-            if key not in settings:
+        backend = storage_class or pulp_settings.STORAGES["default"]["BACKEND"]
+        not_defined_settings = (k for k in keys[backend] if k not in settings)
+        # Read storage settings from STORAGES.default.OPTIONS when using the default backend
+        default_backend = pulp_settings.STORAGES["default"]["BACKEND"]
+        storages_dict = getattr(pulp_settings, "STORAGES", {})
+        storage_options = storages_dict.get("default", {}).get("OPTIONS", {})
+        if storage_options and backend == default_backend:
+            for key in not_defined_settings:
+                settings[key] = storage_options.get(key)
+        else:
+            for key in not_defined_settings:
                 settings[key] = getattr(pulp_settings, key, None)
         return backend, settings
 
