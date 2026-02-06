@@ -68,12 +68,11 @@ def test_orphans_delete(
     monitor_task,
     pulp_settings,
 ):
-    settings = pulp_settings
     # Verify that the system contains the orphan content unit and the orphan artifact.
     content_unit = file_bindings.ContentFilesApi.read(file_random_content_unit.pulp_href)
     artifact = pulpcore_bindings.ArtifactsApi.read(random_artifact.pulp_href)
 
-    if settings.STORAGES["default"]["BACKEND"] == "pulpcore.app.models.storage.FileSystem":
+    if pulp_settings.STORAGES["default"]["BACKEND"] == "pulpcore.app.models.storage.FileSystem":
         # Verify that the artifacts are on disk
         relative_path = pulpcore_bindings.ArtifactsApi.read(content_unit.artifact).file
         artifact_path1 = os.path.join(pulp_settings.MEDIA_ROOT, relative_path)
@@ -89,7 +88,7 @@ def test_orphans_delete(
         with pytest.raises(file_bindings.ApiException) as exc:
             file_bindings.ContentFilesApi.read(file_random_content_unit.pulp_href)
         assert exc.value.status == 404
-        if settings.STORAGES["default"]["BACKEND"] == "pulpcore.app.models.storage.FileSystem":
+        if pulp_settings.STORAGES["default"]["BACKEND"] == "pulpcore.app.models.storage.FileSystem":
             assert os.path.exists(artifact_path1) is False
             assert os.path.exists(artifact_path2) is False
 
@@ -102,7 +101,6 @@ def test_orphans_cleanup(
     monitor_task,
     pulp_settings,
 ):
-    settings = pulp_settings
     # Cleanup orphans with a nonzero orphan_protection_time
     monitor_task(pulpcore_bindings.OrphansCleanupApi.cleanup({"orphan_protection_time": 10}).task)
 
@@ -110,7 +108,7 @@ def test_orphans_cleanup(
     content_unit = file_bindings.ContentFilesApi.read(file_random_content_unit.pulp_href)
     artifact = pulpcore_bindings.ArtifactsApi.read(random_artifact.pulp_href)
 
-    if settings.STORAGES["default"]["BACKEND"] == "pulpcore.app.models.storage.FileSystem":
+    if pulp_settings.STORAGES["default"]["BACKEND"] == "pulpcore.app.models.storage.FileSystem":
         # Verify that the artifacts are on disk
         relative_path = pulpcore_bindings.ArtifactsApi.read(content_unit.artifact).file
         artifact_path1 = os.path.join(pulp_settings.MEDIA_ROOT, relative_path)
@@ -125,7 +123,7 @@ def test_orphans_cleanup(
     with pytest.raises(file_bindings.ApiException) as exc:
         file_bindings.ContentFilesApi.read(file_random_content_unit.pulp_href)
     assert exc.value.status == 404
-    if settings.STORAGES["default"]["BACKEND"] == "pulpcore.app.models.storage.FileSystem":
+    if pulp_settings.STORAGES["default"]["BACKEND"] == "pulpcore.app.models.storage.FileSystem":
         assert os.path.exists(artifact_path1) is False
         assert os.path.exists(artifact_path2) is False
 

@@ -126,7 +126,7 @@ def test_storage_per_domain(
     assert default_status.storage != domain_status.storage
 
 
-def verify_get_response(status, expected_schema, settings):
+def verify_get_response(status, expected_schema, pulp_settings):
     """Verify the response to an HTTP GET call.
 
     Verify that several attributes and have the correct type or value.
@@ -140,7 +140,7 @@ def verify_get_response(status, expected_schema, settings):
     assert status["content_settings"]["content_path_prefix"] is not None
 
     assert status["storage"]["used"] is not None
-    if settings.STORAGES["default"]["BACKEND"] != "pulpcore.app.models.storage.FileSystem":
+    if pulp_settings.STORAGES["default"]["BACKEND"] != "pulpcore.app.models.storage.FileSystem":
         assert status["storage"]["free"] is None
         assert status["storage"]["total"] is None
     else:

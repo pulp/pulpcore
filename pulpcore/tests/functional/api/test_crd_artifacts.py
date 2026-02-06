@@ -143,10 +143,9 @@ def test_upload_mixed_attrs(pulpcore_bindings, pulpcore_random_file):
 def test_delete_artifact(pulpcore_bindings, pulpcore_random_file, gen_user, pulp_settings):
     """Verify that the deletion of artifacts is prohibited for both regular users and
     administrators."""
-    settings = pulp_settings
-    if settings.STORAGES["default"]["BACKEND"] != "pulpcore.app.models.storage.FileSystem":
+    if pulp_settings.STORAGES["default"]["BACKEND"] != "pulpcore.app.models.storage.FileSystem":
         pytest.skip("this test only works for filesystem storage")
-    media_root = settings.MEDIA_ROOT
+    media_root = pulp_settings.MEDIA_ROOT
 
     artifact = pulpcore_bindings.ArtifactsApi.create(str(pulpcore_random_file["name"]))
     path_to_file = os.path.join(media_root, artifact.file)
