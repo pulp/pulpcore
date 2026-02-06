@@ -2,7 +2,6 @@
 
 import pytest
 
-from django.conf import settings
 from jsonschema import validate
 from pulpcore.client.pulpcore import ApiException
 
@@ -59,24 +58,24 @@ STATUS = {
 
 
 @pytest.mark.parallel
-def test_get_authenticated(pulpcore_bindings):
+def test_get_authenticated(pulpcore_bindings, pulp_settings):
     """GET the status path with valid credentials.
 
     Verify the response with :meth:`verify_get_response`.
     """
     response = pulpcore_bindings.StatusApi.status_read()
-    verify_get_response(response.to_dict(), STATUS)
+    verify_get_response(response.to_dict(), STATUS, pulp_settings)
 
 
 @pytest.mark.parallel
-def test_get_unauthenticated(pulpcore_bindings, anonymous_user):
+def test_get_unauthenticated(pulpcore_bindings, anonymous_user, pulp_settings):
     """GET the status path with no credentials.
 
     Verify the response with :meth:`verify_get_response`.
     """
     with anonymous_user:
         response = pulpcore_bindings.StatusApi.status_read()
-    verify_get_response(response.to_dict(), STATUS)
+    verify_get_response(response.to_dict(), STATUS, pulp_settings)
 
 
 @pytest.mark.parallel
@@ -126,7 +125,7 @@ def test_storage_per_domain(
     assert default_status.storage != domain_status.storage
 
 
-def verify_get_response(status, expected_schema):
+def verify_get_response(status, expected_schema, pulp_settings):
     """Verify the response to an HTTP GET call.
 
     Verify that several attributes and have the correct type or value.
@@ -141,7 +140,7 @@ def verify_get_response(status, expected_schema):
     assert status["content_settings"]["content_path_prefix"] is not None
 
     assert status["storage"]["used"] is not None
-    if settings.DEFAULT_FILE_STORAGE != "pulpcore.app.models.storage.FileSystem":
+    if pulp_settings.STORAGES["default"]["BACKEND"] != "pulpcore.app.models.storage.FileSystem":
         assert status["storage"]["free"] is None
         assert status["storage"]["total"] is None
     else:
