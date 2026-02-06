@@ -413,7 +413,7 @@ def get_artifact_url(artifact, headers=None, http_method=None):
         if settings.DOMAIN_ENABLED:
             loc = f"domain {artifact_domain.name}.storage_class"
         else:
-            loc = "settings.DEFAULT_FILE_STORAGE"
+            loc = "settings.STORAGES['default']['BACKEND']"
 
         raise NotImplementedError(
             f"The value {loc}={artifact_domain.storage_class} does not allow redirecting."
@@ -459,7 +459,9 @@ def get_default_domain():
         try:
             default_domain = Domain.objects.get(name="default")
         except Domain.DoesNotExist:
-            default_domain = Domain(name="default", storage_class=settings.DEFAULT_FILE_STORAGE)
+            default_domain = Domain(
+                name="default", storage_class=settings.STORAGES["default"]["BACKEND"]
+            )
             default_domain.save(skip_hooks=True)
 
     return default_domain
