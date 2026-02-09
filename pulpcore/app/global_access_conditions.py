@@ -172,7 +172,8 @@ def has_remote_param_obj_perms(request, view, action, permission):
             authorization.
         action (str): The action being performed, e.g. "destroy".
         permission (str): The name of the Permission to be checked. In the form
-            `app_label.codename`, e.g. "core.delete_task".
+            `app_label.codename`, e.g. "core.delete_task". Can contain multiple permissions
+            separated by commas.
 
     Returns:
         True if the user has the Permission named by the ``permission`` argument on the ``remote``
@@ -188,7 +189,10 @@ def has_remote_param_obj_perms(request, view, action, permission):
     serializer = view.serializer_class(instance=obj, data=request.data, context=context, **kwargs)
     serializer.is_valid(raise_exception=True)
     if remote := serializer.validated_data.get("remote"):
-        return request.user.has_perm(permission, remote)
+        for perm in permission.split(","):
+            if request.user.has_perm(perm, remote):
+                return True
+        return False
     return True
 
 
