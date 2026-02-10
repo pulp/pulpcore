@@ -323,3 +323,16 @@ class ReplicateError(PulpException):
 
     def __str__(self):
         return f"[{self.error_code}] " + _("Replication failed")
+
+
+class TaskTimeoutError(PulpException):
+    """
+    Raised when an immediate task took too long.
+    """
+
+    error_code = "PLP0019"
+
+    def __str__(self, task, timeout):
+        return f"[{self.error_code}] " + _(
+            "Immediate task {task} timed out after {timeout} seconds."
+        ).format(task=task, timeout=timeout)
