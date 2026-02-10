@@ -30,6 +30,7 @@ def _no_validate_storage_backend(monkeypatch):
     params=[
         "pulpcore.app.models.storage.FileSystem",
         "storages.backends.s3boto3.S3Boto3Storage",
+        "storages.backends.s3.S3Storage",
         "storages.backends.azure_storage.AzureStorage",
     ]
 )
@@ -41,7 +42,10 @@ def storage_class(request):
 def serializer_class(storage_class):
     if storage_class == "pulpcore.app.models.storage.FileSystem":
         return FileSystemSettingsSerializer
-    elif storage_class == "storages.backends.s3boto3.S3Boto3Storage":
+    elif storage_class in (
+        "storages.backends.s3boto3.S3Boto3Storage",
+        "storages.backends.s3.S3Storage",
+    ):
         return AmazonS3SettingsSerializer
     elif storage_class == "storages.backends.azure_storage.AzureStorage":
         return AzureSettingsSerializer
@@ -51,14 +55,28 @@ def serializer_class(storage_class):
 def required_settings(storage_class):
     if storage_class == "pulpcore.app.models.storage.FileSystem":
         return {"location": "/var/lib/pulp/media/"}
-    elif storage_class == "storages.backends.s3boto3.S3Boto3Storage":
+    elif storage_class in (
+        "storages.backends.s3boto3.S3Boto3Storage",
+        "storages.backends.s3.S3Storage",
+    ):
         return {"access_key": "testing", "secret_key": "secret", "bucket_name": "test"}
     elif storage_class == "storages.backends.azure_storage.AzureStorage":
         return {"account_name": "test", "account_key": "secret", "azure_container": "test"}
 
 
 @pytest.fixture
-def all_settings(serializer_class, required_settings):
+def extra_required_settings(storage_class):
+    """For fields required in the serializer's validate, but not on the field itself."""
+    if storage_class in (
+        "storages.backends.s3boto3.S3Boto3Storage",
+        "storages.backends.s3.S3Storage",
+    ):
+        return {"secret_key": "secret"}
+    return {}
+
+
+@pytest.fixture
+def all_settings(serializer_class, required_settings, extra_required_settings):
     serializer = serializer_class()
     fields = serializer.get_fields()
     default_settings = {
@@ -111,6 +129,29 @@ def test_using_setting_names(storage_class, serializer_class, all_settings):
 
     storage_settings = serializer.validated_data["storage_settings"]
     assert storage_settings == all_settings
+
+
+@pytest.mark.django_db
+def test_cloudfront_s3_storage_settings(storage_class, required_settings):
+    if storage_class not in (
+        "storages.backends.s3boto3.S3Boto3Storage",
+        "storages.backends.s3.S3Storage",
+    ):
+        pytest.skip("This test only make sense when using S3 as storage backend.")
+
+    domain = SimpleNamespace(storage_class=storage_class, **MIN_DOMAIN_SETTINGS)
+    data = {
+        "storage_settings": {
+            "secret_key": "secret_key",
+            "custom_domain": "custom_domain.cloudfront.net",
+            "cloudfront_key_id": "key_id",
+            "cloudfront_key": "cloudfront_key",
+            **required_settings,
+        }
+    }
+    serializer = DomainSerializer(domain, data=data, partial=True)
+
+    assert serializer.is_valid(raise_exception=True)
 
 
 class DomainSettingsBaseMixin:
