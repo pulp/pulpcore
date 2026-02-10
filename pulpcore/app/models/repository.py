@@ -1068,6 +1068,7 @@ class RepositoryVersion(BaseModel):
                 complete RepositoryVersion
         """
 
+        assert issubclass(content.model, Content)
         if self.complete:
             raise ResourceImmutableError(self)
 
@@ -1076,6 +1077,7 @@ class RepositoryVersion(BaseModel):
             .exclude(pulp_domain_id=get_domain_pk())
             .exists()
         )
+
         repo_content = []
         to_add = set(content.values_list("pk", flat=True)) - set(self._get_content_ids())
         with transaction.atomic():
@@ -1114,12 +1116,14 @@ class RepositoryVersion(BaseModel):
                 complete RepositoryVersion
         """
 
+        assert issubclass(content.model, Content)
         if self.complete:
             raise ResourceImmutableError(self)
 
         if not content or not content.count():
             return
 
+        # check that all content is within the current domain
         assert (
             not Content.objects.filter(pk__in=content)
             .exclude(pulp_domain_id=get_domain_pk())
@@ -1157,6 +1161,7 @@ class RepositoryVersion(BaseModel):
             pulpcore.exception.ResourceImmutableError: if set_content is called on a
                 complete RepositoryVersion
         """
+        assert issubclass(content.model, Content)
         self.remove_content(self.content.exclude(pk__in=content))
         self.add_content(content.exclude(pk__in=self.content))
 
@@ -1306,6 +1311,9 @@ class RepositoryVersion(BaseModel):
         objects and makes new ones with each call.
         """
         with transaction.atomic():
+            # relatively inexpensive sanity check for memoization
+            assert len(self.content_ids) == self._content_relationships().count()
+            # delete existing content details and recompute them all
             RepositoryVersionContentDetails.objects.filter(repository_version=self).delete()
             counts_list = []
             for value, name in RepositoryVersionContentDetails.COUNT_TYPE_CHOICES:
