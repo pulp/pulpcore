@@ -1,1 +1,0 @@
-Exposed `PulpLabelsField` and `pulp_labels_validator` to the plugin API.

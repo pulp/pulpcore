@@ -8,6 +8,39 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.73.25 (2026-02-10) {: #3.73.25 }
+
+### REST API {: #3.73.25-rest-api }
+
+#### Features {: #3.73.25-rest-api-feature }
+
+- Adapted PulpImport/Export to allow update django-import-export==4.x.
+  [#5324](https://github.com/pulp/pulpcore/issues/5324)
+- Allow use of Django 5 as well as Django 4. Note the following breaking changes if upgrading to
+  Django 5: storage configuration must use the new ``STORAGES`` format instead of
+  ``DEFAULT_FILE_STORAGE``, Python >= 3.10 is required, and PostgreSQL >= 14 is required.
+  [#6988](https://github.com/pulp/pulpcore/issues/6988)
+
+#### Bugfixes {: #3.73.25-rest-api-bugfix }
+
+- Fixed PRNField slowing down the generic list endpoints with extra database queries.
+
+### Plugin API {: #3.73.25-plugin-api }
+
+#### Bugfixes {: #3.73.25-plugin-api-bugfix }
+
+- Exposed `PulpLabelsField` and `pulp_labels_validator` to the plugin API.
+
+### Pulp File {: #3.73.25-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.25-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.73.24 (2026-01-27) {: #3.73.24 }
 
 ### REST API {: #3.73.24-rest-api }
