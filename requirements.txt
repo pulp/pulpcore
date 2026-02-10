@@ -25,11 +25,11 @@ jq>=1.6.0,<1.7.0
 # pycares is only a transitive dependency, but there is a combination of versions that expresses a bug.
 pycares<4.9;python_version<'3.12'  # pycares==4.9 + aiodns==3.2.0 + python<3.12 = trouble
 PyOpenSSL<25.0
-opentelemetry-distro[otlp]>=0.38b0,<=0.48b0
-opentelemetry-exporter-otlp-proto-http>=1.17.0,<=1.27.0
-opentelemetry-instrumentation-django>=0.38b0,<=0.48b0
-opentelemetry-instrumentation-wsgi>=0.38b0,<=0.48b0
-protobuf>=4.21.1,<5.0
+opentelemetry-distro[otlp]>=0.38b0,<=0.49b0
+opentelemetry-exporter-otlp-proto-http>=1.17.0,<1.29
+opentelemetry-instrumentation-django>=0.38b0,<=0.49b0
+opentelemetry-instrumentation-wsgi>=0.38b0,<=0.49b0
+protobuf>=4.21.1,<6.0
 pulp-glue>=0.18.0,<0.30
 pygtrie>=2.5,<=2.5.0
 psycopg[binary]>=3.1.8,<3.3  # semver, not explicitely stated, but mentioned on multiple changes
