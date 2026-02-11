@@ -315,6 +315,26 @@ No significant changes.
 
 ---
 
+## 3.93.4 (2026-02-10) {: #3.93.4 }
+
+### REST API {: #3.93.4-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.93.4-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.93.4-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.93.4-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.93.3 (2025-11-25) {: #3.93.3 }
 
 ### REST API {: #3.93.3-rest-api }
@@ -769,6 +789,39 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.86.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.85.10 (2026-02-10) {: #3.85.10 }
+
+### REST API {: #3.85.10-rest-api }
+
+#### Features {: #3.85.10-rest-api-feature }
+
+- Adapted PulpImport/Export to allow update django-import-export==4.x.
+  [#5324](https://github.com/pulp/pulpcore/issues/5324)
+- Allow use of Django 5 as well as Django 4. Note the following breaking changes if upgrading to
+  Django 5: storage configuration must use the new ``STORAGES`` format instead of
+  ``DEFAULT_FILE_STORAGE``, Python >= 3.10 is required, and PostgreSQL >= 14 is required.
+  [#6988](https://github.com/pulp/pulpcore/issues/6988)
+
+#### Bugfixes {: #3.85.10-rest-api-bugfix }
+
+- Fixed PRNField slowing down the generic list endpoints with extra database queries.
+
+### Plugin API {: #3.85.10-plugin-api }
+
+#### Bugfixes {: #3.85.10-plugin-api-bugfix }
+
+- Exposed `PulpLabelsField` and `pulp_labels_validator` to the plugin API.
+
+### Pulp File {: #3.85.10-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.10-pulp-cert-guard }
 
 No significant changes.
 
@@ -1734,6 +1787,39 @@ No significant changes.
   [#6244](https://github.com/pulp/pulpcore/issues/6244)
 
 ### Pulp Cert Guard {: #3.74.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.73.25 (2026-02-10) {: #3.73.25 }
+
+### REST API {: #3.73.25-rest-api }
+
+#### Features {: #3.73.25-rest-api-feature }
+
+- Adapted PulpImport/Export to allow update django-import-export==4.x.
+  [#5324](https://github.com/pulp/pulpcore/issues/5324)
+- Allow use of Django 5 as well as Django 4. Note the following breaking changes if upgrading to
+  Django 5: storage configuration must use the new ``STORAGES`` format instead of
+  ``DEFAULT_FILE_STORAGE``, Python >= 3.10 is required, and PostgreSQL >= 14 is required.
+  [#6988](https://github.com/pulp/pulpcore/issues/6988)
+
+#### Bugfixes {: #3.73.25-rest-api-bugfix }
+
+- Fixed PRNField slowing down the generic list endpoints with extra database queries.
+
+### Plugin API {: #3.73.25-plugin-api }
+
+#### Bugfixes {: #3.73.25-plugin-api-bugfix }
+
+- Exposed `PulpLabelsField` and `pulp_labels_validator` to the plugin API.
+
+### Pulp File {: #3.73.25-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.25-pulp-cert-guard }
 
 No significant changes.
 
@@ -2974,6 +3060,37 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.64.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.63.30 (2026-02-10) {: #3.63.30 }
+
+### REST API {: #3.63.30-rest-api }
+
+#### Features {: #3.63.30-rest-api-feature }
+
+- Adapted PulpImport/Export to allow update django-import-export==4.x.
+  [#5324](https://github.com/pulp/pulpcore/issues/5324)
+- Allow use of Django 5 as well as Django 4. Note the following breaking changes if upgrading to
+  Django 5: storage configuration must use the new ``STORAGES`` format instead of
+  ``DEFAULT_FILE_STORAGE``, Python >= 3.10 is required, and PostgreSQL >= 14 is required.
+  [#6988](https://github.com/pulp/pulpcore/issues/6988)
+
+#### Bugfixes {: #3.63.30-rest-api-bugfix }
+
+- Fixed PRNField slowing down the generic list endpoints with extra database queries.
+
+### Plugin API {: #3.63.30-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.30-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.30-pulp-cert-guard }
 
 No significant changes.
 
@@ -4484,6 +4601,33 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard
+
+No significant changes.
+
+---
+
+## 3.49.50 (2026-02-10) {: #3.49.50 }
+
+### REST API {: #3.49.50-rest-api }
+
+#### Features {: #3.49.50-rest-api-feature }
+
+- Adapted PulpImport/Export to allow update django-import-export==4.x.
+  [#5324](https://github.com/pulp/pulpcore/issues/5324)
+- Allow use of Django 5 as well as Django 4. Note the following breaking changes if upgrading to
+  Django 5: storage configuration must use the new ``STORAGES`` format instead of
+  ``DEFAULT_FILE_STORAGE``, Python >= 3.10 is required, and PostgreSQL >= 14 is required.
+  [#6988](https://github.com/pulp/pulpcore/issues/6988)
+
+### Plugin API {: #3.49.50-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.50-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.50-pulp-cert-guard }
 
 No significant changes.
 
