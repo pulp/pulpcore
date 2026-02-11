@@ -1,11 +1,9 @@
 from django.db import transaction
-from rest_framework.exceptions import ValidationError as DRFValidationError
 
 from pulpcore.app.apps import get_plugin_config
 from pulpcore.app.models import CreatedResource
 from pulpcore.app.loggers import deprecation_logger
 from pulpcore.plugin.models import MasterModel
-from pulpcore.exceptions import ValidationError
 
 from asgiref.sync import sync_to_async
 
@@ -30,7 +28,7 @@ def general_create(app_label, serializer_name, *args, **kwargs):
     Create a model instance.
 
     Raises:
-        SerializerValidationError: If the serializer is not valid
+        ValidationError: If the serializer is not valid
 
     """
     data = kwargs.pop("data", None)
@@ -40,10 +38,7 @@ def general_create(app_label, serializer_name, *args, **kwargs):
     serializer_class = get_plugin_config(app_label).named_serializers[serializer_name]
     serializer = serializer_class(data=data, context=context)
 
-    try:
-        serializer.is_valid(raise_exception=True)
-    except DRFValidationError as e:
-        raise ValidationError(e.detail)
+    serializer.is_valid(raise_exception=True)
     instance = serializer.save()
     if isinstance(instance, MasterModel):
         instance = instance.cast()
@@ -70,7 +65,7 @@ def general_update(instance_id, app_label, serializer_name, *args, **kwargs):
             their values are updated as such.
 
     Raises:
-        SerializerValidationError: When serializer instance can't be saved
+        [rest_framework.exceptions.ValidationError][]: When serializer instance can't be saved
             due to validation error. This theoretically should never occur since validation is
             performed before the task is dispatched.
     """
@@ -85,10 +80,7 @@ def general_update(instance_id, app_label, serializer_name, *args, **kwargs):
     if isinstance(instance, MasterModel):
         instance = instance.cast()
     serializer = serializer_class(instance, data=data, partial=partial)
-    try:
-        serializer.is_valid(raise_exception=True)
-    except DRFValidationError as e:
-        raise ValidationError(e.detail)
+    serializer.is_valid(raise_exception=True)
     serializer.save()
 
 
@@ -149,10 +141,7 @@ async def ageneral_update(instance_id, app_label, serializer_name, *args, **kwar
     if isinstance(instance, MasterModel):
         instance = await instance.acast()
     serializer = serializer_class(instance, data=data, partial=partial, context=context)
-    try:
-        await sync_to_async(serializer.is_valid)(raise_exception=True)
-    except DRFValidationError as e:
-        raise ValidationError(e.detail)
+    await sync_to_async(serializer.is_valid)(raise_exception=True)
     await sync_to_async(serializer.save)()
     return await sync_to_async(lambda: serializer.data)()
 

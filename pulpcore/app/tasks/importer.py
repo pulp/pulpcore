@@ -12,9 +12,10 @@ from django.conf import settings
 from django.core.files.storage import default_storage
 from django.db.models import F
 from io import StringIO
+from rest_framework.serializers import ValidationError
 from tablib import Dataset
 
-from pulpcore.exceptions import MissingPlugin, ImportError
+from pulpcore.exceptions.plugin import MissingPlugin
 from pulpcore.app.apps import get_plugin_config
 from pulpcore.app.models import (
     AppStatus,
@@ -77,7 +78,7 @@ class ChunkedFile(ExitStack):
         with open(toc_path, "r") as toc_file:
             self.toc = json.load(toc_file)
         if "files" not in self.toc or "meta" not in self.toc:
-            raise ImportError(_("Missing 'files' or 'meta' keys in table-of-contents!"))
+            raise ValidationError(_("Missing 'files' or 'meta' keys in table-of-contents!"))
 
         toc_dir = os.path.dirname(toc_path)
         # sorting-by-filename is REALLY IMPORTANT here
@@ -125,7 +126,7 @@ class ChunkedFile(ExitStack):
             if read_size < current_size:
                 # Reached EOF (should only happen on the last chunk)
                 if self.chunk != len(self.chunks) - 1:
-                    raise ImportError(f"Short read from chunk {self.chunk}.")
+                    raise Exception(f"Short read from chunk {self.chunk}.")
                 return data
             if remaining_size == 0:
                 return data
@@ -153,7 +154,7 @@ class ChunkedFile(ExitStack):
           * point to chunks whose checksums match the checksums stored in the 'toc' file
 
         Raises:
-            ImportError: When toc points to chunked-export-files that can't be found in the
+            ValidationError: When toc points to chunked-export-files that can't be found in the
             same directory as the toc-file, or the checksums of the chunks do not match the
             checksums stored in toc.
         """
@@ -163,7 +164,7 @@ class ChunkedFile(ExitStack):
             if not os.path.isfile(chunk_path):
                 missing_files.append(chunk_path)
         if missing_files:
-            raise ImportError(
+            raise ValidationError(
                 _(
                     "Missing import-chunks named in table-of-contents: {}.".format(
                         str(missing_files)
@@ -189,7 +190,7 @@ class ChunkedFile(ExitStack):
 
         # if there are any errors, report and fail
         if errs:
-            raise ImportError(_("Import chunk hash mismatch: {}).").format(str(errs)))
+            raise ValidationError(_("Import chunk hash mismatch: {}).").format(str(errs)))
 
 
 def _get_destination_repo_name(importer, source_repo_name):
@@ -292,7 +293,7 @@ def _check_versions(version_json):
     Compare the export version_json to the installed components.
 
     An upstream whose db-metadata doesn't match the downstream won't import successfully; check
-    for compatibility and raise a ImportError if incompatible versions are found.
+    for compatibility and raise a ValidationError if incompatible versions are found.
     """
     error_messages = []
     for component in version_json:
@@ -319,7 +320,7 @@ def _check_versions(version_json):
                 )
 
     if error_messages:
-        raise ImportError((" ".join(error_messages)))
+        raise ValidationError((" ".join(error_messages)))
 
 
 def import_repository_version(
@@ -365,7 +366,7 @@ def import_repository_version(
                         tar.extract(mem, path=temp_dir)
 
                 if not rv_name:
-                    raise ImportError(_("No RepositoryVersion found for {}").format(rv_name))
+                    raise ValidationError(_("No RepositoryVersion found for {}").format(rv_name))
 
                 rv_path = os.path.join(temp_dir, rv_name)
 
@@ -477,7 +478,7 @@ def pulp_import(importer_pk, path, toc, create_repositories):
                     for member in tar.getmembers():
                         member_path = os.path.join(path, member.name)
                         if not is_within_directory(path, member_path):
-                            raise ImportError("Attempted Path Traversal in Tar File")
+                            raise Exception("Attempted Path Traversal in Tar File")
 
                     tar.extractall(path, members, numeric_owner=numeric_owner)
 

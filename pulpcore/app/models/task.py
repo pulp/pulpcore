@@ -3,6 +3,7 @@ Django models related to the Tasking system
 """
 
 import logging
+import traceback
 from gettext import gettext as _
 
 from django.contrib.postgres.fields import ArrayField, HStoreField
@@ -260,7 +261,7 @@ class Task(BaseModel, AutoAddObjPermsMixin):
                 )
         self._cleanup_progress_reports(TASK_STATES.COMPLETED)
 
-    def set_failed(self, exc):
+    def set_failed(self, exc, tb):
         """
         Set this Task to the failed state and save it.
 
@@ -269,9 +270,11 @@ class Task(BaseModel, AutoAddObjPermsMixin):
 
         Args:
             exc (Exception): The exception raised by the task.
+            tb (traceback): Traceback instance for the current exception.
         """
         finished_at = timezone.now()
-        error = exception_to_dict(exc)
+        tb_str = "".join(traceback.format_tb(tb))
+        error = exception_to_dict(exc, tb_str)
         rows = Task.objects.filter(
             pk=self.pk,
             state=TASK_STATES.RUNNING,

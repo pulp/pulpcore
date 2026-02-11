@@ -33,17 +33,19 @@ class PulpException(Exception):
         raise NotImplementedError("Subclasses of PulpException must implement a __str__() method")
 
 
-def exception_to_dict(exc):
+def exception_to_dict(exc, traceback=None):
     """
     Return a dictionary representation of an Exception.
 
     :param exc: Exception that is being serialized
     :type exc: Exception
+    :param traceback: String representation of a traceback generated when the exception occurred.
+    :type traceback: str
 
     :return: dictionary representing the Exception
     :rtype: dict
     """
-    dic = {"description": str(exc)}
+    dic = {"description": str(exc), "traceback": traceback}
     if isinstance(exc, PulpException):
         dic["error_code"] = exc.error_code
     return dic

@@ -7,7 +7,7 @@ import hashlib
 
 from asgiref.sync import sync_to_async
 from django.db import transaction
-from pulpcore.exceptions import RepositoryVersionDeleteError
+from rest_framework.serializers import ValidationError
 
 from pulpcore.app import models
 from pulpcore.app.models import ProgressReport
@@ -44,7 +44,12 @@ def delete_version(pk):
             return
 
         if version.repository.versions.complete().count() <= 1:
-            raise RepositoryVersionDeleteError()
+            raise ValidationError(
+                _(
+                    "Cannot delete repository version. Repositories must have at least one "
+                    "repository version."
+                )
+            )
 
         log.info(
             "Deleting and squashing version {num} of repository '{repo}'".format(

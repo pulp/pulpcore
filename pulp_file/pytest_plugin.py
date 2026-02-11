@@ -172,14 +172,6 @@ def duplicate_filename_paths(write_3_iso_file_fixture_data_factory):
 
 
 @pytest.fixture(scope="class")
-def missing_file_path(file_fixtures_root):
-    file_fixtures_root.joinpath("missing_file").mkdir()
-    file = {"name": "missing_file/1.iso", "digest": "1234567890", "size": 100}
-    generate_manifest(file_fixtures_root.joinpath("missing_file/PULP_MANIFEST"), [file])
-    return "/missing_file/PULP_MANIFEST"
-
-
-@pytest.fixture(scope="class")
 def file_fixture_server_ssl_client_cert_req(
     ssl_ctx_req_client_auth, file_fixtures_root, gen_fixture_server
 ):

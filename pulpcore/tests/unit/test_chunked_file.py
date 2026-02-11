@@ -3,11 +3,11 @@ import typing as t
 from pathlib import Path
 
 import pytest
+from rest_framework.exceptions import ValidationError
 
 from pulpcore.app.models import ProgressReport
 from pulpcore.app.tasks.importer import ChunkedFile
 from pulpcore.app.util import Crc32Hasher, compute_file_hash
-from pulpcore.exceptions import ImportError
 
 
 def write_chunk_files(tmp_path: Path, data_chunks: t.List[t.ByteString]):
@@ -131,7 +131,7 @@ def test_chunked_file_validate_raises(tmp_path, monkeypatch):
         tmp_path, data_chunks=chunks_list, chunk_size=chunk_size, corrupted=True
     )
     chunked_file = ChunkedFile(toc_path)
-    with pytest.raises(ImportError, match="Import chunk hash mismatch.*"):
+    with pytest.raises(ValidationError, match="Import chunk hash mismatch.*"):
         chunked_file.validate_chunks()
 
 
@@ -144,7 +144,7 @@ def test_chunked_file_shortread_exception(tmp_path):
     toc_path = create_tocfile(tmp_path, data_chunks=malformed_chunks_list, chunk_size=chunk_size)
     chunked_file = ChunkedFile(toc_path)
 
-    with pytest.raises(ImportError, match=r"Short read from chunk \d*."):
+    with pytest.raises(Exception, match=r"Short read from chunk \d*."):
         with chunked_file as fp:
             content_size = len(contiguous_data)
             fp.read(content_size)
