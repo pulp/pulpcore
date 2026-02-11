@@ -30,7 +30,7 @@ from pulpcore.constants import (
     TASK_WAKEUP_HANDLE,
     TASK_WAKEUP_UNBLOCK,
 )
-from pulpcore.exceptions.base import PulpException, InternalErrorException
+from pulpcore.exceptions.base import PulpException, InternalErrorException, TaskTimeoutError
 from pulp_glue.common.exceptions import PulpException as PulpGlueException
 
 from pulpcore.middleware import x_task_diagnostics_var
@@ -223,10 +223,7 @@ def _add_timeout_to(coro_fn, task_pk):
         try:
             return await asyncio.wait_for(coro_fn(), timeout=IMMEDIATE_TIMEOUT)
         except asyncio.TimeoutError:
-            msg_template = "Immediate task %s timed out after %s seconds."
-            error_msg = msg_template % (task_pk, IMMEDIATE_TIMEOUT)
-            _logger.info(error_msg)
-            raise RuntimeError(error_msg)
+            raise TaskTimeoutError(task_pk, timeout=IMMEDIATE_TIMEOUT)
 
     return _wrapper
 
