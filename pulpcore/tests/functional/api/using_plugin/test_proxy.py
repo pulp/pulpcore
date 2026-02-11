@@ -101,7 +101,7 @@ def test_sync_https_through_http_proxy_with_auth_but_auth_not_configured(
     try:
         _run_basic_sync_and_assert(file_bindings, monitor_task, remote_on_demand, file_repo)
     except PulpTaskError as exc:
-        assert "Proxy authentication failed for" in exc.task.error["description"]
+        assert "407, message='Proxy Authentication Required'" in exc.task.error["description"]
 
 
 @pytest.mark.parallel

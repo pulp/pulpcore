@@ -1,1 +1,0 @@
-Fixed an accidental API-breaking change to `PulpException` in the previous release.

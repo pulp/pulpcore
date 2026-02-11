@@ -7,7 +7,6 @@ from gettext import gettext as _
 import asyncio
 import datetime
 import json
-import logging
 import os
 import tempfile
 import shutil
@@ -35,10 +34,7 @@ from pulpcore.exceptions import (
     SizeValidationError,
     MissingDigestValidationError,
     UnsupportedDigestValidationError,
-    ExternalServiceError,
 )
-
-logger = logging.getLogger(__name__)
 
 # All available digest fields ordered by algorithm strength.
 _DIGEST_FIELDS = []
@@ -825,7 +821,7 @@ class SigningService(BaseModel):
             env_vars (dict): dictionary of environment variables
 
         Raises:
-            ExternalServiceError: If the return code of the script is not equal to 0.
+            RuntimeError: If the return code of the script is not equal to 0.
 
         Returns:
             A dictionary as validated by the validate() method.
@@ -838,13 +834,12 @@ class SigningService(BaseModel):
         )
 
         if completed_process.returncode != 0:
-            logger.info("Signing service script failed: {}".format(str(completed_process.stderr)))
-            raise ExternalServiceError("Signing service script")
+            raise RuntimeError(str(completed_process.stderr))
 
         try:
             return_value = json.loads(completed_process.stdout)
         except json.JSONDecodeError:
-            raise ExternalServiceError("Signing service script", "did not return valid JSON")
+            raise RuntimeError("The signing service script did not return valid JSON!")
 
         return return_value
 
@@ -860,13 +855,12 @@ class SigningService(BaseModel):
 
         stdout, stderr = await process.communicate()
         if process.returncode != 0:
-            logger.info("Signing service script failed: {}".format(str(stderr)))
-            raise ExternalServiceError("Signing service script")
+            raise RuntimeError(str(stderr))
 
         try:
             return_value = json.loads(stdout)
         except json.JSONDecodeError:
-            raise ExternalServiceError("Signing service script", "did not return valid JSON")
+            raise RuntimeError("The signing service script did not return valid JSON!")
 
         return return_value
 

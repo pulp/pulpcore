@@ -13,7 +13,6 @@ from pulpcore.app.models import (
 from pulpcore.app.role_util import get_objects_for_user
 from pulpcore.app.util import get_domain, get_current_authenticated_user
 from pulpcore.constants import TASK_STATES, TASK_FINAL_STATES
-from pulpcore.exceptions import SystemStateError
 
 log = getLogger(__name__)
 
@@ -108,7 +107,7 @@ def purge(finished_before=None, states=None, **kwargs):
         if not scheduled:
             current_user = get_current_authenticated_user()
             if current_user is None:
-                raise SystemStateError(
+                raise RuntimeError(
                     "This task should have been dispatched by a user. Cannot find it though. "
                     "Maybe it got deleted."
                 )
