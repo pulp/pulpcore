@@ -468,9 +468,7 @@ class TestImmediateTaskWithNoResource:
                 "pulpcore.app.tasks.test.sleep", args=(LT_TIMEOUT,), immediate=True
             )
             monitor_task(task_href)
-        # Assert masked internal error
-        # Underlying cause is ValueError("Immediate tasks must be async functions")
-        assert "An internal error occurred." in ctx.value.task.error["description"]
+        assert "Immediate tasks must be async functions" in ctx.value.task.error["description"]
 
     @pytest.mark.parallel
     def test_timeouts_on_api_worker(self, pulpcore_bindings, dispatch_task):
@@ -486,8 +484,7 @@ class TestImmediateTaskWithNoResource:
         )
         task = pulpcore_bindings.TasksApi.read(task_href)
         assert task.state == "failed"
-        # Assert masked internal error; underlying cause is asyncio.TimeoutError
-        assert "An internal error occurred." in task.error["description"]
+        assert "timed out after" in task.error["description"]
 
 
 @pytest.fixture
@@ -579,5 +576,4 @@ class TestImmediateTaskWithBlockedResource:
                     exclusive_resources=[COMMON_RESOURCE],
                 )
             monitor_task(task_href)
-        # Assert masked internal error; underlying cause is asyncio.TimeoutError
-        assert "An internal error occurred." in ctx.value.task.error["description"]
+        assert "timed out after" in ctx.value.task.error["description"]

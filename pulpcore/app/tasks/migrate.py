@@ -2,7 +2,7 @@ import logging
 from gettext import gettext as _
 
 from django.utils.timezone import now
-from pulpcore.exceptions import ValidationError
+from rest_framework.serializers import ValidationError
 from pulpcore.app.models import Artifact, storage, ProgressReport
 from pulpcore.app.serializers import DomainBackendMigratorSerializer
 from pulpcore.app.util import get_domain

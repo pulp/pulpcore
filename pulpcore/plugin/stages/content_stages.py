@@ -1,4 +1,3 @@
-from gettext import gettext as _
 from collections import defaultdict
 
 from asgiref.sync import sync_to_async
@@ -8,7 +7,6 @@ from django.db.models import Q
 
 from pulpcore.plugin.sync import sync_to_async_iterable
 
-from pulpcore.plugin.exceptions import SyncError
 from pulpcore.plugin.models import Content, ContentArtifact, ProgressReport
 
 from .api import Stage
@@ -117,14 +115,13 @@ class ContentSaver(Stage):
                             try:
                                 with transaction.atomic():
                                     d_content.content.save()
-                            except IntegrityError:
+                            except IntegrityError as e:
                                 try:
                                     d_content.content = d_content.content.__class__.objects.get(
                                         d_content.content.q()
                                     )
                                 except ObjectDoesNotExist:
-                                    msg = _('Content not found during save "{c}"')
-                                    raise SyncError(msg.format(c=d_content.content.natural_key()))
+                                    raise e
                             else:
                                 for d_artifact in d_content.d_artifacts:
                                     if not d_artifact.artifact._state.adding:
