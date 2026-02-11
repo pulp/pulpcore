@@ -8,6 +8,28 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.103.3 (2026-02-11) {: #3.103.3 }
+
+### REST API {: #3.103.3-rest-api }
+
+#### Removals {: #3.103.3-rest-api-removal }
+
+- Reverted the exception handling refactor.
+
+### Plugin API {: #3.103.3-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.103.3-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.103.3-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.103.2 (2026-02-06) {: #3.103.2 }
 
 ### REST API {: #3.103.2-rest-api }
