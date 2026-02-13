@@ -139,6 +139,14 @@ class RedisWorker:
 
         # Redis connection for distributed locks
         self.redis_conn = get_redis_connection()
+        if self.redis_conn is None:
+            raise RuntimeError(
+                f"Redis connection is not available. RedisWorker {self.name} cannot start."
+            )
+        try:
+            self.redis_conn.ping()
+        except Exception:
+            raise RuntimeError(f"Redis is not reachable. RedisWorker {self.name} cannot start.")
 
         # Add a file descriptor to trigger select on signals
         self.sentinel, sentinel_w = os.pipe()
@@ -206,6 +214,19 @@ class RedisWorker:
             _logger.error(f"Updating the heartbeat of worker {self.name} failed.")
             self.shutdown_requested = True
 
+    def handle_redis_heartbeat(self):
+        """
+        Check Redis connection health.
+
+        If the check fails, the worker is shut down, similar to how a PostgreSQL
+        heartbeat failure triggers shutdown in handle_worker_heartbeat().
+        """
+        try:
+            self.redis_conn.ping()
+        except Exception:
+            _logger.error("Redis connection check failed for worker %s. Shutting down.", self.name)
+            self.shutdown_requested = True
+
     def cleanup_ignored_tasks(self):
         """Remove tasks from ignored list that are no longer incomplete."""
         for pk in (
@@ -234,9 +255,6 @@ class RedisWorker:
         Args:
             app_worker (AppStatus): The AppStatus object of the missing worker
         """
-        if not self.redis_conn:
-            return
-
         worker_name = app_worker.name
 
         try:
@@ -382,6 +400,7 @@ class RedisWorker:
         now = timezone.now()
         if self.app_status.last_heartbeat < now - self.heartbeat_period:
             self.handle_worker_heartbeat()
+            self.handle_redis_heartbeat()
             if self.ignored_task_ids:
                 self.ignored_task_countdown -= 1
                 if self.ignored_task_countdown <= 0:
