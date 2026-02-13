@@ -7,8 +7,12 @@ _conn = None
 _a_conn = None
 
 
+def _redis_is_needed():
+    return settings.get("CACHE_ENABLED") or settings.get("WORKER_TYPE") == "redis"
+
+
 def _get_connection_from_class(redis_class):
-    if not settings.get("CACHE_ENABLED"):
+    if not _redis_is_needed():
         return None
     redis_url = settings.get("REDIS_URL")
     if redis_url is not None:

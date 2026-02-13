@@ -55,9 +55,6 @@ def publish_cancel_signal(task_id):
         bool: True if signal was published, False otherwise
     """
     redis_conn = get_redis_connection()
-    if not redis_conn:
-        _logger.error("Redis connection not available for task cancellation")
-        return False
 
     try:
         # Publish to the task-specific cancellation channel
@@ -82,8 +79,6 @@ def check_cancel_signal(task_id):
         bool: True if cancellation signal exists, False otherwise
     """
     redis_conn = get_redis_connection()
-    if not redis_conn:
-        return False
 
     try:
         cancel_key = f"{REDIS_CANCEL_PREFIX}{task_id}"
@@ -101,8 +96,6 @@ def clear_cancel_signal(task_id):
         task_id (str): The task ID to clear cancellation signal for
     """
     redis_conn = get_redis_connection()
-    if not redis_conn:
-        return
 
     try:
         cancel_key = f"{REDIS_CANCEL_PREFIX}{task_id}"
@@ -329,9 +322,6 @@ def are_resources_available(task: Task) -> bool:
         bool: True if all locks were acquired, False otherwise.
     """
     redis_conn = get_redis_connection()
-    if not redis_conn:
-        _logger.error("Redis connection not available for immediate task locking")
-        return False
 
     # Extract resources from task
     exclusive_resources, shared_resources = extract_task_resources(task)
@@ -385,9 +375,6 @@ async def async_are_resources_available(task: Task) -> bool:
         bool: True if all locks were acquired, False otherwise.
     """
     redis_conn = get_redis_connection()
-    if not redis_conn:
-        _logger.error("Redis connection not available for immediate task locking")
-        return False
 
     # Extract resources from task
     exclusive_resources, shared_resources = extract_task_resources(task)

@@ -478,6 +478,11 @@ def cancel_task(task_id):
     Raises:
         rest_framework.exceptions.NotFound: If a task with given task_id does not exist
     """
+    if settings.WORKER_TYPE == "redis":
+        from pulpcore.tasking.redis_tasks import cancel_task as redis_cancel_task
+
+        return redis_cancel_task(task_id)
+
     task = Task.objects.select_related("pulp_domain").get(pk=task_id)
 
     if task.state in TASK_FINAL_STATES:
@@ -515,6 +520,11 @@ def cancel_task_group(task_group_id):
     Raises:
         TaskGroup.DoesNotExist: If a task group with given task_group_id does not exist
     """
+    if settings.WORKER_TYPE == "redis":
+        from pulpcore.tasking.redis_tasks import cancel_task_group as redis_cancel_task_group
+
+        return redis_cancel_task_group(task_group_id)
+
     task_group = TaskGroup.objects.get(pk=task_group_id)
     task_group.all_tasks_dispatched = True
     task_group.save(update_fields=["all_tasks_dispatched"])

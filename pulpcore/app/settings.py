@@ -449,6 +449,31 @@ cache_validator.messages["combined"] = (
     "for more information."
 )
 
+worker_type_allowed_values_validator = Validator(
+    "WORKER_TYPE",
+    is_in=["pulpcore", "redis"],
+    messages={"operations": "WORKER_TYPE must be either 'pulpcore' or 'redis', got '{value}'."},
+)
+
+worker_type_redis_validator_condition = Validator("WORKER_TYPE", eq="redis")
+worker_type_redis_url_validator = Validator(
+    "REDIS_URL", must_exist=True, when=worker_type_redis_validator_condition
+)
+worker_type_redis_host_validator = Validator(
+    "REDIS_HOST", must_exist=True, when=worker_type_redis_validator_condition
+)
+worker_type_redis_port_validator = Validator(
+    "REDIS_PORT", must_exist=True, when=worker_type_redis_validator_condition
+)
+worker_type_redis_validator = worker_type_redis_url_validator | (
+    worker_type_redis_host_validator & worker_type_redis_port_validator
+)
+worker_type_redis_validator.messages["combined"] = (
+    "WORKER_TYPE is set to 'redis' but it requires REDIS to be configured. Please check "
+    "https://pulpproject.org/pulpcore/docs/admin/reference/settings/?h=settings#redis-settings "
+    "for more information."
+)
+
 sha256_validator = Validator(
     "ALLOWED_CONTENT_CHECKSUMS",
     cont="sha256",
@@ -543,6 +568,8 @@ settings = DjangoDynaconf(
     validators=[
         api_root_validator,
         cache_validator,
+        worker_type_allowed_values_validator,
+        worker_type_redis_validator,
         sha256_validator,
         storage_validator,
         unknown_algs_validator,
