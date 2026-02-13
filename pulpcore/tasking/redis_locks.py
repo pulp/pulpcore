@@ -230,9 +230,6 @@ def safe_release_task_locks(task, lock_owner=None):
         return False
 
     redis_conn = get_redis_connection()
-    if not redis_conn:
-        _logger.warning("Redis connection not available for releasing locks for task %s", task.pk)
-        return False
 
     # Extract resources from task
     exclusive_resources, shared_resources = extract_task_resources(task)
@@ -272,7 +269,7 @@ async def async_safe_release_task_locks(task, lock_owner=None):
             AppStatus.objects.current() or fall back to f"immediate-{task.pk}"
 
     Returns:
-        bool: True if locks were released, False if already released or no Redis connection
+        bool: True if locks were released, False if already released
     """
     from pulpcore.app.models import AppStatus
 
@@ -281,9 +278,6 @@ async def async_safe_release_task_locks(task, lock_owner=None):
         return False
 
     redis_conn = get_redis_connection()
-    if not redis_conn:
-        _logger.warning("Redis connection not available for releasing locks for task %s", task.pk)
-        return False
 
     # Extract resources from task
     exclusive_resources, shared_resources = extract_task_resources(task)
@@ -322,9 +316,6 @@ def acquire_locks(redis_conn, lock_owner, task_lock_key, exclusive_resources, sh
               list of blocked resource names if acquisition failed
               (includes "__task_lock__" if task lock is held by another worker)
     """
-    if not redis_conn:
-        return []
-
     # Sort resources deterministically to prevent deadlocks
     exclusive_resources = sorted(exclusive_resources) if exclusive_resources else []
     shared_resources = sorted(shared_resources) if shared_resources else []
@@ -365,9 +356,6 @@ def release_resource_locks(redis_conn, lock_owner, task_lock_key, resources, sha
         resources (list): List of exclusive resource names to release locks for
         shared_resources (list): Optional list of shared resource names
     """
-    if not redis_conn:
-        return
-
     exclusive_resources = resources if resources else []
     shared_resources = shared_resources if shared_resources else []
 
@@ -428,9 +416,6 @@ async def async_release_resource_locks(
         resources (list): List of exclusive resource names to release locks for
         shared_resources (list): Optional list of shared resource names
     """
-    if not redis_conn:
-        return
-
     exclusive_resources = resources if resources else []
     shared_resources = shared_resources if shared_resources else []
 
