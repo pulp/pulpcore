@@ -15,9 +15,12 @@ It is a CLI tool that uses `docker/podman-compose` and [Pulp OCI Images](https:/
 To set it up, follow these steps:
 
 ```bash
-# 1. clone repos to the same basedir (pulpcore is required)
+# 1. clone required repos to the same basedir
 git clone https://github.com/pulp/oci_env.git
 git clone https://github.com/pulp/pulpcore.git
+git clone https://github.com/pulp/pulp-openapi-generator.git # required for 'generate-client' below
+
+# 1.1 add more repos as necessary to the same basedir
 git clone https://github.com/pulp/pulp_rpm.git
 
 # 2. install oci-env client
@@ -25,18 +28,19 @@ cd oci_env
 pip3 install -e client
 
 # 3. use minimal compose.env
+# At least add pulpcore to DEV_SOURCE_PATH like this: DEV_SOURCE_PATH=pulpcore
 cp compose.env.example compose.env
 
-# 4. build the images and do basic setup
+# 4. build the images and start the service
 oci-env compose build
+oci-env compose up
+
+# 5. do basic setup
 oci-env generate-client -i
 oci-env generate-client -i pulp_file
-
-# 5. start the service
-oci-env compose up 
 ```
 
-A more comprehensive guide on setting up the dev environment is documented  [here](#).
+A more comprehensive guide on setting up the dev environment is documented  [here](site:oci_env/docs/dev/tutorials/quickstart/).
 
 ### 2. Make and test changes
 
@@ -52,11 +56,11 @@ oci-env test -i -p pulp_rpm functional
 oci-env test -p pulp_rpm functional -k test_mychages
 ```
 
-A more comprehensive guide on running tests is documented  [here](#).
+A more comprehensive guide on running tests is documented [here](site:oci_env/docs/dev/guides/run-tests/).
 
 ### 3. Update the changelog entry
 
-Pulp uses [towncrier](#) to manage its changelog.
+Pulp uses [towncrier](https://towncrier.readthedocs.io/en/stable/) to manage its changelog.
 
 It requires that you have a related GitHub issue number, except for trivial changes (such as typo fixes).
 In those cases the entry is no required at all. 
@@ -83,7 +87,7 @@ The changelog message should use past simple tense and describe the change being
     echo "Added API that allows users to export a repository version to disk." > CHANGES/plugin_api/3245.feature
     ```
 
-A more comprehensive guide on using towncrier in the Pulp project is documented  [here](#).
+A more comprehensive guide on using towncrier in the Pulp project is documented [here](site:pulpcore/docs/dev/guides/git/#changelog-update). 
 
 ### 4. Commit and Submit a PR
 
@@ -108,4 +112,4 @@ the worker configuration.
 closes #1392
 ```
 
-A more comprehensive guide on using git in the Pulp project is documented [here](#).
+A more comprehensive guide on using git in the Pulp project is documented [here](site:pulpcore/docs/dev/guides/git/).
