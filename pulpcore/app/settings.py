@@ -318,6 +318,13 @@ ALLOWED_IMPORT_PATHS = []
 
 ALLOWED_EXPORT_PATHS = []
 
+# https://docs.djangoproject.com/en/5.2/ref/settings/#std-setting-CACHES
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+    },
+}
+
 # https://pulpproject.org/pulpcore/docs/admin/reference/settings/?h=settings#cache_enabled
 CACHE_ENABLED = False
 CACHE_SETTINGS = {

@@ -2,6 +2,7 @@
 
 from django.conf import settings
 from django.urls import path, include
+from django.views.decorators.cache import cache_page
 from drf_spectacular.utils import extend_schema
 from drf_spectacular.views import (
     SpectacularJSONAPIView,
@@ -174,34 +175,44 @@ special_views = [
     ),
 ]
 
+hundred_days = 100 * 24 * 60 * 60
+
 docs_and_status = [
     path("livez/", LivezView.as_view()),
     path("status/", StatusView.as_view()),
     path(
         "docs/api.json",
-        SpectacularJSONAPIView.as_view(authentication_classes=[], permission_classes=[]),
+        cache_page(hundred_days)(
+            SpectacularJSONAPIView.as_view(authentication_classes=[], permission_classes=[])
+        ),
         name="schema",
     ),
     path(
         "docs/api.yaml",
-        SpectacularYAMLAPIView.as_view(authentication_classes=[], permission_classes=[]),
+        cache_page(hundred_days)(
+            SpectacularYAMLAPIView.as_view(authentication_classes=[], permission_classes=[])
+        ),
         name="schema-yaml",
     ),
     path(
         "docs/",
-        SpectacularRedocView.as_view(
-            authentication_classes=[],
-            permission_classes=[],
-            url=f"{V3_API_ROOT}docs/api.json?include_html=1&pk_path=1",
+        cache_page(hundred_days)(
+            SpectacularRedocView.as_view(
+                authentication_classes=[],
+                permission_classes=[],
+                url=f"{V3_API_ROOT}docs/api.json?include_html=1&pk_path=1",
+            )
         ),
         name="schema-redoc",
     ),
     path(
         "swagger/",
-        SpectacularSwaggerView.as_view(
-            authentication_classes=[],
-            permission_classes=[],
-            url=f"{V3_API_ROOT}docs/api.json?include_html=1&pk_path=1",
+        cache_page(hundred_days)(
+            SpectacularSwaggerView.as_view(
+                authentication_classes=[],
+                permission_classes=[],
+                url=f"{V3_API_ROOT}docs/api.json?include_html=1&pk_path=1",
+            )
         ),
         name="schema-swagger",
     ),
