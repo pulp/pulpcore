@@ -788,3 +788,76 @@ def test_batch_operations_preserve_correctness(repository, db):
     assert rvcd_qs.get(count_type=RepositoryVersionContentDetails.PRESENT).count == 40
     assert rvcd_qs.filter(count_type=RepositoryVersionContentDetails.ADDED).first() is None
     assert rvcd_qs.get(count_type=RepositoryVersionContentDetails.REMOVED).count == 60
+
+
+def test_postgresql_parameter_limit(db, repository):
+    """
+    Test repository operations with >65535 content units to verify PostgreSQL parameter limit
+    workaround.
+
+    PostgreSQL limits queries to 65535 parameters. When content_ids >= 65535, the
+    RepositoryVersion.get_content() method uses an unnest() workaround to avoid this limit.
+    This test verifies that added(), removed(), and content all handle >65535 items correctly.
+
+    This test verifies the fix from commit b6aaa23 which added the PostgreSQL unnest() workaround.
+    """
+    # Create 66000 content units (exceeds PostgreSQL's 65535 parameter limit)
+    large_content_set = [Content(pulp_type="core.content") for _ in range(66000)]
+    Content.objects.bulk_create(large_content_set, batch_size=1000)
+    large_pks = sorted([c.pk for c in large_content_set])
+
+    version0 = repository.latest_version()
+
+    # Test 1: Add >65535 content units - tests added() and content with >65535 items
+    with repository.new_version() as version1:
+        version1.add_content(Content.objects.filter(pk__in=large_pks))
+
+    # Verify content_ids triggers the unnest() workaround threshold
+    assert isinstance(version1.content_ids, list)
+    assert len(version1.content_ids) >= 65535
+
+    # Test the content property with >65535 items (triggers unnest() workaround)
+    assert version1.content.count() == 66000
+
+    # Test the added() method with >65535 items
+    current_pks = set(version1.content.values_list("pk", flat=True))
+    added_pks = set(version1.added(base_version=version0).values_list("pk", flat=True))
+    removed_pks = set(version1.removed(base_version=version0).values_list("pk", flat=True))
+
+    assert len(current_pks) == 66000
+    assert len(added_pks) == 66000  # Critical: added() must handle >65535 items
+    assert len(removed_pks) == 0
+
+    # Verify RepositoryVersionContentDetails
+    rvcd_qs = RepositoryVersionContentDetails.objects.filter(
+        repository_version=version1, content_type="core.content"
+    )
+    assert rvcd_qs.get(count_type=RepositoryVersionContentDetails.PRESENT).count == 66000
+    assert rvcd_qs.get(count_type=RepositoryVersionContentDetails.ADDED).count == 66000
+    assert rvcd_qs.filter(count_type=RepositoryVersionContentDetails.REMOVED).first() is None
+
+    # Test 2: Remove >65535 content units - tests removed() with >65535 items
+    with repository.new_version() as version2:
+        version2.remove_content(Content.objects.filter(pk__in=large_pks))
+
+    # Test the removed() method with >65535 items
+    current_pks = set(version2.content.values_list("pk", flat=True))
+    added_pks = set(version2.added(base_version=version1).values_list("pk", flat=True))
+    removed_pks = set(version2.removed(base_version=version1).values_list("pk", flat=True))
+
+    assert len(current_pks) == 0
+    assert len(added_pks) == 0
+    assert len(removed_pks) == 66000  # Critical: removed() must handle >65535 items
+
+    # Verify RepositoryVersionContentDetails
+    rvcd_qs = RepositoryVersionContentDetails.objects.filter(
+        repository_version=version2, content_type="core.content"
+    )
+    assert rvcd_qs.filter(count_type=RepositoryVersionContentDetails.PRESENT).first() is None
+    assert rvcd_qs.filter(count_type=RepositoryVersionContentDetails.ADDED).first() is None
+    assert rvcd_qs.get(count_type=RepositoryVersionContentDetails.REMOVED).count == 66000
+
+    # Verify we can iterate and fetch content without errors
+    first_100 = list(version1.content[:100].values_list("pk", flat=True))
+    assert len(first_100) == 100
+    assert all(pk in large_pks for pk in first_100)
