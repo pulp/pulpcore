@@ -1004,15 +1004,7 @@ class RepositoryVersion(BaseModel):
         if content_qs is None:
             content_qs = Content.objects
 
-        content_ids = self.content_ids
-        if len(content_ids) >= 65535:
-            # Workaround for PostgreSQL's limit on the number of parameters in a query
-            content_ids = (
-                RepositoryVersion.objects.filter(pk=self.pk)
-                .annotate(cids=Func(F("content_ids"), function="unnest"))
-                .values_list("cids", flat=True)
-            )
-        return content_qs.filter(pk__in=content_ids)
+        return content_qs.filter(pk__in=self.content_ids)
 
     @property
     def content(self):
