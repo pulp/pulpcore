@@ -8,6 +8,32 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.103.4 (2026-02-18) {: #3.103.4 }
+
+### REST API {: #3.103.4-rest-api }
+
+#### Bugfixes {: #3.103.4-rest-api-bugfix }
+
+- Added a new "datarepair" management command for data cleanups which are for whatever reason not possible to run in a migration. Added support for cleaning up after issue #7272.
+  [#7272](https://github.com/pulp/pulpcore/issues/7272)
+
+### Plugin API {: #3.103.4-plugin-api }
+
+#### Bugfixes {: #3.103.4-plugin-api-bugfix }
+
+- Harden RepositoryVersion memoization against bugs that could lead to incorrect counts and repository content.
+  [#7272](https://github.com/pulp/pulpcore/issues/7272)
+
+### Pulp File {: #3.103.4-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.103.4-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.103.3 (2026-02-11) {: #3.103.3 }
 
 ### REST API {: #3.103.3-rest-api }
