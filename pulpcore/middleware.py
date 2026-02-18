@@ -1,7 +1,6 @@
 import time
 import re
 
-from contextvars import ContextVar
 from os import environ
 
 from django.http.response import Http404
@@ -10,14 +9,13 @@ from django.core.exceptions import MiddlewareNotUsed
 
 from pulpcore.metrics import init_otel_meter
 from pulpcore.app.models import Domain
+from pulpcore.app.contexts import x_task_diagnostics_var
 from pulpcore.app.util import (
     get_worker_name,
     normalize_http_status,
     set_current_user_lazy,
     set_domain,
 )
-
-x_task_diagnostics_var = ContextVar("x_profile_task")
 
 
 class DomainMiddleware:
