@@ -188,20 +188,6 @@ def execute_task(task):
 
 def _execute_task(task):
     try:
-        # Log execution context information
-        current_app = AppStatus.objects.current()
-        if current_app:
-            _logger.info(
-                "TASK EXECUTION: Task %s being executed by %s (app_type=%s)",
-                task.pk,
-                current_app.name,
-                current_app.app_type,
-            )
-        else:
-            _logger.info(
-                "TASK EXECUTION: Task %s being executed with no AppStatus.current()", task.pk
-            )
-
         with with_task_context(task):
             task.set_running()
             domain = get_domain()
@@ -235,8 +221,8 @@ def _execute_task(task):
                 send_task_notification(task)
                 return result
     finally:
-        # Safety net: if we crashed before reaching the lock release above,
-        # still try to release locks here (e.g., if crash during task execution)
+        # Safety net: release locks if we failed before reaching the normal
+        # release point (e.g., during set_running, set_failed, or set_completed)
         if safe_release_task_locks(task):
             _logger.warning(
                 "SAFETY NET: Task %s releasing all locks in "
@@ -253,21 +239,6 @@ async def aexecute_task(task):
 
 async def _aexecute_task(task):
     try:
-        # Log execution context information
-        current_app = await sync_to_async(AppStatus.objects.current)()
-        if current_app:
-            _logger.info(
-                "TASK EXECUTION (async): Task %s being executed by %s (app_type=%s)",
-                task.pk,
-                current_app.name,
-                current_app.app_type,
-            )
-        else:
-            _logger.info(
-                "TASK EXECUTION (async): Task %s being executed with no AppStatus.current()",
-                task.pk,
-            )
-
         async with awith_task_context(task):
             await sync_to_async(task.set_running)()
             domain = get_domain()
@@ -298,8 +269,8 @@ async def _aexecute_task(task):
                 send_task_notification(task)
                 return result
     finally:
-        # Safety net: if we crashed before reaching the lock release above,
-        # release all locks atomically here (task lock + resource locks)
+        # Safety net: release locks if we failed before reaching the normal
+        # release point (e.g., during set_running, set_failed, or set_completed)
         if await async_safe_release_task_locks(task):
             _logger.warning(
                 "SAFETY NET (async): Task %s releasing all locks "
@@ -497,8 +468,8 @@ def dispatch(
                 with using_workdir():
                     execute_task(task)
             except Exception:
-                # Exception during execute_task()
-                # Atomically release all locks as safety net
+                # Release locks if using_workdir() failed before
+                # execute_task() had a chance to run and release them
                 safe_release_task_locks(task, lock_owner)
                 raise
         elif deferred:
@@ -571,8 +542,8 @@ async def adispatch(
                 with using_workdir():
                     await aexecute_task(task)
             except Exception:
-                # Exception during aexecute_task()
-                # Atomically release all locks as safety net
+                # Release locks if using_workdir() failed before
+                # aexecute_task() had a chance to run and release them
                 await async_safe_release_task_locks(task, lock_owner)
                 raise
         elif deferred:
