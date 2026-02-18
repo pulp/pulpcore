@@ -21,7 +21,7 @@ from pulpcore.app.util import (
     get_domain,
     get_prn,
 )
-from pulpcore.app.contexts import with_task_context, awith_task_context
+from pulpcore.app.contexts import with_task_context, awith_task_context, x_task_diagnostics_var
 from pulpcore.constants import (
     TASK_FINAL_STATES,
     TASK_INCOMPLETE_STATES,
@@ -30,7 +30,6 @@ from pulpcore.constants import (
     TASK_WAKEUP_HANDLE,
     TASK_WAKEUP_UNBLOCK,
 )
-from pulpcore.middleware import x_task_diagnostics_var
 from pulpcore.tasking.kafka import send_task_notification
 
 _logger = logging.getLogger(__name__)
@@ -68,9 +67,6 @@ def _execute_task(task):
         domain = get_domain()
 
         try:
-            # If this task is being spawned by another task, we should inherit the profile options
-            # from the current task.
-            ctx_token = x_task_diagnostics_var.set(task.profile_options)
             log_task_start(task, domain)
             task_function = get_task_function(task)
             result = task_function()
@@ -83,7 +79,6 @@ def _execute_task(task):
             task.set_completed(result)
             log_task_completed(task, domain)
             send_task_notification(task)
-            x_task_diagnostics_var.reset(ctx_token)
             return result
         return None
 

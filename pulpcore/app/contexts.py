@@ -8,6 +8,7 @@ from django_guid import get_guid, set_guid, clear_guid
 _current_task = ContextVar("current_task", default=None)
 _current_user_func = ContextVar("current_user", default=lambda: None)
 _current_domain = ContextVar("current_domain", default=None)
+x_task_diagnostics_var = ContextVar("x_profile_task")
 
 
 @contextmanager
@@ -44,11 +45,15 @@ def with_domain(domain):
 @contextmanager
 def with_task_context(task):
     with with_domain(task.pulp_domain), with_guid(task.logging_cid), with_user(task.user):
-        token = _current_task.set(task)
+        task_token = _current_task.set(task)
+        # If this task is being spawned by another task, we should inherit the profile options
+        # from the current task.
+        diagnostics_token = x_task_diagnostics_var.set(task.profile_options)
         try:
             yield
         finally:
-            _current_task.reset(token)
+            x_task_diagnostics_var.reset(diagnostics_token)
+            _current_task.reset(task_token)
 
 
 @asynccontextmanager
@@ -59,8 +64,12 @@ async def awith_task_context(task):
 
     domain, user = await _fetch(task)
     with with_domain(domain), with_guid(task.logging_cid), with_user(user):
-        token = _current_task.set(task)
+        task_token = _current_task.set(task)
+        # If this task is being spawned by another task, we should inherit the profile options
+        # from the current task.
+        diagnostics_token = x_task_diagnostics_var.set(task.profile_options)
         try:
             yield
         finally:
-            _current_task.reset(token)
+            x_task_diagnostics_var.reset(diagnostics_token)
+            _current_task.reset(task_token)
