@@ -11,6 +11,8 @@ from gettext import gettext as _
 from django.conf import settings
 from django.db.models import ObjectDoesNotExist
 from django_filters import BaseInFilter, CharFilter, Filter
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 from rest_framework.serializers import ValidationError as DRFValidationError
 
@@ -114,6 +116,7 @@ class CreatedResourcesFilter(Filter):
         return qs.filter(created_resources__object_id=resource.pk)
 
 
+@extend_schema_field(OpenApiTypes.STR)
 class RepoVersionHrefPrnFilter(Filter):
     """
     Filter Content by a Repository Version.
