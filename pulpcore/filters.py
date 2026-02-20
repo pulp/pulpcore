@@ -18,6 +18,7 @@ from rest_framework import serializers
 
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.plumbing import build_basic_type
+from drf_spectacular.utils import extend_schema_field
 from drf_spectacular.contrib.django_filters import DjangoFilterExtension
 
 from pulpcore.app.util import extract_pk, resolve_prn, get_domain_pk
@@ -42,6 +43,7 @@ class StableOrderingFilter(filters.OrderingFilter):
         return qs.order_by(*ordering)
 
 
+@extend_schema_field(OpenApiTypes.STR)
 class HyperlinkRelatedFilter(filters.Filter):
     """
     Enables a user to filter by a foreign key using that FK's href/prn.

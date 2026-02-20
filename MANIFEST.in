@@ -15,4 +15,6 @@ include pulpcore/app/templates/rest_framework/api.html
 include manage.py
 include test_requirements.txt
 exclude releasing.md
+exclude AGENTS.md
+exclude CLAUDE.md
 recursive-exclude pulpcore/tasking/task_trigger_demonstration *
