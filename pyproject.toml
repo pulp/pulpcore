@@ -183,7 +183,9 @@ exclude = '''
 ignore = [
     ".git-blame-ignore-revs",
     ".bumpversion.cfg",
+    "AGENTS.md",
     "CHANGES/**",
+    "CLAUDE.md",
     "CONTRIBUTING.rst",
     "HISTORY.rst",
     "dev_requirements.txt",
