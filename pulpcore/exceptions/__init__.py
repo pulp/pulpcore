@@ -24,5 +24,6 @@ from .validation import (
     ValidationError,
     MissingDigestValidationError,
     UnsupportedDigestValidationError,
+    DuplicateContentInRepositoryError,
 )
 from .plugin import MissingPlugin
