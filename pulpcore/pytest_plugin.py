@@ -56,6 +56,14 @@ except ImportError:
             if "nightly" in item.keywords:
                 item.add_marker(skip_nightly)
 
+        # Skip long_running tests if --timeout is below 600
+        timeout = config.getoption("--timeout", default=None)
+        if timeout is None or float(timeout) < 600:
+            skip_long = pytest.mark.skip(reason="needs --timeout >= 600 to run")
+            for item in items:
+                if "long_running" in item.keywords:
+                    item.add_marker(skip_long)
+
 
 class PulpTaskTimeoutError(Exception):
     """Exception to describe task and taskgroup timeout errors."""
@@ -81,6 +89,10 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers",
         "nightly: marks tests as intended to run during the nightly CI run",
+    )
+    config.addinivalue_line(
+        "markers",
+        "long_running: marks tests that need a long pytest timeout (--timeout >= 600)",
     )
 
 
