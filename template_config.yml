@@ -2,93 +2,94 @@
 # were not present before running plugin-template have been added with their default values.
 
 # generated with plugin_template
+#
+# After editing this file please always reapply the plugin template before committing any changes.
 
-api_root: /pulp/
+---
+api_root: "/pulp/"
 black: true
 check_commit_message: true
 check_gettext: true
 check_manifest: true
 check_stray_pulpcore_imports: false
-ci_base_image: ghcr.io/pulp/pulp-ci-centos
+ci_base_image: "ghcr.io/pulp/pulp-ci-centos"
 ci_env: {}
-ci_trigger: '{pull_request: {branches: [''*'']}}'
-cli_package: pulp-cli
-cli_repo: https://github.com/pulp/pulp-cli.git
+ci_trigger: "{pull_request: {branches: ['*']}}"
+cli_package: "pulp-cli"
+cli_repo: "https://github.com/pulp/pulp-cli.git"
 core_import_allowed: []
 deploy_client_to_pypi: true
 deploy_client_to_rubygems: true
 deploy_to_pypi: true
 disabled_redis_runners:
-- s3
+  - "s3"
 docker_fixtures: true
 extra_files: []
 flake8: true
 flake8_ignore:
-- ./pulpcore/app/protobuf/*
-github_org: pulp
+  - "./pulpcore/app/protobuf/*"
+github_org: "pulp"
 latest_release_branch: null
 lint_requirements: true
 os_required_packages: []
 parallel_test_workers: 8
-plugin_app_label: core
-plugin_default_branch: main
-plugin_name: pulpcore
+plugin_app_label: "core"
+plugin_default_branch: "main"
+plugin_name: "pulpcore"
 plugins:
-- app_label: core
-  name: pulpcore
-post_job_template: null
-pre_job_template: null
+  - app_label: "core"
+    name: "pulpcore"
 pulp_env:
-  PULP_CA_BUNDLE: /etc/pulp/certs/pulp_webserver.crt
+  PULP_CA_BUNDLE: "/etc/pulp/certs/pulp_webserver.crt"
 pulp_env_azure: {}
 pulp_env_gcp: {}
 pulp_env_s3: {}
-pulp_scheme: https
+pulp_scheme: "https"
 pulp_settings:
   allowed_export_paths:
-  - /tmp
+    - "/tmp"
   allowed_import_paths:
-  - /tmp
+    - "/tmp"
   orphan_protection_time: 0
 pulp_settings_azure:
-  AZURE_ACCOUNT_KEY: Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==
-  AZURE_ACCOUNT_NAME: devstoreaccount1
-  AZURE_CONNECTION_STRING: DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://ci-azurite:10000/devstoreaccount1;
-  AZURE_CONTAINER: pulp-test
-  AZURE_LOCATION: pulp3
+  AZURE_ACCOUNT_KEY: "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
+  AZURE_ACCOUNT_NAME: "devstoreaccount1"
+  AZURE_CONNECTION_STRING: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://ci-azurite:10000/devstoreaccount1;"
+  AZURE_CONTAINER: "pulp-test"
+  AZURE_LOCATION: "pulp3"
   AZURE_OVERWRITE_FILES: true
   AZURE_URL_EXPIRATION_SECS: 120
-  DEFAULT_FILE_STORAGE: storages.backends.azure_storage.AzureStorage
-  MEDIA_ROOT: ''
+  DEFAULT_FILE_STORAGE: "storages.backends.azure_storage.AzureStorage"
+  MEDIA_ROOT: ""
   domain_enabled: true
 pulp_settings_gcp: null
 pulp_settings_s3:
-  AWS_ACCESS_KEY_ID: AKIAIT2Z5TDYPX3ARJBA
-  AWS_DEFAULT_ACL: '@none None'
-  AWS_S3_ADDRESSING_STYLE: path
-  AWS_S3_ENDPOINT_URL: http://minio:9000
-  AWS_S3_REGION_NAME: eu-central-1
-  AWS_S3_SIGNATURE_VERSION: s3v4
-  AWS_SECRET_ACCESS_KEY: fqRvjWaPU5o0fCqQuUWbj9Fainj2pVZtBCiDiieS
-  AWS_STORAGE_BUCKET_NAME: pulp3
-  DEFAULT_FILE_STORAGE: storages.backends.s3boto3.S3Boto3Storage
-  MEDIA_ROOT: ''
+  AWS_ACCESS_KEY_ID: "AKIAIT2Z5TDYPX3ARJBA"
+  AWS_DEFAULT_ACL: "@none None"
+  AWS_S3_ADDRESSING_STYLE: "path"
+  AWS_S3_ENDPOINT_URL: "http://minio:9000"
+  AWS_S3_REGION_NAME: "eu-central-1"
+  AWS_S3_SIGNATURE_VERSION: "s3v4"
+  AWS_SECRET_ACCESS_KEY: "fqRvjWaPU5o0fCqQuUWbj9Fainj2pVZtBCiDiieS"
+  AWS_STORAGE_BUCKET_NAME: "pulp3"
+  DEFAULT_FILE_STORAGE: "storages.backends.s3boto3.S3Boto3Storage"
+  MEDIA_ROOT: ""
   domain_enabled: true
   hide_guarded_distributions: true
 pydocstyle: true
-release_email: pulp-infra@redhat.com
-release_user: pulpbot
+release_email: "pulp-infra@redhat.com"
+release_user: "pulpbot"
 stalebot: true
 stalebot_days_until_close: 30
 stalebot_days_until_stale: 90
 stalebot_limit_to_pulls: true
 supported_release_branches:
-- '3.16'
-- '3.18'
-- '3.21'
-- '3.22'
-- '3.23'
-- '3.27'
+  - "3.16"
+  - "3.18"
+  - "3.21"
+  - "3.22"
+  - "3.23"
+  - "3.27"
 sync_ci: true
 test_azure: true
 test_cli: true
@@ -99,4 +100,5 @@ test_performance: false
 test_reroute: true
 test_s3: true
 use_issue_template: true
+...
 
