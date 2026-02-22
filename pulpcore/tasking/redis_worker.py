@@ -246,12 +246,6 @@ class RedisWorker:
         3. Set app_lock to the current (cleaning) worker
         4. Mark those tasks as FAILED
 
-        If the database query finds no tasks, falls back to scanning Redis
-        to catch the edge case where a worker crashed between fetch_task()
-        (Redis locks acquired) and set_running() (which sets app_lock).
-        In that case the task is still WAITING, so we only release the Redis
-        locks and let another worker pick it up.
-
         Args:
             app_worker (AppStatus): The AppStatus object of the missing worker
         """
@@ -299,51 +293,10 @@ class RedisWorker:
                 error_msg = "Worker has gone missing."
                 task.set_canceled(final_state=TASK_STATES.FAILED, reason=error_msg)
                 _logger.warning(
-                    "Marked task %s as FAILED " "(was being executed by missing worker %s)",
+                    "Marked task %s as FAILED (was being executed by missing worker %s)",
                     task.pk,
                     worker_name,
                 )
-            else:
-                # Fallback: scan Redis for an orphaned lock if no task found in DB.
-                # This catches the edge case where a worker crashed between
-                # fetch_task() (Redis locks acquired) and set_running() (sets
-                # app_lock). In this window the task is still WAITING with no
-                # app_lock, so we just release the Redis locks and let another
-                # worker pick it up.
-                task_lock_pattern = "task:*"
-                for key in self.redis_conn.scan_iter(match=task_lock_pattern, count=100):
-                    lock_holder = self.redis_conn.get(key)
-                    if lock_holder and lock_holder.decode("utf-8") == worker_name:
-                        task_uuid = key.decode("utf-8").split(":", 1)[1]
-
-                        try:
-                            task = Task.objects.select_related("pulp_domain").get(pk=task_uuid)
-
-                            # Extract resources and release Redis locks
-                            exclusive_resources, shared_resources = extract_task_resources(task)
-                            task_lock_key = get_task_lock_key(task_uuid)
-                            release_resource_locks(
-                                self.redis_conn,
-                                worker_name,
-                                task_lock_key,
-                                exclusive_resources,
-                                shared_resources,
-                            )
-                            _logger.info(
-                                "Fallback: released Redis locks for task %s "
-                                "from missing worker %s (task remains %s)",
-                                task_uuid,
-                                worker_name,
-                                task.state,
-                            )
-                        except Task.DoesNotExist:
-                            _logger.warning(
-                                "Task %s locked by missing worker %s " "not found in database",
-                                task_uuid,
-                                worker_name,
-                            )
-                            # Delete the orphaned Redis task lock
-                            self.redis_conn.delete(key)
         except Exception as e:
             _logger.error("Error cleaning up locks for worker %s: %s", worker_name, e)
 
