@@ -523,7 +523,11 @@ class RedisWorker:
                     return task
                 else:
                     # Failed to acquire locks (task lock or resource locks blocked)
-                    # No cleanup needed - Lua script is all-or-nothing
+                    # Clear app_lock since we're not executing this task
+                    Task.objects.filter(pk=task.pk).update(app_lock=None)
+                    task.app_lock = None
+
+                    # No Redis cleanup needed - Lua script is all-or-nothing
                     if "__task_lock__" not in blocked_resource_list:
                         # Mark resources as blocked for FIFO ordering
                         # If this task wanted exclusive access,
