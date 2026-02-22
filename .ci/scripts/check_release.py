@@ -1,11 +1,20 @@
 #!/usr/bin/env python
+# /// script
+# requires-python = ">=3.13"
+# dependencies = [
+#     "gitpython>=3.1.46,<3.2.0",
+#     "packaging>=26.0,<26.1",
+#     "pyyaml>=6.0.3,<6.1.0",
+# ]
+# ///
 
 import argparse
 import re
 import os
 import tomllib
-import yaml
 from pathlib import Path
+
+import yaml
 from packaging.version import Version
 from git import Repo
 
