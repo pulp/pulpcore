@@ -506,8 +506,9 @@ class RedisWorker:
             Task: A task object if one was successfully locked, None otherwise
         """
         # Query waiting tasks, sorted by creation time, limited
+        # Filter for app_lock__isnull=True to avoid tasks being executed immediately by API
         waiting_tasks = (
-            Task.objects.filter(state=TASK_STATES.WAITING)
+            Task.objects.filter(state=TASK_STATES.WAITING, app_lock__isnull=True)
             .exclude(pk__in=self.ignored_task_ids)
             .order_by("pulp_created")
             .select_related("pulp_domain")[:FETCH_TASK_LIMIT]
@@ -543,6 +544,19 @@ class RedisWorker:
 
                 if should_skip:
                     continue
+
+                # Claim the task by setting app_lock BEFORE acquiring locks
+                rows = Task.objects.filter(
+                    pk=task.pk, state=TASK_STATES.WAITING, app_lock__isnull=True
+                ).update(app_lock=self.app_status)
+
+                if rows == 0:
+                    # Task was already claimed or executed
+                    _logger.debug("WORKER: Task %s already claimed or executed, skipping", task.pk)
+                    continue
+
+                # Update local task object
+                task.app_lock = self.app_status
 
                 # Atomically try to acquire task lock and resource locks in a single operation
                 task_lock_key = get_task_lock_key(task.pk)
@@ -730,20 +744,7 @@ class RedisWorker:
                     self._maybe_release_locks(task, mark_released=False)
                     break
 
-                # Check if task is still WAITING after acquiring locks
-                # (an API process might have executed it between query and lock acquisition)
-                task.refresh_from_db()
-                if task.state != TASK_STATES.WAITING:
-                    # Task was already executed, release locks and skip
-                    _logger.info(
-                        "Task %s already in state '%s' after acquiring locks, skipping execution",
-                        task.pk,
-                        task.state,
-                    )
-                    self._maybe_release_locks(task)
-                    continue
-
-                # Task is compatible and still waiting, execute it
+                # Task is compatible, execute it
                 if task.immediate:
                     self.supervise_immediate_task(task)
                 else:
