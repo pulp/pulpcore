@@ -440,31 +440,10 @@ def dispatch(
         # are_resources_available() now acquires ALL locks atomically
         if are_resources_available(task):
             # All locks acquired successfully
-            # Reload task state from database to check if it's still WAITING
-            # (a worker might have executed it between creation and lock acquisition)
-            task.refresh_from_db()
-
-            if task.state != TASK_STATES.WAITING:
-                # Task was already executed by a worker, release locks and return
-                _logger.info(
-                    "IMMEDIATE DISPATCH: Task %s already in state "
-                    "'%s', releasing locks without execution",
-                    task.pk,
-                    task.state,
-                )
-                safe_release_task_locks(task)
-                return task
-
-            # Task is still WAITING, proceed with execution
+            # Proceed with execution
             current_app = AppStatus.objects.current()
             lock_owner = current_app.name if current_app else f"immediate-{task.pk}"
             try:
-                _logger.info(
-                    "IMMEDIATE DISPATCH: Task %s acquired all locks,"
-                    " executing in API process (AppStatus=%s)",
-                    task.pk,
-                    lock_owner,
-                )
                 with using_workdir():
                     execute_task(task)
             except Exception:
@@ -474,10 +453,10 @@ def dispatch(
                 raise
         elif deferred:
             # Locks not available, defer to worker
+            # Clear app_lock so workers can pick this up
             # No locks were acquired (atomic operation failed), so nothing to clean up
-            _logger.info(
-                "IMMEDIATE DISPATCH: Task %s could not acquire locks, deferring to worker", task.pk
-            )
+            Task.objects.filter(pk=task.pk).update(app_lock=None)
+            task.app_lock = None
         else:
             # Can't acquire locks and can't be deferred - cancel task
             # No locks were acquired, so just set state
@@ -513,32 +492,10 @@ async def adispatch(
         # async_are_resources_available() now acquires ALL locks atomically
         if await async_are_resources_available(task):
             # All locks acquired successfully
-            # Reload task state from database to check if it's still WAITING
-            # (a worker might have executed it between creation and lock acquisition)
-            await task.arefresh_from_db()
-
-            if task.state != TASK_STATES.WAITING:
-                # Task was already executed by a worker, release locks and return
-                _logger.info(
-                    "IMMEDIATE DISPATCH (async): Task %s already in"
-                    " state '%s', releasing locks without execution",
-                    task.pk,
-                    task.state,
-                )
-                await async_safe_release_task_locks(task)
-                return task
-
-            # Task is still WAITING, proceed with execution
+            # Proceed with execution
             current_app = await sync_to_async(AppStatus.objects.current)()
             lock_owner = current_app.name if current_app else f"immediate-{task.pk}"
             try:
-                _logger.info(
-                    "IMMEDIATE DISPATCH (async): Task %s acquired "
-                    "all locks, executing in API process "
-                    "(AppStatus=%s)",
-                    task.pk,
-                    lock_owner,
-                )
                 with using_workdir():
                     await aexecute_task(task)
             except Exception:
@@ -548,11 +505,10 @@ async def adispatch(
                 raise
         elif deferred:
             # Locks not available, defer to worker
+            # Clear app_lock so workers can pick this up
             # No locks were acquired (atomic operation failed), so nothing to clean up
-            _logger.info(
-                "IMMEDIATE DISPATCH (async): Task %s could not acquire locks, deferring to worker",
-                task.pk,
-            )
+            await Task.objects.filter(pk=task.pk).aupdate(app_lock=None)
+            task.app_lock = None
         else:
             # Can't acquire locks and can't be deferred - cancel task
             # No locks were acquired, so just set state
