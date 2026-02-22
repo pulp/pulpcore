@@ -110,12 +110,14 @@ async def _aexecute_task(task):
 
 def log_task_start(task, domain):
     _logger.info(
-        "Starting task id: %s in domain: %s, task_type: %s, immediate: %s, deferred: %s",
+        "Starting task id: %s in domain: %s, task_type: %s, immediate: %s, deferred: %s, "
+        "worker: %s",
         task.pk,
         domain.name,
         task.name,
         str(task.immediate),
         str(task.deferred),
+        task.app_lock.name,
     )
 
 
