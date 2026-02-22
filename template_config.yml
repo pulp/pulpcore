@@ -2,136 +2,137 @@
 # were not present before running plugin-template have been added with their default values.
 
 # generated with plugin_template
+#
+# After editing this file please always reapply the plugin template before committing any changes.
 
-api_root: /pulp/
+---
+api_root: "/pulp/"
 black: true
 check_commit_message: true
 check_gettext: true
 check_manifest: true
 check_stray_pulpcore_imports: false
-ci_base_image: ghcr.io/pulp/pulp-ci-centos9
+ci_base_image: "ghcr.io/pulp/pulp-ci-centos9"
 ci_env: {}
-ci_trigger: '{pull_request: {branches: [''*'']}}'
-cli_package: pulp-cli
-cli_repo: https://github.com/pulp/pulp-cli.git
+ci_trigger: "{pull_request: {branches: ['*']}}"
+cli_package: "pulp-cli"
+cli_repo: "https://github.com/pulp/pulp-cli.git"
 core_import_allowed: []
 deploy_client_to_pypi: true
 deploy_client_to_rubygems: true
 deploy_to_pypi: true
 disabled_redis_runners:
-- s3
+  - "s3"
 docker_fixtures: true
 extra_files:
-- destination: /etc/nginx/pulp/api_root_rewrite.conf
-  origin: pulpcore/pulpcore/tests/functional/assets/api_root_rewrite.conf
+  - destination: "/etc/nginx/pulp/api_root_rewrite.conf"
+    origin: "pulpcore/pulpcore/tests/functional/assets/api_root_rewrite.conf"
 flake8: true
 flake8_ignore:
-- ./pulpcore/app/protobuf/*
-github_org: pulp
-latest_release_branch: '3.102'
+  - "./pulpcore/app/protobuf/*"
+github_org: "pulp"
+latest_release_branch: "3.102"
 lint_requirements: true
 os_required_packages: []
 parallel_test_workers: 8
-plugin_app_label: core
-plugin_default_branch: main
-plugin_name: pulpcore
+plugin_app_label: "core"
+plugin_default_branch: "main"
+plugin_name: "pulpcore"
 plugins:
-- app_label: core
-  name: pulpcore
-- app_label: file
-  name: pulp_file
-- app_label: certguard
-  name: pulp_certguard
-post_job_template: null
-pre_job_template: null
+  - app_label: "core"
+    name: "pulpcore"
+  - app_label: "file"
+    name: "pulp_file"
+  - app_label: "certguard"
+    name: "pulp_certguard"
 pulp_env:
-  PULP_CA_BUNDLE: /etc/pulp/certs/pulp_webserver.crt
+  PULP_CA_BUNDLE: "/etc/pulp/certs/pulp_webserver.crt"
 pulp_env_azure: {}
 pulp_env_gcp: {}
 pulp_env_s3: {}
-pulp_scheme: https
+pulp_scheme: "https"
 pulp_settings:
   allowed_export_paths:
-  - /tmp
+    - "/tmp"
   allowed_import_paths:
-  - /tmp
-  content_path_prefix: /somewhere/else/
+    - "/tmp"
+  content_path_prefix: "/somewhere/else/"
   csrf_trusted_origins:
-  - https://pulp:443
+    - "https://pulp:443"
   orphan_protection_time: 0
   task_protection_time: 10
   tmpfile_protection_time: 10
   upload_protection_time: 10
 pulp_settings_azure:
-  MEDIA_ROOT: ''
+  MEDIA_ROOT: ""
   STORAGES:
     default:
-      BACKEND: storages.backends.azure_storage.AzureStorage
+      BACKEND: "storages.backends.azure_storage.AzureStorage"
       OPTIONS:
-        account_key: Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==
-        account_name: devstoreaccount1
-        azure_container: pulp-test
-        connection_string: DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://ci-azurite:10000/devstoreaccount1;
+        account_key: "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
+        account_name: "devstoreaccount1"
+        azure_container: "pulp-test"
+        connection_string: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://ci-azurite:10000/devstoreaccount1;"
         expiration_secs: 120
-        location: pulp3
+        location: "pulp3"
         overwrite_files: true
     staticfiles:
-      BACKEND: django.contrib.staticfiles.storage.StaticFilesStorage
-  api_root_rewrite_header: X-API-Root
+      BACKEND: "django.contrib.staticfiles.storage.StaticFilesStorage"
+  api_root_rewrite_header: "X-API-Root"
   content_origin: null
   domain_enabled: true
-  rest_framework__default_authentication_classes: '@merge pulpcore.app.authentication.PulpRemoteUserAuthentication'
+  rest_framework__default_authentication_classes: "@merge pulpcore.app.authentication.PulpRemoteUserAuthentication"
   rest_framework__default_permission_classes:
-  - pulpcore.plugin.access_policy.DefaultAccessPolicy
+    - "pulpcore.plugin.access_policy.DefaultAccessPolicy"
   task_diagnostics:
-  - memory
+    - "memory"
 pulp_settings_gcp: null
 pulp_settings_s3:
-  DISABLED_authentication_backends: '@merge django.contrib.auth.backends.RemoteUserBackend'
-  DISABLED_authentication_json_header: HTTP_X_RH_IDENTITY
-  DISABLED_authentication_json_header_jq_filter: .identity.user.username
+  DISABLED_authentication_backends: "@merge django.contrib.auth.backends.RemoteUserBackend"
+  DISABLED_authentication_json_header: "HTTP_X_RH_IDENTITY"
+  DISABLED_authentication_json_header_jq_filter: ".identity.user.username"
   DISABLED_authentication_json_header_openapi_security_scheme:
-    description: External OAuth integration
+    description: "External OAuth integration"
     flows:
       clientCredentials:
         scopes:
-          api.console: grant_access_to_pulp
-        tokenUrl: https://your-identity-provider/token/issuer
-    type: oauth2
-  DISABLED_rest_framework__default_authentication_classes: '@merge pulpcore.app.authentication.JSONHeaderRemoteAuthentication'
-  MEDIA_ROOT: ''
+          api.console: "grant_access_to_pulp"
+        tokenUrl: "https://your-identity-provider/token/issuer"
+    type: "oauth2"
+  DISABLED_rest_framework__default_authentication_classes: "@merge pulpcore.app.authentication.JSONHeaderRemoteAuthentication"
+  MEDIA_ROOT: ""
   STORAGES:
     default:
-      BACKEND: storages.backends.s3boto3.S3Boto3Storage
+      BACKEND: "storages.backends.s3boto3.S3Boto3Storage"
       OPTIONS:
-        access_key: AKIAIT2Z5TDYPX3ARJBA
-        addressing_style: path
-        bucket_name: pulp3
-        default_acl: '@none'
-        endpoint_url: http://minio:9000
-        region_name: eu-central-1
-        secret_key: fqRvjWaPU5o0fCqQuUWbj9Fainj2pVZtBCiDiieS
-        signature_version: s3v4
+        access_key: "AKIAIT2Z5TDYPX3ARJBA"
+        addressing_style: "path"
+        bucket_name: "pulp3"
+        default_acl: "@none"
+        endpoint_url: "http://minio:9000"
+        region_name: "eu-central-1"
+        secret_key: "fqRvjWaPU5o0fCqQuUWbj9Fainj2pVZtBCiDiieS"
+        signature_version: "s3v4"
     staticfiles:
-      BACKEND: django.contrib.staticfiles.storage.StaticFilesStorage
+      BACKEND: "django.contrib.staticfiles.storage.StaticFilesStorage"
   domain_enabled: true
   hide_guarded_distributions: true
   rest_framework__default_permission_classes:
-  - pulpcore.plugin.access_policy.AccessPolicyFromSettings
-  spectacular_settings__oas_version: 3.0.3
+    - "pulpcore.plugin.access_policy.AccessPolicyFromSettings"
+  spectacular_settings__oas_version: "3.0.3"
 pydocstyle: true
-release_email: pulp-infra@redhat.com
-release_user: pulpbot
+release_email: "pulp-infra@redhat.com"
+release_user: "pulpbot"
 stalebot: true
 stalebot_days_until_close: 30
 stalebot_days_until_stale: 90
 stalebot_limit_to_pulls: true
 supported_release_branches:
-- '3.28'
-- '3.49'
-- '3.63'
-- '3.73'
-- '3.85'
+  - "3.28"
+  - "3.49"
+  - "3.63"
+  - "3.73"
+  - "3.85"
 sync_ci: true
 test_azure: true
 test_cli: true
@@ -142,4 +143,5 @@ test_performance: false
 test_reroute: true
 test_s3: true
 use_issue_template: true
+...
 
