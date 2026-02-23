@@ -16,7 +16,7 @@ from aiohttp.web_exceptions import HTTPNotFound
 
 from django.conf import settings
 from django.contrib.postgres.fields import HStoreField
-from django.db import IntegrityError, models, transaction
+from django.db import DatabaseError, IntegrityError, models, transaction
 from django.utils import timezone
 from django_lifecycle import hook, AFTER_UPDATE, BEFORE_DELETE
 
@@ -300,12 +300,24 @@ class PublishedMetadata(Content):
         """
         domain = publication.pulp_domain
         with transaction.atomic():
-            artifact = Artifact.init_and_validate(file=PulpTemporaryUploadedFile.from_file(file))
+            temp_file = PulpTemporaryUploadedFile.from_file(file)
+            artifact = Artifact.init_and_validate(file=temp_file)
+            # if artifact already exists, let's use it
             try:
-                with transaction.atomic():
-                    artifact.save()
-            except IntegrityError:
                 artifact = Artifact.objects.get(sha256=artifact.sha256, pulp_domain=domain)
+                if not domain.get_storage().exists(artifact.file.name):
+                    # artifact.save will do the "recreate file in file storage"
+                    # only if file is set and *dirty*, so we need to reset it here
+                    artifact.file = temp_file
+                    raise Artifact.DoesNotExist
+                artifact.touch()
+            except (Artifact.DoesNotExist, DatabaseError):
+                try:
+                    with transaction.atomic():
+                        artifact.save()
+                except IntegrityError:
+                    artifact = Artifact.objects.get(sha256=artifact.sha256, pulp_domain=domain)
+                    artifact.touch()
             if not relative_path:
                 relative_path = file.name
             content = cls(relative_path=relative_path, publication=publication)
