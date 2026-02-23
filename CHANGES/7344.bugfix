@@ -1,0 +1,1 @@
+Fixed metadata artifacts being re-uploaded to storage when creating a publication for an already-published repository version.
