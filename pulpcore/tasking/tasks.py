@@ -110,12 +110,14 @@ async def _aexecute_task(task):
 
 def log_task_start(task, domain):
     _logger.info(
-        "Starting task id: %s in domain: %s, task_type: %s, immediate: %s, deferred: %s",
+        "Starting task id: %s in domain: %s, task_type: %s, immediate: %s, deferred: %s, "
+        "worker: %s",
         task.pk,
         domain.name,
         task.name,
         str(task.immediate),
         str(task.deferred),
+        task.app_lock.name,
     )
 
 
@@ -261,7 +263,23 @@ def dispatch(
     Raises:
         ValueError: When `resources` is an unsupported type.
     """
+    # Check WORKER_TYPE setting and delegate to appropriate implementation
+    if settings.WORKER_TYPE == "redis":
+        from pulpcore.tasking.redis_tasks import dispatch as redis_dispatch
 
+        return redis_dispatch(
+            func,
+            args,
+            kwargs,
+            task_group,
+            exclusive_resources,
+            shared_resources,
+            immediate,
+            deferred,
+            versions,
+        )
+
+    # Original pulpcore implementation using PostgreSQL advisory locks
     execute_now = immediate and not called_from_content_app()
     assert deferred or immediate, "A task must be at least `deferred` or `immediate`."
     send_wakeup_signal = not execute_now
@@ -303,6 +321,23 @@ async def adispatch(
     versions=None,
 ):
     """Async version of dispatch."""
+    # Check WORKER_TYPE setting and delegate to appropriate implementation
+    if settings.WORKER_TYPE == "redis":
+        from pulpcore.tasking.redis_tasks import adispatch as redis_adispatch
+
+        return await redis_adispatch(
+            func,
+            args,
+            kwargs,
+            task_group,
+            exclusive_resources,
+            shared_resources,
+            immediate,
+            deferred,
+            versions,
+        )
+
+    # Original pulpcore implementation using PostgreSQL advisory locks
     execute_now = immediate and not called_from_content_app()
     assert deferred or immediate, "A task must be at least `deferred` or `immediate`."
     function_name = get_function_name(func)
@@ -446,6 +481,11 @@ def cancel_task(task_id):
     Raises:
         rest_framework.exceptions.NotFound: If a task with given task_id does not exist
     """
+    if settings.WORKER_TYPE == "redis":
+        from pulpcore.tasking.redis_tasks import cancel_task as redis_cancel_task
+
+        return redis_cancel_task(task_id)
+
     task = Task.objects.select_related("pulp_domain").get(pk=task_id)
 
     if task.state in TASK_FINAL_STATES:
@@ -483,6 +523,11 @@ def cancel_task_group(task_group_id):
     Raises:
         TaskGroup.DoesNotExist: If a task group with given task_group_id does not exist
     """
+    if settings.WORKER_TYPE == "redis":
+        from pulpcore.tasking.redis_tasks import cancel_task_group as redis_cancel_task_group
+
+        return redis_cancel_task_group(task_group_id)
+
     task_group = TaskGroup.objects.get(pk=task_group_id)
     task_group.all_tasks_dispatched = True
     task_group.save(update_fields=["all_tasks_dispatched"])

@@ -42,7 +42,7 @@ from pulpcore.app.viewsets.custom_filters import (
     CreatedResourcesFilter,
 )
 from pulpcore.constants import TASK_INCOMPLETE_STATES, TASK_STATES
-from pulpcore.tasking.tasks import dispatch, cancel_task, cancel_task_group
+from pulpcore.tasking.tasks import cancel_task, cancel_task_group, dispatch
 from pulpcore.app.role_util import get_objects_for_user
 
 
@@ -228,6 +228,7 @@ class TaskViewSet(
 
         task = self.get_object()
         task = cancel_task(task.pk)
+
         # Check whether task is actually canceled
         http_status = (
             None
@@ -346,6 +347,7 @@ class TaskGroupViewSet(mixins.RetrieveModelMixin, mixins.ListModelMixin, NamedMo
                 ).count()
             ):
                 raise PermissionDenied()
+
         task_group = cancel_task_group(task_group.pk)
         # Check whether task group is actually canceled
         serializer = TaskGroupSerializer(task_group, context={"request": request})

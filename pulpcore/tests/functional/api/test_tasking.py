@@ -86,6 +86,60 @@ def test_multi_resource_locking(dispatch_task, monitor_task):
     assert task1.finished_at < task5.started_at
 
 
+@pytest.mark.long_running
+@pytest.mark.parallel
+def test_worker_cleanup_on_missing_worker(dispatch_task, monitor_task, pulpcore_bindings):
+    """
+    Test that when a worker dies unexpectedly while executing a task,
+    the worker cleanup process marks the task as failed and releases its locks,
+    allowing subsequent tasks requiring the same resource to execute.
+    """
+    # Use a unique resource identifier to avoid conflicts with other tests
+    resource = str(uuid4())
+
+    # Dispatch the missing_worker task that will kill its worker process
+    task_href1 = dispatch_task(
+        "pulpcore.app.tasks.test.missing_worker", exclusive_resources=[resource]
+    )
+
+    # Wait for the task to start running and the worker to die
+    time.sleep(2)
+
+    # Dispatch a second task that requires the same resource
+    task_href2 = dispatch_task(
+        "pulpcore.app.tasks.test.sleep", args=(1,), exclusive_resources=[resource]
+    )
+
+    # Wait for worker cleanup to run (happens every ~100 heartbeats)
+    # In tests, this should happen relatively quickly
+    # Monitor both tasks - the first should be marked as failed,
+    # and the second should complete successfully
+    max_wait = 600  # Wait up to 600 seconds for cleanup
+    start_time = time.time()
+
+    task1 = None
+    task2 = None
+
+    while time.time() - start_time < max_wait:
+        task1 = pulpcore_bindings.TasksApi.read(task_href1)
+        task2 = pulpcore_bindings.TasksApi.read(task_href2)
+
+        # Check if task1 is failed and task2 is completed
+        if task1.state == "failed" and task2.state == "completed":
+            break
+
+        time.sleep(1)
+
+    # Verify task1 was marked as failed
+    assert task1.state == "failed", f"Task 1 should be failed but is {task1.state}"
+    assert (
+        "worker" in task1.error["reason"].lower() and "missing" in task1.error["reason"].lower()
+    ), f"Task 1 error should mention missing worker: {task1.error['reason']}"
+
+    # Verify task2 completed successfully after locks were released
+    assert task2.state == "completed", f"Task 2 should be completed but is {task2.state}"
+
+
 @pytest.mark.parallel
 def test_delete_cancel_waiting_task(dispatch_task, pulpcore_bindings):
     # Queue one task after a long running one
@@ -487,6 +541,106 @@ class TestImmediateTaskWithNoResource:
         assert "timed out after" in task.error["description"]
 
 
+@pytest.mark.parallel
+def test_immediate_task_execution_in_worker(dispatch_task, monitor_task):
+    """
+    GIVEN an immediate async task marked as deferred
+    AND a resource is blocked by another task
+    WHEN the immediate task cannot execute in the API due to blocked resource
+    THEN the task is deferred to a worker and executes successfully
+
+    This test verifies that workers can correctly execute immediate async tasks
+    using aexecute_task() instead of execute_task().
+    """
+    # Use a unique resource to avoid conflicts with other tests
+    resource = str(uuid4())
+
+    # Dispatch a blocking task that holds the resource
+    blocking_task_href = dispatch_task(
+        "pulpcore.app.tasks.test.sleep",
+        args=(3,),  # Runs for 3 seconds
+        exclusive_resources=[resource],
+    )
+
+    # Dispatch the immediate task that needs the same resource
+    # Since the resource is blocked, API cannot execute it immediately
+    # It will be deferred to a worker
+    task_href = dispatch_task(
+        "pulpcore.app.tasks.test.asleep",
+        args=(0.1,),  # Short sleep to make test fast
+        immediate=True,
+        deferred=True,
+        exclusive_resources=[resource],
+    )
+
+    # Monitor the task - it should complete successfully after blocking task finishes
+    task = monitor_task(task_href)
+
+    # Verify task completed successfully
+    assert task.state == "completed", f"Task should be completed but is {task.state}"
+
+    # Verify state transitions occurred correctly
+    assert task.started_at is not None, "Task should have a started_at timestamp"
+    assert task.finished_at is not None, "Task should have a finished_at timestamp"
+    assert task.started_at < task.finished_at, "Task should have started before finishing"
+
+    # Verify there's no error
+    assert task.error is None, f"Task should not have an error but has: {task.error}"
+
+    # Clean up blocking task
+    monitor_task(blocking_task_href)
+
+
+@pytest.mark.parallel
+def test_failing_immediate_task_error_handling(dispatch_task, monitor_task):
+    """
+    GIVEN a task that raises a RuntimeError
+    AND the task is an async function
+    WHEN dispatching the task as immediate and deferred
+    THEN the task fails with the correct error message
+    AND the error field contains the exception details
+    """
+    custom_error_message = "This is a custom error message"
+    with pytest.raises(PulpTaskError) as ctx:
+        task_href = dispatch_task(
+            "pulpcore.app.tasks.test.afailing_task",
+            kwargs={"error_message": custom_error_message},
+            immediate=True,
+            deferred=True,
+        )
+        monitor_task(task_href)
+
+    task = ctx.value.task
+    assert task.state == "failed"
+    assert task.error is not None
+    assert "description" in task.error
+    assert custom_error_message in task.error["description"]
+
+
+@pytest.mark.parallel
+def test_failing_worker_task_error_handling(dispatch_task, monitor_task):
+    """
+    GIVEN a task that raises a RuntimeError
+    AND the task is a sync function
+    WHEN dispatching the task as deferred (executes on worker)
+    THEN the task fails with the correct error message
+    AND the error field contains the exception details
+    """
+    custom_error_message = "Worker task failed with custom error"
+    with pytest.raises(PulpTaskError) as ctx:
+        task_href = dispatch_task(
+            "pulpcore.app.tasks.test.failing_task",
+            kwargs={"error_message": custom_error_message},
+        )
+        monitor_task(task_href)
+
+    task = ctx.value.task
+    assert task.state == "failed"
+    assert task.error is not None
+    assert "description" in task.error
+    assert custom_error_message in task.error["description"]
+
+
 @pytest.fixture
 def resource_blocker(pulpcore_bindings, dispatch_task):
 
@@ -508,6 +662,45 @@ def resource_blocker(pulpcore_bindings, dispatch_task):
                 raise
 
     return _resource_blocker
+
+
+@pytest.mark.parallel
+def test_immediate_task_with_available_resources(dispatch_task, pulpcore_bindings):
+    """
+    Test that immediate tasks with resources can execute when resources are available.
+
+    This test verifies that the are_resources_available() function correctly acquires
+    locks via acquire_locks() when resources are not blocked. This is important for
+    Redis worker implementation where immediate tasks need to acquire distributed locks.
+
+    GIVEN an immediate async task with exclusive and shared resource requirements
+    WHEN the resources are available (not blocked by other tasks)
+    THEN the task executes immediately and completes successfully
+    AND verifies that acquire_locks() is properly imported and callable
+    """
+    # Use unique resources to ensure they're not blocked
+    unique_exclusive = f"exclusive-{uuid4()}"
+    unique_shared = f"shared-{uuid4()}"
+
+    task_href = dispatch_task(
+        "pulpcore.app.tasks.test.asleep",
+        args=(0.1,),  # Quick execution
+        immediate=True,
+        deferred=False,
+        exclusive_resources=[unique_exclusive],
+        shared_resources=[unique_shared],
+    )
+
+    # Task should complete immediately since resources are available
+    task = pulpcore_bindings.TasksApi.read(task_href)
+    assert task.state == "completed", (
+        f"Task should have completed immediately with available resources, "
+        f"but is in state: {task.state}"
+    )
+
+    # Verify task executed successfully
+    assert task.finished_at is not None
+    assert task.error is None
 
 
 class TestImmediateTaskWithBlockedResource:

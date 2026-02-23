@@ -85,6 +85,7 @@ pulp_settings_azure:
   - pulpcore.plugin.access_policy.DefaultAccessPolicy
   task_diagnostics:
   - memory
+  worker_type: redis
 pulp_settings_gcp: null
 pulp_settings_s3:
   DISABLED_authentication_backends: '@merge django.contrib.auth.backends.RemoteUserBackend'
