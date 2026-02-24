@@ -419,7 +419,7 @@ class GroupRoleSerializer(ValidateRoleMixin, ModelSerializer, NestedHyperlinkedM
         help_text=_(
             "Domain this role should be applied on, mutually exclusive with content_object."
         ),
-        view_name="domain-detail",
+        view_name="domains-detail",
         queryset=Domain.objects.all(),
         allow_null=True,
         required=False,

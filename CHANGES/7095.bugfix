@@ -1,0 +1,1 @@
+Fixed a typo in ``GroupRoleSerializer`` that caused a 500 error when listing group roles with a domain set.
