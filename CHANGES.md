@@ -8,6 +8,29 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.73.26 (2026-02-24) {: #3.73.26 }
+
+### REST API {: #3.73.26-rest-api }
+
+#### Bugfixes {: #3.73.26-rest-api-bugfix }
+
+- Fixed file handle leak when content app access triggers downloads due to on_demand or streamed policy.
+  [#7157](https://github.com/pulp/pulpcore/issues/7157)
+
+### Plugin API {: #3.73.26-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.73.26-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.26-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.73.25 (2026-02-10) {: #3.73.25 }
 
 ### REST API {: #3.73.25-rest-api }

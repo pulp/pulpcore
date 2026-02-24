@@ -1,1 +1,0 @@
-Fixed file handle leak when content app access triggers downloads due to on_demand or streamed policy.
