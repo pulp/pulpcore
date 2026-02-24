@@ -8,6 +8,54 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.104.0 (2026-02-24) {: #3.104.0 }
+
+### REST API {: #3.104.0-rest-api }
+
+#### Features {: #3.104.0-rest-api-feature }
+
+- Added a "debug-logs" option to the TASK_DIAGNOSTICS / X-Task-Diagnostics feature - dumps task-specific logs into a profile artifact at a DEBUG level.
+  [#7214](https://github.com/pulp/pulpcore/issues/7214)
+- Added a "logs" option to the TASK_DIAGNOSTICS / X-Task-Diagnostics feature - dumps task-specific logs into a profile artifact.
+  [#7215](https://github.com/pulp/pulpcore/issues/7215)
+- Add memory caching for api doc endpoints.
+
+#### Bugfixes {: #3.104.0-rest-api-bugfix }
+
+- "profile options" designated using the X-Task-Diagnostics feature should be propagated to child tasks.
+  [#7219](https://github.com/pulp/pulpcore/issues/7219)
+- Added a new "datarepair" management command for data cleanups which are for whatever reason not possible to run in a migration. Added support for cleaning up after issue #7272.
+  [#7272](https://github.com/pulp/pulpcore/issues/7272)
+- Fix OpenAPI spec to use string instead of UUID format.
+- Fixed PRNField slowing down the generic list endpoints with extra database queries.
+
+#### Improved Documentation {: #3.104.0-rest-api-doc }
+
+- Fixed the quickstart instructions on how to contribute with code as well as links to more comprehensive guides.
+  [#7319](https://github.com/pulp/pulpcore/issues/7319)
+
+#### Removals {: #3.104.0-rest-api-removal }
+
+- Reverted the exception handling refactor.
+
+### Plugin API {: #3.104.0-plugin-api }
+
+#### Bugfixes {: #3.104.0-plugin-api-bugfix }
+
+- Harden RepositoryVersion memoization against bugs that could lead to incorrect counts and repository content.
+  [#7272](https://github.com/pulp/pulpcore/issues/7272)
+- Fixed new downloader config field breaking plugins with synchronous uploads.
+
+### Pulp File {: #3.104.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.104.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.103.4 (2026-02-18) {: #3.103.4 }
 
 ### REST API {: #3.103.4-rest-api }
