@@ -1,1 +1,0 @@
-Harden RepositoryVersion memoization against bugs that could lead to incorrect counts and repository content.
