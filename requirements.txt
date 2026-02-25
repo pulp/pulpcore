@@ -5,7 +5,7 @@ asyncio-throttle>=1.0,<=1.0.2
 async-timeout>=4.0.3,<4.0.4;python_version<"3.11"
 backoff>=2.1.2,<2.2.2
 click>=8.1.0,<=8.1.7
-cryptography>=38.0.1,<42.0.9
+cryptography>=38.0.1,<47.0  # SemVer compatible https://cryptography.io/en/latest/api-stability/#versioning .
 Django>=4.2.24,<5.3, !=5.0, !=5.1  # LTS version, switch only if we have a compelling reason to
 django-filter>=23.1,<=23.5
 django-guid>=3.3,<=3.4.0
@@ -24,7 +24,7 @@ json_stream>=2.3.2,<2.4
 jq>=1.6.0,<1.7.0
 # pycares is only a transitive dependency, but there is a combination of versions that expresses a bug.
 pycares<4.9;python_version<'3.12'  # pycares==4.9 + aiodns==3.2.0 + python<3.12 = trouble
-PyOpenSSL<25.0
+PyOpenSSL<26.0
 opentelemetry-distro[otlp]>=0.38b0,<=0.49b0
 opentelemetry-exporter-otlp-proto-http>=1.17.0,<1.29
 opentelemetry-instrumentation-django>=0.38b0,<=0.49b0
