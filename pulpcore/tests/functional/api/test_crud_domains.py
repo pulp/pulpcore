@@ -186,6 +186,7 @@ def test_special_domain_creation(domains_api_client, gen_object_with_cleanup):
         "pulpcore.app.models.storage.FileSystem",
         # "pulpcore.app.models.storage.PulpSFTPStorage",
         "storages.backends.s3boto3.S3Boto3Storage",
+        "storages.backends.s3.S3Storage",
         "storages.backends.azure_storage.AzureStorage",
         # "storages.backends.gcloud.GoogleCloudStorage",
     }
@@ -200,7 +201,7 @@ def test_special_domain_creation(domains_api_client, gen_object_with_cleanup):
                 "key_filename": "/etc/pulp/certs/storage_id_ed25519",
             },
         },
-        "storages.backends.s3boto3.S3Boto3Storage": {
+        "storages.backends.s3.S3Storage": {
             "AWS_ACCESS_KEY_ID": "random",
             "AWS_SECRET_ACCESS_KEY": "random",
             "AWS_STORAGE_BUCKET_NAME": "pulp3",
@@ -223,6 +224,9 @@ def test_special_domain_creation(domains_api_client, gen_object_with_cleanup):
             "GS_CUSTOM_ENDPOINT": "http://custom-endpoint",
         },
     }
+    storage_settings["storages.backends.s3boto3.S3Boto3Storage"] = storage_settings[
+        "storages.backends.s3.S3Storage"
+    ]
 
     installed_backends = []
     domain_names = set()
@@ -240,7 +244,8 @@ def test_special_domain_creation(domains_api_client, gen_object_with_cleanup):
             assert e.status == 400
             assert "Backend is not installed on Pulp." in e.body
         else:
-            installed_backends.append(backend)
+            if backend != "storages.backends.s3boto3.S3Boto3Storage":
+                installed_backends.append(backend)
             domain_names.add(domain.name)
     # Try creating domains with correct settings
     for backend in installed_backends:
@@ -253,6 +258,7 @@ def test_special_domain_creation(domains_api_client, gen_object_with_cleanup):
         domain_names.add(domain.name)
 
     # Try creating domains with incorrect settings
+    storage_types.remove("storages.backends.s3boto3.S3Boto3Storage")
     for backend in installed_backends:
         random_backend = random.choice(tuple(storage_types - {backend}))
         body = {
