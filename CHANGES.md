@@ -890,6 +890,26 @@ No significant changes.
 
 ---
 
+## 3.85.12 (2026-02-25) {: #3.85.12 }
+
+### REST API {: #3.85.12-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.85.12-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.85.12-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.12-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.85.11 (2026-02-24) {: #3.85.11 }
 
 ### REST API {: #3.85.11-rest-api }
@@ -1906,6 +1926,26 @@ No significant changes.
   [#6244](https://github.com/pulp/pulpcore/issues/6244)
 
 ### Pulp Cert Guard {: #3.74.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.73.27 (2026-02-25) {: #3.73.27 }
+
+### REST API {: #3.73.27-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.73.27-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.73.27-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.27-pulp-cert-guard }
 
 No significant changes.
 
@@ -3202,6 +3242,26 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.64.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.63.31 (2026-02-25) {: #3.63.31 }
+
+### REST API {: #3.63.31-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.63.31-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.31-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.31-pulp-cert-guard }
 
 No significant changes.
 
@@ -4743,6 +4803,26 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard
+
+No significant changes.
+
+---
+
+## 3.49.52 (2026-02-25) {: #3.49.52 }
+
+### REST API {: #3.49.52-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.49.52-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.52-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.52-pulp-cert-guard }
 
 No significant changes.
 
