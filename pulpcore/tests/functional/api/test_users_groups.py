@@ -73,3 +73,22 @@ def test_groups_add_bad_user(pulpcore_bindings, gen_object_with_cleanup):
     ).pulp_href
     with pytest.raises(ApiException, match="foo"):
         pulpcore_bindings.GroupsUsersApi.create(group_href, group_user={"username": "foo"})
+
+
+@pytest.mark.parallel
+def test_group_roles_with_domain(pulpcore_bindings, gen_object_with_cleanup):
+    """Test that group roles with a domain can be listed and serialized.
+
+    Regression test for https://github.com/pulp/pulpcore/issues/7095
+    """
+    group = gen_object_with_cleanup(pulpcore_bindings.GroupsApi, {"name": str(uuid.uuid4())})
+    default_domain = pulpcore_bindings.DomainsApi.list(name="default").results[0]
+    gen_object_with_cleanup(
+        pulpcore_bindings.GroupsRolesApi,
+        group.pulp_href,
+        {"role": "core.task_viewer", "content_object": None, "domain": default_domain.pulp_href},
+    )
+
+    roles = pulpcore_bindings.GroupsRolesApi.list(group.pulp_href)
+    assert roles.count == 1
+    assert roles.results[0].domain == default_domain.pulp_href
