@@ -7,57 +7,29 @@
 #
 # For more info visit https://github.com/pulp/plugin_template
 
+# This script prepares the scenario definition in the .ci/ansible/vars/main.yaml file.
+#
+#   It requires the following environment:
+#     TEST - The name of the scenario to prepare.
+#
+#   It may also dump the {lower,upper}bounds_constraints.txt for the specific scenario.
+
+set -eu -o pipefail
+
 # make sure this script runs at the repo root
 cd "$(dirname "$(realpath -e "$0")")"/../../..
 
-set -mveuo pipefail
-
-if [ "${GITHUB_REF##refs/heads/}" = "${GITHUB_REF}" ]
-then
-  BRANCH_BUILD=0
-else
-  BRANCH_BUILD=1
-  BRANCH="${GITHUB_REF##refs/heads/}"
-fi
-if [ "${GITHUB_REF##refs/tags/}" = "${GITHUB_REF}" ]
-then
-  TAG_BUILD=0
-else
-  TAG_BUILD=1
-  BRANCH="${GITHUB_REF##refs/tags/}"
+if [ -f .github/workflows/scripts/pre_before_install.sh ]; then
+  source .github/workflows/scripts/pre_before_install.sh
 fi
 
-COMMIT_MSG=$(git log --format=%B --no-merges -1)
-export COMMIT_MSG
-
-COMPONENT_VERSION=$(sed -ne "s/\s*version.*=.*['\"]\(.*\)['\"][\s,]*/\1/p" setup.py)
-
-mkdir .ci/ansible/vars || true
-echo "---" > .ci/ansible/vars/main.yaml
-echo "legacy_component_name: pulpcore" >> .ci/ansible/vars/main.yaml
-echo "component_name: core" >> .ci/ansible/vars/main.yaml
-echo "component_version: '${COMPONENT_VERSION}'" >> .ci/ansible/vars/main.yaml
-
-export PRE_BEFORE_INSTALL=$PWD/.github/workflows/scripts/pre_before_install.sh
-export POST_BEFORE_INSTALL=$PWD/.github/workflows/scripts/post_before_install.sh
-
-if [ -f $PRE_BEFORE_INSTALL ]; then
-  source $PRE_BEFORE_INSTALL
+COMPONENT_VERSION="$(bump-my-version show current_version | tail -n -1 | python -c 'from packaging.version import Version; print(Version(input()))')"
+COMPONENT_SOURCE="./pulpcore/dist/pulpcore-${COMPONENT_VERSION}-py3-none-any.whl"
+if [ "$TEST" = "s3" ]; then
+  COMPONENT_SOURCE="${COMPONENT_SOURCE}[s3]"
 fi
-
-if [ "$GITHUB_EVENT_NAME" = "pull_request" ] || [ "${BRANCH_BUILD}" = "1" -a "${BRANCH}" != "main" ]
-then
-  echo $COMMIT_MSG | sed -n -e 's/.*CI Base Image:\s*\([-_/[:alnum:]]*:[-_[:alnum:]]*\).*/ci_base: "\1"/p' >> .ci/ansible/vars/main.yaml
-fi
-
-for i in {1..3}
-do
-  ansible-galaxy collection install "amazon.aws:8.1.0" && s=0 && break || s=$? && sleep 3
-done
-if [[ $s -gt 0 ]]
-then
-  echo "Failed to install amazon.aws"
-  exit $s
+if [ "$TEST" = "azure" ]; then
+  COMPONENT_SOURCE="${COMPONENT_SOURCE}[azure]"
 fi
 
 if [[ "$TEST" = "pulp" ]]; then
@@ -66,7 +38,97 @@ fi
 if [[ "$TEST" = "lowerbounds" ]]; then
   python3 .ci/scripts/calc_constraints.py requirements.txt > lowerbounds_constraints.txt
 fi
+export PULP_API_ROOT=$(test "${TEST}" = "s3" && echo "/rerouted/djnd/" || echo "/pulp/")
 
-if [ -f $POST_BEFORE_INSTALL ]; then
-  source $POST_BEFORE_INSTALL
+echo "PULP_API_ROOT=${PULP_API_ROOT}" >> "$GITHUB_ENV"
+
+# Compose the scenario definition.
+mkdir -p .ci/ansible/vars
+
+cat > .ci/ansible/vars/main.yaml << VARSYAML
+---
+scenario: "${TEST}"
+legacy_component_name: "pulpcore"
+component_name: "core"
+component_version: "${COMPONENT_VERSION}"
+pulp_env: {"PULP_CA_BUNDLE": "/etc/pulp/certs/pulp_webserver.crt"}
+pulp_settings: {"allowed_export_paths": ["/tmp"], "allowed_import_paths": ["/tmp"], "content_path_prefix": "/somewhere/else/", "orphan_protection_time": 0, "task_protection_time": 10, "tmpfile_protection_time": 10, "upload_protection_time": 10}
+pulp_scheme: "https"
+pulp_default_container: "ghcr.io/pulp/pulp-ci-centos9:latest"
+api_root: "${PULP_API_ROOT}"
+image:
+  name: "pulp"
+  tag: "ci_build"
+plugins:
+  - name: "pulpcore"
+    source: "${COMPONENT_SOURCE}"
+    ci_requirements: $(test -f ci_requirements.txt && echo -n true || echo -n false)
+    upperbounds: $(test "${TEST}" = "pulp" && echo -n true || echo -n false)
+    lowerounds: $(test "${TEST}" = "lowerbounds" && echo -n true || echo -n false)
+services:
+  - name: "pulp"
+    image: "pulp:ci_build"
+    volumes:
+      - "./settings:/etc/pulp"
+      - "./ssh:/keys/"
+      - "~/.config:/var/lib/pulp/.config"
+      - "../../../pulp-openapi-generator:/root/pulp-openapi-generator"
+    env:
+      PULP_WORKERS: "4"
+      PULP_HTTPS: "true"
+  - name: "pulp-fixtures"
+    image: "docker.io/pulp/pulp-fixtures:latest"
+    env:
+      BASE_URL: "http://pulp-fixtures:8080"
+VARSYAML
+
+if [ "$TEST" = "s3" ]; then
+  MINIO_ACCESS_KEY=AKIAIT2Z5TDYPX3ARJBA
+  MINIO_SECRET_KEY=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
+  cat >> .ci/ansible/vars/main.yaml << VARSYAML
+  - name: "minio"
+    image: "minio/minio"
+    env:
+      MINIO_ACCESS_KEY: "${MINIO_ACCESS_KEY}"
+      MINIO_SECRET_KEY: "${MINIO_SECRET_KEY}"
+    command: "server /data"
+s3_test: true
+minio_access_key: "${MINIO_ACCESS_KEY}"
+minio_secret_key: "${MINIO_SECRET_KEY}"
+pulp_scenario_settings: {"DISABLED_authentication_backends": "@merge django.contrib.auth.backends.RemoteUserBackend", "DISABLED_authentication_json_header": "HTTP_X_RH_IDENTITY", "DISABLED_authentication_json_header_jq_filter": ".identity.user.username", "DISABLED_authentication_json_header_openapi_security_scheme": {"description": "External OAuth integration", "flows": {"clientCredentials": {"scopes": {"api.console": "grant_access_to_pulp"}, "tokenUrl": "https://your-identity-provider/token/issuer"}}, "type": "oauth2"}, "DISABLED_rest_framework__default_authentication_classes": "@merge pulpcore.app.authentication.JSONHeaderRemoteAuthentication", "MEDIA_ROOT": "", "STORAGES": {"default": {"BACKEND": "storages.backends.s3boto3.S3Boto3Storage", "OPTIONS": {"access_key": "AKIAIT2Z5TDYPX3ARJBA", "addressing_style": "path", "bucket_name": "pulp3", "default_acl": "@none", "endpoint_url": "http://minio:9000", "region_name": "eu-central-1", "secret_key": "fqRvjWaPU5o0fCqQuUWbj9Fainj2pVZtBCiDiieS", "signature_version": "s3v4"}}, "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"}}, "domain_enabled": true, "hide_guarded_distributions": true}
+pulp_scenario_env: {}
+VARSYAML
+fi
+
+if [ "$TEST" = "azure" ]; then
+  cat >> .ci/ansible/vars/main.yaml << VARSYAML
+  - name: "ci-azurite"
+    image: "mcr.microsoft.com/azure-storage/azurite"
+    command: "azurite-blob --skipApiVersionCheck --blobHost 0.0.0.0"
+azure_test: true
+pulp_scenario_settings: {"MEDIA_ROOT": "", "STORAGES": {"default": {"BACKEND": "storages.backends.azure_storage.AzureStorage", "OPTIONS": {"account_key": "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==", "account_name": "devstoreaccount1", "azure_container": "pulp-test", "connection_string": "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://ci-azurite:10000/devstoreaccount1;", "expiration_secs": 120, "location": "pulp3", "overwrite_files": true}}, "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"}}, "api_root_rewrite_header": "X-API-Root", "domain_enabled": true}
+pulp_scenario_env: {}
+VARSYAML
+fi
+
+if [ "$TEST" = "gcp" ]; then
+  cat >> .ci/ansible/vars/main.yaml << VARSYAML
+  - name: "ci-gcp"
+    image: "fsouza/fake-gcs-server"
+    volumes:
+      - "storage_data:/etc/pulp"
+    command: " -scheme http"
+gcp_test: true
+pulp_scenario_settings: null
+pulp_scenario_env: {}
+VARSYAML
+fi
+
+cat >> .ci/ansible/vars/main.yaml << VARSYAML
+...
+VARSYAML
+cat .ci/ansible/vars/main.yaml
+
+if [ -f .github/workflows/scripts/post_before_install.sh ]; then
+  source .github/workflows/scripts/post_before_install.sh
 fi
