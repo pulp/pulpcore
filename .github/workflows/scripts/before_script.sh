@@ -7,48 +7,46 @@
 #
 # For more info visit https://github.com/pulp/plugin_template
 
+# This script dumps some files to help understand the setup of the test scenario.
+
+set -eu -o pipefail
+
 # make sure this script runs at the repo root
 cd "$(dirname "$(realpath -e "$0")")"/../../..
 
-set -euv
-
 source .github/workflows/scripts/utils.sh
 
-export PRE_BEFORE_SCRIPT=$PWD/.github/workflows/scripts/pre_before_script.sh
-export POST_BEFORE_SCRIPT=$PWD/.github/workflows/scripts/post_before_script.sh
-
-if [[ -f $PRE_BEFORE_SCRIPT ]]; then
-  source $PRE_BEFORE_SCRIPT
+if [[ -f .github/workflows/scripts/pre_before_script.sh ]]; then
+  source .github/workflows/scripts/pre_before_script.sh
 fi
-
-# Developers should be able to reproduce the containers with this config
-echo "CI vars:"
-tail -v -n +1 .ci/ansible/vars/main.yaml
 
 # Developers often want to know the final pulp config
-echo "PULP CONFIG:"
+echo
+echo "# Pulp config:"
 tail -v -n +1 .ci/ansible/settings/settings.* ~/.config/pulp_smash/settings.json
 
-echo "Containerfile:"
+echo
+echo "# Containerfile:"
 tail -v -n +1 .ci/ansible/Containerfile
 
-echo "Constraints Files:"
-# The need not even exist.
+echo
+echo "# Constraints Files:"
+# They need not even exist.
 tail -v -n +1  ../*/*constraints.txt || true
 
-# Needed for some functional tests
-cmd_prefix bash -c "echo '%wheel        ALL=(ALL)       NOPASSWD: ALL' > /etc/sudoers.d/nopasswd"
-cmd_prefix bash -c "usermod -a -G wheel pulp"
+echo
+echo "# pip list outside the container"
+pip list
 
-if [[ "${REDIS_DISABLED:-false}" == true ]]; then
-  cmd_prefix bash -c "s6-rc -d change redis"
-  echo "The Redis service was disabled for $TEST"
+echo
+echo "# pip list inside the container"
+cmd_prefix bash -c "pip3 list"
+
+echo
+echo "# State of the containers"
+docker ps -a
+
+if [[ -f .github/workflows/scripts/post_before_script.sh ]]; then
+  source .github/workflows/scripts/post_before_script.sh
 fi
 
-if [[ -f $POST_BEFORE_SCRIPT ]]; then
-  source $POST_BEFORE_SCRIPT
-fi
-
-# Lots of plugins try to use this path, and throw warnings if they cannot access it.
-cmd_prefix mkdir /.pytest_cache
-cmd_prefix chown pulp:pulp /.pytest_cache
