@@ -63,6 +63,8 @@ pulp_settings:
   task_protection_time: 10
   tmpfile_protection_time: 10
   upload_protection_time: 10
+  task_diagnostics:
+    - "memory"
 pulp_settings_azure:
   MEDIA_ROOT: ""
   STORAGES:
@@ -84,8 +86,6 @@ pulp_settings_azure:
   rest_framework__default_authentication_classes: "@merge pulpcore.app.authentication.PulpRemoteUserAuthentication"
   rest_framework__default_permission_classes:
     - "pulpcore.plugin.access_policy.DefaultAccessPolicy"
-  task_diagnostics:
-    - "memory"
 pulp_settings_gcp: null
 pulp_settings_s3:
   DISABLED_authentication_backends: "@merge django.contrib.auth.backends.RemoteUserBackend"
