@@ -11,7 +11,9 @@
 import argparse
 import re
 import os
+import sys
 import tomllib
+import typing as t
 from pathlib import Path
 
 import yaml
@@ -23,7 +25,7 @@ Y_CHANGELOG_EXTS = [".feature"]
 Z_CHANGELOG_EXTS = [".bugfix", ".misc"]
 
 
-def options():
+def options() -> argparse.Namespace:
     """Check which branches need a release."""
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -42,13 +44,13 @@ def options():
     return parser.parse_args()
 
 
-def template_config():
+def template_config() -> dict[str, t.Any]:
     # Assume this script lies in .ci/scripts
     path = Path(__file__).absolute().parent.parent.parent / "template_config.yml"
     return yaml.safe_load(path.read_text())
 
 
-def current_version(repo, commitish):
+def current_version(repo: Repo, commitish: str) -> Version:
     try:
         pyproject_toml = tomllib.loads(repo.git.show(f"{commitish}:pyproject.toml"))
         try:
@@ -62,7 +64,7 @@ def current_version(repo, commitish):
     return Version(current_version)
 
 
-def check_pyproject_dependencies(repo, from_commit, to_commit):
+def check_pyproject_dependencies(repo: Repo, from_commit: str, to_commit: str) -> list[str]:
     try:
         new_pyproject = tomllib.loads(repo.git.show(f"{to_commit}:pyproject.toml"))
         try:
@@ -83,8 +85,8 @@ def check_pyproject_dependencies(repo, from_commit, to_commit):
         return ["pyproject.toml changed somehow (PLEASE check if dependencies are affected)."]
 
 
-def main(options, template_config):
-    DEFAULT_BRANCH = template_config["plugin_default_branch"]
+def main(options: argparse.Namespace, template_config: dict[str, t.Any]) -> int:
+    DEFAULT_BRANCH: str = template_config["plugin_default_branch"]
 
     repo = Repo()
 
@@ -97,7 +99,7 @@ def main(options, template_config):
 
     # Warning: This will not work if branch names contain "/" but we don't really care here.
     heads = [h.split("/")[-1] for h in repo.git.branch("--remote").split("\n")]
-    available_branches = [h for h in heads if re.search(RELEASE_BRANCH_REGEX, h)]
+    available_branches = [h for h in heads if re.fullmatch(RELEASE_BRANCH_REGEX, h)]
     available_branches.sort(key=lambda ver: Version(ver))
     available_branches.append(DEFAULT_BRANCH)
 
@@ -114,7 +116,10 @@ def main(options, template_config):
 
     if diff := branches - set(available_branches):
         print(f"Supplied branches contains non-existent branches! {diff}")
-        exit(1)
+        return 1
+
+    branches = [branch for branch in available_branches if branch in branches]
+    branches.reverse()
 
     print(f"Checking for releases on branches: {branches}")
 
@@ -179,6 +184,8 @@ def main(options, template_config):
     if len(releases) == 0:
         print("No new releases to perform.")
 
+    return 0
+
 
 if __name__ == "__main__":
-    main(options(), template_config())
+    sys.exit(main(options(), template_config()))
