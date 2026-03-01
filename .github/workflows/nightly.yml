@@ -61,6 +61,7 @@ jobs:
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v6
+        id: "create_pr_changelog"
         with:
           token: ${{ secrets.RELEASE_TOKEN }}
           title: "Update Changelog"
@@ -68,4 +69,12 @@ jobs:
           branch: "changelog/update"
           delete-branch: true
           path: "pulpcore"
+      - name: "Mark PR automerge"
+        working-directory: "pulpcore"
+        run: |
+          gh pr merge --rebase --auto "${{ steps.create_pr_changelog.outputs.pull-request-number }}"
+        if: "steps.create_pr_changelog.outputs.pull-request-number"
+        env:
+          GH_TOKEN: "${{ secrets.RELEASE_TOKEN }}"
+        continue-on-error: true
 ...
