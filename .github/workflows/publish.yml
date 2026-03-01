@@ -136,7 +136,7 @@ jobs:
         run: |
           # The last commit before the release commit contains the release CHANGES fragments
           git checkout "${TAG_NAME}~"
-          NOTES=$(towncrier build --draft --version $TAG_NAME)
+          NOTES=$(towncrier build --draft --version $TAG_NAME | .ci/scripts/clean_gh_release_notes.py pulpcore $TAG_NAME)
           echo "body<<EOF" >> $GITHUB_OUTPUT
           echo "$NOTES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
