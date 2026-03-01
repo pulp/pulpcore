@@ -169,7 +169,7 @@ fi
 export PULP_FIXTURES_URL="http://pulp-fixtures:8080"
 pushd ../pulp-cli
 pip install -r test_requirements.txt
-pytest -v -m "pulpcore or pulp_file or pulp_certguard"
+pytest -v tests -m "pulpcore or pulp_file or pulp_certguard"
 popd
 
 if [ -f "$POST_SCRIPT" ]; then
