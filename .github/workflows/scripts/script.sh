@@ -145,7 +145,7 @@ fi
 export PULP_FIXTURES_URL="http://pulp-fixtures:8080"
 pushd ../pulp-cli
 pip install -r test_requirements.txt
-pytest -v -m "pulpcore"
+pytest -v tests -m "pulpcore"
 popd
 
 if [ -f "$POST_SCRIPT" ]; then

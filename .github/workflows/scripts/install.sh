@@ -7,130 +7,38 @@
 #
 # For more info visit https://github.com/pulp/plugin_template
 
+set -euv
+
 # make sure this script runs at the repo root
 cd "$(dirname "$(realpath -e "$0")")"/../../..
 REPO_ROOT="$PWD"
 
-set -euv
-
 source .github/workflows/scripts/utils.sh
-
-PLUGIN_VERSION="$(bump-my-version show current_version | tail -n -1 | python -c 'from packaging.version import Version; print(Version(input()))')"
-PLUGIN_SOURCE="./pulpcore/dist/pulpcore-${PLUGIN_VERSION}-py3-none-any.whl"
-
-export PULP_API_ROOT="/pulp/"
 
 PIP_REQUIREMENTS=("pulp-cli")
 
 # This must be the **only** call to "pip install" on the test runner.
 pip install ${PIP_REQUIREMENTS[*]}
 
+if [[ "$TEST" = "s3" ]]; then
+for i in {1..3}
+do
+  ansible-galaxy collection install "amazon.aws:8.1.0" && s=0 && break || s=$? && sleep 3
+done
+if [[ $s -gt 0 ]]
+then
+  echo "Failed to install amazon.aws"
+  exit $s
+fi
+fi
+
 # Check out the pulp-cli branch matching the installed version.
 PULP_CLI_VERSION="$(pip freeze | sed -n -e 's/pulp-cli==//p')"
 git clone --depth 1 --branch "$PULP_CLI_VERSION" https://github.com/pulp/pulp-cli.git ../pulp-cli
 
 cd .ci/ansible/
-if [ "$TEST" = "s3" ]; then
-  PLUGIN_SOURCE="${PLUGIN_SOURCE}[s3]"
-fi
-if [ "$TEST" = "azure" ]; then
-  PLUGIN_SOURCE="${PLUGIN_SOURCE}[azure]"
-fi
 
-cat >> vars/main.yaml << VARSYAML
-image:
-  name: pulp
-  tag: "ci_build"
-plugins:
-  - name: pulpcore
-    source: "${PLUGIN_SOURCE}"
-VARSYAML
-if [[ -f ../../ci_requirements.txt ]]; then
-  cat >> vars/main.yaml << VARSYAML
-    ci_requirements: true
-VARSYAML
-fi
-if [ "$TEST" = "pulp" ]; then
-  cat >> vars/main.yaml << VARSYAML
-    upperbounds: true
-VARSYAML
-fi
-if [ "$TEST" = "lowerbounds" ]; then
-  cat >> vars/main.yaml << VARSYAML
-    lowerbounds: true
-VARSYAML
-fi
-
-cat >> vars/main.yaml << VARSYAML
-services:
-  - name: pulp
-    image: "pulp:ci_build"
-    volumes:
-      - ./settings:/etc/pulp
-      - ./ssh:/keys/
-      - ~/.config:/var/lib/pulp/.config
-      - ../../../pulp-openapi-generator:/root/pulp-openapi-generator
-    env:
-      PULP_WORKERS: "4"
-      PULP_HTTPS: "true"
-VARSYAML
-
-cat >> vars/main.yaml << VARSYAML
-pulp_env: {"PULP_CA_BUNDLE": "/etc/pulp/certs/pulp_webserver.crt"}
-pulp_settings: {"allowed_export_paths": ["/tmp"], "allowed_import_paths": ["/tmp"], "orphan_protection_time": 0}
-pulp_scheme: https
-pulp_default_container: ghcr.io/pulp/pulp-ci-centos:latest
-VARSYAML
-
-SCENARIOS=("pulp" "performance" "azure" "gcp" "s3" "generate-bindings" "lowerbounds")
-if [[ " ${SCENARIOS[*]} " =~ " ${TEST} " ]]; then
-  sed -i -e '/^services:/a \
-  - name: pulp-fixtures\
-    image: docker.io/pulp/pulp-fixtures:latest\
-    env: {BASE_URL: "http://pulp-fixtures:8080"}' vars/main.yaml
-
-  export REMOTE_FIXTURES_ORIGIN="http://pulp-fixtures:8080"
-fi
-
-if [ "$TEST" = "s3" ]; then
-  export MINIO_ACCESS_KEY=AKIAIT2Z5TDYPX3ARJBA
-  export MINIO_SECRET_KEY=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
-  sed -i -e '/^services:/a \
-  - name: minio\
-    image: minio/minio\
-    env:\
-      MINIO_ACCESS_KEY: "'$MINIO_ACCESS_KEY'"\
-      MINIO_SECRET_KEY: "'$MINIO_SECRET_KEY'"\
-    command: "server /data"' vars/main.yaml
-  sed -i -e '$a s3_test: true\
-minio_access_key: "'$MINIO_ACCESS_KEY'"\
-minio_secret_key: "'$MINIO_SECRET_KEY'"\
-pulp_scenario_settings: {"AWS_ACCESS_KEY_ID": "AKIAIT2Z5TDYPX3ARJBA", "AWS_DEFAULT_ACL": "@none None", "AWS_S3_ADDRESSING_STYLE": "path", "AWS_S3_ENDPOINT_URL": "http://minio:9000", "AWS_S3_REGION_NAME": "eu-central-1", "AWS_S3_SIGNATURE_VERSION": "s3v4", "AWS_SECRET_ACCESS_KEY": "fqRvjWaPU5o0fCqQuUWbj9Fainj2pVZtBCiDiieS", "AWS_STORAGE_BUCKET_NAME": "pulp3", "DEFAULT_FILE_STORAGE": "storages.backends.s3boto3.S3Boto3Storage", "MEDIA_ROOT": "", "domain_enabled": true, "hide_guarded_distributions": true}\
-pulp_scenario_env: {}\
-' vars/main.yaml
-  export PULP_API_ROOT="/rerouted/djnd/"
-fi
-
-if [ "$TEST" = "azure" ]; then
-  sed -i -e '/^services:/a \
-  - name: ci-azurite\
-    image: mcr.microsoft.com/azure-storage/azurite\
-    volumes:\
-      - ./azurite:/etc/pulp\
-    command: "azurite-blob --skipApiVersionCheck --blobHost 0.0.0.0"' vars/main.yaml
-  sed -i -e '$a azure_test: true\
-pulp_scenario_settings: {"AZURE_ACCOUNT_KEY": "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==", "AZURE_ACCOUNT_NAME": "devstoreaccount1", "AZURE_CONNECTION_STRING": "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://ci-azurite:10000/devstoreaccount1;", "AZURE_CONTAINER": "pulp-test", "AZURE_LOCATION": "pulp3", "AZURE_OVERWRITE_FILES": true, "AZURE_URL_EXPIRATION_SECS": 120, "DEFAULT_FILE_STORAGE": "storages.backends.azure_storage.AzureStorage", "MEDIA_ROOT": "", "domain_enabled": true}\
-pulp_scenario_env: {}\
-' vars/main.yaml
-fi
-
-echo "PULP_API_ROOT=${PULP_API_ROOT}" >> "$GITHUB_ENV"
-
-if [ "${PULP_API_ROOT:-}" ]; then
-  sed -i -e '$a api_root: "'"$PULP_API_ROOT"'"' vars/main.yaml
-fi
-
-pulp config create --base-url https://pulp --api-root "$PULP_API_ROOT" --username "admin" --password "password"
+pulp config create --base-url https://pulp --api-root "${PULP_API_ROOT}" --username "admin" --password "password"
 cp ~/.config/pulp/cli.toml "${REPO_ROOT}/../pulp-cli/tests/cli.toml"
 
 ansible-playbook build_container.yaml
@@ -165,6 +73,16 @@ if [[ "$TEST" = "azure" ]]; then
   az storage container create --name pulp-test --connection-string $AZURE_STORAGE_CONNECTION_STRING
 fi
 
-echo ::group::PIP_LIST
-cmd_prefix bash -c "pip3 list"
-echo ::endgroup::
+# Needed for some functional tests
+cmd_prefix bash -c "echo '%wheel        ALL=(ALL)       NOPASSWD: ALL' > /etc/sudoers.d/nopasswd"
+cmd_prefix bash -c "usermod -a -G wheel pulp"
+
+# In some scenarios we want to simulate a failed redis cache.
+if [[ " s3 " =~ " ${TEST} " ]]; then
+  cmd_prefix bash -c "s6-rc -d change redis"
+  echo "The Redis service was disabled for $TEST"
+fi
+
+# Lots of plugins try to use this path, and throw warnings if they cannot access it.
+cmd_prefix mkdir /.pytest_cache
+cmd_prefix chown pulp:pulp /.pytest_cache
