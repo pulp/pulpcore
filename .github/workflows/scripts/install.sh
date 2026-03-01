@@ -7,130 +7,38 @@
 #
 # For more info visit https://github.com/pulp/plugin_template
 
+set -euv
+
 # make sure this script runs at the repo root
 cd "$(dirname "$(realpath -e "$0")")"/../../..
 REPO_ROOT="$PWD"
 
-set -euv
-
 source .github/workflows/scripts/utils.sh
-
-PLUGIN_VERSION="$(bump-my-version show current_version | tail -n -1 | python -c 'from packaging.version import Version; print(Version(input()))')"
-PLUGIN_SOURCE="./pulpcore/dist/pulpcore-${PLUGIN_VERSION}-py3-none-any.whl"
-
-export PULP_API_ROOT="/pulp/"
 
 PIP_REQUIREMENTS=("pulp-cli")
 
 # This must be the **only** call to "pip install" on the test runner.
 pip install ${PIP_REQUIREMENTS[*]}
 
+if [[ "$TEST" = "s3" ]]; then
+for i in {1..3}
+do
+  ansible-galaxy collection install "amazon.aws:8.1.0" && s=0 && break || s=$? && sleep 3
+done
+if [[ $s -gt 0 ]]
+then
+  echo "Failed to install amazon.aws"
+  exit $s
+fi
+fi
+
 # Check out the pulp-cli branch matching the installed version.
 PULP_CLI_VERSION="$(pip freeze | sed -n -e 's/pulp-cli==//p')"
 git clone --depth 1 --branch "$PULP_CLI_VERSION" https://github.com/pulp/pulp-cli.git ../pulp-cli
 
 cd .ci/ansible/
-if [ "$TEST" = "s3" ]; then
-  PLUGIN_SOURCE="${PLUGIN_SOURCE}[s3]"
-fi
-if [ "$TEST" = "azure" ]; then
-  PLUGIN_SOURCE="${PLUGIN_SOURCE}[azure]"
-fi
 
-cat >> vars/main.yaml << VARSYAML
-image:
-  name: pulp
-  tag: "ci_build"
-plugins:
-  - name: pulpcore
-    source: "${PLUGIN_SOURCE}"
-VARSYAML
-if [[ -f ../../ci_requirements.txt ]]; then
-  cat >> vars/main.yaml << VARSYAML
-    ci_requirements: true
-VARSYAML
-fi
-if [ "$TEST" = "pulp" ]; then
-  cat >> vars/main.yaml << VARSYAML
-    upperbounds: true
-VARSYAML
-fi
-if [ "$TEST" = "lowerbounds" ]; then
-  cat >> vars/main.yaml << VARSYAML
-    lowerbounds: true
-VARSYAML
-fi
-
-cat >> vars/main.yaml << VARSYAML
-services:
-  - name: pulp
-    image: "pulp:ci_build"
-    volumes:
-      - ./settings:/etc/pulp
-      - ./ssh:/keys/
-      - ~/.config:/var/lib/pulp/.config
-      - ../../../pulp-openapi-generator:/root/pulp-openapi-generator
-    env:
-      PULP_WORKERS: "4"
-      PULP_HTTPS: "true"
-VARSYAML
-
-cat >> vars/main.yaml << VARSYAML
-pulp_env: {"PULP_CA_BUNDLE": "/etc/pulp/certs/pulp_webserver.crt"}
-pulp_settings: {"allowed_export_paths": ["/tmp"], "allowed_import_paths": ["/tmp"], "content_path_prefix": "/somewhere/else/", "orphan_protection_time": 0, "task_protection_time": 10, "tmpfile_protection_time": 10, "upload_protection_time": 10}
-pulp_scheme: https
-pulp_default_container: ghcr.io/pulp/pulp-ci-centos9:latest
-VARSYAML
-
-SCENARIOS=("pulp" "performance" "azure" "gcp" "s3" "generate-bindings" "lowerbounds")
-if [[ " ${SCENARIOS[*]} " =~ " ${TEST} " ]]; then
-  sed -i -e '/^services:/a \
-  - name: pulp-fixtures\
-    image: docker.io/pulp/pulp-fixtures:latest\
-    env: {BASE_URL: "http://pulp-fixtures:8080"}' vars/main.yaml
-
-  export REMOTE_FIXTURES_ORIGIN="http://pulp-fixtures:8080"
-fi
-
-if [ "$TEST" = "s3" ]; then
-  export MINIO_ACCESS_KEY=AKIAIT2Z5TDYPX3ARJBA
-  export MINIO_SECRET_KEY=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
-  sed -i -e '/^services:/a \
-  - name: minio\
-    image: minio/minio\
-    env:\
-      MINIO_ACCESS_KEY: "'$MINIO_ACCESS_KEY'"\
-      MINIO_SECRET_KEY: "'$MINIO_SECRET_KEY'"\
-    command: "server /data"' vars/main.yaml
-  sed -i -e '$a s3_test: true\
-minio_access_key: "'$MINIO_ACCESS_KEY'"\
-minio_secret_key: "'$MINIO_SECRET_KEY'"\
-pulp_scenario_settings: {"DISABLED_authentication_backends": "@merge django.contrib.auth.backends.RemoteUserBackend", "DISABLED_authentication_json_header": "HTTP_X_RH_IDENTITY", "DISABLED_authentication_json_header_jq_filter": ".identity.user.username", "DISABLED_authentication_json_header_openapi_security_scheme": {"description": "External OAuth integration", "flows": {"clientCredentials": {"scopes": {"api.console": "grant_access_to_pulp"}, "tokenUrl": "https://your-identity-provider/token/issuer"}}, "type": "oauth2"}, "DISABLED_rest_framework__default_authentication_classes": "@merge pulpcore.app.authentication.JSONHeaderRemoteAuthentication", "MEDIA_ROOT": "", "STORAGES": {"default": {"BACKEND": "storages.backends.s3boto3.S3Boto3Storage", "OPTIONS": {"access_key": "AKIAIT2Z5TDYPX3ARJBA", "addressing_style": "path", "bucket_name": "pulp3", "default_acl": "@none", "endpoint_url": "http://minio:9000", "region_name": "eu-central-1", "secret_key": "fqRvjWaPU5o0fCqQuUWbj9Fainj2pVZtBCiDiieS", "signature_version": "s3v4"}}, "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"}}, "domain_enabled": true, "hide_guarded_distributions": true, "rest_framework__default_permission_classes": ["pulpcore.plugin.access_policy.AccessPolicyFromSettings"]}\
-pulp_scenario_env: {}\
-' vars/main.yaml
-  export PULP_API_ROOT="/rerouted/djnd/"
-fi
-
-if [ "$TEST" = "azure" ]; then
-  sed -i -e '/^services:/a \
-  - name: ci-azurite\
-    image: mcr.microsoft.com/azure-storage/azurite\
-    volumes:\
-      - ./azurite:/etc/pulp\
-    command: "azurite-blob --skipApiVersionCheck --blobHost 0.0.0.0"' vars/main.yaml
-  sed -i -e '$a azure_test: true\
-pulp_scenario_settings: {"MEDIA_ROOT": "", "STORAGES": {"default": {"BACKEND": "storages.backends.azure_storage.AzureStorage", "OPTIONS": {"account_key": "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==", "account_name": "devstoreaccount1", "azure_container": "pulp-test", "connection_string": "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://ci-azurite:10000/devstoreaccount1;", "expiration_secs": 120, "location": "pulp3", "overwrite_files": true}}, "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"}}, "api_root_rewrite_header": "X-API-Root", "content_origin": null, "domain_enabled": true, "rest_framework__default_permission_classes": ["pulpcore.plugin.access_policy.DefaultAccessPolicy"]}\
-pulp_scenario_env: {}\
-' vars/main.yaml
-fi
-
-echo "PULP_API_ROOT=${PULP_API_ROOT}" >> "$GITHUB_ENV"
-
-if [ "${PULP_API_ROOT:-}" ]; then
-  sed -i -e '$a api_root: "'"$PULP_API_ROOT"'"' vars/main.yaml
-fi
-
-pulp config create --base-url https://pulp --api-root "$PULP_API_ROOT" --username "admin" --password "password"
+pulp config create --base-url https://pulp --api-root "${PULP_API_ROOT}" --username "admin" --password "password"
 cp ~/.config/pulp/cli.toml "${REPO_ROOT}/../pulp-cli/tests/cli.toml"
 
 ansible-playbook build_container.yaml
@@ -165,6 +73,16 @@ if [[ "$TEST" = "azure" ]]; then
   az storage container create --name pulp-test --connection-string $AZURE_STORAGE_CONNECTION_STRING
 fi
 
-echo ::group::PIP_LIST
-cmd_prefix bash -c "pip3 list"
-echo ::endgroup::
+# Needed for some functional tests
+cmd_prefix bash -c "echo '%wheel        ALL=(ALL)       NOPASSWD: ALL' > /etc/sudoers.d/nopasswd"
+cmd_prefix bash -c "usermod -a -G wheel pulp"
+
+# In some scenarios we want to simulate a failed redis cache.
+if [[ " s3 " =~ " ${TEST} " ]]; then
+  cmd_prefix bash -c "s6-rc -d change redis"
+  echo "The Redis service was disabled for $TEST"
+fi
+
+# Lots of plugins try to use this path, and throw warnings if they cannot access it.
+cmd_prefix mkdir /.pytest_cache
+cmd_prefix chown pulp:pulp /.pytest_cache
