@@ -1,0 +1,1 @@
+Fix regression (crash) during retain_repo_versions cleanup.

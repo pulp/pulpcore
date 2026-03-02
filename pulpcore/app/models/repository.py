@@ -1313,7 +1313,8 @@ class RepositoryVersion(BaseModel):
         """
         with transaction.atomic():
             # relatively inexpensive sanity check for memoization
-            assert len(self.content_ids) == self._content_relationships().count()
+            if self.content_ids:
+                assert len(self.content_ids) == self._content_relationships().count()
             # delete existing content details and recompute them all
             RepositoryVersionContentDetails.objects.filter(repository_version=self).delete()
             counts_list = []
