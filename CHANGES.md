@@ -8,6 +8,29 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.104.1 (2026-03-02) {: #3.104.1 }
+
+### REST API {: #3.104.1-rest-api }
+
+#### Bugfixes {: #3.104.1-rest-api-bugfix }
+
+- Fix regression (crash) during retain_repo_versions cleanup.
+  [#7371](https://github.com/pulp/pulpcore/issues/7371)
+
+### Plugin API {: #3.104.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.104.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.104.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.104.0 (2026-02-24) {: #3.104.0 }
 
 ### REST API {: #3.104.0-rest-api }
