@@ -5,4 +5,4 @@ pytest<10
 pytest-django
 pytest-asyncio
 pytest-aiohttp
-pytest-redis<3.1.0 # https://github.com/ClearcodeHQ/pytest-redis/issues/679
+pytest-redis<4.1.0 # https://github.com/ClearcodeHQ/pytest-redis/issues/679
