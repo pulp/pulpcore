@@ -57,6 +57,34 @@ def file_repository_content(
 
 
 @pytest.mark.parallel
+def test_repository_filter(
+    file_bindings,
+    file_remote_ssl_factory,
+    file_repository_factory,
+    basic_manifest_path,
+    monitor_task,
+):
+    """Tests that the repository_version filter works with repository HREF/PRN."""
+    remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="on_demand")
+    base_repo = file_repository_factory()
+    contents = file_bindings.ContentFilesApi.list(repository_version=base_repo.latest_version_href)
+    assert contents.count == 0
+    contents = file_bindings.ContentFilesApi.list(repository_version=base_repo.pulp_href)
+    assert contents.count == 0
+
+    task = file_bindings.RepositoriesFileApi.sync(
+        base_repo.pulp_href, {"remote": remote.pulp_href}
+    ).task
+    monitor_task(task)
+    base_repo = file_bindings.RepositoriesFileApi.read(base_repo.pulp_href)
+    assert base_repo.latest_version_href[-2] == "1"
+    contents = file_bindings.ContentFilesApi.list(repository_version=base_repo.latest_version_href)
+    assert contents.count == 3
+    contents = file_bindings.ContentFilesApi.list(repository_version=base_repo.prn)
+    assert contents.count == 3
+
+
+@pytest.mark.parallel
 def test_add_remove_content(
     file_bindings,
     file_repository_factory,
