@@ -58,7 +58,6 @@ class Command(BaseCommand):
                             rv._content_relationships().values_list("content__pk", flat=True)
                         )
                         if cached_id_set != repositorycontent_id_set:
-                            number_broken += 1
                             if not has_printed_domain:
                                 self.stdout.write(f'In domain "{domain.name}"')
                                 has_printed_domain = True
@@ -73,12 +72,16 @@ class Command(BaseCommand):
                     repositorycontent_id_count = rv._content_relationships().count()
                     if repositorycontent_id_count == 0:
                         continue
-                    rv_count_details = models.RepositoryVersionContentDetails.objects.get(
+                    rv_count_details = models.RepositoryVersionContentDetails.objects.filter(
                         repository_version=rv,
                         count_type=models.RepositoryVersionContentDetails.PRESENT,
                     )
 
-                    if rv_count_details.count != repositorycontent_id_count:
+                    # need to sum across all content types
+                    total_count = sum(rvcd.count for rvcd in rv_count_details)
+
+                    if total_count != repositorycontent_id_count:
+                        needs_fix = True
                         if not has_printed_domain:
                             self.stdout.write(f'In domain "{domain.name}"')
                             has_printed_domain = True
@@ -88,12 +91,15 @@ class Command(BaseCommand):
                             "RepositoryContent and RepositoryVersionContentDetails"
                         )
 
-                    if needs_fix and not dry_run:
-                        rv.content_ids = list(
-                            rv._content_relationships().values_list("content__pk", flat=True)
-                        )
-                        rv.save()
-                        rv._compute_counts()
+                    if needs_fix:
+                        number_broken += 1
+
+                        if not dry_run:
+                            rv.content_ids = list(
+                                rv._content_relationships().values_list("content__pk", flat=True)
+                            )
+                            rv.save()
+                            rv._compute_counts()
 
             self.stdout.write()
 
@@ -101,7 +107,10 @@ class Command(BaseCommand):
             self.stdout.write("Finished. (OK)")
         else:
             if dry_run:
-                self.stdout.write("Finished. (no changes)")
+                self.stdout.write(
+                    f"Finished. (dry run: {number_broken} incorrect repository versions "
+                    f"- no changes)"
+                )
             else:
                 self.stdout.write(f"Finished. ({number_broken} repository versions fixed)")
 
