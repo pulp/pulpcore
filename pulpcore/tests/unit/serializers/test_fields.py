@@ -8,14 +8,19 @@ from pulpcore.app.serializers.fields import pulp_labels_validator
 @pytest.mark.parametrize(
     "labels",
     [
-        {"key": "value"},
-        {"key": ""},
-        {"key": None},
-        {"key1": "value", "key2": None, "key3": ""},
+        pytest.param({"key": "value"}, id="normal"),
+        pytest.param({"key": ""}, id="empty-value"),
+        pytest.param({"key": None}, id="none-value"),
+        pytest.param({"key1": "value", "key2": None, "key3": ""}, id="multiple-keys"),
+        pytest.param({"my-key": "value"}, id="dash-key"),
+        pytest.param({"my.key": "value"}, id="dotted-key"),
+        pytest.param({"my key": "value"}, id="spaced-key"),
+        pytest.param({"my-dotted.key": "value"}, id="dotted-dash-key"),
+        pytest.param({"spaced key-with.mixed_chars": "value"}, id="all-key"),
     ],
 )
 def test_pulp_labels_validator_valid(labels):
-    """Valid label values including None should pass validation."""
+    """Valid label keys and values should pass validation."""
     result = pulp_labels_validator(labels)
     assert result == labels
 
@@ -23,10 +28,12 @@ def test_pulp_labels_validator_valid(labels):
 @pytest.mark.parametrize(
     "labels",
     [
-        {"key": "val,ue"},
-        {"key": "val(ue"},
-        {"key": "val)ue"},
-        {"bad!key": "value"},
+        pytest.param({"key": "val,ue"}, id="comma-value"),
+        pytest.param({"key": "val(ue"}, id="open-parenthesis-value"),
+        pytest.param({"key": "val)ue"}, id="close-parenthesis-value"),
+        pytest.param({"bad!key": "value"}, id="exclamation-key"),
+        pytest.param({"bad:key": "value"}, id="colon-key"),
+        pytest.param({"bad@key": "value"}, id="at-sign-key"),
     ],
 )
 def test_pulp_labels_validator_invalid(labels):
