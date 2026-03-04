@@ -11,6 +11,7 @@ from rest_framework import serializers
 from rest_framework.fields import empty
 
 from pulpcore.app import models
+from pulpcore.constants import LABEL_KEY_REGEX
 from pulpcore.app.serializers import DetailIdentityField, IdentityField, RelatedField
 from pulpcore.app.util import reverse
 
@@ -427,8 +428,13 @@ def pulp_labels_validator(value):
         value = json.loads(value)
 
     for k, v in value.items():
-        if not re.match(r"^[\w ]+$", k):
-            raise serializers.ValidationError(_("Key '{}' contains non-alphanumerics.").format(k))
+        if not re.match(LABEL_KEY_REGEX, k):
+            raise serializers.ValidationError(
+                _(
+                    "Key '{}' contains invalid characters. Only alphanumerics, underscores,"
+                    " spaces, hyphens, and dots are allowed."
+                ).format(k)
+            )
         if v is not None and re.search(r"[,()]", v):
             raise serializers.ValidationError(
                 _("Key '{}' contains value with comma or parenthesis.").format(k)

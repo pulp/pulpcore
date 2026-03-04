@@ -1,0 +1,1 @@
+Unified `pulp_labels` key validation across create/update, `set_label`/`unset_label`, and label filters to consistently allow alphanumerics, underscores, spaces, hyphens, and dots.

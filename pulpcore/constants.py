@@ -129,6 +129,10 @@ CHECKPOINT_TS_FORMAT = "%Y%m%dT%H%M%SZ"
 ORPHAN_PROTECTION_TIME_LOWER_BOUND = 0
 ORPHAN_PROTECTION_TIME_UPPER_BOUND = 4294967295  # (2^32)-1
 
+# Valid characters for pulp_labels keys: alphanumerics, underscores, spaces, hyphens, and dots.
+LABEL_KEY_CHARS = r"[\w .\-]"
+LABEL_KEY_REGEX = rf"^{LABEL_KEY_CHARS}+$"
+
 # VULNERABILITY REPORT CONSTANTS
 # OSV API URL
 OSV_QUERY_URL = "https://api.osv.dev/v1/query"
