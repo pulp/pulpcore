@@ -45,19 +45,19 @@ def test_content_directory_listing(
     if pulp_settings.DOMAIN_ENABLED:
         base_url = urljoin(base_url, "default/")
     response = http_get(base_url).decode("utf-8")
-    assert response.count(f'a href="{base_path}/"') == 1
+    assert response.count(f'a href="./{base_path}/"') == 1
     assert response.count('a href="../"') == 0
 
     url = urljoin(base_url, base_path + "/")
     response = http_get(url).decode("utf-8")
-    assert response.count('a href="foo1/"') == 1
-    assert response.count('a href="foo2/"') == (0 if HIDE_GUARDED_DISTRIBUTIONS else 1)
-    assert response.count('a href="boo1/"') == 1
-    assert response.count('a href="boo2/"') == (0 if HIDE_GUARDED_DISTRIBUTIONS else 1)
+    assert response.count('a href="./foo1/"') == 1
+    assert response.count('a href="./foo2/"') == (0 if HIDE_GUARDED_DISTRIBUTIONS else 1)
+    assert response.count('a href="./boo1/"') == 1
+    assert response.count('a href="./boo2/"') == (0 if HIDE_GUARDED_DISTRIBUTIONS else 1)
     assert response.count('a href="../"') == 1
 
     response = http_get(urljoin(url, "boo1/")).decode("utf-8")
-    assert response.count('a href="foo1/"') == 1
+    assert response.count('a href="./foo1/"') == 1
 
     # Assert that not using a trailing slash on the root returns a 301
     base_url = urljoin(
