@@ -570,7 +570,7 @@ class Handler:
 {% else -%}
 {% set size = "" -%}
 {% endif -%}
-<a href="{{ name|e }}">{{ name|e }}</a>{% for number in range(100 - name|e|length) %} """
+<a href="./{{ name|e }}">{{ name|e }}</a>{% for number in range(100 - name|e|length) %} """
             """{% endfor %}{{ date }}  {{ size }}
 {% endfor -%}
 </pre><hr></body>
