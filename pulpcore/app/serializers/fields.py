@@ -429,7 +429,7 @@ def pulp_labels_validator(value):
     for k, v in value.items():
         if not re.match(r"^[\w ]+$", k):
             raise serializers.ValidationError(_("Key '{}' contains non-alphanumerics.").format(k))
-        if re.search(r"[,()]", v):
+        if v is not None and re.search(r"[,()]", v):
             raise serializers.ValidationError(
                 _("Key '{}' contains value with comma or parenthesis.").format(k)
             )

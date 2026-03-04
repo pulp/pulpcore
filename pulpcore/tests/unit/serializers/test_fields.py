@@ -2,6 +2,37 @@ import pytest
 from rest_framework import serializers
 
 from pulpcore.app.serializers import fields
+from pulpcore.app.serializers.fields import pulp_labels_validator
+
+
+@pytest.mark.parametrize(
+    "labels",
+    [
+        {"key": "value"},
+        {"key": ""},
+        {"key": None},
+        {"key1": "value", "key2": None, "key3": ""},
+    ],
+)
+def test_pulp_labels_validator_valid(labels):
+    """Valid label values including None should pass validation."""
+    result = pulp_labels_validator(labels)
+    assert result == labels
+
+
+@pytest.mark.parametrize(
+    "labels",
+    [
+        {"key": "val,ue"},
+        {"key": "val(ue"},
+        {"key": "val)ue"},
+        {"bad!key": "value"},
+    ],
+)
+def test_pulp_labels_validator_invalid(labels):
+    """Invalid label keys or values should raise ValidationError."""
+    with pytest.raises(serializers.ValidationError):
+        pulp_labels_validator(labels)
 
 
 @pytest.mark.parametrize(
