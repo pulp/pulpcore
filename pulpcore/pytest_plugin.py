@@ -768,8 +768,11 @@ def pulp_content_origin(pulp_settings):
 
 
 @pytest.fixture(scope="session")
-def pulp_content_origin_with_prefix(pulp_settings):
-    return pulp_settings.CONTENT_ORIGIN + pulp_settings.CONTENT_PATH_PREFIX[:-1]
+def pulp_content_origin_with_prefix(pulp_settings, bindings_cfg):
+    if pulp_settings.CONTENT_ORIGIN:
+        return pulp_settings.CONTENT_ORIGIN + pulp_settings.CONTENT_PATH_PREFIX[:-1]
+    else:
+        return f"{bindings_cfg.host}{pulp_settings.CONTENT_PATH_PREFIX[:-1]}"
 
 
 @pytest.fixture(scope="session")

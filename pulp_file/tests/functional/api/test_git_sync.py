@@ -14,6 +14,13 @@ FILE_COUNT = {
     "2016.02.18": 95,  # tag
     "63651d3": 306,  # commit for tag 2018.02.15
 }
+LFS_REMOTE_URL = "https://huggingface.co/julien-c/dummy-unknown"
+LFS_BLOBS = [
+    "tf_model.h5,4a8fce317e36e320941d2d200a1747c94d2a8ee0b24c8289522b579ea53eac40,157312",
+    "pytorch_model.bin,4b243c475af8d0a7754e87d7d096c92e5199ec2fe168a2ee7998e3b8e9bcb1d3,65074",
+    "flax_model.msgpack,da73dde871fe14bf876064a40368cefa5e014aa49f408b61ca8350c54456b198,58499",
+]
+LFS_FILE_COUNT = 8
 
 
 # CRUD tests
@@ -114,3 +121,30 @@ def test_git_sync_invalid_ref(file_bindings, file_repo, file_git_remote_factory,
         monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task)
     error_desc = exc.value.task.error["description"]
     assert "Failed to clone" in error_desc or "Could not resolve git ref" in error_desc
+
+
+@pytest.mark.parallel
+def test_git_sync_lfs(
+    file_bindings,
+    file_repo_with_auto_publish,
+    file_git_remote_factory,
+    file_distribution_factory,
+    download_content_unit,
+    monitor_task,
+):
+    """Test syncing from a public Git repository with LFS."""
+    remote = file_git_remote_factory(url=LFS_REMOTE_URL)
+    file_repo = file_repo_with_auto_publish
+
+    body = RepositorySyncURL(remote=remote.pulp_href)
+    monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task)
+
+    file_repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
+    assert file_repo.latest_version_href.endswith("/versions/1/")
+    version = file_bindings.RepositoriesFileVersionsApi.read(file_repo.latest_version_href)
+    assert version.content_summary.present["file.file"]["count"] == LFS_FILE_COUNT
+
+    distribution = file_distribution_factory(repository=file_repo.pulp_href)
+    manifest = download_content_unit(distribution.base_path, "PULP_MANIFEST").decode("utf-8")
+    for line in LFS_BLOBS:
+        assert line in manifest
