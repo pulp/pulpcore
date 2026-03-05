@@ -5,6 +5,7 @@ from urllib.parse import urljoin
 
 from django.conf import settings
 from django.core.exceptions import FieldDoesNotExist
+from django.http import HttpRequest
 from django.utils.html import strip_tags
 from drf_spectacular.drainage import reset_generator_stats
 from drf_spectacular.generators import SchemaGenerator
@@ -21,9 +22,11 @@ from drf_spectacular.plumbing import (
 )
 from drf_spectacular.settings import spectacular_settings
 from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import OpenApiParameter, extend_schema_field
+from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_field
+from drf_spectacular.extensions import OpenApiViewExtension, OpenApiAuthenticationExtension
 from rest_framework import mixins, serializers
 from rest_framework.exceptions import ParseError
+from rest_framework.request import Request
 from rest_framework.schemas.utils import get_pk_description
 
 from pulpcore.app.apps import pulp_plugin_configs
@@ -36,9 +39,12 @@ else:
     API_ROOT_NO_FRONT_SLASH = settings.V3_API_ROOT_NO_FRONT_SLASH
 API_ROOT_NO_FRONT_SLASH = API_ROOT_NO_FRONT_SLASH.replace("<", "{").replace(">", "}")
 
-
 # Python does not distinguish integer sizes. The safest assumption is that they are large.
 extend_schema_field(OpenApiTypes.INT64)(serializers.IntegerField)
+
+
+class InheritSerializer(serializers.Serializer):
+    """This is a dummy tracer to allow mixins to refer to the natural serializer of a viewset."""
 
 
 class PulpAutoSchema(AutoSchema):
@@ -51,6 +57,7 @@ class PulpAutoSchema(AutoSchema):
         "patch": "partial_update",
         "delete": "delete",
     }
+    V3_API = API_ROOT_NO_FRONT_SLASH.replace("{pulp_domain}/", "")
 
     def _tokenize_path(self):
         """
@@ -78,7 +85,7 @@ class PulpAutoSchema(AutoSchema):
             if not tokenized_path and getattr(self.view, "get_view_name", None):
                 tokenized_path.extend(self.view.get_view_name().split())
 
-        path = "/".join(tokenized_path).replace(settings.V3_API_ROOT_NO_FRONT_SLASH, "")
+        path = "/".join(tokenized_path).replace(self.V3_API, "")
         tokenized_path = path.split("/")
 
         return tokenized_path
@@ -193,6 +200,19 @@ class PulpAutoSchema(AutoSchema):
             name = name + "Response"
         return name
 
+    def get_override_parameters(self):
+        parameters = super().get_override_parameters()
+        parameters.append(
+            OpenApiParameter(
+                name="X-Task-Diagnostics",
+                location=OpenApiParameter.HEADER,
+                required=False,
+                type={"type": "array", "items": {"type": "string"}},
+                description="List of profilers to use on tasks.",
+            )
+        )
+        return parameters
+
     def map_parsers(self):
         """
         Get request parsers.
@@ -213,82 +233,11 @@ class PulpAutoSchema(AutoSchema):
             request_body["required"] = True
         return request_body
 
-    def _resolve_path_parameters(self, variables):
-        """
-        Resolve path parameters.
-
-        Extended to omit undesired warns.
-        """
-        model = getattr(getattr(self.view, "queryset", None), "model", None)
-        parameters = []
-
-        for variable in variables:
-            schema = build_basic_type(OpenApiTypes.STR)
-            description = ""
-
-            resolved_parameter = resolve_django_path_parameter(
-                self.path_regex,
-                variable,
-                self.map_renderers("format"),
-            )
-            if not resolved_parameter:
-                resolved_parameter = resolve_regex_path_parameter(self.path_regex, variable)
-
-            if resolved_parameter:
-                schema = resolved_parameter["schema"]
-            elif model:
-                try:
-                    model_field = model._meta.get_field(variable)
-                    schema = self._map_model_field(model_field, direction=None)
-                    # strip irrelevant meta data
-                    irrelevant_field_meta = ["readOnly", "writeOnly", "nullable", "default"]
-                    schema = {k: v for k, v in schema.items() if k not in irrelevant_field_meta}
-                    if "description" not in schema and model_field.primary_key:
-                        description = get_pk_description(model, model_field)
-                except FieldDoesNotExist:
-                    pass
-
-            # Used by the bindings to identify which param is the domain path
-            extensions = {}
-            if settings.DOMAIN_ENABLED and variable == "pulp_domain":
-                extensions["x-isDomain"] = True
-
-            parameters.append(
-                build_parameter_type(
-                    name=variable,
-                    location=OpenApiParameter.PATH,
-                    description=description,
-                    schema=schema,
-                    extensions=extensions,
-                )
-            )
-
-        return parameters
-
-    def resolve_serializer(self, serializer, direction):
-        """Serializer to component."""
-        component_schema = self._map_serializer(serializer, direction)
-        if not component_schema.get("properties", {}):
-            component = ResolvedComponent(
-                name=self._get_serializer_name(serializer, direction),
-                type=ResolvedComponent.SCHEMA,
-                object=serializer,
-            )
-            if component in self.registry:
-                return self.registry[component]
-
-            component.schema = component_schema
-            self.registry.register(component)
-
-        else:
-            component = super().resolve_serializer(serializer, direction)
-
-        return component
-
     def _get_response_bodies(self):
         """
         Handle response status code.
         """
+        # DRF handles this most of the time. But it seems set_label still needs it.
         response = super()._get_response_bodies()
         if (
             self.method == "POST"
@@ -298,6 +247,15 @@ class PulpAutoSchema(AutoSchema):
             response["201"] = response.pop("200")
 
         return response
+
+    def _get_response_for_code(
+        self, serializer, status_code, media_types=None, direction="response"
+    ):
+        """Hack to replace the InheritSerializer with the real deal."""
+        if serializer == InheritSerializer:
+            serializer = self._get_serializer()
+
+        return super()._get_response_for_code(serializer, status_code, media_types, direction)
 
 
 class PulpSchemaGenerator(SchemaGenerator):
@@ -311,7 +269,7 @@ class PulpSchemaGenerator(SchemaGenerator):
             prefix (str): Optional prefix to add to the slug
             pulp_model_alias (str): Optional model name to use instead of model.__name__
         Returns:
-            str: *pulp_href where * is the model name in all lower case letters
+            str: '{model_name_snake_case}_href'
         """
         app_label = model._meta.app_label
         model_name = pulp_model_alias or model.__name__
@@ -377,7 +335,7 @@ class PulpSchemaGenerator(SchemaGenerator):
             resource_path = "%s}/" % path.rsplit(sep="}", maxsplit=1)[0]
             # This check prevents /pulp/{pulp_domain}/ from being converted for non-detail endpoints
             # Possibly affects plugin-specific urls, depends on their url structure
-            if resource_path.lstrip("/") not in API_ROOT_NO_FRONT_SLASH:
+            if not resource_path.endswith("/{pulp_domain}/"):
                 path = path.replace(resource_path, "{%s}" % param_name)
         return path
 
@@ -470,51 +428,47 @@ class PulpSchemaGenerator(SchemaGenerator):
 
     def get_schema(self, request=None, public=False):
         """Generate a OpenAPI schema."""
-        reset_generator_stats()
+        if request is None:
+            request = Request(HttpRequest())
+            request.META["SERVER_NAME"] = "localhost"
+            request.META["SERVER_PORT"] = "24817"
 
         apps = list(pulp_plugin_configs())
+        if request and "plugin" in request.query_params:
+            raise ParseError("'plugin' has been removed. Use 'component' instead.")
         if request and "component" in request.query_params:
             # /pulp/api/v3/docs/api.json?component=core,file
-            if "plugin" in request.query_params:
-                raise ParseError("'component' and 'plugin' cannot be combined.")
             app_labels = request.query_params["component"].split(",")
+            if "core" not in app_labels:
+                core_app = [app for app in apps if app.label == "core"]
+            else:
+                core_app = []
             apps = [app for app in apps if app.label in app_labels]
             if len(apps) != len(app_labels):
                 raise ParseError("Invalid component specified.")
             request.plugins = [app.name.split(".")[0] for app in apps]
+            # Adding core back because we want to report it's version too.
+            apps.extend(core_app)
+        request.apps = apps
 
-        if request and "plugin" in request.query_params:
-            # /pulp/api/v3/docs/api.json?plugin=pulp_file
-            deprecation_logger.warn(
-                _(
-                    "The query parameter `plugin` has been deprecated and "
-                    "will be removed with pulpcore>=3.55. "
-                    "Please use `component` with a list of app labels instead."
-                )
-            )
-            request.plugins = request.query_params["plugin"].split(",")
+        request.bindings = "bindings" in request.query_params
 
-        result = build_root_object(
-            paths=self.parse(request, public),
-            components=self.registry.build(spectacular_settings.APPEND_COMPONENTS),
-            version=self.api_version or getattr(request, "version", None),
-        )
-        for hook in spectacular_settings.POSTPROCESSING_HOOKS:
-            result = hook(result=result, generator=self, request=request, public=public)
+        result = super().get_schema(request, public)
 
-        # Basically I'm doing it to get pulp logo at redoc page
-        result["info"]["x-logo"] = {
-            "url": "https://pulp.plan.io/attachments/download/517478/pulp_logo_word_rectangle.svg"
+        if request.bindings:
+            # Undo the spectacular sanitization of operation ids
+            for path, path_spec in result["paths"].items():
+                for operation, operation_spec in path_spec.items():
+                    operation_spec["operationId"] = operation_spec.pop("x-copy-operationId")
+        return result
+
+
+class BasicAuthenticationScheme(OpenApiAuthenticationExtension):
+    target_class = "pulpcore.app.authentication.BasicAuthentication"
+    name = "basicAuth"
+
+    def get_security_definition(self, auto_schema):
+        return {
+            "type": "http",
+            "scheme": "basic",
         }
-
-        # Adding plugin version config
-        result["info"]["x-pulp-app-versions"] = {app.label: app.version for app in apps}
-
-        # Add domain-settings value
-        result["info"]["x-pulp-domain-enabled"] = settings.DOMAIN_ENABLED
-
-        # Adding current host as server (it will provide a default value for the bindings)
-        server_url = "http://localhost:24817" if not request else request.build_absolute_uri("/")
-        result["servers"] = [{"url": server_url}]
-
-        return normalize_result_object(result)
