@@ -73,7 +73,7 @@ class RepositorySerializer(ModelSerializer):
         )
 
 
-class RemoteSerializer(RemoteNetworkConfigSerializer, ModelSerializer, HiddenFieldsMixin):
+class RemoteSerializer(ModelSerializer, RemoteNetworkConfigSerializer, HiddenFieldsMixin):
     """
     Every remote defined by a plugin should have a Remote serializer that inherits from this
     class. Please import from `pulpcore.plugin.serializers` rather than from this module directly.
