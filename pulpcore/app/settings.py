@@ -307,6 +307,10 @@ SPECTACULAR_SETTINGS = {
     "COMPONENT_NO_READ_ONLY_REQUIRED": True,
     "GENERIC_ADDITIONAL_PROPERTIES": None,
     "DISABLE_ERRORS_AND_WARNINGS": not DEBUG,
+    "POSTPROCESSING_HOOKS": [
+        "drf_spectacular.hooks.postprocess_schema_enums",
+        "pulpcore.openapi.hooks.add_info_hook",
+    ],
     "TITLE": "Pulp 3 API",
     "DESCRIPTION": "Fetch, Upload, Organize, and Distribute Software Packages",
     "VERSION": "v3",
@@ -316,8 +320,9 @@ SPECTACULAR_SETTINGS = {
         "url": "https://pulpproject.org",
     },
     "LICENSE": {
-        "name": "GPLv2+",
         "url": "https://raw.githubusercontent.com/pulp/pulpcore/master/LICENSE",
+        "name": "GNU General Public License v2.0 or later",
+        "identifier": "GPL-2.0-or-later",
     },
 }
 

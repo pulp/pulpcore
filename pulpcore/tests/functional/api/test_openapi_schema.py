@@ -3,33 +3,43 @@
 import asyncio
 import copy
 import json
+from pathlib import Path
 
 import aiohttp
 import pytest
 import jsonschema
 
-from drf_spectacular.validation import JSON_SCHEMA_SPEC_PATH
-from jsonschema import ValidationError
+from drf_spectacular import validation
 from collections import defaultdict
 
 
 @pytest.fixture(scope="session")
-def openapi3_schema_spec():
-    with open(JSON_SCHEMA_SPEC_PATH) as fh:
-        openapi3_schema_spec = json.load(fh)
+def openapi3_schema_spec(pulp_openapi_schema):
+    schema_version = pulp_openapi_schema["openapi"]
+    if schema_version.startswith("3.0"):
+        spec_path = Path(validation.__file__).parent / "openapi_3_0_schema.json"
+        if not spec_path.exists():
+            # Assume this is drf-spectacular 0.26.*
+            spec_path = Path(validation.JSON_SCHEMA_SPEC_PATH)
 
-    return openapi3_schema_spec
+    elif schema_version.startswith("3.1"):
+        spec_path = Path(validation.__file__).parent / "openapi_3_1_schema.json"
+    else:
+        pytest.fail(f"Unknown OpenAPI schema version [{schema_version}].")
+    return json.loads(spec_path.read_text())
 
 
 @pytest.fixture(scope="session")
 def openapi3_schema_with_modified_safe_chars(openapi3_schema_spec):
-    openapi3_schema_spec_copy = copy.deepcopy(openapi3_schema_spec)  # Don't modify the original
+    oas_copy = copy.deepcopy(openapi3_schema_spec)  # Don't modify the original
     # Making OpenAPI validation to accept paths starting with / and {
-    properties = openapi3_schema_spec_copy["definitions"]["Paths"]["patternProperties"]
-    properties["^\\/|{"] = properties["^\\/"]
-    del properties["^\\/"]
-
-    return openapi3_schema_spec_copy
+    if "3.1.x" in oas_copy["description"]:
+        pattern_properties = oas_copy["$defs"]["paths"]["patternProperties"]
+        pattern_properties["^/|{"] = pattern_properties.pop("^/")
+    else:
+        pattern_properties = oas_copy["definitions"]["Paths"]["patternProperties"]
+        pattern_properties["^\\/|{"] = pattern_properties.pop("^\\/")
+    return oas_copy
 
 
 @pytest.fixture(scope="session")
@@ -44,8 +54,7 @@ def pulp_openapi_schema(pulp_openapi_schema_url):
 
 @pytest.fixture(scope="session")
 def pulp_openapi_schema_pk_path_set(pulp_openapi_schema_url):
-    url = f"{pulp_openapi_schema_url}?pk_path=1"
-    return asyncio.run(_download_schema(url))
+    return asyncio.run(_download_schema(pulp_openapi_schema_url + "?pk_path=1"))
 
 
 async def _download_schema(url):
@@ -63,7 +72,7 @@ def test_valid_with_pk_path_set(pulp_openapi_schema_pk_path_set, openapi3_schema
 @pytest.mark.parallel
 @pytest.mark.from_pulpcore_for_all_plugins
 def test_invalid_default_schema(pulp_openapi_schema, openapi3_schema_spec):
-    with pytest.raises(ValidationError):
+    with pytest.raises(jsonschema.ValidationError):
         jsonschema.validate(instance=pulp_openapi_schema, schema=openapi3_schema_spec)
 
 
@@ -86,3 +95,27 @@ def test_no_dup_operation_ids(pulp_openapi_schema):
 
     dup_ids = [id for id, cnt in operation_ids.items() if cnt > 1]
     assert len(dup_ids) == 0, f"Duplicate operationIds found: {dup_ids}"
+
+
+@pytest.mark.parallel
+def test_remote_user_auth_security_scheme(pulp_settings, pulp_openapi_schema):
+    if (
+        "pulpcore.app.authentication.PulpRemoteUserAuthentication"
+        not in pulp_settings.REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"]
+    ):
+        pytest.skip("Test can't run unless PulpRemoteUserAuthentication is enabled.")
+
+    expected_security_scheme = pulp_settings.REMOTE_USER_OPENAPI_SECURITY_SCHEME
+    security_schemes = pulp_openapi_schema["components"]["securitySchemes"]
+
+    assert security_schemes["remoteUserAuthentication"] == expected_security_scheme
+
+
+@pytest.mark.parallel
+def test_license_version_is_valid_spdx_specifier(pulp_openapi_schema):
+    assert (
+        pulp_openapi_schema["info"]["license"]["name"] == "GNU General Public License v2.0 or later"
+    )
+    schema_version = pulp_openapi_schema["openapi"]
+    if schema_version.startswith("3.1"):
+        assert pulp_openapi_schema["info"]["license"]["identifier"] == "GPL-2.0-or-later"
