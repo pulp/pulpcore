@@ -8,6 +8,31 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.104.2 (2026-03-05) {: #3.104.2 }
+
+### REST API {: #3.104.2-rest-api }
+
+#### Bugfixes {: #3.104.2-rest-api-bugfix }
+
+- Fixed a typo in `GroupRoleSerializer` that caused a 500 error when listing group roles with a domain set.
+  [#7095](https://github.com/pulp/pulpcore/issues/7095)
+- Fixed RemoteSerializer to fail when it contains invalid parameters.
+  [#7385](https://github.com/pulp/pulpcore/issues/7385)
+
+### Plugin API {: #3.104.2-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.104.2-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.104.2-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.104.1 (2026-03-02) {: #3.104.1 }
 
 ### REST API {: #3.104.1-rest-api }
