@@ -255,3 +255,13 @@ def test_validate_repo_remote_via_publication(monkeypatch, field):
     serializer = DistributionSerializer()
     with pytest.raises(serializers.ValidationError, match=error_msg):
         serializer.validate(data)
+
+
+def test_create_remote_with_invalid_parameter():
+    """
+    Test that the creation of a RemoteSerializer with an invalid parameter fails.
+    """
+    data = {**MINIMAL_DATA, "foo": "bar"}
+    serializer = RemoteSerializer(data=data)
+    with pytest.raises(serializers.ValidationError, match="Unexpected field"):
+        serializer.validate(data)
