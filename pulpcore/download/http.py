@@ -289,9 +289,14 @@ class HttpDownloader(BaseDownloader):
         """
         if self.download_throttler:
             await self.download_throttler.acquire()
-        async with self.session.get(
-            self.url, proxy=self.proxy, proxy_auth=self.proxy_auth, auth=self.auth
-        ) as response:
+        request_kwargs = {
+            "proxy": self.proxy,
+            "proxy_auth": self.proxy_auth,
+            "auth": self.auth,
+        }
+        if extra_data and extra_data.get("request_kwargs"):
+            request_kwargs.update(extra_data["request_kwargs"])
+        async with self.session.get(self.url, **request_kwargs) as response:
             self.raise_for_status(response)
             to_return = await self._handle_response(response)
             await response.release()

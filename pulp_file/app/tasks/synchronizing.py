@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 import shutil
 import tempfile
 
@@ -14,7 +15,6 @@ from pulpcore.plugin.exceptions import SyncError
 from pulpcore.plugin.models import Artifact, ProgressReport, Remote, PublishedMetadata
 from pulpcore.plugin.serializers import RepositoryVersionSerializer
 from pulpcore.plugin.stages import (
-    ArtifactDownloader,
     DeclarativeArtifact,
     DeclarativeContent,
     DeclarativeVersion,
@@ -66,7 +66,7 @@ def synchronize(remote_pk, repository_pk, mirror, url=None):
         dv.pipeline_stages = lambda new_version: [
             stage
             for stage in old_pipeline_stages(new_version)
-            if not isinstance(stage, (ArtifactDownloader, RemoteArtifactSaver))
+            if not isinstance(stage, (RemoteArtifactSaver))
         ]
     else:
         first_stage = FileFirstStage(remote, url)
@@ -242,6 +242,13 @@ def _build_clone_url(remote):
     return url
 
 
+_LFS_POINTER_RE = re.compile(
+    rb"^version https://git-lfs\.github\.com/spec/v1\n"
+    rb"oid sha256:([0-9a-f]{64})\n"
+    rb"size (\d+)\n$"
+)
+
+
 class GitFirstStage(Stage):
     """
     The first stage of a pulp_file sync pipeline for Git repositories.
@@ -259,6 +266,38 @@ class GitFirstStage(Stage):
         """
         super().__init__()
         self.remote = remote
+
+    def _parse_lfs_pointer(self, data):
+        """Returns the oid and size of an LFS pointer if present."""
+        match = _LFS_POINTER_RE.match(data)
+        if match:
+            return match.group(1).decode(), int(match.group(2))
+        return None
+
+    def _build_lfs_api_url(self):
+        """Derive the LFS API endpoint from the git remote URL."""
+        url = self.remote.url.rstrip("/")
+        if not url.endswith(".git"):
+            url += ".git"
+        return f"{url}/info/lfs/objects/batch"
+
+    async def _fetch_lfs_batch(self, lfs_blobs):
+        """Resolves the LFS pointers to downloadable links."""
+        lfs_api_url = self._build_lfs_api_url()
+        headers = {
+            "Content-Type": "application/vnd.git-lfs+json",
+            "Accept": "application/vnd.git-lfs+json",
+        }
+        data = {
+            "operation": "download",
+            "transfer": "basic",
+            "objects": [{"oid": oid, "size": size} for rp, oid, size in lfs_blobs],
+        }
+        downloader = self.remote.get_downloader(url=lfs_api_url)
+        session = downloader.session
+        async with session.post(lfs_api_url, headers=headers, json=data) as response:
+            response.raise_for_status()
+            return await response.json()
 
     async def run(self):
         """
@@ -310,14 +349,20 @@ class GitFirstStage(Stage):
             code="sync.git.parsing_tree",
         ) as pb:
             blobs = [item for item in commit.tree.traverse() if item.type == "blob"]
+            lfs_blobs = {}
             pb.total = len(blobs)
             await pb.asave()
 
             for blob in blobs:
                 relative_path = blob.path
                 size = blob.size
-                with tempfile.NamedTemporaryFile(dir=".", delete=False, mode="wb") as file:
+                with tempfile.NamedTemporaryFile(dir=".", delete=False, mode="w+b") as file:
                     shutil.copyfileobj(blob.data_stream, file)
+                    file.seek(0)
+                    # Check to see if the blob is an LFS pointer
+                    if size < 1024 and (lfs_tuple := self._parse_lfs_pointer(file.read())):
+                        lfs_blobs[lfs_tuple[0]] = (relative_path, *lfs_tuple)
+                        continue
 
                 artifact = Artifact.init_and_validate(file.name, expected_size=size)
                 file_content = FileContent(relative_path=relative_path, digest=artifact.sha256)
@@ -331,3 +376,32 @@ class GitFirstStage(Stage):
                 dc = DeclarativeContent(content=file_content, d_artifacts=[da])
                 await pb.aincrement()
                 await self.put(dc)
+
+            if lfs_blobs:
+                lfs_results = await self._fetch_lfs_batch(lfs_blobs.values())
+                for lfs_object in lfs_results.get("objects", []):
+                    relative_path, oid, size = lfs_blobs[lfs_object["oid"]]
+                    if lfs_object.get("error"):
+                        raise SyncError(
+                            _("Failed to resolve LFS blob '{rp}': {error}").format(
+                                rp=relative_path, error=lfs_object.get("error", "Unknown error")
+                            )
+                        )
+                    url = lfs_object["actions"]["download"]["href"]
+                    artifact = Artifact(size=size, sha256=oid)
+                    file_content = FileContent(relative_path=relative_path, digest=artifact.sha256)
+                    if headers := lfs_object["actions"]["download"].get("header"):
+                        extra_data = {"request_kwargs": {"headers": headers}}
+                    else:
+                        extra_data = None
+                    da = DeclarativeArtifact(
+                        artifact=artifact,
+                        url=url,
+                        relative_path=relative_path,
+                        remote=remote,
+                        deferred_download=False,
+                        extra_data=extra_data,
+                    )
+                    dc = DeclarativeContent(content=file_content, d_artifacts=[da])
+                    await pb.aincrement()
+                    await self.put(dc)
