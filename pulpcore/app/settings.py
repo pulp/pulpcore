@@ -19,7 +19,6 @@ from cryptography.fernet import Fernet
 from django.conf import global_settings
 from django.core.files.storage import storages  # noqa: F401
 from django.core.exceptions import ImproperlyConfigured
-from django.db import connection
 
 from pulpcore import constants
 
@@ -475,69 +474,6 @@ if not (
 FORBIDDEN_CHECKSUMS = set(constants.ALL_KNOWN_CONTENT_CHECKSUMS).difference(
     ALLOWED_CONTENT_CHECKSUMS
 )
-
-_SKIPPED_COMMANDS_FOR_CONTENT_CHECKS = [
-    "handle-artifact-checksums",
-    "migrate",
-    "collectstatic",
-    "openapi",
-]
-
-if not (len(sys.argv) >= 2 and sys.argv[1] in _SKIPPED_COMMANDS_FOR_CONTENT_CHECKS):
-    try:
-        with connection.cursor() as cursor:
-            for checksum in ALLOWED_CONTENT_CHECKSUMS:
-                # can't import Artifact here so use a direct db connection
-                cursor.execute(f"SELECT count(pulp_id) FROM core_artifact WHERE {checksum} IS NULL")
-                row = cursor.fetchone()
-                if row[0] > 0:
-                    raise ImproperlyConfigured(
-                        (
-                            "There have been identified artifacts missing checksum '{}'. "
-                            "Run 'pulpcore-manager handle-artifact-checksums' first to populate "
-                            "missing artifact checksums."
-                        ).format(checksum)
-                    )
-            for checksum in FORBIDDEN_CHECKSUMS:
-                # can't import Artifact here so use a direct db connection
-                cursor.execute(
-                    f"SELECT count(pulp_id) FROM core_artifact WHERE {checksum} IS NOT NULL"
-                )
-                row = cursor.fetchone()
-                if row[0] > 0:
-                    raise ImproperlyConfigured(
-                        (
-                            "There have been identified artifacts with forbidden checksum '{}'. "
-                            "Run 'pulpcore-manager handle-artifact-checksums' first to unset "
-                            "forbidden checksums."
-                        ).format(checksum)
-                    )
-
-            # warn if there are remote artifacts with checksums but no allowed checksums
-            cond = " AND ".join([f"{c} IS NULL" for c in constants.ALL_KNOWN_CONTENT_CHECKSUMS])
-            no_checksum_query = f"SELECT pulp_id FROM core_remoteartifact WHERE {cond}"
-            cond = " AND ".join([f"{c} IS NULL" for c in ALLOWED_CONTENT_CHECKSUMS])
-            cursor.execute(
-                f"SELECT count(pulp_id) FROM core_remoteartifact WHERE {cond} AND "
-                f"pulp_id NOT IN ({no_checksum_query})"
-            )
-            row = cursor.fetchone()
-            if row[0] > 0:
-                _logger.warning(
-                    (
-                        "Warning: detected remote content without allowed checksums. "
-                        "Run 'pulpcore-manager handle-artifact-checksums --report' to "
-                        "view this content."
-                    )
-                )
-
-    except ImproperlyConfigured as e:
-        raise e
-    except Exception:
-        # our check could fail if the table hasn't been created yet or we can't get a db connection
-        pass
-    finally:
-        connection.close()
 
 # Ensures the cached property storage.backends uses the right value after dynaconf init
 storages._backends = settings.STORAGES.copy()
