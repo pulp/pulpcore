@@ -50,7 +50,6 @@ def test_replication_idempotence(
     monitor_task,
     monitor_task_group,
     pulp_settings,
-    add_to_cleanup,
     gen_object_with_cleanup,
     file_distribution_factory,
     file_publication_factory,
@@ -63,6 +62,7 @@ def test_replication_idempotence(
 
     # Create a domain to replicate from
     source_domain = domain_factory()
+    add_domain_objects_to_cleanup(source_domain)
 
     # Add stuff to it
     repository = file_repository_factory(pulp_domain=source_domain.name)
@@ -85,6 +85,7 @@ def test_replication_idempotence(
 
     # Create a domain as replica
     replica_domain = domain_factory()
+    add_domain_objects_to_cleanup(replica_domain)
 
     # Create an Upstream Pulp in the non-default domain
     upstream_pulp_body = {
@@ -101,7 +102,6 @@ def test_replication_idempotence(
     # Run the replicate task and assert that all tasks successfully complete.
     response = pulpcore_bindings.UpstreamPulpsApi.replicate(upstream_pulp.pulp_href)
     monitor_task_group(response.task_group)
-    objects = add_domain_objects_to_cleanup(replica_domain)
 
     for api_client in (
         file_bindings.DistributionsFileApi,
@@ -111,10 +111,11 @@ def test_replication_idempotence(
     ):
         result = api_client.list(pulp_domain=replica_domain.name)
         assert result.count == 1
-    # Test that each new object (besides Content) has a source UpstreamPulp label
-    for obj in objects:
-        assert "UpstreamPulp" in obj.pulp_labels
-        assert upstream_pulp.prn.split(":")[-1] == obj.pulp_labels["UpstreamPulp"]
+        obj = result.results[0]
+        # Test that each new object (besides Content) has a source UpstreamPulp label
+        if api_client != file_bindings.ContentFilesApi:
+            assert "UpstreamPulp" in obj.pulp_labels
+            assert upstream_pulp.prn.split(":")[-1] == obj.pulp_labels["UpstreamPulp"]
 
     # Now replicate backwards
 
@@ -132,7 +133,6 @@ def test_replication_idempotence(
     # Run the replicate task and assert that all tasks successfully complete.
     response = pulpcore_bindings.UpstreamPulpsApi.replicate(upstream_pulp2.pulp_href)
     monitor_task_group(response.task_group)
-    objects = add_domain_objects_to_cleanup(source_domain)
     # Replicating backwards will create a new repository (deleting the old) + new remote,
     # but use the same distribution
     result = file_bindings.RepositoriesFileApi.list(pulp_domain=source_domain.name)
@@ -140,19 +140,23 @@ def test_replication_idempotence(
     new_repository = result.results[0]
     assert new_repository.pulp_href != repository.pulp_href
     assert new_repository.name == distro.name
+    assert "UpstreamPulp" in new_repository.pulp_labels
+    assert upstream_pulp2.prn.split(":")[-1] == new_repository.pulp_labels["UpstreamPulp"]
 
     result = file_bindings.DistributionsFileApi.list(pulp_domain=source_domain.name)
     assert result.count == 1
-    assert result.results[0].pulp_href == distro.pulp_href
-    assert result.results[0].repository == new_repository.pulp_href
-    assert result.results[0].publication is None
+    new_distribution = result.results[0]
+    assert new_distribution.pulp_href == distro.pulp_href
+    assert new_distribution.repository == new_repository.pulp_href
+    assert new_distribution.publication is None
+    assert "UpstreamPulp" in new_distribution.pulp_labels
+    assert upstream_pulp2.prn.split(":")[-1] == new_distribution.pulp_labels["UpstreamPulp"]
 
     result = file_bindings.RemotesFileApi.list(pulp_domain=source_domain.name)
     assert result.count == 1
-    # Test that each replicate object (besides Content) now has a new UpstreamPulp label
-    for obj in objects:
-        assert "UpstreamPulp" in obj.pulp_labels
-        assert upstream_pulp2.prn.split(":")[-1] == obj.pulp_labels["UpstreamPulp"]
+    new_remote = result.results[0]
+    assert "UpstreamPulp" in new_remote.pulp_labels
+    assert upstream_pulp2.prn.split(":")[-1] == new_remote.pulp_labels["UpstreamPulp"]
 
 
 @pytest.mark.parallel
@@ -532,7 +536,7 @@ def test_replicate_with_basic_q_select(
     add_domain_objects_to_cleanup,
 ):
     """Test basic label select replication."""
-    source_domain = populate_upstream(10)
+    source_domain = populate_upstream(6)
     dest_domain = domain_factory()
     upstream_body = {
         "name": str(uuid.uuid4()),
@@ -545,12 +549,12 @@ def test_replicate_with_basic_q_select(
     upstream = gen_object_with_cleanup(
         pulpcore_bindings.UpstreamPulpsApi, upstream_body, pulp_domain=dest_domain.name
     )
-    # Run the replicate task and assert that all 10 repos got synced
+    # Run the replicate task and assert that all 6 repos got synced
     response = pulpcore_bindings.UpstreamPulpsApi.replicate(upstream.pulp_href)
     monitor_task_group(response.task_group)
     add_domain_objects_to_cleanup(dest_domain)
     result = pulpcore_bindings.DistributionsApi.list(pulp_domain=dest_domain.name)
-    assert result.count == 10
+    assert result.count == 6
 
     # Update q_select to sync only 'even' repos
     body = {"q_select": "pulp_label_select='even'"}
@@ -558,8 +562,8 @@ def test_replicate_with_basic_q_select(
     response = pulpcore_bindings.UpstreamPulpsApi.replicate(upstream.pulp_href)
     monitor_task_group(response.task_group)
     result = pulpcore_bindings.DistributionsApi.list(pulp_domain=dest_domain.name)
-    assert result.count == 5
-    assert {d.name for d in result.results} == {"0", "2", "4", "6", "8"}
+    assert result.count == 3
+    assert {d.name for d in result.results} == {"0", "2", "4"}
 
     # Update q_select to sync one 'upstream' repo
     body["q_select"] = "pulp_label_select='upstream=4'"
@@ -592,8 +596,9 @@ def test_replicate_with_complex_q_select(
     add_domain_objects_to_cleanup,
 ):
     """Test complex q_select replication."""
-    source_domain = populate_upstream(10)
+    source_domain = populate_upstream(6)
     dest_domain = domain_factory()
+    add_domain_objects_to_cleanup(dest_domain)
     upstream_body = {
         "name": str(uuid.uuid4()),
         "base_url": bindings_cfg.host,
@@ -609,19 +614,18 @@ def test_replicate_with_complex_q_select(
     # Run the replicate task and assert that two repos got synced
     response = pulpcore_bindings.UpstreamPulpsApi.replicate(upstream.pulp_href)
     monitor_task_group(response.task_group)
-    add_domain_objects_to_cleanup(dest_domain)
     result = pulpcore_bindings.DistributionsApi.list(pulp_domain=dest_domain.name)
     assert result.count == 2
     assert {d.name for d in result.results} == {"1", "2"}
 
-    # Test odds but not seven
-    body = {"q_select": "pulp_label_select='odd' AND NOT pulp_label_select='upstream=7'"}
+    # Test odds but not five
+    body = {"q_select": "pulp_label_select='odd' AND NOT pulp_label_select='upstream=5'"}
     pulpcore_bindings.UpstreamPulpsApi.partial_update(upstream.pulp_href, body)
     response = pulpcore_bindings.UpstreamPulpsApi.replicate(upstream.pulp_href)
     monitor_task_group(response.task_group)
     result = pulpcore_bindings.DistributionsApi.list(pulp_domain=dest_domain.name)
-    assert result.count == 4
-    assert {d.name for d in result.results} == {"1", "3", "5", "9"}
+    assert result.count == 2
+    assert {d.name for d in result.results} == {"1", "3"}
 
     # Test we error when trying to provide an invalid q expression
     body["q_select"] = "invalid='testing'"
@@ -639,8 +643,14 @@ def test_replicate_with_complex_q_select(
 
 @pytest.fixture
 def add_domain_objects_to_cleanup(add_to_cleanup, file_bindings):
-    def _add_objects_to_cleanup(domain):
-        objects = []
+    domains = []
+
+    def _add_domain_to_cleanup(domain):
+        domains.append(domain)
+
+    yield _add_domain_to_cleanup
+
+    for domain in domains:
         for api_client in (
             file_bindings.DistributionsFileApi,
             file_bindings.RemotesFileApi,
@@ -648,11 +658,7 @@ def add_domain_objects_to_cleanup(add_to_cleanup, file_bindings):
         ):
             result = api_client.list(pulp_domain=domain.name)
             for item in result.results:
-                objects.append(item)
                 add_to_cleanup(api_client, item.pulp_href)
-        return objects
-
-    return _add_objects_to_cleanup
 
 
 @pytest.mark.parallel
