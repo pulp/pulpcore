@@ -9,6 +9,7 @@ from itertools import chain
 from gettext import gettext as _
 
 from django.conf import settings
+from pulpcore.constants import LABEL_KEY_CHARS
 from django.db.models import ObjectDoesNotExist
 from django_filters import BaseInFilter, CharFilter, Filter
 from drf_spectacular.types import OpenApiTypes
@@ -313,7 +314,7 @@ class LabelFilter(Filter):
             return qs
 
         for term in value.split(","):
-            match = re.match(r"(!?[\w\s]+)(=|!=|~)?(.*)?", term)
+            match = re.match(rf"(!?{LABEL_KEY_CHARS}+)(=|!=|~)?(.*)?", term)
             if not match:
                 raise DRFValidationError(_("Invalid search term: '{}'.").format(term))
             key, op, val = match.groups()

@@ -564,8 +564,14 @@ class SetLabelSerializer(serializers.Serializer):
     Serializer for synchronously setting a label.
     """
 
-    key = serializers.SlugField(required=True)
+    key = serializers.CharField(required=True)
     value = serializers.CharField(required=True, allow_null=True, allow_blank=True)
+
+    def validate(self, data):
+        from pulpcore.app.serializers.fields import pulp_labels_validator
+
+        pulp_labels_validator({data["key"]: data["value"]})
+        return super().validate(data)
 
 
 class UnsetLabelSerializer(serializers.Serializer):
@@ -573,7 +579,7 @@ class UnsetLabelSerializer(serializers.Serializer):
     Serializer for synchronously UNsetting a label.
     """
 
-    key = serializers.SlugField(required=True)
+    key = serializers.CharField(required=True)
     value = serializers.CharField(read_only=True)
 
     def validate_key(self, value):
