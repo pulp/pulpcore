@@ -1,0 +1,1 @@
+Fixed the url of the generated openapi schemas when using `pulpcore-manager openapi`.

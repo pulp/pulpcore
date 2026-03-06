@@ -3,9 +3,7 @@ from django.conf import settings
 
 def add_info_hook(result, generator, request, **kwargs):
     # Basically I'm doing it to get pulp logo at redoc page
-    result["info"]["x-logo"] = {
-        "url": "https://pulpproject.org/pulp-docs/docs/assets/pulp_logo_icon.svg"
-    }
+    result["info"]["x-logo"] = {"url": "https://pulpproject.org/assets/pulp_logo_icon.svg"}
 
     # Adding plugin version config
     result["info"]["x-pulp-app-versions"] = {app.label: app.version for app in request.apps}
