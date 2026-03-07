@@ -4856,6 +4856,26 @@ No significant changes.
 
 ---
 
+## 3.49.54 (2026-03-06) {: #3.49.54 }
+
+### REST API {: #3.49.54-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.49.54-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.54-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.54-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.49.53 (2026-03-03) {: #3.49.53 }
 
 ### REST API {: #3.49.53-rest-api }
