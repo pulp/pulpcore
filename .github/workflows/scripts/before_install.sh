@@ -64,7 +64,7 @@ plugins:
     source: "${COMPONENT_SOURCE}"
     ci_requirements: $(test -f ci_requirements.txt && echo -n true || echo -n false)
     upperbounds: $(test "${TEST}" = "pulp" && echo -n true || echo -n false)
-    lowerounds: $(test "${TEST}" = "lowerbounds" && echo -n true || echo -n false)
+    lowerbounds: $(test "${TEST}" = "lowerbounds" && echo -n true || echo -n false)
 extra_files:
   - origin: "pulpcore/pulpcore/tests/functional/assets/api_root_rewrite.conf"
     destination: "/etc/nginx/pulp/api_root_rewrite.conf"
