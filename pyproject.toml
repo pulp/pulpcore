@@ -98,6 +98,8 @@ ignore = [
     ".github/**",
     "lint_requirements.txt",
     ".flake8",
+    "AGENTS.md",
+    "CLAUDE.md",
 ]
 
 [tool.bumpversion]
