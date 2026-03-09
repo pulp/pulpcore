@@ -1,7 +1,7 @@
 pytest<10
 pytest-custom_exit_code
 pytest-xdist
-python-gnupg
+pysequoia
 proxy.py~=2.4.10
 trustme~=1.2.1
 
