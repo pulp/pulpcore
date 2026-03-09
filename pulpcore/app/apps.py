@@ -425,10 +425,12 @@ def _populate_artifact_serving_distribution(sender, apps, verbosity, **kwargs):
             with transaction.atomic():
                 content_guard, _created = ContentRedirectContentGuard.objects.get_or_create(
                     name=name,
+                    description="Guard for Pulp's artifact distribution",
                     pulp_type="core.content_redirect",
                 )
                 _dist, _created = ArtifactDistribution.objects.get_or_create(
                     name=name,
+                    description="Pulp's artifact distribution used by plugins or when REDIRECT_TO_OBJECT_STORAGE=False",  # noqa: E501
                     pulp_type="core.artifact",
                     defaults={"base_path": name, "content_guard": content_guard},
                 )
