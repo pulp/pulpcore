@@ -2,13 +2,10 @@ import hashlib
 import zlib
 import os
 import socket
-import tempfile
 from io import RawIOBase
 from pathlib import Path
 from types import TracebackType
 from typing import Self, IO, Any
-
-import gnupg
 
 from functools import lru_cache
 from gettext import gettext as _
@@ -389,7 +386,7 @@ def get_request_without_query_params(context):
 
 def gpg_verify(public_keys, signature, detached_data=None):
     """
-    Check whether the provided gnupg signature is valid for one of the provided public keys.
+    Check whether the provided signature is valid for one of the provided public keys.
 
     Args:
         public_keys (str): Ascii armored public key data
@@ -397,26 +394,32 @@ def gpg_verify(public_keys, signature, detached_data=None):
         detached_data (str) [optional]: The filesystem path to signed data in case of a detached
             signature
 
-    Returns:
-        gnupg.Verify: The result of the verification
-
     Raises:
         pulpcore.exceptions.validation.InvalidSignatureError: In case the signature is invalid.
     """
-    with tempfile.TemporaryDirectory(dir=settings.WORKING_DIRECTORY) as temp_directory_name:
-        gpg = gnupg.GPG(gnupghome=temp_directory_name)
-        gpg.import_keys(public_keys)
+    from pysequoia import Cert, Sig, verify
 
-        with ExitStack() as stack:
-            if isinstance(signature, str):
-                signature = stack.enter_context(open(signature, "rb"))
-            elif isinstance(signature, models.Artifact):
-                signature = stack.enter_context(signature.file)
+    certs = Cert.split_bytes(public_keys.encode("utf8"))
 
-            verified = gpg.verify_file(signature, detached_data)
-        if not verified.valid:
-            raise InvalidSignatureError(_("The signature is not valid."), verified=verified)
-    return verified
+    def store(key_ids):
+        return certs
+
+    with ExitStack() as stack:
+        if isinstance(signature, str):
+            sig_data = stack.enter_context(open(signature, "rb")).read()
+        elif isinstance(signature, models.Artifact):
+            sig_data = stack.enter_context(signature.file).read()
+        else:
+            sig_data = signature.read()
+
+    try:
+        sig = Sig.from_bytes(sig_data)
+        if detached_data is not None:
+            verify(file=detached_data, store=store, signature=sig)
+        else:
+            verify(bytes=sig_data, store=store)
+    except Exception:
+        raise InvalidSignatureError(_("The signature is not valid."))
 
 
 def compute_file_hash(filename, hasher=None, cumulative_hash=None, blocksize=8192):
