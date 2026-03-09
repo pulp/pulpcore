@@ -53,6 +53,8 @@ class Repository(MasterModel):
         next_version (models.PositiveIntegerField): A record of the next version number to be
             created.
         retain_repo_versions (models.PositiveIntegerField): Number of repo versions to keep
+        retain_checkpoints (models.PositiveIntegerField): Number of checkpoint publications to
+            keep as checkpoints.
         user_hidden (models.BooleanField): Whether to expose this repo to users via the API
 
     Relations:
@@ -72,6 +74,7 @@ class Repository(MasterModel):
     description = models.TextField(null=True)
     next_version = models.PositiveIntegerField(default=0)
     retain_repo_versions = models.PositiveIntegerField(default=None, null=True)
+    retain_checkpoints = models.PositiveIntegerField(default=None, null=True)
     user_hidden = models.BooleanField(default=False)
     content = models.ManyToManyField(
         "Content", through="RepositoryContent", related_name="repositories"
@@ -419,6 +422,33 @@ class Repository(MasterModel):
                     "Deleting repository version {} due to version retention limit.".format(version)
                 )
                 version.delete()
+
+    @hook(AFTER_UPDATE, when="retain_checkpoints", has_changed=True)
+    def _cleanup_old_checkpoints_hook(self):
+        transaction.on_commit(self.cleanup_old_checkpoints)
+
+    def cleanup_old_checkpoints(self):
+        """Unmark old checkpoint publications based on retain_checkpoints."""
+        from .publication import Publication
+
+        if self.retain_checkpoints:
+            checkpoint_pubs = Publication.objects.filter(
+                repository_version__repository=self,
+                checkpoint=True,
+                complete=True,
+            ).order_by("-pulp_created")
+            expired_pks = list(
+                checkpoint_pubs[self.retain_checkpoints :].values_list("pk", flat=True)
+            )
+            if expired_pks:
+                Publication.objects.filter(pk__in=expired_pks).update(checkpoint=False)
+                _logger.info(
+                    "Cleared checkpoint flag on %d publication(s) for repository %s "
+                    "due to checkpoint retention limit of %d.",
+                    len(expired_pks),
+                    self.name,
+                    self.retain_checkpoints,
+                )
 
     def delete(self, **kwargs):
         """

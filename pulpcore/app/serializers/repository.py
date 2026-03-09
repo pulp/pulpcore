@@ -44,6 +44,15 @@ class RepositorySerializer(ModelSerializer):
         required=False,
         min_value=1,
     )
+    retain_checkpoints = serializers.IntegerField(
+        help_text=_(
+            "Retain X checkpoint publications for the repository. "
+            "Default is null which retains all checkpoints."
+        ),
+        allow_null=True,
+        required=False,
+        min_value=1,
+    )
     remote = DetailRelatedField(
         help_text=_("An optional remote to use by default when syncing."),
         view_name_pattern=r"remotes(-.*/.*)-detail",
@@ -69,6 +78,7 @@ class RepositorySerializer(ModelSerializer):
             "name",
             "description",
             "retain_repo_versions",
+            "retain_checkpoints",
             "remote",
         )
 
