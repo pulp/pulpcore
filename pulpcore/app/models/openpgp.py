@@ -48,6 +48,7 @@ class OpenPGPPublicKey(_OpenPGPContent):
         else:
             content_filter = {}
         data = self.packet()
+        # note: because these queries aren't ordered, the result may be nondetermininistic
         for signature in self.openpgp_signatures.filter(**content_filter):
             data += signature.packet()
         for user_id in self.user_ids.filter(**content_filter):

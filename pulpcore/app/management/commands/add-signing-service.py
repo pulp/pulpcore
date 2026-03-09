@@ -1,6 +1,5 @@
 import os
-
-import gnupg
+import subprocess
 
 from pathlib import Path
 
@@ -72,13 +71,33 @@ class Command(BaseCommand):
                 )
             )
 
-        gpg = gnupg.GPG(gnupghome=options["gnupghome"], keyring=options["keyring"])
+        gpg_cmd = ["gpg"]
+        if options["gnupghome"]:
+            gpg_cmd += ["--homedir", options["gnupghome"]]
+        if options["keyring"]:
+            gpg_cmd += ["--keyring", options["keyring"]]
 
-        key_list = gpg.list_keys(keys=[key_id])
-        if not len(key_list) == 1:
-            raise CommandError(_("There are {} keys matching the key id.").format(len(key_list)))
-        fingerprint = key_list[0]["fingerprint"]
-        public_key = gpg.export_keys(key_id)
+        result = subprocess.run(
+            gpg_cmd + ["--with-colons", "--fingerprint", key_id],
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            raise CommandError(result.stderr.strip())
+
+        fpr_lines = [line for line in result.stdout.splitlines() if line.startswith("fpr:")]
+        if len(fpr_lines) != 1:
+            raise CommandError(_("There are {} keys matching the key id.").format(len(fpr_lines)))
+        fingerprint = fpr_lines[0].split(":")[9]
+
+        result = subprocess.run(
+            gpg_cmd + ["--armor", "--export", key_id],
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            raise CommandError(result.stderr.strip())
+        public_key = result.stdout
 
         try:
             script_path = Path(script).resolve(strict=True)
