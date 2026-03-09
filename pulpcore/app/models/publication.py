@@ -233,6 +233,11 @@ class Publication(MasterModel):
                 self.delete()
                 raise
 
+            # Unmark old checkpoints if retention is configured
+            if self.checkpoint:
+                repository = self.repository_version.repository
+                repository.cleanup_old_checkpoints()
+
             # invalidate cache
             if settings.CACHE_ENABLED:
                 base_paths = Distribution.objects.filter(

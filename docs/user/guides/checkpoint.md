@@ -73,6 +73,22 @@ http https://pulp.example/pulp/content/checkpoint/myfile
 </html>
 ```
 
+## Limiting Checkpoints
+
+By default, all checkpoint publications are retained indefinitely. You can limit the number of
+checkpoints per repository by setting `retain_checkpoints` on the repository. When set, only the
+most recent N checkpoint publications are kept. Older checkpoint publications have their checkpoint
+flag cleared but are not deleted and the underlying publications and repository versions remain intact.
+
+```bash
+pulp file repository update --name myrepo --retain-checkpoints 10
+```
+
+Setting this to `null` (the default) disables checkpoint retention and keeps all checkpoints.
+
+Note that clearing the checkpoint flag on a publication also removes its repository version from
+checkpoint protection, making it eligible for cleanup by `retain_repo_versions` if configured.
+
 ### Accessing a Specific Checkpoint
 To access a specific checkpoint, suffix the checkpoint distribution's path with a timestamp in the format
 `yyyyMMddTHHmmssZ` (e.g. 20250130T205339Z), If a checkpoint was created at this time, it will be
