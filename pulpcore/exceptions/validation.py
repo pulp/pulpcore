@@ -109,7 +109,7 @@ class UnsupportedDigestValidationError(ValidationError):
 
 class InvalidSignatureError(ValidationError):
     """
-    Raised when a signature could not be verified by the GnuPG utility.
+    Raised when a signature could not be verified.
     """
 
     error_code = "PLP0021"
