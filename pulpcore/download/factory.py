@@ -16,7 +16,6 @@ from pulpcore.app.apps import PulpAppConfig
 from .http import HttpDownloader
 from .file import FileDownloader
 
-
 PROTOCOL_MAP = {
     "http": HttpDownloader,
     "https": HttpDownloader,
@@ -204,10 +203,10 @@ class DownloaderFactory:
                     login=self._remote.proxy_username, password=self._remote.proxy_password
                 )
 
-        if self._remote.username and self._remote.password:
-            options["auth"] = aiohttp.BasicAuth(
-                login=self._remote.username, password=self._remote.password
-            )
+        if self._remote.username:
+            # Support username-only auth with empty passwords
+            password = self._remote.password or str()
+            options["auth"] = aiohttp.BasicAuth(login=self._remote.username, password=password)
 
         kwargs["throttler"] = self._remote.download_throttler if self._remote.rate_limit else None
 
