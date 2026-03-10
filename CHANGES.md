@@ -8,6 +8,21 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.28.44 (2026-03-10) {: #3.28.44 }
+
+### REST API {: #3.28.44-rest-api }
+
+#### Bugfixes {: #3.28.44-rest-api-bugfix }
+
+- Moved artifact checksum validation from module-level settings code to a Django system check.
+  [#7380](https://github.com/pulp/pulpcore/issues/7380)
+
+### Plugin API {: #3.28.44-plugin-api }
+
+No significant changes.
+
+---
+
 ## 3.28.43 (2025-12-09) {: #3.28.43 }
 
 ### REST API {: #3.28.43-rest-api }
