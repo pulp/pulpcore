@@ -23,7 +23,7 @@ fi
 # Developers often want to know the final pulp config
 echo
 echo "# Pulp config:"
-tail -v -n +1 .ci/ansible/settings/settings.* ~/.config/pulp_smash/settings.json
+tail -v -n +1 .ci/ansible/settings/settings.*
 
 echo
 echo "# Containerfile:"

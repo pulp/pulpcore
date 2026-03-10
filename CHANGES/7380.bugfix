@@ -1,1 +1,0 @@
-Moved artifact checksum validation from module-level settings code to a Django system check.

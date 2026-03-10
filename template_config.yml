@@ -31,7 +31,7 @@ flake8: true
 flake8_ignore:
   - "./pulpcore/app/protobuf/*"
 github_org: "pulp"
-latest_release_branch: "3.104"
+latest_release_branch: "3.105"
 lint_requirements: true
 os_required_packages: []
 parallel_test_workers: 8
@@ -60,11 +60,11 @@ pulp_settings:
   csrf_trusted_origins:
     - "https://pulp:443"
   orphan_protection_time: 0
+  task_diagnostics:
+    - "memory"
   task_protection_time: 10
   tmpfile_protection_time: 10
   upload_protection_time: 10
-  task_diagnostics:
-    - "memory"
 pulp_settings_azure:
   MEDIA_ROOT: ""
   STORAGES:
@@ -140,7 +140,6 @@ test_deprecations: true
 test_gcp: false
 test_lowerbounds: true
 test_performance: false
-test_reroute: true
 test_s3: true
 use_issue_template: true
 ...
