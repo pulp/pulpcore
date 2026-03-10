@@ -1,1 +1,0 @@
-Fixed RemoteSerializer to fail when it contains invalid parameters.
