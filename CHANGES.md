@@ -8,6 +8,32 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.85.13 (2026-03-10) {: #3.85.13 }
+
+### REST API {: #3.85.13-rest-api }
+
+#### Bugfixes {: #3.85.13-rest-api-bugfix }
+
+- Fixed a typo in `GroupRoleSerializer` that caused a 500 error when listing group roles with a domain set.
+  [#7095](https://github.com/pulp/pulpcore/issues/7095)
+- Moved artifact checksum validation from module-level settings code to a Django system check.
+  [#7380](https://github.com/pulp/pulpcore/issues/7380)
+- Fixed the url of the generated openapi schemas when using `pulpcore-manager openapi`.
+
+### Plugin API {: #3.85.13-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.85.13-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.13-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.85.12 (2026-02-25) {: #3.85.12 }
 
 ### REST API {: #3.85.12-rest-api }
