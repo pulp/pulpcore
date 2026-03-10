@@ -8,6 +8,30 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.49.55 (2026-03-10) {: #3.49.55 }
+
+### REST API {: #3.49.55-rest-api }
+
+#### Bugfixes {: #3.49.55-rest-api-bugfix }
+
+- Moved artifact checksum validation from module-level settings code to a Django system check.
+  [#7380](https://github.com/pulp/pulpcore/issues/7380)
+- Fixed the url of the generated openapi schemas when using `pulpcore-manager openapi`.
+
+### Plugin API {: #3.49.55-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.55-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.55-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.49.54 (2026-03-06) {: #3.49.54 }
 
 ### REST API {: #3.49.54-rest-api }
