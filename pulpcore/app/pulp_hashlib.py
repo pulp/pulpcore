@@ -33,4 +33,5 @@ def new(name, *args, **kwargs):
                 "setting"
             ).format(name)
         )
+    kwargs.setdefault("usedforsecurity", False)
     return the_real_hashlib.new(name, *args, **kwargs)

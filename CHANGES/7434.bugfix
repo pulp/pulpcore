@@ -1,0 +1,1 @@
+Added ``usedforsecurity=False`` to ``pulp_hashlib.new()`` so FIPS-disallowed algorithms used for content addressing no longer raise ``UnsupportedDigestmodError``.
