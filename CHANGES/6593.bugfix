@@ -1,1 +1,0 @@
-Fixed a traceback when setting `pulp_labels` with null values on create or update.
