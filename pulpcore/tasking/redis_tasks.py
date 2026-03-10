@@ -297,10 +297,8 @@ def are_resources_available(task: Task) -> bool:
     # Extract resources from task
     exclusive_resources, shared_resources = extract_task_resources(task)
 
-    # Use AppStatus.current() to get a worker identifier for the lock value
-    # For immediate tasks, we use a special identifier
     current_app = AppStatus.objects.current()
-    lock_owner = current_app.name if current_app else f"immediate-{task.pk}"
+    lock_owner = current_app.name
 
     # Build task lock key
     task_lock_key = get_task_lock_key(task.pk)
@@ -350,10 +348,8 @@ async def async_are_resources_available(task: Task) -> bool:
     # Extract resources from task
     exclusive_resources, shared_resources = extract_task_resources(task)
 
-    # Use AppStatus.current() to get a worker identifier for the lock value
-    # For immediate tasks, we use a special identifier
     current_app = await sync_to_async(AppStatus.objects.current)()
-    lock_owner = current_app.name if current_app else f"immediate-{task.pk}"
+    lock_owner = current_app.name
 
     # Build task lock key
     task_lock_key = get_task_lock_key(task.pk)
@@ -442,7 +438,7 @@ def dispatch(
             # All locks acquired successfully
             # Proceed with execution
             current_app = AppStatus.objects.current()
-            lock_owner = current_app.name if current_app else f"immediate-{task.pk}"
+            lock_owner = current_app.name
             try:
                 with using_workdir():
                     execute_task(task)
@@ -494,7 +490,7 @@ async def adispatch(
             # All locks acquired successfully
             # Proceed with execution
             current_app = await sync_to_async(AppStatus.objects.current)()
-            lock_owner = current_app.name if current_app else f"immediate-{task.pk}"
+            lock_owner = current_app.name
             try:
                 with using_workdir():
                     await aexecute_task(task)
