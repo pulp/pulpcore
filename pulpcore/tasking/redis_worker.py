@@ -109,7 +109,6 @@ class RedisWorker:
     def __init__(self):
         # Notification states from signal handlers
         self.shutdown_requested = False
-        self.wakeup_handle = False
 
         self.ignored_task_ids = []
         self.ignored_task_countdown = IGNORED_TASKS_CLEANUP_INTERVAL
@@ -327,18 +326,14 @@ class RedisWorker:
         than 5 seconds, then subtracts the number of active workers to get the
         number of tasks waiting to be picked up by workers.
         """
-        # Calculate the cutoff time (5 seconds ago)
         cutoff_time = timezone.now() - timedelta(seconds=5)
 
-        # Count tasks in RUNNING or WAITING state older than 5 seconds
         task_count = Task.objects.filter(
             state__in=[TASK_STATES.RUNNING, TASK_STATES.WAITING], pulp_created__lt=cutoff_time
         ).count()
 
-        # Calculate waiting tasks: total tasks - workers
         waiting_tasks = task_count - self.num_workers
 
-        # Set the metric value
         self.waiting_tasks_meter.set(waiting_tasks)
 
         _logger.debug(
