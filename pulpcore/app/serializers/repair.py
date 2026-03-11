@@ -15,3 +15,14 @@ class RepairSerializer(serializers.Serializer, ValidateFieldsMixin):
             "by default"
         ),
     )
+
+
+class DataRepair7272Serializer(serializers.Serializer, ValidateFieldsMixin):
+    dry_run = fields.BooleanField(
+        required=False,
+        default=False,
+        help_text=_(
+            "If true, only report issues without fixing them. If false (default), "
+            "repair the detected issues."
+        ),
+    )
