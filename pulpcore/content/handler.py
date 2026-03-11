@@ -1156,8 +1156,10 @@ class Handler:
                 await original_handle_data(data)
 
         async def finalize():
+            nonlocal failed_download
             if save_artifact and remote.policy != Remote.STREAMED:
                 await original_finalize()
+            failed_download = False
 
         downloader = remote.get_downloader(
             remote_artifact=remote_artifact,
@@ -1167,6 +1169,7 @@ class Handler:
         downloader.handle_data = handle_data
         original_finalize = downloader.finalize
         downloader.finalize = finalize
+        failed_download = True
         try:
             download_result = await downloader.run(
                 extra_data={"disable_retry_list": (DigestValidationError,)}
@@ -1193,6 +1196,13 @@ class Handler:
                 "Learn more on <https://pulpproject.org/pulpcore/docs/user/learn/"
                 "on-demand-downloading/#on-demand-and-streamed-limitations>"
             )
+        finally:
+            if failed_download:
+                if downloader.path:
+                    await sync_to_async(os.unlink)(downloader.path)
+
+            if hasattr(downloader, "session"):
+                await downloader.session.close()
 
         if content_length := response.headers.get("Content-Length"):
             self._report_served_artifact_size(int(content_length))
