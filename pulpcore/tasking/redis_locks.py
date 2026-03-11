@@ -343,7 +343,7 @@ def acquire_locks(redis_conn, lock_owner, task_lock_key, exclusive_resources, sh
         return ["error"]  # Return non-empty list to indicate failure
 
 
-def release_resource_locks(redis_conn, lock_owner, task_lock_key, resources, shared_resources=None):
+def release_resource_locks(redis_conn, lock_owner, task_lock_key, resources=None, shared_resources=None):
     """
     Atomically release task lock and resource locks.
 
@@ -402,7 +402,7 @@ def release_resource_locks(redis_conn, lock_owner, task_lock_key, resources, sha
 
 
 async def async_release_resource_locks(
-    redis_conn, lock_owner, task_lock_key, resources, shared_resources=None
+    redis_conn, lock_owner, task_lock_key, resources=None, shared_resources=None
 ):
     """
     Async version: Atomically release task lock and resource locks.
