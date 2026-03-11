@@ -6,6 +6,7 @@ resource locks using Redis.
 """
 
 import logging
+import redis
 from asgiref.sync import sync_to_async
 
 from pulpcore.app.redis_connection import get_redis_connection
@@ -392,7 +393,7 @@ def release_resource_locks(redis_conn, lock_owner, task_lock_key, resources=None
             _logger.debug("Released %d shared lock(s)", num_released_shared)
         if not task_lock_not_owned:
             _logger.debug("Released task lock %s", task_lock_key)
-    except Exception as e:
+    except redis.RedisError as e:
         _logger.error("Error releasing locks: %s", e)
 
 
@@ -452,5 +453,5 @@ async def async_release_resource_locks(
             _logger.debug("Released %d shared lock(s)", num_released_shared)
         if not task_lock_not_owned:
             _logger.debug("Released task lock %s", task_lock_key)
-    except Exception as e:
+    except redis.RedisError as e:
         _logger.error("Error releasing locks: %s", e)
