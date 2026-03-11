@@ -27,3 +27,5 @@ from .repository import repair_all_artifacts
 from .analytics import post_analytics
 
 from .vulnerability_report import check_content
+
+from .datarepair import repair_7272
