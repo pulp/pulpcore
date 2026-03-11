@@ -8,6 +8,54 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.105.0 (2026-03-10) {: #3.105.0 }
+
+### REST API {: #3.105.0-rest-api }
+
+#### Features {: #3.105.0-rest-api-feature }
+
+- Added better error handling for errors when creating RepositoryVersions.
+  Now the duplicate content pks are shown in the logs.
+  [#7184](https://github.com/pulp/pulpcore/issues/7184)
+- `repository_version` filters now accept Repository HREF/PRNs to filter by the latest version
+  [#7365](https://github.com/pulp/pulpcore/issues/7365)
+
+#### Bugfixes {: #3.105.0-rest-api-bugfix }
+
+- Unified `pulp_labels` key validation across create/update, `set_label`/`unset_label`, and label filters to consistently allow alphanumerics, underscores, spaces, hyphens, and dots.
+  [#6456](https://github.com/pulp/pulpcore/issues/6456)
+- Fixed a traceback when setting `pulp_labels` with null values on create or update.
+  [#6593](https://github.com/pulp/pulpcore/issues/6593)
+- Clean up on-demand temporary file left over on an aborted download.
+  [#6975](https://github.com/pulp/pulpcore/issues/6975)
+- Fixed a typo in `GroupRoleSerializer` that caused a 500 error when listing group roles with a domain set.
+  [#7095](https://github.com/pulp/pulpcore/issues/7095)
+- Fix regression (crash) during retain_repo_versions cleanup.
+  [#7371](https://github.com/pulp/pulpcore/issues/7371)
+- Moved artifact checksum validation from module-level settings code to a Django system check.
+  [#7380](https://github.com/pulp/pulpcore/issues/7380)
+- Fixed RemoteSerializer to fail when it contains invalid parameters.
+  [#7385](https://github.com/pulp/pulpcore/issues/7385)
+- Fixed the url of the generated openapi schemas when using `pulpcore-manager openapi`.
+
+### Plugin API {: #3.105.0-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.105.0-pulp-file }
+
+#### Features {: #3.105.0-pulp-file-feature }
+
+- Added ability to sync a git repository with the new FileGitRemote.
+  [#4708](https://github.com/pulp/pulpcore/issues/4708)
+- Added support for Git LFS in pulp-file git sync.
+
+### Pulp Cert Guard {: #3.105.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.104.2 (2026-03-05) {: #3.104.2 }
 
 ### REST API {: #3.104.2-rest-api }
@@ -933,6 +981,32 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.86.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.85.13 (2026-03-10) {: #3.85.13 }
+
+### REST API {: #3.85.13-rest-api }
+
+#### Bugfixes {: #3.85.13-rest-api-bugfix }
+
+- Fixed a typo in `GroupRoleSerializer` that caused a 500 error when listing group roles with a domain set.
+  [#7095](https://github.com/pulp/pulpcore/issues/7095)
+- Moved artifact checksum validation from module-level settings code to a Django system check.
+  [#7380](https://github.com/pulp/pulpcore/issues/7380)
+- Fixed the url of the generated openapi schemas when using `pulpcore-manager openapi`.
+
+### Plugin API {: #3.85.13-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.85.13-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.13-pulp-cert-guard }
 
 No significant changes.
 
@@ -1974,6 +2048,31 @@ No significant changes.
   [#6244](https://github.com/pulp/pulpcore/issues/6244)
 
 ### Pulp Cert Guard {: #3.74.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.73.28 (2026-03-10) {: #3.73.28 }
+
+### REST API {: #3.73.28-rest-api }
+
+#### Bugfixes {: #3.73.28-rest-api-bugfix }
+
+- Fixed a typo in `GroupRoleSerializer` that caused a 500 error when listing group roles with a domain set.
+  [#7095](https://github.com/pulp/pulpcore/issues/7095)
+- Moved artifact checksum validation from module-level settings code to a Django system check.
+  [#7380](https://github.com/pulp/pulpcore/issues/7380)
+
+### Plugin API {: #3.73.28-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.73.28-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.28-pulp-cert-guard }
 
 No significant changes.
 
@@ -3290,6 +3389,31 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.64.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.63.32 (2026-03-10) {: #3.63.32 }
+
+### REST API {: #3.63.32-rest-api }
+
+#### Bugfixes {: #3.63.32-rest-api-bugfix }
+
+- Fixed a typo in `GroupRoleSerializer` that caused a 500 error when listing group roles with a domain set.
+  [#7095](https://github.com/pulp/pulpcore/issues/7095)
+- Moved artifact checksum validation from module-level settings code to a Django system check.
+  [#7380](https://github.com/pulp/pulpcore/issues/7380)
+
+### Plugin API {: #3.63.32-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.32-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.32-pulp-cert-guard }
 
 No significant changes.
 
@@ -4851,6 +4975,30 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard
+
+No significant changes.
+
+---
+
+## 3.49.55 (2026-03-10) {: #3.49.55 }
+
+### REST API {: #3.49.55-rest-api }
+
+#### Bugfixes {: #3.49.55-rest-api-bugfix }
+
+- Moved artifact checksum validation from module-level settings code to a Django system check.
+  [#7380](https://github.com/pulp/pulpcore/issues/7380)
+- Fixed the url of the generated openapi schemas when using `pulpcore-manager openapi`.
+
+### Plugin API {: #3.49.55-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.55-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.55-pulp-cert-guard }
 
 No significant changes.
 
@@ -7713,6 +7861,21 @@ No significant changes.
 #### Misc
 
 -   [#3798](https://github.com/pulp/pulpcore/issues/3798)
+
+## 3.28.44 (2026-03-10) {: #3.28.44 }
+
+### REST API {: #3.28.44-rest-api }
+
+#### Bugfixes {: #3.28.44-rest-api-bugfix }
+
+- Moved artifact checksum validation from module-level settings code to a Django system check.
+  [#7380](https://github.com/pulp/pulpcore/issues/7380)
+
+### Plugin API {: #3.28.44-plugin-api }
+
+No significant changes.
+
+---
 
 ## 3.28.43 (2025-12-09) {: #3.28.43 }
 
