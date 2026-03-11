@@ -238,9 +238,6 @@ class DistributionSerializer(ModelSerializer):
         help_text=_("A unique name. Ex, `rawhide` and `stable`."),
         validators=[DomainUniqueValidator(queryset=models.Distribution.objects.all())],
     )
-    description = serializers.CharField(
-        help_text=_("An optional description."), allow_null=True, required=False
-    )
     repository = DetailRelatedField(
         required=False,
         help_text=_("The latest RepositoryVersion for this Repository will be served."),
@@ -268,7 +265,6 @@ class DistributionSerializer(ModelSerializer):
             "hidden",
             "pulp_labels",
             "name",
-            "description",
             "repository",
         )
 
