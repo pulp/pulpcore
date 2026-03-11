@@ -334,13 +334,8 @@ def acquire_locks(redis_conn, lock_owner, task_lock_key, exclusive_resources, sh
 
     # Register and execute the Lua script
     acquire_script = redis_conn.register_script(REDIS_ACQUIRE_LOCKS_SCRIPT)
-    try:
-        blocked_resources = acquire_script(keys=keys, args=args)
-        # Redis returns list of blocked resources or empty list
-        return blocked_resources if blocked_resources else []
-    except Exception as e:
-        _logger.error("Error acquiring locks: %s", e)
-        return ["error"]  # Return non-empty list to indicate failure
+    blocked_resources = acquire_script(keys=keys, args=args)
+    return blocked_resources if blocked_resources else []
 
 
 def release_resource_locks(redis_conn, lock_owner, task_lock_key, resources=None, shared_resources=None):
