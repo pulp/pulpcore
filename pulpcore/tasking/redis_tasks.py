@@ -195,7 +195,6 @@ def _execute_task(task):
             exception_info = None
             result = None
 
-            # Execute task and capture result or exception
             try:
                 log_task_start(task, domain)
                 task_function = get_task_function(task)
@@ -326,7 +325,7 @@ def are_resources_available(task: Task) -> bool:
             )
             return False
 
-    except Exception as e:
+    except redis.RedisError as e:
         _logger.error("Error acquiring locks for immediate task %s: %s", task.pk, e)
         return False
 
@@ -377,7 +376,7 @@ async def async_are_resources_available(task: Task) -> bool:
             )
             return False
 
-    except Exception as e:
+    except redis.RedisError as e:
         _logger.error("Error acquiring locks for immediate task %s: %s", task.pk, e)
         return False
 
