@@ -316,7 +316,7 @@ def acquire_locks(redis_conn, lock_owner, task_lock_key, exclusive_resources, sh
               list of blocked resource names if acquisition failed
               (includes "__task_lock__" if task lock is held by another worker)
     """
-    # Sort resources deterministically to prevent deadlocks
+    # Sort resources for consistent, reproducible key ordering
     exclusive_resources = sorted(exclusive_resources) if exclusive_resources else []
     shared_resources = sorted(shared_resources) if shared_resources else []
 
