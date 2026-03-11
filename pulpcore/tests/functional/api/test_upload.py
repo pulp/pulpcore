@@ -193,3 +193,32 @@ def test_upload_owner(pulpcore_bindings, gen_user, gen_object_with_cleanup):
             "core.delete_upload",
             "core.manage_roles_upload",
         }
+
+
+@pytest.mark.parallel
+def test_upload_duplicate_chunk(
+    pulpcore_bindings,
+    pulpcore_random_chunked_file_factory,
+    gen_object_with_cleanup,
+    monitor_task,
+):
+    """Test that uploading the same chunk twice replaces rather than duplicates it."""
+    file_chunks_data = pulpcore_random_chunked_file_factory(number_chunks=1)
+    size = file_chunks_data["size"]
+    chunk = file_chunks_data["chunks"][0]
+    sha256 = file_chunks_data["digest"]
+
+    upload = gen_object_with_cleanup(pulpcore_bindings.UploadsApi, {"size": size})
+    kwargs = {"file": chunk[0], "content_range": chunk[1], "upload_href": upload.pulp_href}
+
+    pulpcore_bindings.UploadsApi.update(**kwargs)
+    pulpcore_bindings.UploadsApi.update(**kwargs)
+
+    upload_detail = pulpcore_bindings.UploadsApi.read(upload.pulp_href)
+    assert len(upload_detail.chunks) == 1, "Duplicate chunk should replace the existing one"
+
+    task = pulpcore_bindings.UploadsApi.commit(upload.pulp_href, {"sha256": sha256}).task
+    response = monitor_task(task)
+    artifact_href = response.created_resources[0]
+    artifact = pulpcore_bindings.ArtifactsApi.read(artifact_href)
+    assert artifact.sha256 == sha256
