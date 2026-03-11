@@ -43,6 +43,7 @@ class Upload(BaseModel):
             if sha256 != current_sha256:
                 raise serializers.ValidationError(_("Checksum does not match chunk upload."))
 
+        UploadChunk.objects.filter(upload=self, offset=offset).delete()
         upload_chunk = UploadChunk(upload=self, offset=offset, size=len(chunk))
         filename = os.path.basename(upload_chunk.storage_path(""))
         upload_chunk.file.save(filename, ContentFile(chunk))

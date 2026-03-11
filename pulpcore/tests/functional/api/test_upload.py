@@ -184,3 +184,33 @@ def test_delete_upload(
         uploads_api_client.read(upload.pulp_href)
 
     assert e.value.status == 404
+
+
+@pytest.mark.parallel
+def test_upload_duplicate_chunk(
+    uploads_api_client,
+    artifacts_api_client,
+    pulpcore_random_chunked_file_factory,
+    gen_object_with_cleanup,
+    monitor_task,
+):
+    """Test that uploading the same chunk twice replaces rather than duplicates it."""
+    file_chunks_data = pulpcore_random_chunked_file_factory(number_chunks=1)
+    size = file_chunks_data["size"]
+    chunk = file_chunks_data["chunks"][0]
+    sha256 = file_chunks_data["digest"]
+
+    upload = gen_object_with_cleanup(uploads_api_client, {"size": size})
+    kwargs = {"file": chunk[0], "content_range": chunk[1], "upload_href": upload.pulp_href}
+
+    uploads_api_client.update(**kwargs)
+    uploads_api_client.update(**kwargs)
+
+    upload_detail = uploads_api_client.read(upload.pulp_href)
+    assert len(upload_detail.chunks) == 1, "Duplicate chunk should replace the existing one"
+
+    task = uploads_api_client.commit(upload.pulp_href, {"sha256": sha256}).task
+    response = monitor_task(task)
+    artifact_href = response.created_resources[0]
+    artifact = artifacts_api_client.read(artifact_href)
+    assert artifact.sha256 == sha256
