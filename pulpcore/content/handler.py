@@ -1116,8 +1116,10 @@ class Handler:
                 await original_handle_data(data)
 
         async def finalize():
+            nonlocal failed_download
             if save_artifact and remote.policy != Remote.STREAMED:
                 await original_finalize()
+            failed_download = False
 
         downloader = remote.get_downloader(
             remote_artifact=remote_artifact,
@@ -1127,6 +1129,7 @@ class Handler:
         downloader.handle_data = handle_data
         original_finalize = downloader.finalize
         downloader.finalize = finalize
+        failed_download = True
         try:
             download_result = await downloader.run(
                 extra_data={"disable_retry_list": (DigestValidationError,)}
@@ -1138,7 +1141,6 @@ class Handler:
                 pulp_last_updated=timezone.now()
                 + timedelta(settings.REMOTE_CONTENT_FETCH_FAILURE_COOLDOWN)
             )
-            await downloader.session.close()
             close_tcp_connection(request.transport._sock)
             REMOTE_CONTENT_FETCH_FAILURE_COOLDOWN = settings.REMOTE_CONTENT_FETCH_FAILURE_COOLDOWN
             raise RuntimeError(
@@ -1153,6 +1155,13 @@ class Handler:
                 "affected Pulp Remote, adding a good one and resyncing.\n"
                 "If the problem persists, please contact the Pulp team."
             )
+        finally:
+            if failed_download:
+                if downloader.path:
+                    await sync_to_async(os.unlink)(downloader.path)
+
+            if hasattr(downloader, "session"):
+                await downloader.session.close()
 
         if save_artifact and remote.policy != Remote.STREAMED:
             await asyncio.shield(
