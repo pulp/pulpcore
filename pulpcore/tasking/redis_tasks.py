@@ -7,6 +7,7 @@ Redis distributed locks for task coordination.
 
 import contextvars
 import logging
+import redis
 import sys
 from asgiref.sync import sync_to_async
 
@@ -63,7 +64,7 @@ def publish_cancel_signal(task_id):
         redis_conn.setex(cancel_key, 86400, "cancel")
         _logger.info("Published cancellation signal for task %s", task_id)
         return True
-    except Exception as e:
+    except redis.RedisError as e:
         _logger.error("Error publishing cancellation signal for task %s: %s", task_id, e)
         return False
 
@@ -83,7 +84,7 @@ def check_cancel_signal(task_id):
     try:
         cancel_key = f"{REDIS_CANCEL_PREFIX}{task_id}"
         return redis_conn.exists(cancel_key) > 0
-    except Exception as e:
+    except redis.RedisError as e:
         _logger.error("Error checking cancellation signal for task %s: %s", task_id, e)
         return False
 
@@ -101,7 +102,7 @@ def clear_cancel_signal(task_id):
         cancel_key = f"{REDIS_CANCEL_PREFIX}{task_id}"
         redis_conn.delete(cancel_key)
         _logger.debug("Cleared cancellation signal for task %s", task_id)
-    except Exception as e:
+    except redis.RedisError as e:
         _logger.error("Error clearing cancellation signal for task %s: %s", task_id, e)
 
 
