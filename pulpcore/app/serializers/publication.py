@@ -180,10 +180,8 @@ class DistributionSerializer(ModelSerializer):
     """
     The Serializer for the Distribution model.
 
-    The serializer deliberately omits the `publication` and `repository_version` field due to
-    plugins typically requiring one or the other but not both.
-
-    To include the ``publication`` field, it is recommended plugins define the field::
+    The serializer deliberately omits the `publication` field due to not all plugins using
+    publications. To include the `publication` field, plugins should define it::
 
       publication = DetailRelatedField(
           required=False,
@@ -193,14 +191,8 @@ class DistributionSerializer(ModelSerializer):
           allow_null=True,
       )
 
-    To include the ``repository_version`` field, it is recommended plugins define the field::
-
-      repository_version = RepositoryVersionRelatedField(
-          required=False, help_text=_("RepositoryVersion to be served"), allow_null=True
-      )
-
-    Additionally, the serializer omits the ``remote`` field, which is used for pull-through caching
-    feature and only by plugins which use publications. Plugins implementing a pull-through caching
+    The serializer also omits the `remote` field, which is used for pull-through caching
+    and only by plugins which use publications. Plugins implementing pull-through caching
     should define the field in their derived serializer class like this::
 
       remote = DetailRelatedField(
@@ -245,6 +237,9 @@ class DistributionSerializer(ModelSerializer):
         queryset=models.Repository.objects.all(),
         allow_null=True,
     )
+    repository_version = RepositoryVersionRelatedField(
+        required=False, help_text=_("RepositoryVersion to be served"), allow_null=True
+    )
     hidden = serializers.BooleanField(
         default=False, help_text=_("Whether this distribution should be shown in the content app.")
     )
@@ -266,6 +261,7 @@ class DistributionSerializer(ModelSerializer):
             "pulp_labels",
             "name",
             "repository",
+            "repository_version",
         )
 
     def _validate_path_overlap(self, path):

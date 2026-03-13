@@ -6,16 +6,23 @@ environment to another. There are some features Pulp provides which can help fac
 
 ## Distributions
 
-`Distributions` are a resource in Pulp that are useful for supporting different
-environments. In most cases, you'll want to create one Distribution for each `Repository` and
-environment. If for example, you have a CentOS Repository that you want to serve to your Dev
-servers, you can create a distribution called "Dev CentOS" that points to your CentOS Publication.
+`Distributions` are a resource in Pulp that are useful for supporting different environments.
+A Distribution can serve content by pointing to a `Repository` (automatically serving the latest
+version), a `RepositoryVersion` (serving a specific version), or for content types that use
+publications, a specific `Publication`.
 
-One way to promote content is to use Distributions. Going back to the Dev CentOS example one way you
-could promote this Publication to a Staging environment would be to create a Staging CentOS
-distribution and point it to the same publication as the Dev CentOS distribution. Any time you want
-to promote content from Dev to Staging, you can simply repeat this action. Also, to rollback, you can
-simply point the Staging CentOS distribution to the Publication it was previously pointed at.
+In most cases, you'll want to create one Distribution for each `Repository` and environment.
+If for example, you have a CentOS Repository that you want to serve to your Dev servers,
+you can create a distribution called "Dev CentOS" that points to a specific `RepositoryVersion`
+of your CentOS Repository.
+
+One way to promote content is to use Distributions. Going back to the Dev CentOS example,
+one way you could promote content to a Staging environment would be to create a Staging CentOS
+distribution and point it to the same `RepositoryVersion` as the Dev CentOS distribution.
+Any time you want to promote content from Dev to Staging, you can simply repeat this action.
+To rollback, simply point the Staging CentOS distribution to the `RepositoryVersion` it was
+previously pointed at. For content types that use publications, you can also point distributions
+at a specific `Publication`.
 
 ## Repositories
 

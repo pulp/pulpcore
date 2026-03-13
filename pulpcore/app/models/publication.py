@@ -631,6 +631,55 @@ class Distribution(MasterModel):
     class Meta:
         unique_together = (("name", "pulp_domain"), ("base_path", "pulp_domain"))
 
+    def get_repository_publication_and_version(self):
+        """
+        Resolve the repository, repository version, and publication to serve for this distribution.
+
+        Checks in priority order: explicit publication, explicit repository_version
+        (latest publication for that version), explicit repository (latest publication
+        across all versions).
+
+        Publication lookup only occurs when SERVE_FROM_PUBLICATION is True.
+
+        Returns:
+            Tuple of (repository, repository_version, publication), any of which may be None.
+        """
+        repository = repo_version = publication = None
+        if self.publication:
+            publication = self.publication.cast()
+            repo_version = publication.repository_version
+            repository = repo_version.repository.cast()
+        elif self.repository_version:
+            repo_version = self.repository_version
+            repository = repo_version.repository.cast()
+            if self.SERVE_FROM_PUBLICATION:
+                try:
+                    publication = (
+                        Publication.objects.filter(repository_version=repo_version, complete=True)
+                        .latest("pulp_created")
+                        .cast()
+                    )
+                except Publication.DoesNotExist:
+                    pass
+        elif self.repository:
+            repository = self.repository.cast()
+            if self.SERVE_FROM_PUBLICATION:
+                try:
+                    publication = (
+                        Publication.objects.filter(
+                            repository_version__in=repository.versions.all(), complete=True
+                        )
+                        .select_related("repository_version")
+                        .latest("repository_version", "pulp_created")
+                        .cast()
+                    )
+                    repo_version = publication.repository_version
+                except Publication.DoesNotExist:
+                    pass
+            if not repo_version:
+                repo_version = repository.latest_version()
+        return repository, repo_version, publication
+
     def content_handler(self, path):
         """
         Handler to serve extra, non-Artifact content for this Distribution

@@ -744,28 +744,9 @@ class Handler:
             rel_path = rel_path.split("/", 1)[1]
             original_rel_path = original_rel_path.split("/", 1)[1]
         else:
-            repository = distro.repository
-            publication = distro.publication
-            repo_version = distro.repository_version
-
-        if repository:
-            repository = await repository.acast()
-            # Search for publication serving the latest (last complete) version
-            if not publication:
-                try:
-                    versions = repository.versions.all()
-                    publications = Publication.objects.filter(
-                        repository_version__in=versions, complete=True
-                    )
-                    publication = await publications.select_related("repository_version").alatest(
-                        "repository_version", "pulp_created"
-                    )
-                    repo_version = publication.repository_version
-                except ObjectDoesNotExist:
-                    pass
-
-            if not repo_version:
-                repo_version = await repository.alatest_version()
+            repository, repo_version, publication = await sync_to_async(
+                distro.get_repository_publication_and_version
+            )()
 
         if publication:
             try:

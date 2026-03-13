@@ -31,8 +31,12 @@ Here is a gist of how models are related to each other and what each model is re
   belongs to a certain `pulpcore.app.models.Publication`.
 - `pulpcore.app.models.Publication` is a result of publish operation of a specific
   `pulpcore.plugin.models.RepositoryVersion`.
-- `pulpcore.app.models.Distribution` defines how a publication is distributed for a specific
-  `pulpcore.plugin.models.Publication`.
+- `pulpcore.app.models.Distribution` defines how content is served to clients. It can
+  reference a `pulpcore.app.models.Repository` (serving the latest version) or a
+  `pulpcore.plugin.models.RepositoryVersion` (serving a specific version). For content
+  types that use publications, it can also reference a specific
+  `pulpcore.plugin.models.Publication`, and when pointing to a repository or version it
+  will automatically resolve to the latest publication.
 - `pulpcore.plugin.models.ProgressReport` is used to report progress of the task.
 - `pulpcore.plugin.models.GroupProgressReport` is used to report progress of the task group.
 

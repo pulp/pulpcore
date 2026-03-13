@@ -2,9 +2,12 @@
 
 import pytest
 import json
+from urllib.parse import urljoin
 from uuid import uuid4
 
 from pulpcore.client.pulp_file.exceptions import ApiException
+
+from pulpcore.tests.functional.utils import download_file, get_from_url
 
 
 @pytest.mark.parallel
@@ -279,3 +282,195 @@ def test_distribution_filtering(
         with_content=file_random_content_unit.pulp_href
     ).results
     assert [] == results
+
+
+def _get_manifest_from_distribution(distribution, distribution_base_url):
+    """Download and parse PULP_MANIFEST from a distribution, returning a set of
+    (name, sha256, size) tuples.
+    """
+    url = urljoin(distribution_base_url(distribution.base_url), "PULP_MANIFEST")
+    r = download_file(url)
+    files = set()
+    for line in r.body.splitlines():
+        files.add(tuple(line.decode().split(",")))
+    return files
+
+
+@pytest.mark.parallel
+def test_distribution_serves_publication_content(
+    file_bindings,
+    file_repo,
+    file_remote_ssl_factory,
+    basic_manifest_path,
+    gen_object_with_cleanup,
+    file_distribution_factory,
+    distribution_base_url,
+    monitor_task,
+):
+    """Test that publication, repository, and repository_version distributions serve
+    correct content.
+
+    Sets up a repository with two versions (v1 has 3 files, v2 has 2 files), publishes both,
+    then verifies:
+    - A distribution with an explicit publication serves that publication's content.
+    - A distribution with ``repository`` serves the latest publication (for the latest version).
+    - A distribution with ``repository_version`` serves the latest publication for that version.
+    """
+    # Sync to create version 1 (3 files)
+    remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="immediate")
+    body = file_bindings.RepositorySyncURL(remote=remote.pulp_href)
+    monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task)
+    file_repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
+    v1_href = file_repo.latest_version_href
+
+    # Remove one content unit to create version 2 (2 files)
+    v1_content = file_bindings.ContentFilesApi.list(repository_version=v1_href).results
+    monitor_task(
+        file_bindings.RepositoriesFileApi.modify(
+            file_repo.pulp_href, {"remove_content_units": [v1_content[0].pulp_href]}
+        ).task
+    )
+    file_repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
+    v2_href = file_repo.latest_version_href
+
+    # Publish version 1 and version 2
+    pub_v1 = gen_object_with_cleanup(
+        file_bindings.PublicationsFileApi,
+        file_bindings.FileFilePublication(repository_version=v1_href),
+    )
+    pub_v2 = gen_object_with_cleanup(
+        file_bindings.PublicationsFileApi,
+        file_bindings.FileFilePublication(repository_version=v2_href),
+    )
+
+    # Create distributions for each method of specifying content
+    distro_pub_v1 = file_distribution_factory(publication=pub_v1.pulp_href)
+    distro_pub_v2 = file_distribution_factory(publication=pub_v2.pulp_href)
+    distro_repo = file_distribution_factory(repository=file_repo.pulp_href)
+    distro_repo_ver = file_distribution_factory(repository_version=v1_href)
+
+    # Download manifests from each distribution
+    manifest_pub_v1 = _get_manifest_from_distribution(distro_pub_v1, distribution_base_url)
+    manifest_pub_v2 = _get_manifest_from_distribution(distro_pub_v2, distribution_base_url)
+    manifest_repo = _get_manifest_from_distribution(distro_repo, distribution_base_url)
+    manifest_repo_ver = _get_manifest_from_distribution(distro_repo_ver, distribution_base_url)
+
+    # Sanity check: v1 and v2 publications have different content
+    assert len(manifest_pub_v1) == 3
+    assert len(manifest_pub_v2) == 2
+    assert manifest_pub_v1 != manifest_pub_v2
+
+    # "repository" distribution should serve the latest publication (pub_v2)
+    assert manifest_repo == manifest_pub_v2
+
+    # "repository_version" distribution pointing to v1 should serve pub_v1
+    assert manifest_repo_ver == manifest_pub_v1
+
+
+@pytest.mark.parallel
+def test_distribution_mutually_exclusive_source(
+    file_bindings,
+    file_repo,
+    file_remote_ssl_factory,
+    basic_manifest_path,
+    gen_object_with_cleanup,
+    file_distribution_factory,
+    monitor_task,
+):
+    """Test that only one of publication, repository, and repository_version can be set."""
+    # Sync to get a version and publication to reference
+    remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="on_demand")
+    body = file_bindings.RepositorySyncURL(remote=remote.pulp_href)
+    monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task)
+    file_repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
+    version_href = file_repo.latest_version_href
+
+    publication = gen_object_with_cleanup(
+        file_bindings.PublicationsFileApi,
+        file_bindings.FileFilePublication(repository_version=version_href),
+    )
+
+    # repository + publication
+    with pytest.raises(ApiException) as exc:
+        file_distribution_factory(repository=file_repo.pulp_href, publication=publication.pulp_href)
+    assert exc.value.status == 400
+
+    # repository + repository_version
+    with pytest.raises(ApiException) as exc:
+        file_distribution_factory(repository=file_repo.pulp_href, repository_version=version_href)
+    assert exc.value.status == 400
+
+    # publication + repository_version
+    with pytest.raises(ApiException) as exc:
+        file_distribution_factory(
+            publication=publication.pulp_href, repository_version=version_href
+        )
+    assert exc.value.status == 400
+
+    # all three
+    with pytest.raises(ApiException) as exc:
+        file_distribution_factory(
+            repository=file_repo.pulp_href,
+            publication=publication.pulp_href,
+            repository_version=version_href,
+        )
+    assert exc.value.status == 400
+
+
+@pytest.mark.parallel
+def test_distribution_returns_404_without_servable_content(
+    file_bindings,
+    file_repository_factory,
+    file_remote_ssl_factory,
+    basic_manifest_path,
+    gen_object_with_cleanup,
+    file_distribution_factory,
+    distribution_base_url,
+    monitor_task,
+):
+    """Test that distributions return 404 when they have no servable content.
+
+    Covers the cases where:
+    - No source is set (no publication, repository, or repository_version).
+    - A repository is set but has no versions (empty repo, version 0 only).
+    - A repository is set but none of its versions have publications.
+    - A repository_version is set but has no publication.
+    """
+    # Create a repo and sync it, but don't publish
+    repo = file_repository_factory()
+    remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="on_demand")
+    body = file_bindings.RepositorySyncURL(remote=remote.pulp_href)
+    monitor_task(file_bindings.RepositoriesFileApi.sync(repo.pulp_href, body).task)
+    repo = file_bindings.RepositoriesFileApi.read(repo.pulp_href)
+    v1_href = repo.latest_version_href
+
+    # Case 1: No source set at all
+    distro_empty = file_distribution_factory()
+    r = get_from_url(distribution_base_url(distro_empty.base_url))
+    assert r.status == 404
+
+    # Case 2: Repository with no versions (version 0 only, no content)
+    empty_repo = file_repository_factory()
+    distro_empty_repo = file_distribution_factory(repository=empty_repo.pulp_href)
+    r = get_from_url(distribution_base_url(distro_empty_repo.base_url))
+    assert r.status == 404
+
+    # Case 3: Repository with versions but no publications
+    distro_repo_no_pub = file_distribution_factory(repository=repo.pulp_href)
+    r = get_from_url(distribution_base_url(distro_repo_no_pub.base_url))
+    assert r.status == 404
+
+    # Case 4: Repository version with no publication
+    distro_ver_no_pub = file_distribution_factory(repository_version=v1_href)
+    r = get_from_url(distribution_base_url(distro_ver_no_pub.base_url))
+    assert r.status == 404
+
+    # Sanity check: after publishing, the repository and repository_version distributions work
+    gen_object_with_cleanup(
+        file_bindings.PublicationsFileApi,
+        file_bindings.FileFilePublication(repository_version=v1_href),
+    )
+    r = get_from_url(distribution_base_url(distro_repo_no_pub.base_url))
+    assert r.status == 200
+    r = get_from_url(distribution_base_url(distro_ver_no_pub.base_url))
+    assert r.status == 200
