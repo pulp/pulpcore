@@ -694,6 +694,24 @@ def test_delete_protected_repo_version(
     ).task
     monitor_task(task)
 
+    # distribute the repo version directly via repository_version
+    task = file_bindings.DistributionsFileApi.partial_update(
+        distribution.pulp_href, {"repository_version": repo.latest_version_href}
+    ).task
+    monitor_task(task)
+
+    # deleting a repo version distributed via repository_version also fails
+    with pytest.raises(file_bindings.ApiException) as e:
+        file_bindings.RepositoriesFileVersionsApi.delete(repo.latest_version_href)
+    assert e.value.status == 400
+    assert "The repository version cannot be deleted" in e.value.body
+
+    # unset the repository_version for the distribution
+    task = file_bindings.DistributionsFileApi.partial_update(
+        distribution.pulp_href, {"repository_version": ""}
+    ).task
+    monitor_task(task)
+
     # and then delete the repo version
     task = file_bindings.RepositoriesFileVersionsApi.delete(repo.latest_version_href).task
     monitor_task(task)
@@ -902,14 +920,14 @@ def test_repo_versions_protected_from_cleanup(
     # Version 2 will be removed since we're creating version 3 and it's not protected
     repo = _modify_and_validate(repo, "3", 3)
 
-    # Publish version 3 as a checkpoint and ditribute it
+    # Publish version 3 as a checkpoint and distribute it
     gen_object_with_cleanup(
         file_bindings.PublicationsFileApi,
         {"repository": repo.pulp_href, "checkpoint": True},
     )
     file_distribution_factory(repository=repo.pulp_href, checkpoint=True)
 
-    # Version 3 is protected since it's ditributed by the checkpoint distribution
+    # Version 3 is protected since it's distributed by the checkpoint distribution
     repo = _modify_and_validate(repo, "4", 4)
 
     # Publish version 4 as a checkpoint (it's already distributed)
@@ -918,7 +936,7 @@ def test_repo_versions_protected_from_cleanup(
         {"repository": repo.pulp_href, "checkpoint": True},
     )
 
-    # Version 4 is protected since it's ditributed by the checkpoint distribution
+    # Version 4 is protected since it's distributed by the checkpoint distribution
     repo = _modify_and_validate(repo, "5", 5)
 
     # Version 5 will be removed since it's not protected and we're creating version 6

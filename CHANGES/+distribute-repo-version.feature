@@ -1,0 +1,1 @@
+It is now possible to set `repository_version` on any distribution type, including for publication-based content types where this was not previously the case. For publication-based content, selecting a `repository_version` to distribute will pick the latest publication for that repository version, just as selecting a `repository` will pick the latest repository version.
