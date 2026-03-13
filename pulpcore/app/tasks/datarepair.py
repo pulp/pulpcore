@@ -2,7 +2,7 @@ from logging import getLogger
 
 from pulpcore.app import models
 from pulpcore.app.models import ProgressReport
-from pulpcore.app.util import get_domain_pk
+from pulpcore.app.util import get_domain
 
 log = getLogger(__name__)
 
@@ -21,7 +21,7 @@ def repair_7272(dry_run=False):
     """
     number_broken = 0
 
-    domain = models.Domain.objects.get(pk=get_domain_pk())
+    domain = get_domain()
 
     log.info(f'Performing datarepair for issue #7272 for domain "{domain.name}"')
 
@@ -103,5 +103,59 @@ def repair_7272(dry_run=False):
         else:
             log.info(
                 f"Data repair operation for issue #7272 finished. ({number_broken} "
+                f'repository versions fixed in domain "{domain.name}")'
+            )
+
+
+def repair_7465(dry_run=False):
+    """
+    Populates the content_ids cache for all repository versions.
+    """
+    number_missing = 0
+    domain = get_domain()
+
+    log.info(f'Performing datarepair for issue #7465 for domain "{domain.name}"')
+
+    repos = models.Repository.objects.filter(pulp_domain=domain)
+    total_versions = models.RepositoryVersion.objects.filter(repository__in=repos).count()
+
+    with ProgressReport(
+        message="Repositories checked",
+        code="repair.7465.repos_checked",
+        total=repos.count(),
+    ) as repos_progress, ProgressReport(
+        message="Repository versions checked",
+        code="repair.7465.versions_checked",
+        total=total_versions,
+    ) as versions_progress, ProgressReport(
+        message="Repository versions fixed",
+        code="repair.7465.versions_fixed",
+    ) as fixed_progress:
+        for repo in repos:
+            for rv in models.RepositoryVersion.objects.filter(repository=repo):
+                versions_progress.increment()
+                if rv.content_ids is None:
+                    number_missing += 1
+                    if not dry_run:
+                        rv.content_ids = list(
+                            rv._content_relationships().values_list("content_id", flat=True)
+                        )
+                        rv.save()
+                        fixed_progress.increment()
+            repos_progress.increment()
+
+        fixed_progress.total = number_missing
+
+    if not number_missing:
+        log.info(f'Data repair operation for issue #7465 for domain "{domain.name}" finished. (OK)')
+    else:
+        if dry_run:
+            log.info(
+                f"Data repair operation for issue #7465 dry run finished. ({number_missing} "
+                f'repository versions need fixing in domain "{domain.name}")'
+            )
+        else:
+            log.info(
+                f"Data repair operation for issue #7465 finished. ({number_missing} "
                 f'repository versions fixed in domain "{domain.name}")'
             )

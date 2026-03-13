@@ -117,3 +117,22 @@ def check_artifact_checksums(app_configs, **kwargs):
         )
 
     return messages
+
+
+@register(Tags.database)
+def check_repository_version_content_ids(app_configs, **kwargs):
+    from pulpcore.app.models import RepositoryVersion
+
+    try:
+        if RepositoryVersion.objects.filter(content_ids=None).exists():
+            return [
+                CheckWarning(
+                    "There are repository versions with no content_ids cache. Run "
+                    "'/pulp/api/v3/datarepair/7465/' to add missing content_ids cache to all "
+                    "repository versions. This will become an error in 3.115",
+                    id="pulpcore.W006",
+                )
+            ]
+    except Exception:
+        pass
+    return []

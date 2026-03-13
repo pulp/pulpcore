@@ -104,3 +104,8 @@ and recomputing the content counts. The repair operates within the current domai
 !!! tip
     It is recommended to run with `dry_run=true` first to understand the scope of the issue
     before performing the actual repair.
+
+
+## Repair #7465: Populate missing Repository Version Caches
+
+[Issue #7465](https://github.com/pulp/pulpcore/issues/7465) The repository version `content_ids` caches were added in [pulpcore 3.83](https://github.com/pulp/pulpcore/issues/5783) as a way to speed up the content set calculation performed anytime content is accessed from a repository. To ensure a smooth upgrade and maintain backwards compatibility, the new cache was only populated for newly created repository versions after 3.83. Starting in pulpcore 3.115 the cache will become required for all repository versions. This endpoint will spawn a task to populate any missing `content_ids` on all the repository versions in the task's domain.
