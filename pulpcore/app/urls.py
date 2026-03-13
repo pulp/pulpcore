@@ -19,6 +19,7 @@ from pulpcore.app.views import (
     OrphansView,
     PulpImporterImportCheckView,
     DataRepair7272View,
+    DataRepair7465View,
     RepairView,
     StatusView,
 )
@@ -158,6 +159,7 @@ special_views = [
     path("login/", LoginViewSet.as_view()),
     path("repair/", RepairView.as_view()),
     path("datarepair/7272/", DataRepair7272View.as_view()),
+    path("datarepair/7465/", DataRepair7465View.as_view()),
     path(
         "orphans/cleanup/",
         OrphansCleanupViewset.as_view(actions={"post": "cleanup"}),

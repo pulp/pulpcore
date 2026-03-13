@@ -95,7 +95,7 @@ from .repository import (
     RepositoryAddRemoveContentSerializer,
     RepositoryVersionSerializer,
 )
-from .repair import RepairSerializer, DataRepair7272Serializer
+from .repair import RepairSerializer, DataRepair7272Serializer, DataRepair7465Serializer
 from .reclaim import ReclaimSpaceSerializer
 from .task import (
     MinimalTaskSerializer,
