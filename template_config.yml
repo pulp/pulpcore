@@ -127,7 +127,6 @@ test_deprecations: true
 test_gcp: false
 test_lowerbounds: true
 test_performance: false
-test_reroute: true
 test_s3: true
 use_issue_template: true
 ...

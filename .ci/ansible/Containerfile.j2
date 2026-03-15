@@ -1,34 +1,28 @@
-FROM {{ ci_base | default(pulp_default_container) }}
+FROM {{ image.ci_base }}
+{%- if image.webserver_snippet %}
 
-# Add source directories to container
-{% for item in plugins %}
-ADD ./{{ item.name }} ./{{ item.name }}
-{% endfor %}
+ADD ./{{ plugin_name }}/{{ plugin_name | replace("-", "_") }}/app/webserver_snippets/nginx.conf /etc/nginx/pulp/{{ plugin_name }}.conf
+{%- endif %}
 
-{% for item in extra_files | default([]) %}
+{%- for item in extra_files | default([]) %}
+
 ADD ./{{ item.origin }} {{ item.destination }}
-{% endfor %}
+{%- endfor %}
 
 # This MUST be the ONLY call to pip install in inside the container.
 RUN pip3 install --upgrade pip setuptools wheel && \
   rm -rf /root/.cache/pip && \
-  pip3 install
-{%- if s3_test | default(false) -%}
-{{ " " }}git+https://github.com/gerrod3/botocore.git@fix-100-continue
+  pip3 install {{ image.source }}
+{%- if image.upperbounds | default(false) -%}
+{{ " " }}-c ./{{ plugin_name }}/upperbounds_constraints.txt
 {%- endif -%}
-{%- for item in plugins -%}
-{{ " " }}{{ item.source }}
-{%- if item.upperbounds | default(false) -%}
-{{ " " }}-c ./{{ item.name }}/upperbounds_constraints.txt
+{%- if image.lowerbounds | default(false) -%}
+{{ " " }}-c ./{{ plugin_name }}/lowerbounds_constraints.txt
 {%- endif -%}
-{%- if item.lowerbounds | default(false) -%}
-{{ " " }}-c ./{{ item.name }}/lowerbounds_constraints.txt
+{%- if image.ci_requirements | default(false) -%}
+{{ " " }}-r ./{{ plugin_name }}/ci_requirements.txt
 {%- endif -%}
-{%- if item.ci_requirements | default(false) -%}
-{{ " " }}-r ./{{ item.name }}/ci_requirements.txt
-{%- endif -%}
-{%- endfor %}
-{{ " " }}-c ./{{ plugins[0].name }}/.ci/assets/ci_constraints.txt && \
+{{ " " }}-c ./{{ plugin_name }}/.ci/assets/ci_constraints.txt && \
   rm -rf /root/.cache/pip
 
 {% if pulp_env is defined and pulp_env %}
@@ -46,11 +40,8 @@ ENV {{ key | upper }}={{ value }}
 USER pulp:pulp
 RUN PULP_STATIC_ROOT=/var/lib/operator/static/ PULP_CONTENT_ORIGIN=localhost \
        /usr/local/bin/pulpcore-manager collectstatic --clear --noinput --link
-USER root:root
 
-{% for item in plugins %}
-RUN export plugin_path="$(pip3 show {{ item.name }} | sed -n -e 's/Location: //p')/{{ item.name }}" && \
-    ln $plugin_path/app/webserver_snippets/nginx.conf /etc/nginx/pulp/{{ item.name }}.conf || true
-{% endfor %}
+RUN mkdir /var/lib/pulp/.config
+USER root:root
 
 ENTRYPOINT ["/init"]
