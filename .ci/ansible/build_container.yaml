@@ -1,15 +1,14 @@
 # Ansible playbook to create the pulp service containers image
 ---
-- hosts: localhost
+- hosts: "localhost"
   gather_facts: false
   vars_files:
-    - vars/main.yaml
+    - "vars/main.yaml"
   tasks:
     - name: "Generate Containerfile from template"
-      template:
-        src: Containerfile.j2
-        dest: Containerfile
-
+      ansible.builtin.template:
+        src: "Containerfile.j2"
+        dest: "Containerfile"
     - name: "Build pulp image"
       # We build from the ../.. (parent dir of pulpcore git repo) Docker build
       # "context" so that repos like pulp-smash are accessible to Docker

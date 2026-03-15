@@ -11,7 +11,7 @@ on:
   schedule:
     # * is a special character in YAML so you have to quote this string
     # runs at 3:00 UTC daily
-    - cron: '00 3 * * *'
+    - cron: "00 3 * * *"
   workflow_dispatch:
 
 defaults:
@@ -34,36 +34,35 @@ jobs:
         [{"TEST": "pulp"}, {"TEST": "azure"}, {"TEST": "s3"}, {"TEST": "lowerbounds"}]
 
   changelog:
-    runs-on: ubuntu-latest
+    runs-on: "ubuntu-latest"
     steps:
-      - uses: "actions/checkout@v4"
+      - uses: "actions/checkout@v6"
         with:
           fetch-depth: 0
           path: "pulpcore"
 
-      - uses: "actions/setup-python@v5"
+      - uses: "actions/setup-python@v6"
         with:
           python-version: "3.13"
 
       - name: "Install python dependencies"
         run: |
-          echo ::group::PYDEPS
           pip install gitpython packaging toml
-          echo ::endgroup::
 
       - name: "Configure Git with pulpbot name and email"
         run: |
           git config --global user.name 'pulpbot'
           git config --global user.email 'pulp-infra@redhat.com'
 
-      - name: Collect changes from all branches
-        run: python .ci/scripts/collect_changes.py
+      - name: "Collect changes from all branches"
+        run: |
+          python .ci/scripts/collect_changes.py
 
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v6
+      - name: "Create Pull Request"
+        uses: "peter-evans/create-pull-request@v8"
         id: "create_pr_changelog"
         with:
-          token: ${{ secrets.RELEASE_TOKEN }}
+          token: "${{ secrets.RELEASE_TOKEN }}"
           title: "Update Changelog"
           body: ""
           branch: "changelog/update"
