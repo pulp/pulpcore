@@ -5,8 +5,11 @@
 #
 # For more info visit https://github.com/pulp/plugin_template
 
+
+# This file describes checks that should prevent a premature merge,
+# but still let the tests run for demonstrations or experiments.
 ---
-name: "Lint"
+name: "Sanity"
 on:
   workflow_call:
 
@@ -15,7 +18,7 @@ defaults:
     working-directory: "pulpcore"
 
 jobs:
-  lint:
+  sanity:
     runs-on: "ubuntu-latest"
 
     steps:
@@ -32,26 +35,16 @@ jobs:
         run: |
           pip install -r lint_requirements.txt
 
-      - name: "Lint workflow files"
+      - name: "Verify bump version config"
         run: |
-          yamllint -s -d '{extends: relaxed, rules: {line-length: disable}}' .github/workflows
+          bump-my-version bump --dry-run release
+          bump-my-version show-bump
 
-      # run black separately from flake8 to get a diff
-      - name: "Run black"
+      - name: "Check for any files unintentionally left out of MANIFEST.in"
         run: |
-          black --version
-          black --check --diff .
+          check-manifest
 
-      # Lint code.
-      - name: "Run flake8"
+      - name: "Verify requirements files"
         run: |
-          flake8
-
-      - name: "Check for common gettext problems"
-        run: |
-          sh .ci/scripts/check_gettext.sh
-
-      - name: "Run extra lint checks"
-        run: |
-          [ ! -x .ci/scripts/extra_linting.sh ] || .ci/scripts/extra_linting.sh
+          python .ci/scripts/check_requirements.py
 ...
