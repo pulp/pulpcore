@@ -13,7 +13,7 @@ on:
       run_docs:
         description: "Whether to run docs jobs"
         required: true
-        type: string
+        type: "string"
 
 jobs:
   changelog:
@@ -22,23 +22,22 @@ jobs:
       run:
         working-directory: "pulpcore"
     steps:
-      - uses: "actions/checkout@v4"
+      - uses: "actions/checkout@v6"
         with:
           fetch-depth: 1
           path: "pulpcore"
-      - uses: "actions/setup-python@v5"
+      - uses: "actions/setup-python@v6"
         with:
           python-version: "3.12"
       - name: "Install python dependencies"
         run: |
-          echo ::group::PYDEPS
           pip install towncrier
-          echo ::endgroup::
       - name: "Build changelog"
         run: |
           towncrier build --yes --version 4.0.0.ci
   docs:
-    if: ${{ inputs.run_docs == '1' }}
-    uses: 'pulp/pulp-docs/.github/workflows/docs-ci.yml@main'
+    if: "${{ inputs.run_docs == '1' }}"
+    uses: "pulp/pulp-docs/.github/workflows/docs-ci.yml@main"
     with:
-      pulpdocs_ref: 'main'
+      pulpdocs_ref: "main"
+...
