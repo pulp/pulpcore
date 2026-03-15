@@ -44,10 +44,6 @@ cp ~/.config/pulp/cli.toml "${REPO_ROOT}/../pulp-cli/tests/cli.toml"
 ansible-playbook build_container.yaml
 ansible-playbook start_container.yaml
 
-# .config needs to be accessible by the pulp user in the container, but some
-# files will likely be modified on the host by post/pre scripts.
-chmod 777 ~/.config/pulp_smash/
-chmod 666 ~/.config/pulp_smash/settings.json
 # Plugins often write to ~/.config/pulp/cli.toml from the host
 chmod 777 ~/.config/pulp
 chmod 666 ~/.config/pulp/cli.toml
