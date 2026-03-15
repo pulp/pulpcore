@@ -19,23 +19,21 @@ jobs:
     runs-on: "ubuntu-latest"
 
     steps:
-      - uses: "actions/checkout@v4"
+      - uses: "actions/checkout@v6"
         with:
           fetch-depth: 1
           path: "pulpcore"
-      - uses: "actions/checkout@v4"
+      - uses: "actions/checkout@v6"
         with:
           fetch-depth: 1
           repository: "pulp/pulp-openapi-generator"
           path: "pulp-openapi-generator"
-      - uses: "actions/setup-python@v5"
+      - uses: "actions/setup-python@v6"
         with:
           python-version: "3.11"
       - name: "Install python dependencies"
         run: |
-          echo ::group::PYDEPS
           pip install build packaging twine wheel mkdocs jq
-          echo ::endgroup::
       - name: "Build package"
         run: |
           python3 -m build
@@ -48,7 +46,7 @@ jobs:
           pulpcore-manager openapi --file "api.json"
           pulpcore-manager openapi --bindings --component "core" --file "core-api.json"
       - name: "Upload Package whl"
-        uses: "actions/upload-artifact@v4"
+        uses: "actions/upload-artifact@v5"
         with:
           name: "plugin_package"
           path: "pulpcore/dist/"
@@ -56,7 +54,7 @@ jobs:
           retention-days: 5
           overwrite: true
       - name: "Upload API specs"
-        uses: "actions/upload-artifact@v4"
+        uses: "actions/upload-artifact@v5"
         with:
           name: "api_spec"
           path: |
@@ -75,7 +73,7 @@ jobs:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
           GITHUB_CONTEXT: "${{ github.event.pull_request.commits_url }}"
       - name: "Upload python client packages"
-        uses: "actions/upload-artifact@v4"
+        uses: "actions/upload-artifact@v5"
         with:
           name: "python-client.tar"
           path: |
@@ -84,7 +82,7 @@ jobs:
           retention-days: 5
           overwrite: true
       - name: "Upload python client docs"
-        uses: "actions/upload-artifact@v4"
+        uses: "actions/upload-artifact@v5"
         with:
           name: "python-client-docs.tar"
           path: |
@@ -102,7 +100,7 @@ jobs:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
           GITHUB_CONTEXT: "${{ github.event.pull_request.commits_url }}"
       - name: "Upload Ruby client"
-        uses: "actions/upload-artifact@v4"
+        uses: "actions/upload-artifact@v5"
         with:
           name: "ruby-client.tar"
           path: |
