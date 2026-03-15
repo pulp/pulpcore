@@ -21,18 +21,16 @@ jobs:
   check-commits:
     runs-on: "ubuntu-latest"
     steps:
-      - uses: "actions/checkout@v4"
+      - uses: "actions/checkout@v6"
         with:
           fetch-depth: 0
           path: "pulpcore"
-      - uses: "actions/setup-python@v5"
+      - uses: "actions/setup-python@v6"
         with:
           python-version: "3.11"
       - name: "Install python dependencies"
         run: |
-          echo ::group::PYDEPS
           pip install requests pygithub pyyaml
-          echo ::endgroup::
       - name: "Check commit message"
         if: github.event_name == 'pull_request'
         env:
@@ -44,29 +42,27 @@ jobs:
           .github/workflows/scripts/check_commit.sh
 
   check-changes:
-    runs-on: ubuntu-latest
+    runs-on: "ubuntu-latest"
     outputs:
-      run_tests: ${{ steps.check.outputs.run_tests }}
-      run_docs: ${{ steps.check.outputs.run_docs }}
+      run_tests: "${{ steps.check.outputs.run_tests }}"
+      run_docs: "${{ steps.check.outputs.run_docs }}"
     steps:
-      - uses: "actions/checkout@v4"
+      - uses: "actions/checkout@v6"
         with:
           fetch-depth: 0
           path: "pulpcore"
 
-      - uses: "actions/setup-python@v5"
+      - uses: "actions/setup-python@v6"
         with:
           python-version: "3.12"
 
       - name: "Install python dependencies"
         run: |
-          echo ::group::PYDEPS
           pip install gitpython
-          echo ::endgroup::
 
-      - name: Analyze changed files
-        shell: bash
-        id: check
+      - name: "Analyze changed files"
+        id: "check"
+        shell: "bash"
         run: |
           # We only test docs on the default branch (usually main)
           if [[ "${{ github.base_ref }}" == *"main" ]]; then
@@ -91,16 +87,19 @@ jobs:
     needs: "check-changes"
     uses: "./.github/workflows/docs.yml"
     with:
-      run_docs: ${{ needs.check-changes.outputs.run_docs }}
+      run_docs: "${{ needs.check-changes.outputs.run_docs }}"
 
   lint:
     uses: "./.github/workflows/lint.yml"
+
+  sanity:
+    uses: "./.github/workflows/sanity.yml"
 
   build:
     needs:
       - "check-changes"
       - "lint"
-    if: needs.check-changes.outputs.run_tests == '1'
+    if: "needs.check-changes.outputs.run_tests == '1'"
     uses: "./.github/workflows/build.yml"
 
   test:
@@ -112,7 +111,7 @@ jobs:
 
   deprecations:
     runs-on: "ubuntu-latest"
-    if: github.base_ref == 'main'
+    if: "github.base_ref == 'main'"
     needs: "test"
     steps:
       - name: "Create working directory"
@@ -120,7 +119,7 @@ jobs:
           mkdir -p "pulpcore"
         working-directory: "."
       - name: "Download Deprecations"
-        uses: actions/download-artifact@v4
+        uses: "actions/download-artifact@v8"
         with:
           pattern: "deprecations-*"
           path: "pulpcore"
@@ -139,6 +138,7 @@ jobs:
       - "lint"
       - "test"
       - "docs"
+      - "sanity"
     if: "always()"
     steps:
       - name: "Collect needed jobs results"
@@ -171,3 +171,4 @@ jobs:
 
           check_jobs "$FILTERS"
           echo "CI says: Looks good!"
+...
