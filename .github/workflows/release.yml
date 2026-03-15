@@ -22,21 +22,19 @@ jobs:
       fail-fast: false
 
     steps:
-      - uses: "actions/checkout@v4"
+      - uses: "actions/checkout@v6"
         with:
           fetch-depth: 0
           path: "pulpcore"
           token: ${{ secrets.RELEASE_TOKEN }}
 
-      - uses: "actions/setup-python@v5"
+      - uses: "actions/setup-python@v6"
         with:
           python-version: "3.11"
 
       - name: "Install python dependencies"
         run: |
-          echo ::group::PYDEPS
           pip install bump-my-version towncrier
-          echo ::endgroup::
 
       - name: "Configure Git with pulpbot name and email"
         run: |
@@ -58,3 +56,4 @@ jobs:
           ANSIBLE_FORCE_COLOR: "1"
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
           GITHUB_CONTEXT: "${{ github.event.pull_request.commits_url }}"
+...

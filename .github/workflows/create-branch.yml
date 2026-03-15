@@ -6,7 +6,7 @@
 # For more info visit https://github.com/pulp/plugin_template
 
 ---
-name: Create New Release Branch
+name: "Create New Release Branch"
 on:
   workflow_dispatch:
 
@@ -15,35 +15,33 @@ env:
 
 jobs:
   create-branch:
-    runs-on: ubuntu-latest
+    runs-on: "ubuntu-latest"
 
     strategy:
       fail-fast: false
 
     permissions:
-      contents: write
+      contents: "write"
 
     steps:
-      - uses: "actions/checkout@v4"
+      - uses: "actions/checkout@v6"
         with:
           fetch-depth: 0
           path: "pulpcore"
 
-      - uses: "actions/checkout@v4"
+      - uses: "actions/checkout@v6"
         with:
           fetch-depth: 1
           repository: "pulp/plugin_template"
           path: "plugin_template"
 
-      - uses: "actions/setup-python@v5"
+      - uses: "actions/setup-python@v6"
         with:
           python-version: "3.11"
 
       - name: "Install python dependencies"
         run: |
-          echo ::group::PYDEPS
           pip install bump-my-version packaging -r plugin_template/requirements.txt
-          echo ::endgroup::
 
       - name: "Setting secrets"
         working-directory: "pulpcore"
@@ -52,8 +50,8 @@ jobs:
         env:
           SECRETS_CONTEXT: "${{ toJson(secrets) }}"
 
-      - name: Determine new branch name
-        working-directory: pulpcore
+      - name: "Determine new branch name"
+        working-directory: "pulpcore"
         run: |
           # Just to be sure...
           git checkout main
@@ -65,42 +63,43 @@ jobs:
           fi
           echo "NEW_BRANCH=${NEW_BRANCH}" >> "$GITHUB_ENV"
 
-      - name: Create release branch
-        working-directory: pulpcore
+      - name: "Create release branch"
+        working-directory: "pulpcore"
         run: |
           git branch "${NEW_BRANCH}"
 
-      - name: Bump version on main branch
-        working-directory: pulpcore
+      - name: "Bump version on main branch"
+        working-directory: "pulpcore"
         run: |
           bump-my-version bump --no-commit minor
 
-      - name: Remove entries from CHANGES directory
-        working-directory: pulpcore
+      - name: "Remove entries from CHANGES directory"
+        working-directory: "pulpcore"
         run: |
           find CHANGES -type f -regex ".*\.\(bugfix\|doc\|feature\|misc\|deprecation\|removal\)" -exec git rm {} +
 
-      - name: Update CI branches in template_config
-        working-directory: plugin_template
+      - name: "Update CI branches in template_config"
+        working-directory: "plugin_template"
         run: |
           python3 ./plugin-template pulpcore --github --latest-release-branch "${NEW_BRANCH}"
           git add -A
 
-      - name: Make a PR with version bump and without CHANGES/*
-        uses: peter-evans/create-pull-request@v6
+      - name: "Make a PR with version bump and without CHANGES/*"
+        uses: "peter-evans/create-pull-request@v8"
         with:
-          path: pulpcore
-          token: ${{ secrets.RELEASE_TOKEN }}
-          committer: pulpbot <pulp-infra@redhat.com>
-          author: pulpbot <pulp-infra@redhat.com>
-          branch: minor-version-bump
-          base: main
-          title: Bump minor version
+          path: "pulpcore"
+          token: "${{ secrets.RELEASE_TOKEN }}"
+          committer: "pulpbot <pulp-infra@redhat.com>"
+          author: "pulpbot <pulp-infra@redhat.com>"
+          branch: "minor-version-bump"
+          base: "main"
+          title: "Bump minor version"
           commit-message: |
             Bump minor version
           delete-branch: true
 
-      - name: Push release branch
-        working-directory: pulpcore
+      - name: "Push release branch"
+        working-directory: "pulpcore"
         run: |
           git push origin "${NEW_BRANCH}"
+...
