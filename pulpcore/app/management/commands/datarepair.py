@@ -38,6 +38,8 @@ class Command(BaseCommand):
             self.repair_2327(options)
         elif issue == "7272":
             self.repair_7272(options)
+        elif issue == "7465":
+            self.repair_7465(options)
         else:
             raise CommandError(_("Unknown issue: '{}'").format(issue))
 
@@ -200,3 +202,38 @@ class Command(BaseCommand):
                         number_unencrypted + number_multi_encrypted
                     )
                 )
+
+    def repair_7465(self, options):
+        dry_run = options["dry_run"]
+
+        number_missing = 0
+        self.stdout.write()
+
+        for domain in models.Domain.objects.all():
+            has_printed_domain = False
+            for repo in models.Repository.objects.filter(pulp_domain=domain):
+                for rv in models.RepositoryVersion.objects.filter(repository=repo):
+                    if rv.content_ids is None:
+                        if not has_printed_domain:
+                            self.stdout.write(f'In domain "{domain.name}"')
+                            has_printed_domain = True
+                        number_missing += 1
+                        self.stdout.write(
+                            f'\tRepository "{repo.name}" (type "{repo.pulp_type}") '
+                            f"version {rv.number} has a missing content_ids cache"
+                        )
+                        if not dry_run:
+                            rv.content_ids = list(
+                                rv._content_relationships().values_list("content__pk", flat=True)
+                            )
+                            rv.save()
+
+        if not number_missing:
+            self.stdout.write("Finished. (OK)")
+        else:
+            if dry_run:
+                self.stdout.write(
+                    f"Finished. (dry run: {number_missing} repository versions need fixing)"
+                )
+            else:
+                self.stdout.write(f"Finished. ({number_missing} repository versions fixed)")
