@@ -366,21 +366,6 @@ class RedisWorker:
             # Update cached worker count for sleep calculation
             self.num_workers = AppStatus.objects.online().filter(app_type="worker").count()
 
-    def _release_resource_locks(self, task_lock_key, resources, shared_resources=None):
-        """
-        Atomically release task lock and resource locks.
-
-        Uses a Lua script to ensure we only release locks that we own.
-
-        Args:
-            task_lock_key (str): Redis key for the task lock (e.g., "task:{task_id}")
-            resources (list): List of exclusive resource names to release locks for
-            shared_resources (list): Optional list of shared resource names
-        """
-        release_resource_locks(
-            self.redis_conn, self.name, task_lock_key, resources, shared_resources
-        )
-
     def _maybe_release_locks(self, task, mark_released=True):
         """
         Release locks for a task if not already released.
@@ -395,8 +380,12 @@ class RedisWorker:
         if not getattr(task, "_all_locks_released", False):
             exclusive_resources, shared_resources = extract_task_resources(task)
             task_lock_key = get_task_lock_key(task.pk)
-            self._release_resource_locks(
-                task_lock_key, exclusive_resources or [], shared_resources or []
+            release_resource_locks(
+                self.redis_conn,
+                self.name,
+                task_lock_key,
+                exclusive_resources or [],
+                shared_resources or [],
             )
             if mark_released:
                 task._all_locks_released = True
