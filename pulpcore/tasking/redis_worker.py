@@ -518,14 +518,11 @@ class RedisWorker:
 
                     # No Redis cleanup needed - Lua script is all-or-nothing
                     if "__task_lock__" not in blocked_resource_list:
-                        # Mark resources as blocked for FIFO ordering
-                        # If this task wanted exclusive access,
-                        # block exclusive access for later tasks
-                        for resource in exclusive_resources:
-                            if resource in blocked_resource_list:
-                                blocked_exclusive.add(resource)
-                        # If this task wanted shared access, block shared access for later tasks
-                        # (only if exclusive lock exists, which is why it failed)
+                        # Block ALL exclusive resources this task needed to preserve FIFO ordering.
+                        # A later task must not acquire a resource that an earlier task also needs,
+                        # even if the earlier task failed due to a different resource being blocked.
+                        blocked_exclusive.update(exclusive_resources)
+                        # Block shared resources that were explicitly blocked by an exclusive lock.
                         for resource in shared_resources:
                             if resource in blocked_resource_list:
                                 blocked_shared.add(resource)
