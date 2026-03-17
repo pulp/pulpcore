@@ -9,6 +9,7 @@ for the unblocking mechanism and all task cancellation support.
 from gettext import gettext as _
 import functools
 import logging
+import redis
 import os
 import random
 import select
@@ -144,7 +145,7 @@ class RedisWorker:
             )
         try:
             self.redis_conn.ping()
-        except Exception:
+        except redis.RedisError:
             raise RuntimeError(f"Redis is not reachable. RedisWorker {self.name} cannot start.")
 
         # Add a file descriptor to trigger select on signals
@@ -222,7 +223,7 @@ class RedisWorker:
         """
         try:
             self.redis_conn.ping()
-        except Exception:
+        except redis.RedisError:
             _logger.error("Redis connection check failed for worker %s. Shutting down.", self.name)
             self.shutdown_requested = True
 
