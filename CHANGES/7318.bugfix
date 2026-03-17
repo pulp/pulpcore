@@ -1,1 +1,0 @@
-Fix remove-signing-service handling, can now remove service without --class argument.
