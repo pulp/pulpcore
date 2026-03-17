@@ -355,6 +355,14 @@ A JSON object representing the security scheme advertised for the `PulpRemoteUse
 
 Defaults to `{"type": "mutualTLS"}`, which represents x509 certificate based authentication.
 
+### REDACT\_UNSAFE\_EXCEPTIONS
+
+When enabled, task errors that are not `PulpException` subclasses will be sanitized to prevent sensitive data leakage in error messages.
+Non-Pulp exceptions may contain credentials, tokens, or signed URLs.
+With this setting enabled, such exceptions are replaced with a generic error message in the task output, while the full exception details are still logged for administrator.
+
+Defaults to `False`.
+
 ### TASK\_DIAGNOSTICS
 
 When enabled, users are allowed to request various diagnostics for analysis by a developer.

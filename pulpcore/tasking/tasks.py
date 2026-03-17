@@ -21,6 +21,7 @@ from pulpcore.app.util import (
     get_domain,
     get_prn,
 )
+from pulpcore.exceptions import PulpException, InternalErrorException
 from pulpcore.app.contexts import with_task_context, awith_task_context, x_task_diagnostics_var
 from pulpcore.constants import (
     TASK_FINAL_STATES,
@@ -31,6 +32,7 @@ from pulpcore.constants import (
     TASK_WAKEUP_UNBLOCK,
 )
 from pulpcore.tasking.kafka import send_task_notification
+from pulpcore.app.loggers import deprecation_logger
 
 _logger = logging.getLogger(__name__)
 
@@ -70,14 +72,25 @@ def _execute_task(task):
             log_task_start(task, domain)
             task_function = get_task_function(task)
             result = task_function()
-        except Exception:
+        except Exception as e:
             exc_type, exc, tb = sys.exc_info()
-            task.set_failed(exc, tb)
             log_task_failed(task, exc_type, exc, tb, domain)
+
+            if not isinstance(e, PulpException):
+                if settings.SAFE_EXCEPTION:
+                    # Replace exception with generic error
+                    exc = InternalErrorException()
+                    tb = None
+                deprecation_logger.warning(
+                    "Exception ({exc_type}: {exc}) will be sanitized in pulpcore 3.115".format(
+                        exc_type=exc_type.__name__, exc=exc
+                    )
+                )
+            task.set_failed(exc, tb)
             send_task_notification(task)
         else:
-            task.set_completed(result)
             log_task_completed(task, domain)
+            task.set_completed(result)
             send_task_notification(task)
             return result
         return None
@@ -95,15 +108,26 @@ async def _aexecute_task(task):
         try:
             task_coroutine_fn = await aget_task_function(task)
             result = await task_coroutine_fn()
-        except Exception:
+        except Exception as e:
             exc_type, exc, tb = sys.exc_info()
-            await sync_to_async(task.set_failed)(exc, tb)
             log_task_failed(task, exc_type, exc, tb, domain)
+
+            if not isinstance(e, PulpException):
+                if settings.SAFE_EXCEPTION:
+                    # Replace exception with generic error
+                    exc = InternalErrorException()
+                    tb = None
+                deprecation_logger.warning(
+                    "Exception ({exc_type}: {exc}) will be sanitized in pulpcore v3.115".format(
+                        exc_type=exc_type.__name__, exc=exc
+                    )
+                )
+            await sync_to_async(task.set_failed)(exc, tb)
             send_task_notification(task)
         else:
+            log_task_completed(task, domain)
             await sync_to_async(task.set_completed)(result)
             send_task_notification(task)
-            log_task_completed(task, domain)
             return result
         return None
 
@@ -144,7 +168,8 @@ def log_task_failed(task, exc_type, exc, tb, domain):
             domain=domain.name,
         )
     )
-    _logger.info("\n".join(traceback.format_list(traceback.extract_tb(tb))))
+    if tb is not None:
+        _logger.info("\n".join(traceback.format_list(traceback.extract_tb(tb))))
 
 
 async def aget_task_function(task):
