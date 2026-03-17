@@ -1,5 +1,7 @@
 from logging import getLogger
 
+from django.db import transaction
+
 from pulpcore.app import models
 from pulpcore.app.models import ProgressReport
 from pulpcore.app.util import get_domain
@@ -81,12 +83,13 @@ def repair_7272(dry_run=False):
                     number_broken += 1
 
                     if not dry_run:
-                        rv.content_ids = list(
-                            rv._content_relationships().values_list("content__pk", flat=True)
-                        )
-                        rv.save()
-                        rv._compute_counts()
-                        fixed_progress.increment()
+                        with transaction.atomic():
+                            rv.content_ids = list(
+                                rv._content_relationships().values_list("content__pk", flat=True)
+                            )
+                            rv.save()
+                            rv._compute_counts()
+                            fixed_progress.increment()
 
             repos_progress.increment()
 
