@@ -8,6 +8,33 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.105.1 (2026-03-17) {: #3.105.1 }
+
+### REST API {: #3.105.1-rest-api }
+
+#### Bugfixes {: #3.105.1-rest-api-bugfix }
+
+- Fixed duplicate chunk uploads corrupting the entire upload
+  [#6381](https://github.com/pulp/pulpcore/issues/6381)
+- Fix remove-signing-service handling, can now remove service without --class argument.
+  [#7318](https://github.com/pulp/pulpcore/issues/7318)
+- Fixed metadata artifacts being re-uploaded to storage when creating a publication for an already-published repository version.
+  [#7344](https://github.com/pulp/pulpcore/issues/7344)
+
+### Plugin API {: #3.105.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.105.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.105.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.105.0 (2026-03-10) {: #3.105.0 }
 
 ### REST API {: #3.105.0-rest-api }
