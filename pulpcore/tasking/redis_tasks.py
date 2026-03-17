@@ -437,7 +437,7 @@ def dispatch(
         if are_resources_available(task):
             # All locks acquired successfully
             # Proceed with execution
-            current_app = AppStatus.objects.current()
+            current_app = app_lock
             lock_owner = current_app.name
             try:
                 with using_workdir():
