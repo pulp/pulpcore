@@ -322,10 +322,10 @@ class LabelFilter(Filter):
                 raise DRFValidationError(_("Cannot use an operator with '{}'.").format(key))
 
             if op == "=":
-                qs = qs.filter(**{f"{field_name}__{key}": val})
+                qs = qs.filter(**{f"{field_name}__contains": {key: val}})
             elif op == "!=":
                 qs = qs.filter(**{f"{field_name}__has_key": key}).exclude(
-                    **{f"{field_name}__{key}": val}
+                    **{f"{field_name}__contains": {key: val}}
                 )
             elif op == "~":
                 qs = qs.filter(**{f"{field_name}__{key}__icontains": val})
