@@ -322,6 +322,14 @@ Toggles the activation of OpenTelemetry instrumentation for monitoring and traci
 
 Defaults to `False`.
 
+### REDACT\_UNSAFE\_EXCEPTIONS
+
+When enabled, task errors that are not `PulpException` subclasses are sanitized to prevent sensitive data leakage, such as credentials, tokens, or signed URLs.
+These exceptions appear as a generic error message in the task output, while full details remain logged for administrators.
+When disabled, all exception details are shown in task error messages with a deprecation warning.
+
+Defaults to `False`.
+
 ### REDIRECT\_TO\_OBJECT\_STORAGE
 
 When set to `True` access to artifacts is redirected to the corresponding Cloud storage

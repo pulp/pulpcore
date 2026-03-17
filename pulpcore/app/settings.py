@@ -425,6 +425,9 @@ VULN_REPORT_TASK_LIMITER = 10
 # Replaces asyncio event loop with uvloop
 UVLOOP_ENABLED = False
 
+# Replaces every non PulpException error msg with "An internal error occured"
+REDACT_UNSAFE_EXCEPTIONS = False
+
 # HERE STARTS DYNACONF EXTENSION LOAD (Keep at the very bottom of settings.py)
 # Read more at https://www.dynaconf.com/django/
 
