@@ -337,13 +337,6 @@ class RedisWorker:
 
         self.waiting_tasks_meter.set(waiting_tasks)
 
-        _logger.debug(
-            "Waiting tasks metric: %d tasks (%d total tasks older than 5s - %d workers)",
-            waiting_tasks,
-            task_count,
-            self.num_workers,
-        )
-
     def beat(self):
         """Periodic worker maintenance tasks (heartbeat, cleanup, etc.)."""
         now = timezone.now()
@@ -572,12 +565,6 @@ class RedisWorker:
         cancel_state = None
         cancel_reason = None
         domain = task.pulp_domain
-        _logger.info(
-            "WORKER DEFERRED EXECUTION: Worker %s executing deferred task %s in domain: %s",
-            self.name,
-            task.pk,
-            domain.name,
-        )
         with TemporaryDirectory(dir=".") as task_working_dir_rel_path:
             task_process = Process(target=perform_task, args=(task.pk, task_working_dir_rel_path))
             task_process.start()
