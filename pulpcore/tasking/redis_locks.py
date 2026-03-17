@@ -384,15 +384,6 @@ def release_resource_locks(redis_conn, lock_owner, task_lock_key, resources=None
         if task_lock_not_owned:
             _logger.warning("Task lock %s was not owned by %s", task_lock_key, lock_owner)
 
-        # Log debug for successful releases
-        num_released_exclusive = len(exclusive_resources) - len(not_owned_exclusive)
-        num_released_shared = len(shared_resources) - len(not_in_shared)
-        if num_released_exclusive > 0:
-            _logger.debug("Released %d exclusive lock(s)", num_released_exclusive)
-        if num_released_shared > 0:
-            _logger.debug("Released %d shared lock(s)", num_released_shared)
-        if not task_lock_not_owned:
-            _logger.debug("Released task lock %s", task_lock_key)
     except redis.RedisError as e:
         _logger.error("Error releasing locks: %s", e)
 
@@ -444,14 +435,5 @@ async def async_release_resource_locks(
         if task_lock_not_owned:
             _logger.warning("Task lock %s was not owned by %s", task_lock_key, lock_owner)
 
-        # Log debug for successful releases
-        num_released_exclusive = len(exclusive_resources) - len(not_owned_exclusive)
-        num_released_shared = len(shared_resources) - len(not_in_shared)
-        if num_released_exclusive > 0:
-            _logger.debug("Released %d exclusive lock(s)", num_released_exclusive)
-        if num_released_shared > 0:
-            _logger.debug("Released %d shared lock(s)", num_released_shared)
-        if not task_lock_not_owned:
-            _logger.debug("Released task lock %s", task_lock_key)
     except redis.RedisError as e:
         _logger.error("Error releasing locks: %s", e)
