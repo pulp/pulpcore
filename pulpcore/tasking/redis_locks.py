@@ -339,7 +339,9 @@ def acquire_locks(redis_conn, lock_owner, task_lock_key, exclusive_resources, sh
     return blocked_resources if blocked_resources else []
 
 
-def release_resource_locks(redis_conn, lock_owner, task_lock_key, resources=None, shared_resources=None):
+def release_resource_locks(
+    redis_conn, lock_owner, task_lock_key, resources=None, shared_resources=None
+):
     """
     Atomically release task lock and resource locks.
 
