@@ -106,8 +106,10 @@ class Replicator:
         return {}
 
     def create_or_update_remote(self, upstream_distribution):
-        if not upstream_distribution.get("repository") and not upstream_distribution.get(
-            "publication"
+        if (
+            not upstream_distribution.get("repository")
+            and not upstream_distribution.get("repository_version")
+            and not upstream_distribution.get("publication")
         ):
             return None
         url = self.url(upstream_distribution)
@@ -171,9 +173,18 @@ class Replicator:
     def distribution_extra_fields(self, repository, upstream_distribution):
         """
         Return the fields that need to be updated/cleared on distributions for idempotence.
+
+        Note: repository_version is computed here but filtered out for updates/creates.
+        It will be set atomically in finalize_replication after sync completes.
         """
+        latest = repository.latest_version()
+        if latest:
+            repo_version_href = get_url(repository) + "versions/{}/".format(latest.number)
+        else:
+            repo_version_href = None
         return {
-            "repository": get_url(repository),
+            "repository": None,
+            "repository_version": repo_version_href,
             "publication": None,
             "base_path": upstream_distribution["base_path"],
         }
@@ -187,7 +198,11 @@ class Replicator:
             )
             if not self._is_managed(distro):
                 return None
-            needs_update = self.needs_update(distribution_data, distro)
+            # Don't update repository_version here — that happens atomically in
+            # finalize_replication after all syncs complete.
+            # Do clear repository and publication so they don't conflict.
+            update_data = {k: v for k, v in distribution_data.items() if k != "repository_version"}
+            needs_update = self.needs_update(update_data, distro)
             if needs_update:
                 # Update the distribution
                 dispatch(
@@ -197,20 +212,28 @@ class Replicator:
                     exclusive_resources=self.distros_uris,
                     args=(distro.pk, self.app_label, self.distribution_serializer_name),
                     kwargs={
-                        "data": distribution_data,
+                        "data": update_data,
                         "partial": True,
                     },
                 )
         except self.distribution_model_cls.DoesNotExist:
             # Dispatch a task to create the distribution
-            distribution_data["name"] = upstream_distribution["name"]
+            # Don't set repository_version for new distributions - it will be set in
+            # finalize_replication after sync completes.
+            create_data = {
+                k: v
+                for k, v in distribution_data.items()
+                if k not in ("repository_version", "repository", "publication")
+            }
+            create_data["name"] = upstream_distribution["name"]
+            create_data["pulp_labels"] = distribution_data["pulp_labels"]
             dispatch(
                 general_create,
                 task_group=self.task_group,
                 shared_resources=[repository, self.server],
                 exclusive_resources=self.distros_uris,
                 args=(self.app_label, self.distribution_serializer_name),
-                kwargs={"data": distribution_data},
+                kwargs={"data": create_data},
             )
 
     def sync_params(self, repository, remote):

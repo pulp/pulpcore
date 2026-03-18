@@ -33,6 +33,10 @@ class FileReplicator(Replicator):
             manifest = self.publication_ctx_cls(
                 self.pulp_ctx, upstream_distribution["publication"]
             ).entity["manifest"]
+        elif upstream_distribution.get("repository_version"):
+            # Extract repository href from repository_version href
+            repo_href = upstream_distribution["repository_version"].rsplit("versions/", 1)[0]
+            manifest = self.repository_ctx_cls(self.pulp_ctx, repo_href).entity["manifest"]
         else:
             # This distribution doesn't serve any content
             return None
