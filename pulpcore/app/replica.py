@@ -172,8 +172,11 @@ class Replicator:
         """
         Return the fields that need to be updated/cleared on distributions for idempotence.
         """
+        latest = repository.latest_version()
+        repo_version_href = get_url(repository) + "versions/{}/".format(latest.number)
         return {
-            "repository": get_url(repository),
+            "repository": None,
+            "repository_version": repo_version_href,
             "publication": None,
             "base_path": upstream_distribution["base_path"],
         }
@@ -187,7 +190,15 @@ class Replicator:
             )
             if not self._is_managed(distro):
                 return None
-            needs_update = self.needs_update(distribution_data, distro)
+            # Don't update repository_version here — that happens atomically in
+            # finalize_replication after all syncs complete.
+            update_data = {
+                k: v
+                for k, v in distribution_data.items()
+                if k not in ("repository_version", "repository", "publication")
+            }
+            update_data["pulp_labels"] = distribution_data["pulp_labels"]
+            needs_update = self.needs_update(update_data, distro)
             if needs_update:
                 # Update the distribution
                 dispatch(
@@ -197,7 +208,7 @@ class Replicator:
                     exclusive_resources=self.distros_uris,
                     args=(distro.pk, self.app_label, self.distribution_serializer_name),
                     kwargs={
-                        "data": distribution_data,
+                        "data": update_data,
                         "partial": True,
                     },
                 )
