@@ -3,11 +3,12 @@ import platform
 import sys
 from tempfile import NamedTemporaryFile
 
+from django.db import transaction
 from django.db.models import Min
 
 from pulpcore.constants import TASK_STATES
 from pulpcore.app.apps import pulp_plugin_configs, PulpAppConfig
-from pulpcore.app.models import UpstreamPulp, Task, TaskGroup
+from pulpcore.app.models import Distribution, Repository, UpstreamPulp, Task, TaskGroup
 from pulpcore.app.replica import ReplicaContext
 from pulpcore.tasking.tasks import dispatch
 
@@ -77,6 +78,7 @@ def replicate_distributions(server_pk):
                     replicator = replicator_class(ctx, task_group, tls_settings, server)
                     supported_replicators.append(replicator)
 
+    distro_repo_pairs = []
     for replicator in supported_replicators:
         distros = replicator.upstream_distributions(q=server.q_select)
         distro_names = []
@@ -90,7 +92,7 @@ def replicate_distributions(server_pk):
             # Check if there is already a repository
             repository = replicator.create_or_update_repository(remote=remote)
             if not repository:
-                # No update occured because server.policy==LABELED and there was
+                # No update occurred because server.policy==LABELED and there was
                 # an already existing local repository with the same name
                 continue
 
@@ -103,6 +105,7 @@ def replicate_distributions(server_pk):
 
             # Add name to the list of known distribution names
             distro_names.append(distro["name"])
+            distro_repo_pairs.append((distro["name"], str(repository.pk)))
 
         replicator.remove_missing(distro_names)
 
@@ -110,16 +113,27 @@ def replicate_distributions(server_pk):
         finalize_replication,
         task_group=task_group,
         exclusive_resources=[server],
-        args=[server.pk],
+        args=[server.pk, distro_repo_pairs],
     )
 
 
-def finalize_replication(server_pk):
+def finalize_replication(server_pk, distro_repo_pairs):
     task = Task.current()
     task_group = TaskGroup.current()
     server = UpstreamPulp.objects.get(pk=server_pk)
     if task_group.tasks.exclude(pk=task.pk).exclude(state=TASK_STATES.COMPLETED).exists():
         raise Exception("Replication failed.")
+
+    # Atomically update all managed distributions to point to their repo's latest version.
+    with transaction.atomic():
+        for distro_name, repo_pk in distro_repo_pairs:
+            distro = Distribution.objects.get(name=distro_name, pulp_domain=server.pulp_domain)
+            repo = Repository.objects.get(pk=repo_pk)
+            latest_version = repo.latest_version()
+            if latest_version:
+                if distro.repository_version != latest_version:
+                    distro.repository_version = latest_version
+                    distro.save(update_fields=["repository_version"])
 
     # Record timestamp of last successful replication.
     started_at = task_group.tasks.aggregate(Min("started_at"))["started_at__min"]
