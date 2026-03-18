@@ -8,13 +8,10 @@ Redis distributed locks for task coordination.
 import contextvars
 import logging
 import redis
-import sys
 from asgiref.sync import sync_to_async
 
 from pulpcore.app.models import Task, TaskGroup, AppStatus
 from pulpcore.app.redis_connection import get_redis_connection
-from pulpcore.app.util import get_domain
-from pulpcore.app.contexts import with_task_context, awith_task_context
 from pulpcore.constants import TASK_STATES, TASK_FINAL_STATES
 from pulpcore.tasking.redis_locks import (
     acquire_locks,
@@ -29,14 +26,10 @@ from pulpcore.tasking.tasks import (
     get_version,
     get_resources,
     get_task_payload,
-    get_task_function,
-    aget_task_function,
-    log_task_start,
-    log_task_completed,
-    log_task_failed,
     using_workdir,
+    _execute_task as _pulpcoreworker_execute_task,
+    _aexecute_task as _apulpcoreworker_execute_task,
 )
-from pulpcore.tasking.kafka import send_task_notification
 
 
 _logger = logging.getLogger(__name__)
@@ -183,100 +176,22 @@ def cancel_task_group(task_group_id):
 
 def execute_task(task):
     """Redis-aware task execution that releases Redis locks for immediate tasks."""
-    # This extra stack is needed to isolate the current_task ContextVar
-    contextvars.copy_context().run(_execute_task, task)
-
-
-def _execute_task(task):
     try:
-        with with_task_context(task):
-            task.set_running()
-            domain = get_domain()
-            exception_info = None
-            result = None
-
-            try:
-                log_task_start(task, domain)
-                task_function = get_task_function(task)
-                result = task_function()
-            except Exception:
-                exc_type, exc, tb = sys.exc_info()
-                exception_info = (exc_type, exc, tb)
-
-            # Release locks BEFORE transitioning to final state
-            # This ensures resources are freed even if we crash
-            # during state transition
-            safe_release_task_locks(task)
-
-            # NOW transition to final state after locks are released
-            if exception_info:
-                exc_type, exc, tb = exception_info
-                task.set_failed(exc, tb)
-                log_task_failed(task, exc_type, exc, tb, domain)
-                send_task_notification(task)
-                return None
-            else:
-                task.set_completed(result)
-                log_task_completed(task, domain)
-                send_task_notification(task)
-                return result
+        # This extra stack is needed to isolate the current_task ContextVar
+        contextvars.copy_context().run(_pulpcoreworker_execute_task, task)
     finally:
-        # Safety net: release locks if we failed before reaching the normal
-        # release point (e.g., during set_running, set_failed, or set_completed)
         if safe_release_task_locks(task):
-            _logger.warning(
-                "SAFETY NET: Task %s releasing all locks in "
-                "finally block (this shouldn't normally happen)",
-                task.pk,
-            )
+            _logger.warning("Task %s releasing all locks in finally block", task.pk)
 
 
 async def aexecute_task(task):
     """Redis-aware async task execution that releases Redis locks for immediate tasks."""
-    # This extra stack is needed to isolate the current_task ContextVar
-    await contextvars.copy_context().run(_aexecute_task, task)
-
-
-async def _aexecute_task(task):
     try:
-        async with awith_task_context(task):
-            await sync_to_async(task.set_running)()
-            domain = get_domain()
-            exception_info = None
-            result = None
-
-            # Execute task and capture result or exception
-            try:
-                task_coroutine_fn = await aget_task_function(task)
-                result = await task_coroutine_fn()
-            except Exception:
-                exc_type, exc, tb = sys.exc_info()
-                exception_info = (exc_type, exc, tb)
-
-            # Release locks BEFORE transitioning to final state
-            await async_safe_release_task_locks(task)
-
-            # NOW transition to final state after locks are released
-            if exception_info:
-                exc_type, exc, tb = exception_info
-                await sync_to_async(task.set_failed)(exc, tb)
-                log_task_failed(task, exc_type, exc, tb, domain)
-                send_task_notification(task)
-                return None
-            else:
-                await sync_to_async(task.set_completed)(result)
-                log_task_completed(task, domain)
-                send_task_notification(task)
-                return result
+        # This extra stack is needed to isolate the current_task ContextVar
+        await contextvars.copy_context().run(_apulpcoreworker_execute_task, task)
     finally:
-        # Safety net: release locks if we failed before reaching the normal
-        # release point (e.g., during set_running, set_failed, or set_completed)
         if await async_safe_release_task_locks(task):
-            _logger.warning(
-                "SAFETY NET (async): Task %s releasing all locks "
-                "in finally block (this shouldn't normally happen)",
-                task.pk,
-            )
+            _logger.warning("Task %s releasing all locks in finally block (async)", task.pk)
 
 
 def are_resources_available(task: Task) -> bool:
