@@ -250,6 +250,14 @@ The number of seconds before a content app should be considered lost.
 
 Defaults to `30` seconds.
 
+### MEMORY\_TRIM\_INTERVAL
+
+Number of API worker requests between periodic `gc.collect()` + `malloc_trim(0)` calls.
+This compacts the glibc heap to prevent unbounded RSS growth from memory fragmentation.
+Set to `0` to disable.
+
+Defaults to `1024`.
+
 ### CONTENT\_ORIGIN
 
 A string containing the `protocol`, `fqdn`, and optionally `port` where the content app is reachable by users.
