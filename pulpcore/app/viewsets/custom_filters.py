@@ -10,14 +10,14 @@ from gettext import gettext as _
 
 from django.conf import settings
 from pulpcore.constants import LABEL_KEY_CHARS
-from django.db.models import ObjectDoesNotExist
+from django.db.models import Q
 from django_filters import BaseInFilter, CharFilter, Filter
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 from rest_framework.serializers import ValidationError as DRFValidationError
 
-from pulpcore.app.models import Content, ContentArtifact, Repository, RepositoryVersion, Publication
+from pulpcore.app.models import Content, ContentArtifact, Repository, RepositoryVersion
 from pulpcore.app.viewsets import NamedModelViewSet
 from pulpcore.app.util import get_prn, get_domain_pk, extract_pk, raise_for_unknown_content_units
 
@@ -401,31 +401,13 @@ class DistributionWithContentFilter(Filter):
         # version
         versions_distributions = defaultdict(list)
 
-        for dist in qs.exclude(publication=None).values("publication__repository_version", "pk"):
-            versions_distributions[dist["publication__repository_version"]].append(dist["pk"])
-
-        for dist in qs.exclude(repository_version=None).values("repository_version", "pulp_type"):
-            if not dist.detail_model.SERVE_FROM_PUBLICATION:
-                versions_distributions[dist["repository_version"]].append(dist["pk"])
-
-        for dist in qs.exclude(repository=None).prefetch_related("repository__versions"):
-            if dist.detail_model.SERVE_FROM_PUBLICATION:
-                versions = dist.repository.versions.values_list("pk", flat=True)
-                publications = Publication.objects.filter(
-                    repository_version__in=versions, complete=True
-                )
-
-                try:
-                    publication = publications.select_related("repository_version").latest(
-                        "repository_version", "pulp_created"
-                    )
-                except ObjectDoesNotExist:
-                    pass
-                else:
-                    repo_version = publication.repository_version
-                    versions_distributions[repo_version.pk].append(dist.pk)
-            else:
-                repo_version = dist.repository.latest_version()
+        for dist in qs.filter(
+            Q(publication__isnull=False)
+            | Q(repository__isnull=False)
+            | Q(repository_version__isnull=False)
+        ):
+            _repo, repo_version, publication = dist.get_repository_publication_and_version()
+            if repo_version and (publication or not dist.detail_model.SERVE_FROM_PUBLICATION):
                 versions_distributions[repo_version.pk].append(dist.pk)
 
         content = NamedModelViewSet.get_resource(value)
