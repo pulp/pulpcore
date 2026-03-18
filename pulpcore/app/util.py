@@ -2,13 +2,10 @@ import hashlib
 import zlib
 import os
 import socket
-import tempfile
 from io import RawIOBase
 from pathlib import Path
 from types import TracebackType
 from typing import Self, IO, Any
-
-import gnupg
 
 from functools import lru_cache
 from gettext import gettext as _
@@ -387,9 +384,45 @@ def get_request_without_query_params(context):
     return request
 
 
+class VerifyResult:
+    """
+    Verification result mimicking the interface of gnupg.Verify for compatibility.
+
+    Attributes:
+        valid (bool): Always True; invalid signatures raise InvalidSignatureError instead.
+        fingerprint (str): Fingerprint of the signing subkey (uppercase hex).
+        pubkey_fingerprint (str): Fingerprint of the signing certificate (uppercase hex).
+        key_id (str): Short (16-char) key ID derived from the fingerprint.
+        username (str): Empty string; primary UID not available without extending pysequoia.
+        data (bytes or None): The verified plaintext content for inline signatures, None for
+            detached signatures.
+    """
+
+    def __init__(self, decrypted):
+        self.valid = True
+        self.data = bytes(decrypted.bytes) if decrypted.bytes is not None else None
+        if decrypted.valid_sigs:
+            vs = decrypted.valid_sigs[0]
+            self.fingerprint = vs.signing_key.upper()
+            self.pubkey_fingerprint = vs.certificate.upper()
+            self.key_id = vs.signing_key[-16:].upper()
+            self.username = ""
+        else:
+            self.fingerprint = None
+            self.pubkey_fingerprint = None
+            self.key_id = None
+            self.username = ""
+
+    def __repr__(self):
+        return (
+            f"<VerifyResult valid={self.valid} fingerprint={self.fingerprint}"
+            f" key_id={self.key_id}>"
+        )
+
+
 def gpg_verify(public_keys, signature, detached_data=None):
     """
-    Check whether the provided gnupg signature is valid for one of the provided public keys.
+    Check whether the provided signature is valid for one of the provided public keys.
 
     Args:
         public_keys (str): Ascii armored public key data
@@ -398,25 +431,37 @@ def gpg_verify(public_keys, signature, detached_data=None):
             signature
 
     Returns:
-        gnupg.Verify: The result of the verification
+        VerifyResult: The verification result with `valid`, `fingerprint`, `pubkey_fingerprint`,
+            `key_id`, `username`, and `data` attributes, mimicking the gnupg.Verify interface.
 
     Raises:
         pulpcore.exceptions.validation.InvalidSignatureError: In case the signature is invalid.
     """
-    with tempfile.TemporaryDirectory(dir=settings.WORKING_DIRECTORY) as temp_directory_name:
-        gpg = gnupg.GPG(gnupghome=temp_directory_name)
-        gpg.import_keys(public_keys)
+    from pysequoia import Cert, Sig, verify
 
-        with ExitStack() as stack:
-            if isinstance(signature, str):
-                signature = stack.enter_context(open(signature, "rb"))
-            elif isinstance(signature, models.Artifact):
-                signature = stack.enter_context(signature.file)
+    certs = Cert.split_bytes(public_keys.encode("utf8"))
 
-            verified = gpg.verify_file(signature, detached_data)
-        if not verified.valid:
-            raise InvalidSignatureError(_("The signature is not valid."), verified=verified)
-    return verified
+    def store(key_ids):
+        return certs
+
+    with ExitStack() as stack:
+        if isinstance(signature, str):
+            sig_data = stack.enter_context(open(signature, "rb")).read()
+        elif isinstance(signature, models.Artifact):
+            sig_data = stack.enter_context(signature.file).read()
+        else:
+            sig_data = signature.read()
+
+    try:
+        sig = Sig.from_bytes(sig_data)
+        if detached_data is not None:
+            result = verify(file=detached_data, store=store, signature=sig)
+        else:
+            result = verify(bytes=sig_data, store=store)
+    except Exception:
+        raise InvalidSignatureError(_("The signature is not valid."))
+
+    return VerifyResult(result)
 
 
 def compute_file_hash(filename, hasher=None, cumulative_hash=None, blocksize=8192):
