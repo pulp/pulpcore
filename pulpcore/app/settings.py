@@ -292,6 +292,7 @@ CONTENT_PATH_PREFIX = "/pulp/content/"
 API_APP_TTL = 120  # The heartbeat is called from gunicorn notify (defaulting to 45 sec).
 CONTENT_APP_TTL = 30
 WORKER_TTL = 30
+MEMORY_TRIM_INTERVAL = 1024
 
 # Seconds for a task to finish on semi graceful worker shutdown (approx)
 # On SIGHUP, SIGTERM the currently running task will be awaited forever.

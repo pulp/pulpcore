@@ -1,0 +1,2 @@
+Added periodic ``gc.collect()`` and ``malloc_trim(0)`` calls in API workers to prevent
+unbounded RSS growth caused by glibc heap fragmentation.

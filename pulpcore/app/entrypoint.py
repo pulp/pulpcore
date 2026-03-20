@@ -1,6 +1,10 @@
 from contextvars import ContextVar
 from logging import getLogger
+import ctypes
+import ctypes.util
+import gc
 import os
+import platform
 import sys
 import threading
 import time
@@ -18,15 +22,41 @@ from pulpcore.app.pulpcore_gunicorn_application import PulpcoreGunicornApplicati
 
 logger = getLogger(__name__)
 
+_malloc_trim = None
+if platform.system() == "Linux":
+    try:
+        _libc = ctypes.CDLL(ctypes.util.find_library("c"))
+        _malloc_trim = _libc.malloc_trim
+        _malloc_trim.argtypes = [ctypes.c_int]
+        _malloc_trim.restype = ctypes.c_int
+    except (OSError, AttributeError):
+        pass
+
 
 name_template_var = ContextVar("name_template_var", default=None)
 using_pulp_api_worker = ContextVar("using_pulp_api_worker", default=False)
 
 
 class PulpApiWorker(SyncWorker):
+    _request_counter = 0
+    _memory_trim_interval = 0
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.heartbeat_thread = None
+
+    def handle_request(self, listener, req, client, addr):
+        super().handle_request(listener, req, client, addr)
+        self._trim_memory_if_needed()
+
+    def _trim_memory_if_needed(self):
+        if not _malloc_trim or self._memory_trim_interval <= 0:
+            return
+        self._request_counter += 1
+        if self._request_counter >= self._memory_trim_interval:
+            self._request_counter = 0
+            gc.collect()
+            _malloc_trim(0)
 
     def _heartbeat_loop(self):
         """Run heartbeat in a loop. Exit process if heartbeat fails."""
@@ -104,6 +134,13 @@ class PulpApiWorker(SyncWorker):
             target=self._heartbeat_loop, daemon=True, name=f"heartbeat-{self.name}"
         )
         self.heartbeat_thread.start()
+
+        self._memory_trim_interval = settings.MEMORY_TRIM_INTERVAL
+        if _malloc_trim and self._memory_trim_interval > 0:
+            logger.info(
+                "Memory trim enabled: gc.collect + malloc_trim(0) every %d requests",
+                self._memory_trim_interval,
+            )
 
         super().init_process()
 
