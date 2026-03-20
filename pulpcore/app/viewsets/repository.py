@@ -97,6 +97,7 @@ class RepositoryFilter(BaseFilterSet):
         fields = {
             "name": NAME_FILTER_OPTIONS,
             "retain_repo_versions": NULLABLE_NUMERIC_FILTER_OPTIONS,
+            "retain_checkpoints": NULLABLE_NUMERIC_FILTER_OPTIONS,
         }
 
 

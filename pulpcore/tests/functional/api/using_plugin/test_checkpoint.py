@@ -24,21 +24,18 @@ def content_factory(tmp_path_factory, file_bindings, monitor_task):
 
 
 @pytest.fixture(scope="class")
-def setup(
-    file_repository_factory,
-    file_distribution_factory,
-    content_factory,
-    file_bindings,
-    monitor_task,
-):
-    def create_publication(repo, checkpoint):
-        nonlocal content_counter
+def create_publication(content_factory, file_bindings, monitor_task):
+    counter = [0]
+
+    def _create_publication(repo, checkpoint):
+        content_href = content_factory(f"{counter[0]}")
+        counter[0] += 1
+
         monitor_task(
             file_bindings.RepositoriesFileApi.modify(
-                repo.pulp_href, {"add_content_units": [content_factory(f"{content_counter}")]}
+                repo.pulp_href, {"add_content_units": [content_href]}
             ).task
         )
-        content_counter += 1
 
         response = monitor_task(
             file_bindings.PublicationsFileApi.create(
@@ -47,11 +44,19 @@ def setup(
         )
         return file_bindings.PublicationsFileApi.read(response.created_resources[0])
 
+    return _create_publication
+
+
+@pytest.fixture(scope="class")
+def setup(
+    file_repository_factory,
+    file_distribution_factory,
+    create_publication,
+):
     repo = file_repository_factory()
     distribution = file_distribution_factory(repository=repo.pulp_href, checkpoint=True)
 
     pubs = []
-    content_counter = 0
     pubs.append(create_publication(repo, False))
     sleep(1)
     pubs.append(create_publication(repo, True))
@@ -227,3 +232,51 @@ class TestCheckpointDistribution:
                 file_bindings.PublicationsFileApi,
                 {"repository_version": repo.latest_version_href, "checkpoint": True},
             )
+
+
+@pytest.mark.parallel
+def test_checkpoint_retention(
+    file_bindings,
+    file_repository_factory,
+    file_distribution_factory,
+    create_publication,
+    monitor_task,
+):
+    """Test retain_checkpoints for repositories.
+
+    When retain_checkpoints is set, only the N most recent checkpoint publications should
+    retain their checkpoint=True flag. Older ones get their checkpoint flag cleared.
+    """
+    repo = file_repository_factory()
+    file_distribution_factory(repository=repo.pulp_href, checkpoint=True)
+
+    # Create 4 checkpoint publications
+    checkpoint_pubs = []
+    for _ in range(4):
+        checkpoint_pubs.append(create_publication(repo, True))
+
+    # Verify all 4 publications are checkpoints
+    for pub in checkpoint_pubs:
+        assert file_bindings.PublicationsFileApi.read(pub.pulp_href).checkpoint is True
+
+    # Set retain_checkpoints=2 — should clear checkpoint flag on the 2 oldest
+    task = file_bindings.RepositoriesFileApi.partial_update(
+        repo.pulp_href, {"retain_checkpoints": 2}
+    ).task
+    monitor_task(task)
+
+    # Verify the 2 oldest had their flag cleared
+    for pub in checkpoint_pubs[:2]:
+        assert file_bindings.PublicationsFileApi.read(pub.pulp_href).checkpoint is False
+
+    # Verify the 2 most recent still have checkpoint=True
+    for pub in checkpoint_pubs[2:]:
+        assert file_bindings.PublicationsFileApi.read(pub.pulp_href).checkpoint is True
+
+    # Create another checkpoint — should trigger steady-state cleanup
+    new_pub = create_publication(repo, True)
+
+    # checkpoint_pubs[2] should now be cleared too
+    assert file_bindings.PublicationsFileApi.read(checkpoint_pubs[2].pulp_href).checkpoint is False
+    assert file_bindings.PublicationsFileApi.read(checkpoint_pubs[3].pulp_href).checkpoint is True
+    assert file_bindings.PublicationsFileApi.read(new_pub.pulp_href).checkpoint is True
