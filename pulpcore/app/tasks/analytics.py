@@ -22,7 +22,6 @@ from pulpcore.app.models.role import Role
 from pulpcore.app.models.status import AppStatus
 from pulpcore.app.protobuf.analytics_pb2 import Analytics
 
-
 logger = logging.getLogger(__name__)
 
 

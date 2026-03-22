@@ -6,7 +6,6 @@ from pulpcore.client.pulpcore.exceptions import ApiException, BadRequestExceptio
 from pulpcore.app import settings
 from pulpcore.constants import TASK_STATES
 
-
 pytestmark = [
     pytest.mark.skipif(
         "/tmp" not in settings.ALLOWED_EXPORT_PATHS,
@@ -123,7 +122,7 @@ def test_crud_fsexporter(fs_exporter_factory, pulpcore_bindings, monitor_task):
 @pytest.mark.parallel
 def test_fsexport(pulpcore_bindings, fs_exporter_factory, fs_export_factory, pub_and_repo):
     exporter = fs_exporter_factory()
-    (publication, _) = pub_and_repo()
+    publication, _ = pub_and_repo()
     # Test export
     body = {"publication": publication.pulp_href}
     export = fs_export_factory(exporter, body=body)
@@ -142,7 +141,7 @@ def test_fsexport_by_version(
     fs_export_factory,
     pub_and_repo,
 ):
-    (publication, repository) = pub_and_repo()
+    publication, repository = pub_and_repo()
     latest = repository.latest_version_href
     zeroth = latest.replace("/2/", "/0/")
 
@@ -192,7 +191,7 @@ def test_fsexport_cross_domain(
             "storage_settings": {"MEDIA_ROOT": "/var/lib/pulp/media/"},
         }
         e["domain"] = gen_object_with_cleanup(pulpcore_bindings.DomainsApi, body)
-        (e["publication"], e["repository"]) = pub_and_repo(pulp_domain=e["domain"].name)
+        e["publication"], e["repository"] = pub_and_repo(pulp_domain=e["domain"].name)
         e["exporter"] = fs_exporter_factory(pulp_domain=e["domain"].name)
         body = {"publication": e["publication"].pulp_href}
         e["export"] = fs_export_factory(e["exporter"], body=body)

@@ -40,7 +40,6 @@ from pulpcore.app.util import (
     resolve_prn,
 )
 
-
 log = getLogger(__name__)
 
 
