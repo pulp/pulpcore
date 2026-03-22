@@ -11,7 +11,6 @@ from pulpcore.app.models.repository import Repository
 from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS
 from pulpcore.plugin.importexport import QueryModelResource
 
-
 log = getLogger(__name__)
 
 

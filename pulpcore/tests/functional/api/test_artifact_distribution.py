@@ -4,7 +4,6 @@ from hashlib import sha256
 
 from django.conf import settings
 
-
 OBJECT_STORAGES = (
     "storages.backends.s3boto3.S3Boto3Storage",
     "storages.backends.azure_storage.AzureStorage",

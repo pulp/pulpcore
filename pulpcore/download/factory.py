@@ -16,7 +16,6 @@ import aiohttp
 from .http import HttpDownloader
 from .file import FileDownloader
 
-
 PROTOCOL_MAP = {
     "http": HttpDownloader,
     "https": HttpDownloader,

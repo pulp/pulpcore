@@ -8,7 +8,6 @@ from django.db import connection
 from pulpcore.app.models import Remote, Domain
 from pulpcore.app.models.fields import _fernet, EncryptedTextField
 
-
 TEST_KEY1 = b"hPCIFQV/upbvPRsEpgS7W32XdFA2EQgXnMtyNAekebQ="
 TEST_KEY2 = b"6Xyv+QezAQ+4R870F5qsgKcngzmm46caDB2gyo9qnpc="
 

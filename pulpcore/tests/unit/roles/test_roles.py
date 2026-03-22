@@ -13,7 +13,6 @@ from pulpcore.app.role_util import (
     get_users_with_perms_attached_roles,
 )
 
-
 User = get_user_model()
 
 

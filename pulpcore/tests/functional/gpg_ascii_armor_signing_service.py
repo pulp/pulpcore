@@ -9,7 +9,6 @@ import aiohttp
 import gnupg
 import pytest
 
-
 signing_script_string = r"""#!/usr/bin/env bash
 
 FILE_PATH=$1

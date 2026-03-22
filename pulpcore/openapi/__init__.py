@@ -29,7 +29,6 @@ from rest_framework.schemas.utils import get_pk_description
 from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app.loggers import deprecation_logger
 
-
 if settings.DOMAIN_ENABLED:
     API_ROOT_NO_FRONT_SLASH = settings.V3_DOMAIN_API_ROOT_NO_FRONT_SLASH.replace("slug:", "")
 else:

@@ -42,7 +42,6 @@ from pulpcore.tasking.storage import WorkerDirectory
 from pulpcore.tasking.tasks import dispatch_scheduled_tasks, execute_task
 from pulpcore.tasking.util import _delete_incomplete_resources
 
-
 _logger = logging.getLogger(__name__)
 random.seed()
 
