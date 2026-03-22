@@ -12,16 +12,13 @@ import textwrap
 from git import Repo
 from git.exc import GitCommandError
 
-
-helper = textwrap.dedent(
-    """\
+helper = textwrap.dedent("""\
         Stage the changelog for a release on main branch.
 
         Example:
             $ python .github/workflows/scripts/stage-changelog-for-default-branch.py 3.4.0
 
-    """
-)
+    """)
 
 parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, description=helper)
 

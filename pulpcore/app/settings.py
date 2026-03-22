@@ -22,7 +22,6 @@ from django.core.exceptions import ImproperlyConfigured
 
 from pulpcore import constants
 
-
 try:
     import sentry_sdk
 

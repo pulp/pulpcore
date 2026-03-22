@@ -30,7 +30,7 @@ jobs:
       id-token: "write"
 
     steps:
-      - uses: "actions/download-artifact@v4"
+      - uses: "actions/download-artifact@v8"
         with:
           name: "plugin_package"
           path: "dist/"
@@ -53,7 +53,7 @@ jobs:
           path: "pulpcore"
 
       - name: "Download Python client"
-        uses: "actions/download-artifact@v4"
+        uses: "actions/download-artifact@v8"
         with:
           name: "python-client.tar"
           path: "pulpcore/"
@@ -84,7 +84,7 @@ jobs:
           path: "pulpcore"
 
       - name: "Download Ruby client"
-        uses: "actions/download-artifact@v4"
+        uses: "actions/download-artifact@v8"
         with:
           name: "ruby-client.tar"
           path: "pulpcore/"

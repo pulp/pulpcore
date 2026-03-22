@@ -48,7 +48,6 @@ from .content import (
     SingleArtifactContentUploadSerializer,
 )
 
-
 __all__ = [
     "AlternateContentSourceSerializer",
     "AlternateContentSourcePathSerializer",

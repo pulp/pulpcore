@@ -1,6 +1,5 @@
 import pytest
 
-
 ALICE_PUB = """
 -----BEGIN PGP PUBLIC KEY BLOCK-----
 Comment: Alice's OpenPGP certificate
