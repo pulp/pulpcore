@@ -20,7 +20,6 @@ from pulpcore.app.viewsets import (
     ReclaimSpaceViewSet,
 )
 
-
 if settings.DOMAIN_ENABLED:
     API_ROOT = settings.V3_DOMAIN_API_ROOT_NO_FRONT_SLASH
 else:

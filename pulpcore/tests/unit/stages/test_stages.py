@@ -6,7 +6,6 @@ import mock
 
 from pulpcore.plugin.stages import Stage, EndStage, DeclarativeContent
 
-
 pytestmark = pytest.mark.usefixtures("fake_domain")
 
 

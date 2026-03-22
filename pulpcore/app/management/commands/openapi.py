@@ -19,16 +19,14 @@ class SchemaValidationError(CommandError):
 
 
 class Command(BaseCommand):
-    help = dedent(
-        """
+    help = dedent("""
         Generate OpenAPI3 schema for the Pulp API.
 
         The type of schema generated can be modified by providing some options.
           --component <str> comma separated list of app_labels
           --bindings flag, to produce operation ids used for bindings generation
           --pk-path flag, whether paths are presented with PK or href variable
-    """
-    )
+    """)
 
     requires_system_checks = []
 

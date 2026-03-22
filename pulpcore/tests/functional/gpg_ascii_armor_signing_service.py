@@ -6,7 +6,6 @@ import requests
 import gnupg
 import pytest
 
-
 SIGNING_SCRIPT_STRING = r"""#!/usr/bin/env bash
 
 FILE_PATH=$1

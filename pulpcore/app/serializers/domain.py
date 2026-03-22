@@ -12,7 +12,6 @@ from rest_framework.validators import UniqueValidator
 from pulpcore.app import models
 from pulpcore.app.serializers import IdentityField, ModelSerializer, HiddenFieldsMixin
 
-
 BACKEND_CHOICES = (
     ("pulpcore.app.models.storage.FileSystem", "Use local filesystem as storage"),
     # ("pulpcore.app.models.storage.PulpSFTPStorage", "Use SFTP server as storage"),
