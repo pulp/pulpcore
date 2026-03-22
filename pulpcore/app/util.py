@@ -29,7 +29,6 @@ from pulpcore.constants import STORAGE_METRICS_LOCK
 from pulpcore.exceptions import AdvisoryLockError
 from pulpcore.exceptions.validation import InvalidSignatureError
 
-
 # a little cache so viewset_for_model doesn't have to iterate over every app every time
 _model_viewset_cache = {}
 STRIPPED_API_ROOT = settings.API_ROOT.strip("/")

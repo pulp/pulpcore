@@ -12,7 +12,6 @@ from .instrumentation import middleware as instrumentation
 
 import django
 
-
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pulpcore.app.settings")
 django.setup()
 
@@ -27,7 +26,6 @@ from pulpcore.app.models import ContentAppStatus  # noqa: E402: module level not
 
 from .handler import Handler  # noqa: E402: module level not at top of file
 from .authentication import authenticate  # noqa: E402: module level not at top of file
-
 
 log = logging.getLogger(__name__)
 

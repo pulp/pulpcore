@@ -5,7 +5,6 @@ from pulpcore.client.pulpcore.exceptions import ApiException
 from pulpcore.app import settings
 from pulpcore.constants import TASK_STATES
 
-
 pytestmark = [
     pytest.mark.skipif(settings.DOMAIN_ENABLED, reason="Domains do not support export."),
     pytest.mark.skipif(

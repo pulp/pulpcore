@@ -1,7 +1,6 @@
 import pytest
 from pulpcore.app.serializers import PulpExportSerializer
 
-
 pytestmark = pytest.mark.usefixtures("fake_domain")
 
 
