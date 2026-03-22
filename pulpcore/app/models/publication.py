@@ -31,7 +31,6 @@ from pulpcore.app.models import AutoAddObjPermsMixin
 from pulpcore.responses import ArtifactResponse
 from pulpcore.app.util import get_domain_pk, cache_key, get_url
 
-
 _logger = logging.getLogger(__name__)
 
 

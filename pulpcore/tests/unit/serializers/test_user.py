@@ -9,7 +9,6 @@ from pulpcore.app.util import get_url, get_prn
 from pulpcore.app.serializers import UserRoleSerializer, GroupRoleSerializer
 from pulp_file.app.models import FileRepository
 
-
 pytestmark = [pytest.mark.django_db]
 
 

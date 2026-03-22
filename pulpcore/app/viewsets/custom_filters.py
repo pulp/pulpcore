@@ -18,7 +18,6 @@ from pulpcore.app.models import Content, ContentArtifact, RepositoryVersion, Pub
 from pulpcore.app.viewsets import NamedModelViewSet
 from pulpcore.app.util import get_prn, get_domain_pk, extract_pk, raise_for_unknown_content_units
 
-
 # Lookup conversion table from old resource hrefs to new PDRN resource names
 OLD_RESOURCE_HREFS = {
     "/api/v3/orphans/cleanup/": "orphans",

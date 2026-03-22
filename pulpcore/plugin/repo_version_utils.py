@@ -7,7 +7,6 @@ from pulpcore.app.files import validate_file_paths
 from pulpcore.app.models import Content, ContentArtifact
 from pulpcore.app.util import batch_qs
 
-
 _logger = logging.getLogger(__name__)
 
 __all__ = ["remove_duplicates"]

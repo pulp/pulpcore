@@ -15,7 +15,6 @@ from pulpcore.plugin.models import (
 from pulp_file.app.models import FilePublication
 from pulp_file.manifest import Entry, Manifest
 
-
 log = logging.getLogger(__name__)
 
 
