@@ -11,7 +11,6 @@ from collections import defaultdict
 from django_guid import get_guid
 from typing import NamedTuple
 
-
 _logger = logging.getLogger(__name__)
 
 __all__ = ["remove_duplicates"]

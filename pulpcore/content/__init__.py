@@ -10,7 +10,6 @@ from aiohttp import web
 from gunicorn.arbiter import Arbiter
 import django
 
-
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pulpcore.app.settings")
 django.setup()
 
@@ -27,7 +26,6 @@ from pulpcore.app.util import get_worker_name  # noqa: E402: module level not at
 
 from .handler import Handler  # noqa: E402: module level not at top of file
 from .authentication import authenticate, guid  # noqa: E402: module level not at top of file
-
 
 log = logging.getLogger(__name__)
 

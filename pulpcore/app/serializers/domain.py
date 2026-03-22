@@ -18,7 +18,6 @@ from pulpcore.app.serializers import (
     pulp_labels_validator,
 )
 
-
 BACKEND_CHOICES = (
     ("pulpcore.app.models.storage.FileSystem", "Use local filesystem as storage"),
     # ("pulpcore.app.models.storage.PulpSFTPStorage", "Use SFTP server as storage"),

@@ -13,7 +13,6 @@ from pulpcore.plugin.models import ContentGuard
 
 from pulp_certguard import rhsm
 
-
 logger = getLogger(__name__)
 
 cert_unquoted_body_regex = re.compile("^-----BEGIN CERTIFICATE-----(.*)-----END CERTIFICATE-----")

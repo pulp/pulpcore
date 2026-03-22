@@ -13,7 +13,6 @@ from django.utils.module_loading import module_has_submodule
 
 from pulpcore.exceptions.plugin import MissingPlugin
 
-
 VIEWSETS_MODULE_NAME = "viewsets"
 SERIALIZERS_MODULE_NAME = "serializers"
 URLS_MODULE_NAME = "urls"

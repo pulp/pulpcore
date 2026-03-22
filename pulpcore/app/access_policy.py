@@ -7,7 +7,6 @@ from pulpcore.app import settings
 from pulpcore.app.models import AccessPolicy as AccessPolicyModel
 from pulpcore.app.util import get_view_urlpattern, get_viewset_for_model
 
-
 DEFAULT_ACCESS_POLICY = {"statements": [{"action": "*", "principal": "admin", "effect": "allow"}]}
 
 
