@@ -9,7 +9,6 @@ from django.contrib.contenttypes.models import ContentType
 
 from pulpcore.app.util import get_url
 
-
 SEPARATOR = "\t"
 
 
@@ -25,8 +24,7 @@ def _get_url(content_type_id, object_pk):
 
 def _get_user_model_permissions():
     with connection.cursor() as cursor:
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT
                 auth_user.id,
                 array_agg(auth_permission.id),
@@ -38,8 +36,7 @@ def _get_user_model_permissions():
             LEFT JOIN django_content_type ON (content_type_id=django_content_type.id)
             GROUP BY auth_user.id
             ORDER BY username
-            """
-        )
+            """)
         while row := cursor.fetchone():
             (
                 user_id,
@@ -52,8 +49,7 @@ def _get_user_model_permissions():
 
 def _get_group_model_permissions():
     with connection.cursor() as cursor:
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT
                 auth_group.id,
                 array_agg(auth_permission.id),
@@ -65,8 +61,7 @@ def _get_group_model_permissions():
             LEFT JOIN django_content_type ON (content_type_id=django_content_type.id)
             GROUP BY auth_group.id
             ORDER BY auth_group.name
-            """
-        )
+            """)
         while row := cursor.fetchone():
             (
                 group_id,
@@ -80,8 +75,7 @@ def _get_group_model_permissions():
 
 def _get_user_object_permissions():
     with connection.cursor() as cursor:
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT
                 auth_user.id,
                 django_content_type.id,
@@ -97,8 +91,7 @@ def _get_user_object_permissions():
             LEFT JOIN auth_permission ON (permission_id=auth_permission.id)
             GROUP BY auth_user.id, django_content_type.id, object_pk
             ORDER BY username, django_content_type.id, object_pk
-            """
-        )
+            """)
         while row := cursor.fetchone():
             (
                 user_id,
@@ -119,8 +112,7 @@ def _get_user_object_permissions():
 
 def _get_group_object_permissions():
     with connection.cursor() as cursor:
-        cursor.execute(
-            """
+        cursor.execute("""
                     SELECT
                         auth_group.id,
                         django_content_type.id,
@@ -136,8 +128,7 @@ def _get_group_object_permissions():
                     LEFT JOIN auth_permission ON (permission_id=auth_permission.id)
                     GROUP BY auth_group.id, django_content_type.id, object_pk
                     ORDER BY auth_group.name, django_content_type.id, object_pk
-                    """
-        )
+                    """)
         while row := cursor.fetchone():
             (
                 group_id,

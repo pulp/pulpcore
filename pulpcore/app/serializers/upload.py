@@ -6,7 +6,6 @@ from rest_framework import serializers
 from pulpcore.app import models
 from pulpcore.app.serializers import base, ValidateFieldsMixin
 
-
 CONTENT_RANGE_PATTERN = r"^bytes (\d+)-(\d+)/(\d+|[*])$"
 
 

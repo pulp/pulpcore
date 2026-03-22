@@ -2,7 +2,6 @@ import pytest
 import random
 import uuid
 
-
 # Warning: Do not use HEX digits here!
 NAMES = (
     "GGGG",

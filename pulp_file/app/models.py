@@ -15,7 +15,6 @@ from pulpcore.plugin.publication_utils import validate_publication_paths
 from pulpcore.plugin.repo_version_utils import remove_duplicates, validate_repo_version
 from pulpcore.plugin.util import get_domain_pk
 
-
 log = getLogger(__name__)
 
 

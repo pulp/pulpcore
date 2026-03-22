@@ -12,7 +12,6 @@ from pulpcore.app.serializers.domain import (
     DomainSerializer,
 )
 
-
 MIN_DOMAIN_SETTINGS = {
     "name": "hello",
     "storage_settings": {},

@@ -5,7 +5,6 @@ from pulpcore.tests.functional.utils import PulpTaskError
 
 from pulpcore.client.pulp_file import RepositorySyncURL
 
-
 GIT_REMOTE_URL = "https://github.com/pulp/pulp-smash.git"
 FILE_COUNT = {
     "HEAD": 79,  # latest commit

@@ -22,7 +22,6 @@ from dynaconf import DjangoDynaconf, Dynaconf, Validator
 
 from pulpcore import constants
 
-
 try:
     import sentry_sdk
 

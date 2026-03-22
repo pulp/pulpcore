@@ -11,7 +11,6 @@ django.setup()
 from django.conf import settings  # noqa: E402: module level not at top
 from pulpcore.tasking.worker import PulpcoreWorker  # noqa: E402: module level not at top
 
-
 _logger = logging.getLogger(__name__)
 
 

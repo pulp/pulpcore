@@ -1,6 +1,5 @@
 from asgiref.sync import sync_to_async
 
-
 # This is useful for querysets which don't have async support yet. Django querysets issue a db call
 # when the iterator for them is requested, so we need that to be wrapped in `sync_to_async` also.
 iter_async = sync_to_async(iter)

@@ -5,7 +5,6 @@ import itertools
 import re
 import zlib
 
-
 RH_OID = "1.3.6.1.4.1.2312.9"
 RH_ORDER_NAME_OID = RH_OID + ".4.1"
 RH_VERSION_OID = RH_OID + ".6"

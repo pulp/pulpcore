@@ -32,7 +32,6 @@ from pulpcore.app.util import (
     resolve_prn,
 )
 
-
 __all__ = [
     "assign_role",
     "get_groups_with_perms",
