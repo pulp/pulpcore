@@ -4,7 +4,6 @@ import pytest
 
 from jsonschema import validate
 
-
 STATUS = {
     "$schema": "http://json-schema.org/schema#",
     "title": "Pulp 3 status API schema",

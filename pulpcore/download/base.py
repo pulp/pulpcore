@@ -20,7 +20,6 @@ from pulpcore.exceptions import (
     UnsupportedDigestValidationError,
 )
 
-
 log = logging.getLogger(__name__)
 
 

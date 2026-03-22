@@ -3,7 +3,6 @@ from unittest import mock
 
 from pulpcore.app import models, util
 
-
 pytestmark = pytest.mark.usefixtures("fake_domain")
 
 

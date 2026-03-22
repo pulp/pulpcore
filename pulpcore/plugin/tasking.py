@@ -15,7 +15,6 @@ from pulpcore.app.tasks import (
 from pulpcore.app.tasks.vulnerability_report import check_content
 from pulpcore.app.tasks.repository import add_and_remove
 
-
 __all__ = [
     "ageneral_update",
     "check_content",
