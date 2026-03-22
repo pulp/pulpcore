@@ -26,7 +26,6 @@ from pulp_certguard.tests.functional.constants import (
     RHSM_V3_ZERO_VAR_BASE_PATH,
 )
 
-
 if settings.DOMAIN_ENABLED:
     pytest.skip("RHSM tests are currently not compatible with domains.", allow_module_level=True)
 

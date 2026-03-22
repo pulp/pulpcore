@@ -5,7 +5,6 @@ from rest_framework.serializers import ValidationError
 
 from pulpcore.app.models import Group, Repository
 
-
 # Model checks
 
 

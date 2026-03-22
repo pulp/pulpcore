@@ -232,15 +232,11 @@ class SingleArtifactContentUploadSerializer(
         during initialization (typically due to immutable QueryDict).
         """
         if "pulp_labels" in data and isinstance(data["pulp_labels"], str):
-            raise ValidationError(
-                _(
-                    """
+            raise ValidationError(_("""
                     Failed to deserialize pulp_labels!
                     This error often occurs when file didn't upload, is incomplete, or
                     when pulp_labels are not in a valid JSON format.
-                    """
-                )
-            )
+                    """))
         return super().validate(data)
 
     def deferred_validate(self, data):

@@ -9,7 +9,6 @@ from pulpcore.client.pulpcore.exceptions import BadRequestException
 from pulpcore.app import settings
 from pulpcore.constants import TASK_STATES
 
-
 pytestmark = [
     pytest.mark.skipif(
         "/tmp" not in settings.ALLOWED_EXPORT_PATHS,
