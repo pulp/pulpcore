@@ -4,7 +4,6 @@ import uuid
 
 from pulpcore.client.pulpcore.exceptions import ApiException, ApiTypeError
 
-
 # Warning: Do not use HEX digits here!
 NAMES = (
     "GGGG",

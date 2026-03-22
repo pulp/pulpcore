@@ -99,9 +99,9 @@ def main(options: argparse.Namespace, template_config: dict[str, t.Any]) -> int:
 
     # Warning: This will not work if branch names contain "/" but we don't really care here.
     heads = [h.split("/")[-1] for h in repo.git.branch("--remote").split("\n")]
-    available_branches = [h for h in heads if re.fullmatch(RELEASE_BRANCH_REGEX, h)]
-    available_branches.sort(key=lambda ver: Version(ver))
-    available_branches.append(DEFAULT_BRANCH)
+    available_branches = sorted(
+        {h for h in heads if re.fullmatch(RELEASE_BRANCH_REGEX, h)}, key=lambda ver: Version(ver)
+    ) + [DEFAULT_BRANCH]
 
     branches = options.branches
     if branches == "supported":
