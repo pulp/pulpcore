@@ -49,7 +49,6 @@ from .content import (
     SingleArtifactContentUploadViewSet,
 )
 
-
 __all__ = [
     "BaseFilterSet",
     "OperationPostponedResponse",

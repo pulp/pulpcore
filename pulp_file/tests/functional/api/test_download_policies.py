@@ -13,7 +13,6 @@ from pulpcore.tests.functional.utils import get_files_in_manifest, download_file
 
 from pulpcore.client.pulp_file import FileFilePublication, RepositorySyncURL
 
-
 OBJECT_STORAGES = (
     "storages.backends.s3boto3.S3Boto3Storage",
     "storages.backends.azure_storage.AzureStorage",

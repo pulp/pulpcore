@@ -48,7 +48,7 @@ jobs:
           pulpcore-manager openapi --bindings --component "file" --file "file-api.json"
           pulpcore-manager openapi --bindings --component "certguard" --file "certguard-api.json"
       - name: "Upload Package whl"
-        uses: "actions/upload-artifact@v5"
+        uses: "actions/upload-artifact@v7"
         with:
           name: "plugin_package"
           path: "pulpcore/dist/"
@@ -56,7 +56,7 @@ jobs:
           retention-days: 5
           overwrite: true
       - name: "Upload API specs"
-        uses: "actions/upload-artifact@v5"
+        uses: "actions/upload-artifact@v7"
         with:
           name: "api_spec"
           path: |
@@ -77,7 +77,7 @@ jobs:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
           GITHUB_CONTEXT: "${{ github.event.pull_request.commits_url }}"
       - name: "Upload python client packages"
-        uses: "actions/upload-artifact@v5"
+        uses: "actions/upload-artifact@v7"
         with:
           name: "python-client.tar"
           path: |
@@ -88,7 +88,7 @@ jobs:
           retention-days: 5
           overwrite: true
       - name: "Upload python client docs"
-        uses: "actions/upload-artifact@v5"
+        uses: "actions/upload-artifact@v7"
         with:
           name: "python-client-docs.tar"
           path: |
@@ -108,7 +108,7 @@ jobs:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
           GITHUB_CONTEXT: "${{ github.event.pull_request.commits_url }}"
       - name: "Upload Ruby client"
-        uses: "actions/upload-artifact@v5"
+        uses: "actions/upload-artifact@v7"
         with:
           name: "ruby-client.tar"
           path: |

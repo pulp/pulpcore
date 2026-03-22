@@ -1,7 +1,6 @@
 from gettext import gettext as _
 from types import SimpleNamespace
 
-
 # Special purpose advisory locks for use with the two number variant.
 # The group will be 0.
 # The numbers are randomly chosen.

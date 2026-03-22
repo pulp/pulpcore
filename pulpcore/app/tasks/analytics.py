@@ -23,7 +23,6 @@ from pulpcore.app.models.status import ContentAppStatus
 from pulpcore.app.models.task import Worker
 from pulpcore.app.protobuf.analytics_pb2 import Analytics
 
-
 logger = logging.getLogger(__name__)
 
 

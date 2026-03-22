@@ -30,7 +30,6 @@ from pulpcore.tests.functional.utils import (
     add_recording_route,
 )
 
-
 try:
     import pulp_smash  # noqa: F401
 except ImportError:
