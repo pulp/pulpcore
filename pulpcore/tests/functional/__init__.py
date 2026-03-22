@@ -79,7 +79,6 @@ from .gpg_ascii_armor_signing_service import (
     signing_script_temp_dir,
 )
 
-
 try:
     import pulp_smash
 except ImportError:

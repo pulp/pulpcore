@@ -38,7 +38,6 @@ from .content import Artifact, Content
 from .fields import EncryptedTextField
 from .task import CreatedResource, Task
 
-
 _logger = logging.getLogger(__name__)
 
 

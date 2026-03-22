@@ -6,7 +6,6 @@ from django.conf import settings
 from jsonschema import validate
 from pulpcore.client.pulpcore import ApiException
 
-
 STATUS = {
     "$schema": "http://json-schema.org/schema#",
     "title": "Pulp 3 status API schema",

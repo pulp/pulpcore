@@ -19,7 +19,6 @@ from pulpcore.app.serializers import (
     SingleArtifactContentSerializer,
 )
 
-
 log = getLogger(__name__)
 
 
