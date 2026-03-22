@@ -4,7 +4,6 @@ from gettext import gettext as _
 
 from re import fullmatch
 
-
 Line = namedtuple("Line", ("number", "content"))
 
 

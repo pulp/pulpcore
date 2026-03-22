@@ -16,7 +16,6 @@ from pulpcore.app.apps import PulpAppConfig
 from .http import HttpDownloader
 from .file import FileDownloader
 
-
 PROTOCOL_MAP = {
     "http": HttpDownloader,
     "https": HttpDownloader,

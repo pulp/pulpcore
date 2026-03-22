@@ -200,10 +200,8 @@ class DistributionSerializer(ModelSerializer):
     pulp_labels = serializers.HStoreField(required=False, validators=[pulp_labels_validator])
 
     base_path = serializers.CharField(
-        help_text=_(
-            'The base (relative) path component of the published url. Avoid paths that \
-                    overlap with other distribution base paths (e.g. "foo" and "foo/bar")'
-        ),
+        help_text=_('The base (relative) path component of the published url. Avoid paths that \
+                    overlap with other distribution base paths (e.g. "foo" and "foo/bar")'),
         validators=[DomainUniqueValidator(queryset=models.Distribution.objects.all())],
     )
     base_url = BaseURLField(

@@ -17,7 +17,6 @@ from pulpcore.plugin.stages import (
 from pulp_file.app.models import FileContent, FileRemote, FileRepository, FilePublication
 from pulp_file.manifest import Manifest
 
-
 log = logging.getLogger(__name__)
 
 
@@ -54,7 +53,7 @@ def synchronize(remote_pk, repository_pk, mirror, url=None):
         # accomodate this use case
         global metadata_files
         with FilePublication.create(rv, pass_through=True) as publication:
-            (mdfile_path, relative_path) = metadata_files.pop()
+            mdfile_path, relative_path = metadata_files.pop()
             PublishedMetadata.create_from_file(
                 file=File(open(mdfile_path, "rb")),
                 relative_path=relative_path,

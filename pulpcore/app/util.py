@@ -24,7 +24,6 @@ from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app import models
 from pulpcore.exceptions.validation import InvalidSignatureError
 
-
 # a little cache so viewset_for_model doesn't have to iterate over every app every time
 _model_viewset_cache = {}
 
