@@ -47,6 +47,14 @@ Use the `plugin-template` tool after any changes made to `template_config.yml`.
 ../plugin_template/plugin-template --github
 ```
 
+## Fixing failed backports
+
+When patchback fails to cherry-pick a PR into an older branch, you need to manually apply the equivalent change. Key things to know:
+
+- Older branches (e.g. 3.49, 3.63) may use `requirements.txt` for dependencies, while newer branches use `pyproject.toml`. Always check which file the target branch uses before applying changes.
+- When creating a PR include `[<version>]` in the PR title (e.g. `[3.49] Update pyopenssl requirement from <26.0 to <27.0`).
+- Use `git cherry-pick -x`.
+
 ## Contributing
 
-When preparing to commit and create a PR you **must** follow our [PR checklist](https://pulpproject.org/pulpcore/docs/dev/guides/pull-request-walkthrough/)
+When preparing to commit and create a PR you **must** follow our [PR checklist](https://pulpproject.org/pulpcore/docs/dev/guides/pull-request-walkthrough/) Important to note is the AI attribution requirement in our commit messages. Also, note that our changelog entries are markdown.
