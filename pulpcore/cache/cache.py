@@ -7,6 +7,7 @@ from functools import wraps
 from django.http import HttpResponseRedirect, HttpResponse, FileResponse as ApiFileResponse
 
 from rest_framework.request import Request as ApiRequest
+from rest_framework.response import Response as ApiResponse
 
 from aiohttp.web import FileResponse, Response, HTTPSuccessful, Request, StreamResponse
 from aiohttp.web_exceptions import HTTPFound
@@ -127,6 +128,7 @@ class SyncContentCache(Cache):
 
     RESPONSE_TYPES = {
         "FileResponse": ApiFileResponse,
+        "APIResponse": ApiResponse,
         "Response": HttpResponse,
         "Redirect": HttpResponseRedirect,
     }
@@ -218,6 +220,9 @@ class SyncContentCache(Cache):
         elif isinstance(response, ApiFileResponse):
             entry["path"] = str(response.filename)
             entry["type"] = "FileResponse"
+        elif isinstance(response, ApiResponse):
+            entry["data"] = response.data
+            entry["type"] = "APIResponse"
         elif isinstance(response, HttpResponse):
             entry["content"] = response.content.decode("utf-8")
             entry["type"] = "Response"
