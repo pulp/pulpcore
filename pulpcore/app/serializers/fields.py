@@ -443,6 +443,41 @@ def pulp_labels_validator(value):
     return value
 
 
+class PgpKeyFingerprintField(serializers.CharField):
+    """
+    A DRF field for type-prefixed OpenPGP key identifiers.
+
+    Accepts formats like 'v4:<40-hex>', 'v6:<64-hex>', or 'keyid:<16-hex>'.
+    Normalizes hex to uppercase on input and validates the format.
+    """
+
+    # Matches versioned fingerprints (v3/v4/v5/v6) and legacy 16-char key IDs.
+    FINGERPRINT_RE = re.compile(r"^(v\d:[0-9A-F]{32,64}|keyid:[0-9A-F]{16})$")
+
+    default_error_messages = {
+        "invalid_format": _(
+            "Invalid fingerprint format. Expected 'v<N>:<hex-fingerprint>' or 'keyid:<16-hex>'."
+        ),
+    }
+
+    def __init__(self, **kwargs):
+        kwargs.setdefault("max_length", 68)  # "v4:" (3) + 64 hex + 1 for headroom
+        super().__init__(**kwargs)
+
+    @staticmethod
+    def normalize(value):
+        """Uppercase the hex portion of a prefixed signing fingerprint."""
+        prefix, sep, hex_part = value.partition(":")
+        return f"{prefix}:{hex_part.upper()}" if sep else value
+
+    def to_internal_value(self, data):
+        value = super().to_internal_value(data)
+        value = self.normalize(value)
+        if not self.FINGERPRINT_RE.match(value):
+            self.fail("invalid_format")
+        return value
+
+
 class PulpLabelsField(serializers.HStoreField):
     """
     Custom field for handling pulp labels that ensures proper dictionary format.

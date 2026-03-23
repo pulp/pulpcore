@@ -2,7 +2,10 @@ import pytest
 from rest_framework import serializers
 
 from pulpcore.app.serializers import fields
-from pulpcore.app.serializers.fields import pulp_labels_validator
+from pulpcore.app.serializers.fields import (
+    PgpKeyFingerprintField,
+    pulp_labels_validator,
+)
 
 
 @pytest.mark.parametrize(
@@ -85,3 +88,112 @@ def test_custom_json_dict_field_raises(field_and_data, binary_arg):
     error_msg = "Invalid type"
     with pytest.raises(serializers.ValidationError, match=error_msg):
         custom_field.to_internal_value(data)
+
+
+# -- PgpKeyFingerprintField tests --
+
+
+@pytest.mark.parametrize(
+    "value, expected",
+    [
+        pytest.param(
+            "v4:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            "v4:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            id="v4-uppercase",
+        ),
+        pytest.param(
+            "v4:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "v4:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            id="v4-lowercase-normalized",
+        ),
+        pytest.param(
+            "v6:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            "v6:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            id="v6-64hex",
+        ),
+        pytest.param(
+            "keyid:AAAAAAAAAAAAAAAA",
+            "keyid:AAAAAAAAAAAAAAAA",
+            id="keyid-16hex",
+        ),
+        pytest.param(
+            "keyid:aaaaaaaaaaaaaaaa",
+            "keyid:AAAAAAAAAAAAAAAA",
+            id="keyid-lowercase-normalized",
+        ),
+        pytest.param(
+            "v3:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            "v3:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            id="v3-32hex",
+        ),
+    ],
+)
+def test_pgp_key_fingerprint_field_valid(value, expected):
+    """Valid fingerprint formats should be accepted and normalized."""
+    field = PgpKeyFingerprintField()
+    assert field.to_internal_value(value) == expected
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        pytest.param("not-a-fingerprint", id="garbage"),
+        pytest.param("v4:ZZZZ", id="non-hex-chars"),
+        pytest.param("v4:AAAA", id="too-short-hex"),
+        pytest.param("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", id="no-prefix"),
+        pytest.param("v4:", id="empty-hex"),
+        pytest.param("", id="empty-string"),
+        pytest.param("keyid:AAAAAAAAAAAAAAA", id="keyid-15hex-too-short"),
+        pytest.param("keyid:AAAAAAAAAAAAAAAAA", id="keyid-17hex-too-long"),
+        pytest.param(
+            "KEYID:AAAAAAAAAAAAAAAA",
+            id="keyid-uppercase-prefix",
+        ),
+        pytest.param(
+            "V4:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            id="v4-uppercase-prefix",
+        ),
+        pytest.param(
+            "V3:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            id="v3-uppercase-prefix",
+        ),
+        pytest.param(
+            "V6:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            id="v6-uppercase-prefix",
+        ),
+        pytest.param(
+            "KeyId:AAAAAAAAAAAAAAAA",
+            id="keyid-mixed-case-prefix",
+        ),
+    ],
+)
+def test_pgp_key_fingerprint_field_invalid(value):
+    """Invalid fingerprint formats should raise ValidationError."""
+    field = PgpKeyFingerprintField()
+    with pytest.raises(serializers.ValidationError):
+        field.to_internal_value(value)
+
+
+def test_pgp_key_fingerprint_field_default_max_length():
+    """Field should have a default max_length of 68."""
+    field = PgpKeyFingerprintField()
+    assert field.max_length == 68
+
+
+def test_pgp_key_fingerprint_field_custom_max_length():
+    """Custom max_length should override the default."""
+    field = PgpKeyFingerprintField(max_length=100)
+    assert field.max_length == 100
+
+
+@pytest.mark.parametrize(
+    "value, expected",
+    [
+        ("v4:aabbccdd", "v4:AABBCCDD"),
+        ("keyid:aabbccdd", "keyid:AABBCCDD"),
+        ("nocolon", "nocolon"),
+    ],
+)
+def test_pgp_key_fingerprint_field_normalize(value, expected):
+    """PgpKeyFingerprintField.normalize should uppercase hex after the colon."""
+    assert PgpKeyFingerprintField.normalize(value) == expected
