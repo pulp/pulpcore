@@ -56,6 +56,7 @@ def test_crud_publication_distribution(
 
     # Assert on all the field values
     assert distribution.content_guard is None
+    assert distribution.content_guard_prn is None
     assert distribution.repository is None
     assert distribution.publication == publication.pulp_href
     assert distribution.base_path == distribution_data["base_path"]

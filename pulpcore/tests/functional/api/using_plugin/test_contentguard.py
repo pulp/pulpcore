@@ -61,6 +61,7 @@ def test_rbac_content_guard_full_workflow(
         monitor_task(file_bindings.DistributionsFileApi.partial_update(distro.pulp_href, body).task)
         distro = file_bindings.DistributionsFileApi.read(distro.pulp_href)
         assert guard.pulp_href == distro.content_guard
+        assert guard.prn == distro.content_guard_prn
 
     # Check that now only the creator and admin user can access the distribution
     _assert_access([creator_user, pulp_admin_user])
