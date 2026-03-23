@@ -259,6 +259,9 @@ class Artifact(HandleTempFilesMixin, BaseModel):
             ("sha384", "pulp_domain"),
             ("sha512", "pulp_domain"),
         )
+        indexes = [
+            models.Index(fields=["pulp_domain", "size"], name="artifact_domain_size_index"),
+        ]
 
     @hook(BEFORE_SAVE)
     def before_save(self):
