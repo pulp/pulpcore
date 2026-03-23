@@ -224,6 +224,9 @@ class DistributionSerializer(ModelSerializer):
         queryset=models.ContentGuard.objects.all(),
         allow_null=True,
     )
+    content_guard_prn = serializers.SerializerMethodField(
+        help_text=_("The Pulp Resource Name (PRN) of the associated optional content guard."),
+    )
     name = serializers.CharField(
         help_text=_("A unique name. Ex, `rawhide` and `stable`."),
         validators=[DomainUniqueValidator(queryset=models.Distribution.objects.all())],
@@ -254,6 +257,7 @@ class DistributionSerializer(ModelSerializer):
             "base_path",
             "base_url",
             "content_guard",
+            "content_guard_prn",
             "no_content_change_since",
             "hidden",
             "pulp_labels",
@@ -362,6 +366,9 @@ class DistributionSerializer(ModelSerializer):
             )
 
         return data
+
+    def get_content_guard_prn(self, obj):
+        return get_prn(obj.content_guard) if obj.content_guard else None
 
     def get_no_content_change_since(self, obj):
         publication = obj.publication
