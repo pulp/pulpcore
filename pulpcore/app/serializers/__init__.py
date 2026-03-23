@@ -33,6 +33,7 @@ from .fields import (
     JSONDictField,
     JSONListField,
     LatestVersionField,
+    PgpKeyFingerprintField,
     PulpLabelsField,
     SingleContentArtifactField,
     RepositoryVersionsIdentityFromRepositoryField,
