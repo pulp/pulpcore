@@ -1,0 +1,2 @@
+Added a composite database index on (pulp_domain, size) to the Artifact model to improve
+query performance when loading metrics data.
