@@ -8,6 +8,34 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.85.15 (2026-03-24) {: #3.85.15 }
+
+### REST API {: #3.85.15-rest-api }
+
+#### Bugfixes {: #3.85.15-rest-api-bugfix }
+
+- Fixed a bug when syncing a custom repository using the upstream username only (no password)
+  did not send any authentication since both were required by the download factory.
+  [#7425](https://github.com/pulp/pulpcore/issues/7425)
+- Added a management command (`pulpcore-manager datarepair 7465`) to populate the content_ids cache for all repository versions.
+  [#7465](https://github.com/pulp/pulpcore/issues/7465)
+
+### Plugin API {: #3.85.15-plugin-api }
+
+#### Bugfixes {: #3.85.15-plugin-api-bugfix }
+
+- Properly support DRF responses in Synchronous Content Cache.
+
+### Pulp File {: #3.85.15-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.15-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.85.14 (2026-03-17) {: #3.85.14 }
 
 ### REST API {: #3.85.14-rest-api }

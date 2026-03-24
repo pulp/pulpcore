@@ -1,2 +1,0 @@
-Fixed a bug when syncing a custom repository using the upstream username only (no password)
-did not send any authentication since both were required by the download factory.
