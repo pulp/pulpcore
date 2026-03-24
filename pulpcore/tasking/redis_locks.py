@@ -11,7 +11,6 @@ from asgiref.sync import sync_to_async
 
 from pulpcore.app.redis_connection import get_redis_connection
 
-
 _logger = logging.getLogger(__name__)
 
 # Redis key prefix for resource locks

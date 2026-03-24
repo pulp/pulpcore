@@ -51,7 +51,6 @@ from pulpcore.tasking.redis_locks import (
 from pulpcore.tasking.tasks import using_workdir
 from pulpcore.tasking.redis_tasks import execute_task
 
-
 _logger = logging.getLogger(__name__)
 random.seed()
 

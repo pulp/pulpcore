@@ -31,7 +31,6 @@ from pulpcore.tasking.tasks import (
     _aexecute_task as _apulpcoreworker_execute_task,
 )
 
-
 _logger = logging.getLogger(__name__)
 
 # Redis key prefix for task cancellation
