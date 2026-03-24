@@ -21,7 +21,7 @@ from django.apps import apps
 from django.conf import settings
 from django.db import connection
 from django.db.models import Model, UUIDField
-from django.urls import Resolver404, resolve
+
 
 from rest_framework.serializers import ValidationError
 from rest_framework.reverse import reverse as drf_reverse
@@ -195,15 +195,13 @@ def extract_pk(uri, only_prn=False):
         return prn[2]
     elif only_prn:
         raise ValidationError(_("Not a valid PRN: {p}, must start with 'prn:'").format(p=uri))
+    path = urlparse(uri).path
+    pk = path.rstrip("/").rsplit("/", 1)[-1]
     try:
-        match = resolve(urlparse(uri).path)
-    except Resolver404:
+        UUID(pk)
+    except ValueError:
         raise ValidationError(detail=_("URI not valid: {u}").format(u=uri))
-
-    try:
-        return match.kwargs["pk"]
-    except KeyError:
-        raise ValidationError("URI does not contain an unqualified resource PK")
+    return pk
 
 
 def raise_for_unknown_content_units(

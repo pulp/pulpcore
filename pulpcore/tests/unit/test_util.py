@@ -1,15 +1,72 @@
 import hashlib
 import tempfile
 import unittest
+from contextlib import nullcontext
 from pathlib import Path
 
 import pytest
 from unittest import mock
+from rest_framework.exceptions import ValidationError
 
 from pulpcore.app import models, util
-from pulpcore.app.util import HashingFileWriter
+from pulpcore.app.util import HashingFileWriter, extract_pk
 
 pytestmark = pytest.mark.usefixtures("fake_domain")
+
+
+TEST_UUID = "019c8cae-cc5f-7148-a3de-456d0a9f39a1"
+
+EXTRACT_PK_CASES = [
+    # happy cases
+    pytest.param(
+        f"/pulp/api/v3/repositories/file/file/{TEST_UUID}/",
+        nullcontext(TEST_UUID),
+        id="valid_href",
+    ),
+    pytest.param(
+        f"prn:file.filerepository:{TEST_UUID}",
+        nullcontext(TEST_UUID),
+        id="valid_prn",
+    ),
+    # validation errors
+    pytest.param(
+        "/pulp/api/v3/repositories/file/file/not-a-uuid/",
+        pytest.raises(ValidationError),
+        id="href_non_uuid_segment",
+    ),
+    pytest.param(
+        "not-a-valid-uri",
+        pytest.raises(ValidationError),
+        id="invalid_uri",
+    ),
+    pytest.param(
+        "prn:file.filerepository",
+        pytest.raises(ValidationError),
+        id="prn_missing_pk",
+    ),
+    pytest.param(
+        f"prn:file.filerepository:{TEST_UUID}:extra",
+        pytest.raises(ValidationError),
+        id="prn_too_many_parts",
+    ),
+    # nested URL can't be used with extract_pk
+    pytest.param(
+        f"/pulp/api/v3/repositories/file/file/{TEST_UUID}/versions/3/",
+        pytest.raises(ValidationError),
+        id="nested_href_version_number",
+    ),
+]
+
+
+@pytest.mark.parametrize("uri,ctx", EXTRACT_PK_CASES)
+def test_extract_pk(uri, ctx):
+    with ctx as expected:
+        assert extract_pk(uri) == expected
+
+
+def test_extract_pk_only_prn_rejects_href():
+    with pytest.raises(ValidationError):
+        extract_pk(f"/pulp/api/v3/repositories/file/file/{TEST_UUID}/", only_prn=True)
 
 
 def test_get_view_name_for_model_with_object():
