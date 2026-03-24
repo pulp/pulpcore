@@ -1,1 +1,0 @@
-Added a management command (`pulpcore-manager datarepair 7465`) to populate the content_ids cache for all repository versions.
