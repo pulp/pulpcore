@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
     atomic = False  # required for CONCURRENTLY
 
     dependencies = [
-        ("core", "0145_domainize_import_export"),
+        ("core", "0146_repository_retain_checkpoints"),
     ]
 
     operations = [
