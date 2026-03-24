@@ -476,36 +476,15 @@ class RedisWorker:
                 if should_skip:
                     continue
 
-                # Claim the task by setting app_lock BEFORE acquiring locks
-                rows = Task.objects.filter(
-                    pk=task.pk, state=TASK_STATES.WAITING, app_lock__isnull=True
-                ).update(app_lock=self.app_status)
-
-                if rows == 0:
-                    # Task was already claimed or executed
-                    _logger.debug("WORKER: Task %s already claimed or executed, skipping", task.pk)
-                    continue
-
-                # Update local task object
-                task.app_lock = self.app_status
-
-                # Atomically try to acquire task lock and resource locks in a single operation
+                # Acquire Redis locks first — avoids wasted DB writes for blocked tasks
                 task_lock_key = get_task_lock_key(task.pk)
 
                 blocked_resource_list = acquire_locks(
                     self.redis_conn, self.name, task_lock_key, exclusive_resources, shared_resources
                 )
 
-                if not blocked_resource_list:
-                    # All locks acquired successfully (task lock + resource locks)!
-                    return task
-                else:
-                    # Failed to acquire locks (task lock or resource locks blocked)
-                    # Clear app_lock since we're not executing this task
-                    Task.objects.filter(pk=task.pk).update(app_lock=None)
-                    task.app_lock = None
-
-                    # No Redis cleanup needed - Lua script is all-or-nothing
+                if blocked_resource_list:
+                    # Failed to acquire locks — no DB writes needed
                     if "__task_lock__" not in blocked_resource_list:
                         # Block ALL exclusive resources this task needed to preserve FIFO ordering.
                         # A later task must not acquire a resource that an earlier task also needs,
@@ -516,6 +495,20 @@ class RedisWorker:
                             if resource in blocked_resource_list:
                                 blocked_shared.add(resource)
                     continue
+
+                # Redis locks acquired — now claim the task in the DB
+                rows = Task.objects.filter(
+                    pk=task.pk, state=TASK_STATES.WAITING, app_lock__isnull=True
+                ).update(app_lock=self.app_status)
+
+                if rows == 0:
+                    # Task was canceled or state changed between SELECT and lock attempt
+                    safe_release_task_locks(task, lock_owner=self.name)
+                    _logger.debug("WORKER: Task %s no longer claimable, releasing locks", task.pk)
+                    continue
+
+                task.app_lock = self.app_status
+                return task
 
             except Exception as e:
                 _logger.error("Error processing task %s: %s", task.pk, e)
