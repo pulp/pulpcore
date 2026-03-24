@@ -8,7 +8,7 @@ class Migration(migrations.Migration):
     atomic = False # required for CONCURRENTLY
 
     dependencies = [
-        ("core", "0146_content_pulp_labels_gin"),
+        ("core", "0147_content_pulp_labels_gin"),
     ]
 
     operations = [
