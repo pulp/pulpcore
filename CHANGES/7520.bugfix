@@ -1,2 +1,0 @@
-Fixed a bug where a worker would start running `finalize_replication` task before the
-`replicate_distributions` task finishes.

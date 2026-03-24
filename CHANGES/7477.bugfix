@@ -1,2 +1,0 @@
-Added a GIN index to the pulp_labels field on Content and updated label filtering to use
-GIN-optimized lookups, improving query performance for label-based content searches.

@@ -1,1 +1,0 @@
-Added upperbounds to uvloop (an optional dependency) to prevent a known bug in newer releases.
