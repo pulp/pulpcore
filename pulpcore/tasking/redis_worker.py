@@ -439,7 +439,7 @@ class RedisWorker:
         # Query waiting tasks, sorted by creation time, limited
         # Filter for app_lock__isnull=True to avoid tasks being executed immediately by API
         waiting_tasks = (
-            Task.objects.filter(state=TASK_STATES.WAITING, app_lock__isnull=True)
+            Task.objects.filter(state=TASK_STATES.WAITING, app_lock=None)
             .exclude(pk__in=self.ignored_task_ids)
             .order_by("pulp_created")
             .select_related("pulp_domain")[:FETCH_TASK_LIMIT]
