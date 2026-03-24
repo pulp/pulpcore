@@ -29,7 +29,7 @@ if [ "$TEST" = "s3" ]; then
   COMPONENT_SOURCE="${COMPONENT_SOURCE}[s3] git+https://github.com/gerrod3/botocore.git@fix-100-continue"
 fi
 if [ "$TEST" = "azure" ]; then
-  COMPONENT_SOURCE="${COMPONENT_SOURCE}[azure]"
+  COMPONENT_SOURCE="${COMPONENT_SOURCE}[azure,uvloop]"
 fi
 
 if [[ "$TEST" = "pulp" ]]; then
