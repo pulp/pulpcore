@@ -134,6 +134,7 @@ class UpstreamPulpViewSet(
         dispatch(
             replicate_distributions,
             exclusive_resources=exclusive_resources,
+            shared_resources=[server],
             kwargs={"server_pk": pk},
             task_group=task_group,
         )
