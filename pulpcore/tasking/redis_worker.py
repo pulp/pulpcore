@@ -47,6 +47,7 @@ from pulpcore.tasking.redis_locks import (
     acquire_locks,
     extract_task_resources,
     get_task_lock_key,
+    safe_release_task_locks,
 )
 from pulpcore.tasking.tasks import using_workdir
 from pulpcore.tasking.redis_tasks import execute_task
