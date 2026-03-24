@@ -1,1 +1,0 @@
-Fixed bug where API process would miss heartbeats during long uploads.
