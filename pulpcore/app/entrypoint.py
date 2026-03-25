@@ -124,6 +124,9 @@ class PulpcoreApiApplication(PulpcoreGunicornApplication):
             PulpApiWorker.__module__ + "." + PulpApiWorker.__qualname__,
             enforced=True,
         )
+        if self.cfg.max_requests == 0:
+            self.cfg.set("max_requests", 10000)
+            self.cfg.set("max_requests_jitter", 500)
 
     def load(self):
         using_pulp_api_worker.set(True)
