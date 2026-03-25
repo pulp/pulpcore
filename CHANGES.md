@@ -8,6 +8,97 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.106.0 (2026-03-24) {: #3.106.0 }
+
+### REST API {: #3.106.0-rest-api }
+
+#### Features {: #3.106.0-rest-api-feature }
+
+- Added the `content_guard_prn` field to Distribution.
+  [#7004](https://github.com/pulp/pulpcore/issues/7004)
+- Add a data repair API for admins - for more granular control and operations which are too long for migrations.
+  [#7272](https://github.com/pulp/pulpcore/issues/7272)
+- Added ``retain_checkpoints`` field to Repository to automatically clear the checkpoint flag on older publications exceeding the limit.
+  [#7428](https://github.com/pulp/pulpcore/issues/7428)
+- Added `/pulp/api/v3/datarepair/7465/` endpoint to add missing repository version content_ids cache to all repository versions.
+  [#7465](https://github.com/pulp/pulpcore/issues/7465)
+- It is now possible to set `repository_version` on any distribution type, including for publication-based content types where this was not previously the case. For publication-based content, selecting a `repository_version` to distribute will pick the latest publication for that repository version, just as selecting a `repository` will pick the latest repository version.
+
+#### Bugfixes {: #3.106.0-rest-api-bugfix }
+
+- Fixed duplicate chunk uploads corrupting the entire upload
+  [#6381](https://github.com/pulp/pulpcore/issues/6381)
+- Added upperbounds to uvloop (an optional dependency) to prevent a known bug in newer releases.
+  [#7213](https://github.com/pulp/pulpcore/issues/7213)
+- Fixed bug where API process would miss heartbeats during long uploads.
+  [#7315](https://github.com/pulp/pulpcore/issues/7315)
+- Fix remove-signing-service handling, can now remove service without --class argument.
+  [#7318](https://github.com/pulp/pulpcore/issues/7318)
+- Fixed metadata artifacts being re-uploaded to storage when creating a publication for an already-published repository version.
+  [#7344](https://github.com/pulp/pulpcore/issues/7344)
+- Fixed a bug when syncing a custom repository using the upstream username only (no password)
+  did not send any authentication since both were required by the download factory.
+  [#7425](https://github.com/pulp/pulpcore/issues/7425)
+- Added a management command (`pulpcore-manager datarepair 7465`) to populate the content_ids cache for all repository versions.
+  [#7465](https://github.com/pulp/pulpcore/issues/7465)
+- Added a composite database index on (pulp_domain, size) to the Artifact model to improve
+  query performance when loading metrics data.
+  [#7475](https://github.com/pulp/pulpcore/issues/7475)
+- Added a GIN index to the pulp_labels field on Content and updated label filtering to use
+  GIN-optimized lookups, improving query performance for label-based content searches.
+  [#7477](https://github.com/pulp/pulpcore/issues/7477)
+- Fixed a bug where a worker would start running `finalize_replication` task before the
+  `replicate_distributions` task finishes.
+  [#7520](https://github.com/pulp/pulpcore/issues/7520)
+
+### Plugin API {: #3.106.0-plugin-api }
+
+#### Features {: #3.106.0-plugin-api-feature }
+
+- Added ``PgpKeyFingerprintField`` serializer field to the plugin API for validating and normalizing type-prefixed OpenPGP key identifiers.
+
+#### Bugfixes {: #3.106.0-plugin-api-bugfix }
+
+- Properly support DRF responses in Synchronous Content Cache.
+
+### Pulp File {: #3.106.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.106.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.105.2 (2026-03-24) {: #3.105.2 }
+
+### REST API {: #3.105.2-rest-api }
+
+#### Bugfixes {: #3.105.2-rest-api-bugfix }
+
+- Fixed a bug when syncing a custom repository using the upstream username only (no password)
+  did not send any authentication since both were required by the download factory.
+  [#7425](https://github.com/pulp/pulpcore/issues/7425)
+- Added a management command (`pulpcore-manager datarepair 7465`) to populate the content_ids cache for all repository versions.
+  [#7465](https://github.com/pulp/pulpcore/issues/7465)
+
+### Plugin API {: #3.105.2-plugin-api }
+
+#### Bugfixes {: #3.105.2-plugin-api-bugfix }
+
+- Properly support DRF responses in Synchronous Content Cache.
+
+### Pulp File {: #3.105.2-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.105.2-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.105.1 (2026-03-17) {: #3.105.1 }
 
 ### REST API {: #3.105.1-rest-api }
@@ -1008,6 +1099,34 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.86.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.85.15 (2026-03-24) {: #3.85.15 }
+
+### REST API {: #3.85.15-rest-api }
+
+#### Bugfixes {: #3.85.15-rest-api-bugfix }
+
+- Fixed a bug when syncing a custom repository using the upstream username only (no password)
+  did not send any authentication since both were required by the download factory.
+  [#7425](https://github.com/pulp/pulpcore/issues/7425)
+- Added a management command (`pulpcore-manager datarepair 7465`) to populate the content_ids cache for all repository versions.
+  [#7465](https://github.com/pulp/pulpcore/issues/7465)
+
+### Plugin API {: #3.85.15-plugin-api }
+
+#### Bugfixes {: #3.85.15-plugin-api-bugfix }
+
+- Properly support DRF responses in Synchronous Content Cache.
+
+### Pulp File {: #3.85.15-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.15-pulp-cert-guard }
 
 No significant changes.
 
@@ -2104,6 +2223,32 @@ No significant changes.
   [#6244](https://github.com/pulp/pulpcore/issues/6244)
 
 ### Pulp Cert Guard {: #3.74.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.73.30 (2026-03-24) {: #3.73.30 }
+
+### REST API {: #3.73.30-rest-api }
+
+#### Bugfixes {: #3.73.30-rest-api-bugfix }
+
+- Fixed a bug when syncing a custom repository using the upstream username only (no password)
+  did not send any authentication since both were required by the download factory.
+  [#7425](https://github.com/pulp/pulpcore/issues/7425)
+
+### Plugin API {: #3.73.30-plugin-api }
+
+#### Bugfixes {: #3.73.30-plugin-api-bugfix }
+
+- Properly support DRF responses in Synchronous Content Cache.
+
+### Pulp File {: #3.73.30-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.30-pulp-cert-guard }
 
 No significant changes.
 
@@ -3474,6 +3619,32 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.64.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.63.34 (2026-03-24) {: #3.63.34 }
+
+### REST API {: #3.63.34-rest-api }
+
+#### Bugfixes {: #3.63.34-rest-api-bugfix }
+
+- Fixed a bug when syncing a custom repository using the upstream username only (no password)
+  did not send any authentication since both were required by the download factory.
+  [#7425](https://github.com/pulp/pulpcore/issues/7425)
+
+### Plugin API {: #3.63.34-plugin-api }
+
+#### Bugfixes {: #3.63.34-plugin-api-bugfix }
+
+- Properly support DRF responses in Synchronous Content Cache.
+
+### Pulp File {: #3.63.34-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.34-pulp-cert-guard }
 
 No significant changes.
 
@@ -5087,6 +5258,26 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard
+
+No significant changes.
+
+---
+
+## 3.49.57 (2026-03-24) {: #3.49.57 }
+
+### REST API {: #3.49.57-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.49.57-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.57-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.57-pulp-cert-guard }
 
 No significant changes.
 
