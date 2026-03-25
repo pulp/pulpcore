@@ -180,7 +180,7 @@ def execute_task(task):
         contextvars.copy_context().run(_pulpcoreworker_execute_task, task)
     finally:
         if safe_release_task_locks(task):
-            _logger.warning("Task %s releasing all locks in finally block", task.pk)
+            _logger.debug("Task %s releasing all locks in finally block", task.pk)
 
 
 async def aexecute_task(task):
@@ -190,7 +190,7 @@ async def aexecute_task(task):
         await contextvars.copy_context().run(_apulpcoreworker_execute_task, task)
     finally:
         if await async_safe_release_task_locks(task):
-            _logger.warning("Task %s releasing all locks in finally block (async)", task.pk)
+            _logger.debug("Task %s releasing all locks in finally block (async)", task.pk)
 
 
 def are_resources_available(task: Task, app_lock) -> bool:
