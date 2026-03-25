@@ -193,7 +193,7 @@ async def aexecute_task(task):
             _logger.warning("Task %s releasing all locks in finally block (async)", task.pk)
 
 
-def are_resources_available(task: Task) -> bool:
+def are_resources_available(task: Task, app_lock) -> bool:
     """
     Atomically try to acquire task lock and resource locks for immediate task.
 
@@ -202,6 +202,7 @@ def are_resources_available(task: Task) -> bool:
 
     Args:
         task: The task to acquire locks for.
+        app_lock: The current AppStatus instance.
 
     Returns:
         bool: True if all locks were acquired, False otherwise.
@@ -211,8 +212,7 @@ def are_resources_available(task: Task) -> bool:
     # Extract resources from task
     exclusive_resources, shared_resources = extract_task_resources(task)
 
-    current_app = AppStatus.objects.current()
-    lock_owner = current_app.name
+    lock_owner = app_lock.name
 
     # Build task lock key
     task_lock_key = get_task_lock_key(task.pk)
@@ -244,7 +244,7 @@ def are_resources_available(task: Task) -> bool:
         return False
 
 
-async def async_are_resources_available(task: Task) -> bool:
+async def async_are_resources_available(task: Task, app_lock) -> bool:
     """
     Atomically try to acquire task lock and resource locks for immediate task (async version).
 
@@ -253,6 +253,7 @@ async def async_are_resources_available(task: Task) -> bool:
 
     Args:
         task: The task to acquire locks for.
+        app_lock: The current AppStatus instance.
 
     Returns:
         bool: True if all locks were acquired, False otherwise.
@@ -262,8 +263,7 @@ async def async_are_resources_available(task: Task) -> bool:
     # Extract resources from task
     exclusive_resources, shared_resources = extract_task_resources(task)
 
-    current_app = await sync_to_async(AppStatus.objects.current)()
-    lock_owner = current_app.name
+    lock_owner = app_lock.name
 
     # Build task lock key
     task_lock_key = get_task_lock_key(task.pk)
@@ -348,7 +348,7 @@ def dispatch(
     if execute_now:
         # Try to atomically acquire task lock and resource locks
         # are_resources_available() now acquires ALL locks atomically
-        if are_resources_available(task):
+        if are_resources_available(task, app_lock):
             # All locks acquired successfully
             # Proceed with execution
             current_app = app_lock
@@ -400,10 +400,10 @@ async def adispatch(
     if execute_now:
         # Try to atomically acquire task lock and resource locks
         # async_are_resources_available() now acquires ALL locks atomically
-        if await async_are_resources_available(task):
+        if await async_are_resources_available(task, app_lock):
             # All locks acquired successfully
             # Proceed with execution
-            current_app = await sync_to_async(AppStatus.objects.current)()
+            current_app = app_lock
             lock_owner = current_app.name
             try:
                 with using_workdir():
