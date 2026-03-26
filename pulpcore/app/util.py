@@ -484,7 +484,7 @@ def configure_cleanup():
 
 def configure_periodic_telemetry():
     task_name = "pulpcore.app.tasks.telemetry.otel_metrics"
-    dispatch_interval = timedelta(minutes=5)
+    dispatch_interval = timedelta(minutes=settings.OTEL_METRICS_DISPATCH_INTERVAL_MINUTES)
     name = "Emit OpenTelemetry metrics periodically"
 
     if settings.OTEL_ENABLED and settings.DOMAIN_ENABLED:

@@ -322,6 +322,13 @@ Toggles the activation of OpenTelemetry instrumentation for monitoring and traci
 
 Defaults to `False`.
 
+### OTEL\_METRICS\_DISPATCH\_INTERVAL\_MINUTES
+
+Defines the interval, in minutes, at which the task to collect the total space usage per domain
+is dispatched.
+
+Defaults to 5.
+
 ### REDACT\_UNSAFE\_EXCEPTIONS
 
 When enabled, task errors that are not `PulpException` subclasses are sanitized to prevent sensitive data leakage, such as credentials, tokens, or signed URLs.
