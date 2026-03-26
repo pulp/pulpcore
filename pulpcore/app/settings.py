@@ -417,6 +417,7 @@ KAFKA_SASL_PASSWORD = None
 
 # opentelemetry settings
 OTEL_ENABLED = False
+OTEL_METRICS_DISPATCH_INTERVAL_MINUTES = 5
 OTEL_PULP_API_HISTOGRAM_BUCKETS = []
 
 # VulnerabilityReport settings
@@ -530,6 +531,16 @@ otel_pulp_api_histogram_buckets_validator = Validator(
     },
 )
 
+otel_metrics_dispatch_interval_validator = Validator(
+    "OTEL_METRICS_DISPATCH_INTERVAL_MINUTES",
+    is_type_of=(int, float),
+    gt=0,
+    messages={
+        "is_type_of": "{name} must be a number.",
+        "operations": "{name} must be greater than zero.",
+    },
+)
+
 
 def otel_middleware_hook(settings):
     data = {"dynaconf_merge": True}
@@ -557,6 +568,7 @@ settings = DjangoDynaconf(
         json_header_auth_validator,
         authentication_json_header_openapi_security_scheme_validator,
         otel_pulp_api_histogram_buckets_validator,
+        otel_metrics_dispatch_interval_validator,
     ],
     post_hooks=(otel_middleware_hook,),
 )
