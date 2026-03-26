@@ -448,15 +448,21 @@ class PgpKeyFingerprintField(serializers.CharField):
     A DRF field for type-prefixed OpenPGP key identifiers.
 
     Accepts formats like 'v4:<40-hex>', 'v6:<64-hex>', or 'keyid:<16-hex>'.
+    If no prefix is provided, 'v4:' is assumed.
     Normalizes hex to uppercase on input and validates the format.
     """
+
+    DEFAULT_PREFIX = "v4"
 
     # Matches versioned fingerprints (v3/v4/v5/v6) and legacy 16-char key IDs.
     FINGERPRINT_RE = re.compile(r"^(v\d:[0-9A-F]{32,64}|keyid:[0-9A-F]{16})$")
 
+    # Matches a bare hex string (no prefix).
+    BARE_HEX_RE = re.compile(r"^[0-9a-fA-F]+$")
+
     default_error_messages = {
         "invalid_format": _(
-            "Invalid fingerprint format. Expected 'v<N>:<hex-fingerprint>' or 'keyid:<16-hex>'."
+            "Invalid fingerprint format. Expected '[v<N>:]<hex-fingerprint>' or 'keyid:<16-hex>'."
         ),
     }
 
@@ -472,6 +478,8 @@ class PgpKeyFingerprintField(serializers.CharField):
 
     def to_internal_value(self, data):
         value = super().to_internal_value(data)
+        if self.BARE_HEX_RE.match(value):
+            value = f"{self.DEFAULT_PREFIX}:{value}"
         value = self.normalize(value)
         if not self.FINGERPRINT_RE.match(value):
             self.fail("invalid_format")

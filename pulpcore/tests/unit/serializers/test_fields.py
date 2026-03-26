@@ -126,6 +126,16 @@ def test_custom_json_dict_field_raises(field_and_data, binary_arg):
             "v3:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
             id="v3-32hex",
         ),
+        pytest.param(
+            "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            "v4:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            id="bare-hex-defaults-to-v4",
+        ),
+        pytest.param(
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "v4:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            id="bare-hex-lowercase-defaults-to-v4",
+        ),
     ],
 )
 def test_pgp_key_fingerprint_field_valid(value, expected):
@@ -140,7 +150,7 @@ def test_pgp_key_fingerprint_field_valid(value, expected):
         pytest.param("not-a-fingerprint", id="garbage"),
         pytest.param("v4:ZZZZ", id="non-hex-chars"),
         pytest.param("v4:AAAA", id="too-short-hex"),
-        pytest.param("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", id="no-prefix"),
+        pytest.param("AAAA", id="bare-hex-too-short"),
         pytest.param("v4:", id="empty-hex"),
         pytest.param("", id="empty-string"),
         pytest.param("keyid:AAAAAAAAAAAAAAA", id="keyid-15hex-too-short"),
