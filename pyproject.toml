@@ -44,7 +44,7 @@ dependencies = [
   "drf-spectacular>=0.27.2,<0.30",  # We monkeypatch this so we may need a very narrow requirement string.
   "dynaconf>=3.2.5,<3.3.0",
   "GitPython>=3.1.24,<3.2",
-  "gunicorn>=22.0,<25.3.0",
+  "gunicorn>=22.0,<25.4.0",
   "jinja2>=3.1,<=3.1.6",
   "json_stream>=2.3.2,<2.6",
   "jq>=1.6.0,<1.12.0",
