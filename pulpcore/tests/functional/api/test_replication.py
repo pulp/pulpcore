@@ -117,6 +117,13 @@ def test_replication_idempotence(
             assert "UpstreamPulp" in obj.pulp_labels
             assert upstream_pulp.prn.split(":")[-1] == obj.pulp_labels["UpstreamPulp"]
 
+    # Verify the replica distribution uses repository_version (not repository)
+    replica_distro = file_bindings.DistributionsFileApi.list(
+        pulp_domain=replica_domain.name
+    ).results[0]
+    assert replica_distro.repository is None
+    assert replica_distro.repository_version is not None
+
     # Now replicate backwards
 
     upstream_pulp_body = {
@@ -147,7 +154,9 @@ def test_replication_idempotence(
     assert result.count == 1
     new_distribution = result.results[0]
     assert new_distribution.pulp_href == distro.pulp_href
-    assert new_distribution.repository == new_repository.pulp_href
+    assert new_distribution.repository is None
+    assert new_distribution.repository_version is not None
+    assert new_distribution.repository_version.startswith(new_repository.pulp_href)
     assert new_distribution.publication is None
     assert "UpstreamPulp" in new_distribution.pulp_labels
     assert upstream_pulp2.prn.split(":")[-1] == new_distribution.pulp_labels["UpstreamPulp"]
@@ -373,11 +382,9 @@ def check_replication(
             assert upstream_pulp.last_replication > old_replication
 
         # check if the content was correctly replicated
-        local_version = file_bindings.RepositoriesFileApi.read(
-            distribution.repository
-        ).latest_version_href
+        assert distribution.repository_version is not None
         local_present = file_bindings.RepositoriesFileVersionsApi.read(
-            local_version
+            distribution.repository_version
         ).content_summary.present
         upstream_version = file_bindings.PublicationsFileApi.read(
             upstream_distribution.publication
