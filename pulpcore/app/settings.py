@@ -630,6 +630,9 @@ if settings.API_ROOT_REWRITE_HEADER:
     api_root = "/<path:api_root>/"
 else:
     api_root = settings.API_ROOT
+# protocol://host:port/{API_ROOT}{domain}/api/{version}/
+# All of the below are DEPRECATED, and should be replaced by calling
+# pulpcore.plugin.find_url.find_api_root() (q.v.)
 settings.set("V3_API_ROOT", api_root + "api/v3/")  # Not user configurable
 settings.set("V3_DOMAIN_API_ROOT", api_root + "<slug:pulp_domain>/api/v3/")
 settings.set("V3_API_ROOT_NO_FRONT_SLASH", settings.V3_API_ROOT.lstrip("/"))

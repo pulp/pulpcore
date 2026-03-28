@@ -32,16 +32,21 @@ from rest_framework.schemas.utils import get_pk_description
 
 from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app.loggers import deprecation_logger
+from pulpcore.plugin.find_url import find_api_root
 
+# Get the API-ROOT for this installation
+_unused, FULL_API_PATH_NOFRONT = find_api_root(lstrip=True)
+
+# Massage some api-affecting vars to "genericize" them for the spec
 if settings.DOMAIN_ENABLED:
-    API_ROOT_NO_FRONT_SLASH = settings.V3_DOMAIN_API_ROOT_NO_FRONT_SLASH.replace("slug:", "")
-else:
-    API_ROOT_NO_FRONT_SLASH = settings.V3_API_ROOT_NO_FRONT_SLASH
+    FULL_API_PATH_NOFRONT = FULL_API_PATH_NOFRONT.replace("slug:", "")
 if settings.API_ROOT_REWRITE_HEADER:
-    API_ROOT_NO_FRONT_SLASH = API_ROOT_NO_FRONT_SLASH.replace(
+    FULL_API_PATH_NOFRONT = FULL_API_PATH_NOFRONT.replace(
         "<path:api_root>", settings.API_ROOT.strip("/")
     )
-API_ROOT_NO_FRONT_SLASH = API_ROOT_NO_FRONT_SLASH.replace("<", "{").replace(">", "}")
+
+# Final massage to make api-root "openapi compatible"
+FULL_API_PATH_NOFRONT = FULL_API_PATH_NOFRONT.replace("<", "{").replace(">", "}")
 
 # Python does not distinguish integer sizes. The safest assumption is that they are large.
 extend_schema_field(OpenApiTypes.INT64)(serializers.IntegerField)
@@ -61,7 +66,7 @@ class PulpAutoSchema(AutoSchema):
         "patch": "partial_update",
         "delete": "delete",
     }
-    V3_API = API_ROOT_NO_FRONT_SLASH.replace("{pulp_domain}/", "")
+    V3_API = FULL_API_PATH_NOFRONT.replace("{pulp_domain}/", "")
 
     def _tokenize_path(self):
         """
@@ -118,7 +123,7 @@ class PulpAutoSchema(AutoSchema):
         tokenized_path = self._tokenize_path()
 
         subpath = "/".join(tokenized_path)
-        operation_keys = subpath.replace(settings.V3_API_ROOT_NO_FRONT_SLASH, "").split("/")
+        operation_keys = subpath.replace(self.V3_API, "").split("/")
         operation_keys = [i.title() for i in operation_keys]
         if len(operation_keys) > 2:
             del operation_keys[1]
