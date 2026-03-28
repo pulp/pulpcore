@@ -30,6 +30,8 @@ from pulpcore.tests.functional.utils import (
     add_recording_route,
 )
 
+from pulpcore.plugin.find_url import find_api_root
+
 try:
     import pulp_smash  # noqa: F401
 except ImportError:
@@ -629,7 +631,7 @@ def backend_settings_factory(pulp_settings):
         ]
 
         def get_installation_storage_option(key, backend):
-            value = pulp_settings.STORAGES["default"]["OPTIONS"].get(key)
+            value = pulp_settings.STORAGES["default"].get("OPTIONS", {}).get(key)
             # Some FileSystem backend options may be defined in the top settings module
             if backend == "pulpcore.app.models.storage.FileSystem" and not value:
                 value = getattr(pulp_settings, key, None)
@@ -787,18 +789,18 @@ def pulp_content_origin_with_prefix(pulp_settings, bindings_cfg):
 
 @pytest.fixture(scope="session")
 def pulp_api_v3_path(pulp_settings, pulp_domain_enabled):
+    root, path = find_api_root(set_domain=True, rewrite_header=False, domain="default")
+
+    # Check that find_api_root() is doing what the tests expect
     if pulp_domain_enabled:
-        v3_api_root = pulp_settings.V3_DOMAIN_API_ROOT
-        v3_api_root = v3_api_root.replace("<slug:pulp_domain>", "default")
+        v3_api_root = f"{pulp_settings.API_ROOT}default/api/v3/"
     else:
-        v3_api_root = pulp_settings.V3_API_ROOT
-    if v3_api_root is None:
-        raise RuntimeError(
-            "This fixture requires the server to have the `V3_API_ROOT` setting set."
-        )
-    if pulp_settings.API_ROOT_REWRITE_HEADER:
-        v3_api_root = v3_api_root.replace("<path:api_root>", pulp_settings.API_ROOT.strip("/"))
-    return v3_api_root
+        v3_api_root = f"{pulp_settings.API_ROOT}api/v3/"
+    assert path == v3_api_root
+
+    if path is None:
+        raise RuntimeError("This fixture requires the server to have the `API_ROOT` setting set.")
+    return path
 
 
 @pytest.fixture(scope="session")

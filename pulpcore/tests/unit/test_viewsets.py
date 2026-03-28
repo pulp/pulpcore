@@ -1,18 +1,11 @@
 from uuid import uuid4
 
-from django.conf import settings
 from django.test import TestCase
 from rest_framework.serializers import ValidationError as DRFValidationError
-
+from pulpcore.plugin.find_url import find_api_root
 from pulp_file.app import models, viewsets
 
-API_ROOT = (
-    settings.V3_API_ROOT
-    if not settings.DOMAIN_ENABLED
-    else settings.V3_DOMAIN_API_ROOT.replace("<slug:pulp_domain>", "default")
-)
-if settings.API_ROOT_REWRITE_HEADER:
-    API_ROOT = API_ROOT.replace("<path:api_root>", settings.API_ROOT.strip("/"))
+_, V3_PATH = find_api_root(domain="default", rewrite_header=False, lstrip=False)
 
 
 class TestGetResource(TestCase):
@@ -30,7 +23,7 @@ class TestGetResource(TestCase):
         repo = models.FileRepository.objects.create(name="foo")
         viewset = viewsets.FileRepositoryViewSet()
         resource = viewset.get_resource(
-            "{api_root}repositories/file/file/{pk}/".format(api_root=API_ROOT, pk=repo.pk),
+            "{path}repositories/file/file/{pk}/".format(path=V3_PATH, pk=repo.pk),
             models.FileRepository,
         )
         assert repo == resource
@@ -46,7 +39,7 @@ class TestGetResource(TestCase):
         with self.assertRaises(DRFValidationError):
             # matches all repositories
             viewset.get_resource(
-                "{api_root}repositories/file/file/".format(api_root=API_ROOT),
+                "{path}repositories/file/file/".format(path=V3_PATH),
                 models.FileRepository,
             )
 
@@ -69,7 +62,7 @@ class TestGetResource(TestCase):
 
         with self.assertRaises(DRFValidationError):
             viewset.get_resource(
-                "{api_root}repositories/file/file/{pk}/".format(api_root=API_ROOT, pk=pk),
+                "{path}repositories/file/file/{pk}/".format(path=V3_PATH, pk=pk),
                 models.FileRepository,
             )
 
@@ -84,8 +77,6 @@ class TestGetResource(TestCase):
         with self.assertRaises(DRFValidationError):
             # has no repo versions yet
             viewset.get_resource(
-                "{api_root}repositories/file/file/{pk}/versions/1/".format(
-                    api_root=API_ROOT, pk=repo.pk
-                ),
+                "{path}repositories/file/file/{pk}/versions/1/".format(path=V3_PATH, pk=repo.pk),
                 models.FileRepository,
             )

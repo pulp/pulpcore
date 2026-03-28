@@ -31,7 +31,6 @@ from pulpcore.exceptions.validation import InvalidSignatureError
 
 # a little cache so viewset_for_model doesn't have to iterate over every app every time
 _model_viewset_cache = {}
-STRIPPED_API_ROOT = settings.API_ROOT.strip("/")
 
 
 def reverse(viewname, args=None, kwargs=None, request=None, relative_url=True, **extra):
@@ -45,7 +44,7 @@ def reverse(viewname, args=None, kwargs=None, request=None, relative_url=True, *
     if settings.DOMAIN_ENABLED:
         kwargs.setdefault("pulp_domain", get_domain().name)
     if settings.API_ROOT_REWRITE_HEADER:
-        kwargs.setdefault("api_root", getattr(request, "api_root", STRIPPED_API_ROOT))
+        kwargs.setdefault("api_root", getattr(request, "api_root", settings.API_ROOT.strip("/")))
     if relative_url:
         request = None
     return drf_reverse(viewname, args=args, kwargs=kwargs, request=request, **extra)
@@ -79,7 +78,6 @@ def get_url(model, domain=None, request=None):
         kwargs["pk"] = model.pk
     else:
         view_action = "list"
-
     return reverse(get_view_name_for_model(model, view_action), kwargs=kwargs, request=request)
 
 
@@ -299,7 +297,6 @@ def get_view_name_for_model(model_obj, view_action):
     if isinstance(model_obj, models.MasterModel):
         model_obj = model_obj.cast()
     viewset = get_viewset_for_model(model_obj)
-
     # return the complete view name, joining the registered viewset base name with
     # the requested view method.
     for router in all_routers:

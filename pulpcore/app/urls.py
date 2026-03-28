@@ -14,6 +14,7 @@ from rest_framework_nested import routers
 from rest_framework.routers import APIRootView
 
 from pulpcore.app.apps import pulp_plugin_configs
+from pulpcore.plugin.find_url import find_api_root
 from pulpcore.app.views import (
     LivezView,
     OrphansView,
@@ -30,14 +31,11 @@ from pulpcore.app.viewsets import (
     ReclaimSpaceViewSet,
 )
 
-if settings.DOMAIN_ENABLED:
-    API_ROOT = settings.V3_DOMAIN_API_ROOT_NO_FRONT_SLASH
-else:
-    API_ROOT = settings.V3_API_ROOT_NO_FRONT_SLASH
-if settings.API_ROOT_REWRITE_HEADER:
-    V3_API_ROOT = settings.V3_API_ROOT.replace("/<path:api_root>/", settings.API_ROOT)
-else:
-    V3_API_ROOT = settings.V3_API_ROOT
+_, PATH_DOMAIN_REWRITE_NOFRONT = find_api_root(lstrip=True, set_domain=True, rewrite_header=True)
+_, PATH_NODOMAIN_NOREWRITE_NOFRONT = find_api_root(
+    lstrip=True, set_domain=False, rewrite_header=False
+)
+_, PATH_NODOMAIN_REWRITE_NOFRONT = find_api_root(lstrip=True, set_domain=False, rewrite_header=True)
 
 
 class ViewSetNode:
@@ -203,7 +201,7 @@ docs_and_status = [
             SpectacularRedocView.as_view(
                 authentication_classes=[],
                 permission_classes=[],
-                url=f"{V3_API_ROOT}docs/api.json?include_html=1&pk_path=1",
+                url=f"/{PATH_NODOMAIN_NOREWRITE_NOFRONT}docs/api.json?include_html=1&pk_path=1",
             )
         ),
         name="schema-redoc",
@@ -214,7 +212,7 @@ docs_and_status = [
             SpectacularSwaggerView.as_view(
                 authentication_classes=[],
                 permission_classes=[],
-                url=f"{V3_API_ROOT}docs/api.json?include_html=1&pk_path=1",
+                url=f"/{PATH_NODOMAIN_NOREWRITE_NOFRONT}docs/api.json?include_html=1&pk_path=1",
             )
         ),
         name="schema-swagger",
@@ -222,9 +220,10 @@ docs_and_status = [
 ]
 
 urlpatterns = [
-    path(API_ROOT, include(special_views)),
+    path(PATH_DOMAIN_REWRITE_NOFRONT, include(special_views)),
     path("auth/", include("rest_framework.urls")),
-    path(settings.V3_API_ROOT_NO_FRONT_SLASH, include(docs_and_status)),
+    # docs/status aren't "inside" a domain
+    path(PATH_NODOMAIN_REWRITE_NOFRONT, include(docs_and_status)),
 ]
 
 if settings.DOMAIN_ENABLED:
@@ -239,7 +238,7 @@ if settings.DOMAIN_ENABLED:
         view = NoSchema.as_view(**p.callback.initkwargs)
         name = p.name + "-domains" if p.name else None
         docs_and_status_no_schema.append(path(str(p.pattern), view, name=name))
-    urlpatterns.insert(-1, path(API_ROOT, include(docs_and_status_no_schema)))
+    urlpatterns.insert(-1, path(PATH_DOMAIN_REWRITE_NOFRONT, include(docs_and_status_no_schema)))
 
 if "social_django" in settings.INSTALLED_APPS:
     urlpatterns.append(
@@ -251,7 +250,7 @@ root_router = PulpDefaultRouter()
 
 all_routers = [root_router] + vs_tree.register_with(root_router)
 for router in all_routers:
-    urlpatterns.append(path(API_ROOT, include(router.urls)))
+    urlpatterns.append(path(PATH_DOMAIN_REWRITE_NOFRONT, include(router.urls)))
 
 # If plugins define a urls.py, include them into the root namespace.
 for plugin_pattern in plugin_patterns:

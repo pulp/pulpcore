@@ -6,13 +6,9 @@ from pulp_file.app.serializers import FileContentSerializer
 from pulp_file.app.models import FileContent
 
 from pulpcore.plugin.models import Artifact
+from pulpcore.plugin.find_url import find_api_root
 
-V3_API_ROOT = (
-    settings.V3_API_ROOT
-    if not settings.DOMAIN_ENABLED
-    else settings.V3_DOMAIN_API_ROOT.replace("<slug:pulp_domain>", "default")
-)
-
+_, V3_API_ROOT = find_api_root(domain="default")
 
 CHECKSUM_LEN = {
     "md5": 32,
