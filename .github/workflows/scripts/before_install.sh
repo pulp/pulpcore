@@ -29,7 +29,7 @@ if [ "$TEST" = "s3" ]; then
   COMPONENT_SOURCE="${COMPONENT_SOURCE}[s3] git+https://github.com/gerrod3/botocore.git@fix-100-continue"
 fi
 if [ "$TEST" = "azure" ]; then
-  COMPONENT_SOURCE="${COMPONENT_SOURCE}[azure]"
+  COMPONENT_SOURCE="${COMPONENT_SOURCE}[azure,uvloop]"
 fi
 
 if [[ "$TEST" = "pulp" ]]; then
@@ -38,10 +38,6 @@ fi
 if [[ "$TEST" = "lowerbounds" ]]; then
   python3 .ci/scripts/calc_constraints.py requirements.txt > lowerbounds_constraints.txt
 fi
-
-export PULP_API_ROOT=$(test "${TEST}" = "s3" && echo "/rerouted/djnd/" || echo "/pulp/")
-
-echo "PULP_API_ROOT=${PULP_API_ROOT}" >> "$GITHUB_ENV"
 
 # Compose the scenario definition.
 mkdir -p .ci/ansible/vars
@@ -54,9 +50,8 @@ legacy_component_name: "pulpcore"
 component_name: "core"
 component_version: "${COMPONENT_VERSION}"
 pulp_env: {"PULP_CA_BUNDLE": "/etc/pulp/certs/pulp_webserver.crt"}
-pulp_settings: {"allowed_export_paths": ["/tmp"], "allowed_import_paths": ["/tmp"], "orphan_protection_time": 0}
+pulp_settings: {"allowed_export_paths": ["/tmp"], "allowed_import_paths": ["/tmp"], "api_root": "/pulp/", "orphan_protection_time": 0}
 pulp_scheme: "https"
-api_root: "${PULP_API_ROOT}"
 image:
   name: "pulp"
   tag: "ci_build"
@@ -97,7 +92,7 @@ if [ "$TEST" = "s3" ]; then
 s3_test: true
 minio_access_key: "${MINIO_ACCESS_KEY}"
 minio_secret_key: "${MINIO_SECRET_KEY}"
-pulp_scenario_settings: {"AWS_ACCESS_KEY_ID": "AKIAIT2Z5TDYPX3ARJBA", "AWS_DEFAULT_ACL": "@none None", "AWS_S3_ADDRESSING_STYLE": "path", "AWS_S3_ENDPOINT_URL": "http://minio:9000", "AWS_S3_REGION_NAME": "eu-central-1", "AWS_S3_SIGNATURE_VERSION": "s3v4", "AWS_SECRET_ACCESS_KEY": "fqRvjWaPU5o0fCqQuUWbj9Fainj2pVZtBCiDiieS", "AWS_STORAGE_BUCKET_NAME": "pulp3", "DEFAULT_FILE_STORAGE": "storages.backends.s3boto3.S3Boto3Storage", "MEDIA_ROOT": "", "domain_enabled": true, "hide_guarded_distributions": true}
+pulp_scenario_settings: {"AWS_ACCESS_KEY_ID": "AKIAIT2Z5TDYPX3ARJBA", "AWS_DEFAULT_ACL": "@none None", "AWS_S3_ADDRESSING_STYLE": "path", "AWS_S3_ENDPOINT_URL": "http://minio:9000", "AWS_S3_REGION_NAME": "eu-central-1", "AWS_S3_SIGNATURE_VERSION": "s3v4", "AWS_SECRET_ACCESS_KEY": "fqRvjWaPU5o0fCqQuUWbj9Fainj2pVZtBCiDiieS", "AWS_STORAGE_BUCKET_NAME": "pulp3", "DEFAULT_FILE_STORAGE": "storages.backends.s3boto3.S3Boto3Storage", "MEDIA_ROOT": "", "api_root": "/rerouted/djnd/", "domain_enabled": true, "hide_guarded_distributions": true}
 pulp_scenario_env: {}
 VARSYAML
 fi
