@@ -1,6 +1,7 @@
 # Ansible playbook to start the pulp service container and its supporting services
 ---
-- hosts: "localhost"
+- name: "Start CI Containers"
+  hosts: "localhost"
   gather_facts: false
   vars_files:
     - "vars/main.yaml"
@@ -14,16 +15,16 @@
         - "settings"
 
     - name: "Generate Pulp Settings"
-      template:
+      ansible.builtin.template:
         src: "settings.py.j2"
         dest: "settings/settings.py"
 
     - name: "Setup docker networking"
-      docker_network:
+      community.docker.docker_network:
         name: "pulp_ci_bridge"
 
     - name: "Start Service Containers"
-      docker_container:
+      community.docker.docker_container:
         name: "{{ item.name }}"
         image: "{{ item.image }}"
         auto_remove: true
@@ -39,12 +40,12 @@
       loop: "{{ services | default([]) }}"
 
     - name: "Retrieve Docker Network Info"
-      docker_network_info:
+      community.docker.docker_network_info:
         name: "pulp_ci_bridge"
       register: "pulp_ci_bridge_info"
 
     - name: "Update /etc/hosts"
-      lineinfile:
+      ansible.builtin.lineinfile:
         path: "/etc/hosts"
         regexp: "\\s{{ item.value.Name }}\\s*$"
         line: "{{ item.value.IPv4Address | ansible.utils.ipaddr('address') }}\t{{ item.value.Name }}"
@@ -55,16 +56,27 @@
       amazon.aws.s3_bucket:
         aws_access_key: "{{ minio_access_key }}"
         aws_secret_key: "{{ minio_secret_key }}"
-        s3_url: "http://minio:9000"
+        endpoint_url: "http://minio:9000"
         region: "eu-central-1"
         name: "pulp3"
         state: "present"
       when: "s3_test | default(false)"
 
-    - block:
+    - name: "Wait on Services"
+      block:
+        - name: "Wait for azurite"
+          ansible.builtin.uri:
+            url: "http://ci-azurite:10000/"
+            status_code:
+              - 200
+              - 400
+          when: "azure_test | default(false)"
+          retries: 2
+          delay: 5
+
         - name: "Wait for Pulp"
-          uri:
-            url: "http://pulp{{ lookup('env', 'PULP_API_ROOT') | default('\/pulp\/', True) }}api/v3/status/"
+          ansible.builtin.uri:
+            url: "http://pulp{{ pulp_scenario_settings.api_root | default(pulp_settings.api_root | default('\/pulp\/', True), True) }}api/v3/status/"
             follow_redirects: "all"
             validate_certs: "no"
           register: "result"
@@ -73,11 +85,12 @@
           delay: 5
       rescue:
         - name: "Output pulp container log"
-          command: "docker logs pulp"
+          ansible.builtin.command:
+            cmd: "docker logs pulp"
           failed_when: true
 
     - name: "Check version of component being tested"
-      assert:
+      ansible.builtin.assert:
         that:
           - "(result.json.versions | items2dict(key_name='component', value_name='version'))[item.app_label] | canonical_semver == (component_version | canonical_semver)"
         fail_msg: |
@@ -86,14 +99,15 @@
       loop: "{{ 'plugins' | ansible.builtin.extract(lookup('ansible.builtin.file', '../../template_config.yml') | from_yaml) }}"
 
     - name: "Set pulp password in .netrc"
-      copy:
+      ansible.builtin.copy:
         dest: "~/.netrc"
         content: |
           machine pulp
           login admin
           password password
 
-- hosts: "pulp"
+- name: "Prepare Pulp Application Container"
+  hosts: "pulp"
   gather_facts: false
   tasks:
     - name: "Create directory for pulp-smash config"
@@ -108,6 +122,6 @@
         dest: "/var/lib/pulp/.config/pulp_smash/settings.json"
 
     - name: "Set pulp admin password"
-      command:
+      ansible.builtin.command:
         cmd: "pulpcore-manager reset-admin-password --password password"
 ...
