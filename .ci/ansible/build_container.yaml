@@ -1,6 +1,7 @@
 # Ansible playbook to create the pulp service containers image
 ---
-- hosts: "localhost"
+- name: "Build CI Container Image"
+  hosts: "localhost"
   gather_facts: false
   vars_files:
     - "vars/main.yaml"
@@ -9,6 +10,7 @@
       ansible.builtin.template:
         src: "Containerfile.j2"
         dest: "Containerfile"
+
     - name: "Build pulp image"
       # We build from the ../.. (parent dir of pulpcore git repo) Docker build
       # "context" so that repos like pulp-smash are accessible to Docker
@@ -18,9 +20,20 @@
       # 1-off-builds and CI purposes (which has no cache across CI runs.)
       # Run build.yaml with -e cache=false if your builds are using outdated
       # layers.
-      command: "docker build --network host --no-cache={{ not cache | default(true) | bool }} -t {{ image.name }}:{{ image.tag }} -f {{ playbook_dir }}/Containerfile ../../.."
+      ansible.builtin.command:
+        argv:
+          - "docker"
+          - "build"
+          - "--network"
+          - "host"
+          - "--no-cache={{ not cache | default(true) | bool }}"
+          - "-t"
+          - "{{ image.name }}:{{ image.tag }}"
+          - "-f"
+          - "{{ playbook_dir }}/Containerfile"
+          - "../../.."
 
     - name: "Clean image cache"
-      docker_prune:
-        images : true
+      community.docker.docker_prune:
+        images: true
 ...
