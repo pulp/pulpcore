@@ -1,12 +1,15 @@
 from pulpcore.exceptions import (
     DigestValidationError,
     ExternalServiceError,
+    HttpResponseError,
     InvalidSignatureError,
     MissingDigestValidationError,
     PublishError,
     PulpException,
+    RemoteConnectionError,
     ReplicateError,
     SizeValidationError,
+    SslConnectionError,
     SyncError,
     SystemStateError,
     TimeoutException,
@@ -28,4 +31,7 @@ __all__ = [
     "ExternalServiceError",
     "SystemStateError",
     "ReplicateError",
+    "HttpResponseError",
+    "SslConnectionError",
+    "RemoteConnectionError",
 ]
