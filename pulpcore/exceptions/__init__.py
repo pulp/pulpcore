@@ -18,6 +18,11 @@ from .base import (
     ReplicateError,
     SyncError,
     PublishError,
+    TaskConfigurationError,
+    TaskTimeoutException,
+    HttpResponseError,
+    SslConnectionError,
+    RemoteConnectionError,
 )
 from .validation import (
     DigestValidationError,

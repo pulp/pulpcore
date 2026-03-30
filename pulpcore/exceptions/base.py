@@ -326,3 +326,107 @@ class ReplicateError(PulpException):
 
     def __str__(self):
         return f"[{self.error_code}] " + _("Replication failed")
+
+
+class TaskConfigurationError(PulpException):
+    """
+    Raised when a task is incorrectly configured.
+    """
+
+    error_code = "PLP0023"
+
+    def __init__(self, task_name, message):
+        """
+        :param task_name: the fully qualified name of the task function
+        :type task_name: str
+        :param message: description of the configuration error
+        :type message: str
+        """
+        self.task_name = task_name
+        self.message = message
+
+    def __str__(self):
+        return f"[{self.error_code}] " + _(
+            "Task type '{task_name}' is misconfigured: {message}"
+        ).format(task_name=self.task_name, message=self.message)
+
+
+class TaskTimeoutException(PulpException):
+    """
+    Raised when an immediate task exceeds its execution timeout.
+    """
+
+    error_code = "PLP0024"
+
+    def __init__(self, task_name, task_pk, timeout_seconds):
+        """
+        :param task_name: the fully qualified name of the task function
+        :type task_name: str
+        :param task_pk: the unique task identifier
+        :type task_pk: str
+        :param timeout_seconds: the timeout value that was exceeded
+        :type timeout_seconds: int
+        """
+        self.task_name = task_name
+        self.task_pk = task_pk
+        self.timeout_seconds = timeout_seconds
+
+    def __str__(self):
+        return f"[{self.error_code}] " + _(
+            "Immediate task {task_pk} (type: {task_name}) timed out after {timeout} seconds."
+        ).format(task_pk=self.task_pk, task_name=self.task_name, timeout=self.timeout_seconds)
+
+
+class HttpResponseError(PulpException):
+    """
+    Raised when a remote server returns an HTTP error response after retries are exhausted.
+    """
+
+    error_code = "PLP0025"
+
+    def __init__(self, url, status, message):
+        super().__init__()
+        self.url = url
+        self.status = status
+        self.message = message
+
+    def __str__(self):
+        return f"[{self.error_code}] " + _(
+            "HTTP error {status} when downloading {url}: {message}"
+        ).format(url=self.url, status=self.status, message=self.message)
+
+
+class SslConnectionError(PulpException):
+    """
+    Raised when an SSL/TLS connection fails after retries are exhausted.
+    """
+
+    error_code = "PLP0026"
+
+    def __init__(self, url, details):
+        super().__init__()
+        self.url = url
+        self.details = details
+
+    def __str__(self):
+        return f"[{self.error_code}] " + _("SSL connection failed for {url}: {details}").format(
+            url=self.url, details=self.details
+        )
+
+
+class RemoteConnectionError(PulpException):
+    """
+    Raised when a connection to a remote server fails after retries are exhausted.
+    """
+
+    error_code = "PLP0027"
+
+    def __init__(self, url, details):
+        super().__init__()
+        self.url = url
+        self.details = details
+
+    def __str__(self):
+        return f"[{self.error_code}] " + _("Connection failed for {url}: {details}").format(
+            url=self.url, details=self.details
+        )

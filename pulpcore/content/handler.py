@@ -61,6 +61,9 @@ from pulpcore.app.util import (  # noqa: E402
 from pulpcore.cache import AsyncContentCache  # noqa: E402
 from pulpcore.exceptions import (  # noqa: E402
     DigestValidationError,
+    HttpResponseError,
+    RemoteConnectionError,
+    SslConnectionError,
     UnsupportedDigestValidationError,
 )
 from pulpcore.metrics import artifacts_size_counter  # noqa: E402
@@ -915,13 +918,13 @@ class Handler:
                             save_artifact=save_artifact,
                             repository=repository,
                         )
-                    except ClientResponseError as ce:
+                    except (ClientResponseError, HttpResponseError) as e:
 
                         class Error(HTTPError):
-                            status_code = ce.status
+                            status_code = e.status
 
                         reason = _("Error while fetching from upstream remote({url}): {r}").format(
-                            url=url, r=ce.message
+                            url=url, r=e.message
                         )
                         raise Error(reason=reason)
 
@@ -962,6 +965,9 @@ class Handler:
             ClientResponseError,
             UnsupportedDigestValidationError,
             ClientConnectionError,
+            HttpResponseError,
+            SslConnectionError,
+            RemoteConnectionError,
         )
 
         protection_time = settings.REMOTE_CONTENT_FETCH_FAILURE_COOLDOWN

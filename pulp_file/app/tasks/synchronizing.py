@@ -117,7 +117,7 @@ def synchronize(remote_pk, repository_pk, mirror, optimize=False, url=None, **kw
     optimize = optimize or settings.FILE_SYNC_OPTIMIZATION
 
     if not remote.url:
-        raise ValueError(_("A remote must have a url specified to synchronize."))
+        raise SyncError(_("A remote must have a url specified to synchronize."))
 
     if isinstance(remote, FileGitRemote):
         first_stage = GitFirstStage(remote)
