@@ -7,6 +7,7 @@ import re
 
 from base64 import b64decode
 from binascii import Error as Base64DecodeError
+from contextlib import suppress
 from datetime import timedelta
 from gettext import gettext as _
 from url_normalize import url_normalize
@@ -18,7 +19,7 @@ from django.conf import settings
 from django.contrib.postgres.fields import HStoreField
 from django.db import DatabaseError, IntegrityError, models, transaction
 from django.utils import timezone
-from django_lifecycle import hook, AFTER_UPDATE, BEFORE_DELETE
+from django_lifecycle import hook, AFTER_CREATE, AFTER_UPDATE, BEFORE_DELETE
 
 from .base import MasterModel, BaseModel
 from .content import Artifact, Content, ContentArtifact
@@ -32,6 +33,19 @@ from pulpcore.responses import ArtifactResponse
 from pulpcore.app.util import get_domain_pk, cache_key, get_url
 
 _logger = logging.getLogger(__name__)
+
+
+def _latest_publication_for_repository(repository):
+    """Return the latest complete Publication for a repository, or None."""
+    with suppress(Publication.DoesNotExist):
+        return (
+            Publication.objects.filter(
+                repository_version__in=repository.versions.all(), complete=True
+            )
+            .select_related("repository_version")
+            .latest("repository_version", "pulp_created")
+        )
+    return None
 
 
 class PublicationQuerySet(models.QuerySet):
@@ -232,6 +246,15 @@ class Publication(MasterModel):
             except Exception:
                 self.delete()
                 raise
+
+            # Register with distributed publication tracking
+            for distro in Distribution.objects.filter(repository=self.repository):
+                detail_distro = distro.cast()
+                if not detail_distro.SERVE_FROM_PUBLICATION:
+                    continue
+                latest_repo_publication = _latest_publication_for_repository(self.repository)
+                if self == latest_repo_publication:
+                    DistributedPublication(distribution=distro, publication=self).save()
 
             # Unmark old checkpoints if retention is configured
             if self.checkpoint:
@@ -731,6 +754,76 @@ class Distribution(MasterModel):
         """
         return {}
 
+    def get_fallback_ca(self, path):
+        """
+        Return a ContentArtifact for path from the grace-period publication history, or None.
+
+        Iterates DistributedPublication records for this distribution from newest to oldest,
+        trying each publication until the path is found.  Handles both pass-through and
+        non-pass-through (PublishedArtifact) publications.
+        """
+        recent_dp = (
+            self.core_distributedpublications.filter(
+                models.Q(expires_at__gte=timezone.now()) | models.Q(expires_at__isnull=True)
+            )
+            .order_by("-pulp_created")
+            .select_related("publication__repository_version")
+        )
+        for dp in recent_dp.iterator():
+            pub = dp.publication
+            if pub.pass_through:
+                ca = (
+                    ContentArtifact.objects.select_related("artifact", "artifact__pulp_domain")
+                    .filter(content__in=pub.repository_version.content, relative_path=path)
+                    .first()
+                )
+                if ca is not None:
+                    return ca
+            else:
+                pa = (
+                    pub.published_artifact.select_related(
+                        "content_artifact__artifact",
+                        "content_artifact__artifact__pulp_domain",
+                    )
+                    .filter(relative_path=path)
+                    .first()
+                )
+                if pa is not None:
+                    return pa.content_artifact
+        return None
+
+    @hook(AFTER_CREATE)
+    @hook(AFTER_UPDATE, when="publication", has_changed=True, is_not=None)
+    @hook(AFTER_UPDATE, when="repository", has_changed=True, is_not=None)
+    @hook(AFTER_UPDATE, when="repository_version", has_changed=True, is_not=None)
+    def set_distributed_publication(self):
+        """Track the publication being served when a distribution is created or changed."""
+        if not self.cast().SERVE_FROM_PUBLICATION:
+            return
+        pub = None
+        if self.publication:
+            pub = self.publication
+        elif self.repository:
+            pub = _latest_publication_for_repository(self.repository)
+        elif self.repository_version:
+            with suppress(Publication.DoesNotExist):
+                pub = Publication.objects.filter(
+                    repository_version=self.repository_version, complete=True
+                ).latest("pulp_created")
+        if pub is None:
+            return
+        DistributedPublication(distribution=self, publication=pub).save()
+
+    @hook(
+        AFTER_UPDATE,
+        when_any=["publication", "repository", "repository_version"],
+        has_changed=True,
+        is_now=None,
+    )
+    def clear_distributed_publication(self):
+        """Remove all DistributedPublication records when the distribution's source is cleared."""
+        DistributedPublication.objects.filter(distribution=self).delete()
+
     @hook(BEFORE_DELETE)
     @hook(
         AFTER_UPDATE,
@@ -794,3 +887,48 @@ class ArtifactDistribution(Distribution):
         permissions = [
             ("manage_roles_artifactdistribution", "Can manage roles on artifact distributions"),
         ]
+
+
+class DistributedPublication(BaseModel):
+    """
+    Records the history of publications served by each Distribution.
+
+    Keeps superseded publications alive and serveable for a configurable grace period
+    so clients mid-download don't receive 404 errors when a distribution switches publications.
+
+    - ``expires_at=null``       — currently active
+    - ``expires_at=<datetime>`` — superseded; still served until that time
+    """
+
+    distribution = models.ForeignKey(
+        Distribution, on_delete=models.CASCADE, related_name="core_distributedpublications"
+    )
+    publication = models.ForeignKey(
+        Publication, on_delete=models.CASCADE, related_name="core_distributedpublications"
+    )
+    expires_at = models.DateTimeField(null=True)
+
+    @classmethod
+    def get_active(cls, distribution):
+        """Return records that are still being served (current or within grace period)."""
+        return cls.objects.filter(distribution=distribution).filter(
+            models.Q(expires_at__isnull=True) | models.Q(expires_at__gte=timezone.now())
+        )
+
+    @classmethod
+    def get_expired(cls, distribution):
+        """Return records whose grace period has elapsed for a distribution."""
+        return cls.objects.filter(distribution=distribution, expires_at__lt=timezone.now())
+
+    @hook(AFTER_CREATE)
+    def cleanup(self):
+        """Expire older active DistributedPublications; delete already-expired ones."""
+        DistributedPublication.objects.filter(expires_at__lt=timezone.now()).delete()
+        DistributedPublication.objects.exclude(pk=self.pk).filter(
+            distribution=self.distribution, expires_at__isnull=True
+        ).update(
+            expires_at=(
+                timezone.now()
+                + timedelta(seconds=settings.DISTRIBUTED_PUBLICATION_RETENTION_PERIOD)
+            )
+        )

@@ -10,7 +10,9 @@ from pulpcore.client.pulp_file import (
     PatchedfileFileDistribution,
 )
 
-from pulpcore.tests.functional.utils import get_from_url
+from pulpcore.tests.functional.utils import (
+    get_from_url,
+)
 
 
 @pytest.mark.parallel

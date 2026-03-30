@@ -333,6 +333,10 @@ CACHE_SETTINGS = {
 # The time in seconds a RemoteArtifact will be ignored after failure.
 REMOTE_CONTENT_FETCH_FAILURE_COOLDOWN = 5 * 60  # 5 minutes
 
+# The time in seconds that a superseded publication will continue to be served for distributions
+# that have switched to a newer publication. Prevents 404s for clients mid-download.
+DISTRIBUTED_PUBLICATION_RETENTION_PERIOD = 3 * 24 * 60 * 60  # 3 days
+
 SPECTACULAR_SETTINGS = {
     "OAS_VERSION": "3.1.1",
     "SERVE_URLCONF": ROOT_URLCONF,

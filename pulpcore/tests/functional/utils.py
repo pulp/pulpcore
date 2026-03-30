@@ -5,10 +5,19 @@ import asyncio
 import hashlib
 import os
 import random
+import time
 
 from aiohttp import web
 from dataclasses import dataclass
+from django.conf import settings
 from multidict import CIMultiDict
+
+
+def wait_distributed_publication_retention_period():
+    assert (
+        settings.DISTRIBUTED_PUBLICATION_RETENTION_PERIOD <= 5
+    ), "DISTRIBUTED_PUBLICATION_RETENTION_PERIOD is too long for testing."
+    time.sleep(settings.DISTRIBUTED_PUBLICATION_RETENTION_PERIOD + 1)
 
 
 async def get_response(url):
