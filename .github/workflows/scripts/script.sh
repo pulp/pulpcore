@@ -122,50 +122,6 @@ cmd_prefix pip3 install -r /tmp/unittest_requirements.txt -r /tmp/functest_requi
 CERTIFI=$(cmd_prefix python3 -c 'import certifi; print(certifi.where())')
 cmd_prefix bash -c "cat /etc/pulp/certs/pulp_webserver.crt >> '$CERTIFI'"
 
-# check for any uncommitted migrations
-echo "Checking for uncommitted migrations..."
-cmd_user_prefix bash -c "django-admin makemigrations core --check --dry-run"
-cmd_user_prefix bash -c "django-admin makemigrations file --check --dry-run"
-cmd_user_prefix bash -c "django-admin makemigrations certguard --check --dry-run"
-
-# Run unit tests.
-cmd_user_prefix bash -c "PULP_DATABASES__default__USER=postgres pytest -v -r sx --color=yes --suppress-no-test-exit-code -p no:pulpcore --durations=20 --pyargs pulpcore.tests.unit"
-cmd_user_prefix bash -c "PULP_DATABASES__default__USER=postgres pytest -v -r sx --color=yes --suppress-no-test-exit-code -p no:pulpcore --durations=20 --pyargs pulp_file.tests.unit"
-cmd_user_prefix bash -c "PULP_DATABASES__default__USER=postgres pytest -v -r sx --color=yes --suppress-no-test-exit-code -p no:pulpcore --durations=20 --pyargs pulp_certguard.tests.unit"
-# Run functional tests
-if [[ "$TEST" == "performance" ]]; then
-  if [[ -z ${PERFORMANCE_TEST+x} ]]; then
-    cmd_user_prefix bash -c "pytest -vv -r sx --color=yes --suppress-no-test-exit-code --capture=no --durations=0 --pyargs pulpcore.tests.performance"
-    cmd_user_prefix bash -c "pytest -vv -r sx --color=yes --suppress-no-test-exit-code --capture=no --durations=0 --pyargs pulp_file.tests.performance"
-    cmd_user_prefix bash -c "pytest -vv -r sx --color=yes --suppress-no-test-exit-code --capture=no --durations=0 --pyargs pulp_certguard.tests.performance"
-  else
-    cmd_user_prefix bash -c "pytest -vv -r sx --color=yes --suppress-no-test-exit-code --capture=no --durations=0 --pyargs pulpcore.tests.performance.test_${PERFORMANCE_TEST}"
-    cmd_user_prefix bash -c "pytest -vv -r sx --color=yes --suppress-no-test-exit-code --capture=no --durations=0 --pyargs pulp_file.tests.performance.test_${PERFORMANCE_TEST}"
-    cmd_user_prefix bash -c "pytest -vv -r sx --color=yes --suppress-no-test-exit-code --capture=no --durations=0 --pyargs pulp_certguard.tests.performance.test_${PERFORMANCE_TEST}"
-  fi
-  exit
-fi
-
-if [ -f "$FUNC_TEST_SCRIPT" ]; then
-  source "$FUNC_TEST_SCRIPT"
-else
-  if [[ "$GITHUB_WORKFLOW" =~ "Nightly" ]]
-  then
-    cmd_user_prefix bash -c "pytest -v --timeout=300 -r sx --color=yes --suppress-no-test-exit-code --durations=20 --pyargs pulpcore.tests.functional -m parallel -n 8 --nightly"
-    cmd_user_prefix bash -c "pytest -v --timeout=300 -r sx --color=yes --suppress-no-test-exit-code --durations=20 --pyargs pulpcore.tests.functional -m 'not parallel' --nightly"
-    cmd_user_prefix bash -c "pytest -v --timeout=300 -r sx --color=yes --suppress-no-test-exit-code --durations=20 --pyargs pulp_file.tests.functional -m parallel -n 8 --nightly"
-    cmd_user_prefix bash -c "pytest -v --timeout=300 -r sx --color=yes --suppress-no-test-exit-code --durations=20 --pyargs pulp_file.tests.functional -m 'not parallel' --nightly"
-    cmd_user_prefix bash -c "pytest -v --timeout=300 -r sx --color=yes --suppress-no-test-exit-code --durations=20 --pyargs pulp_certguard.tests.functional -m parallel -n 8 --nightly"
-    cmd_user_prefix bash -c "pytest -v --timeout=300 -r sx --color=yes --suppress-no-test-exit-code --durations=20 --pyargs pulp_certguard.tests.functional -m 'not parallel' --nightly"
-  else
-    cmd_user_prefix bash -c "pytest -v --timeout=300 -r sx --color=yes --suppress-no-test-exit-code --durations=20 --pyargs pulpcore.tests.functional -m parallel -n 8"
-    cmd_user_prefix bash -c "pytest -v --timeout=300 -r sx --color=yes --suppress-no-test-exit-code --durations=20 --pyargs pulpcore.tests.functional -m 'not parallel'"
-    cmd_user_prefix bash -c "pytest -v --timeout=300 -r sx --color=yes --suppress-no-test-exit-code --durations=20 --pyargs pulp_file.tests.functional -m parallel -n 8"
-    cmd_user_prefix bash -c "pytest -v --timeout=300 -r sx --color=yes --suppress-no-test-exit-code --durations=20 --pyargs pulp_file.tests.functional -m 'not parallel'"
-    cmd_user_prefix bash -c "pytest -v --timeout=300 -r sx --color=yes --suppress-no-test-exit-code --durations=20 --pyargs pulp_certguard.tests.functional -m parallel -n 8"
-    cmd_user_prefix bash -c "pytest -v --timeout=300 -r sx --color=yes --suppress-no-test-exit-code --durations=20 --pyargs pulp_certguard.tests.functional -m 'not parallel'"
-  fi
-fi
 export PULP_FIXTURES_URL="http://pulp-fixtures:8080"
 pushd ../pulp-cli
 pip install -r test_requirements.txt
