@@ -6,7 +6,6 @@
 # After editing this file please always reapply the plugin template before committing any changes.
 
 ---
-api_root: "/pulp/"
 black: true
 check_commit_message: true
 check_gettext: true
@@ -54,6 +53,7 @@ pulp_settings:
     - "/tmp"
   allowed_import_paths:
     - "/tmp"
+  api_root: "/pulp/"
   content_path_prefix: "/somewhere/else/"
   orphan_protection_time: 0
   task_protection_time: 10
@@ -105,6 +105,7 @@ pulp_settings_s3:
         signature_version: "s3v4"
     staticfiles:
       BACKEND: "django.contrib.staticfiles.storage.StaticFilesStorage"
+  api_root: "/rerouted/djnd/"
   domain_enabled: true
   hide_guarded_distributions: true
 pydocstyle: true

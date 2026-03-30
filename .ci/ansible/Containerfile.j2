@@ -44,4 +44,8 @@ RUN PULP_STATIC_ROOT=/var/lib/operator/static/ PULP_CONTENT_ORIGIN=localhost \
 RUN mkdir /var/lib/pulp/.config
 USER root:root
 
+# Lots of plugins try to use this path, and throw warnings if they cannot access it.
+RUN mkdir /.pytest_cache
+RUN chown pulp:pulp /.pytest_cache
+
 ENTRYPOINT ["/init"]
