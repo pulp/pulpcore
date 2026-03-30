@@ -12,4 +12,7 @@
     'pulp_certguard/tests/functional/artifacts/rhsm/katello-default-ca.key',
     'pulp_certguard/tests/functional/artifacts/thirdparty_ca/keys/ca.pem'
   ]
+  description = "Allow specific test-keys."
+paths = []
+regexes = ['''AKIAIT2Z5TDYPX3ARJBA''', '''Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw''', '''fqRvjWaPU5o0fCqQuUWbj9Fainj2pVZtBCiDiieS''', '''qR\+vjWPU50fCqQuUWbj9Fain/j2pV\+ZtBCiDiieS''']
 
