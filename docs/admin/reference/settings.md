@@ -277,6 +277,15 @@ Default location is `/etc/pulp/certs/database_fields.symmetric.key`.
 
 See [Database Encryption] for more details.
 
+### DISTRIBUTED\_PUBLICATION\_RETENTION\_PERIOD
+
+When a distribution switches to a newer publication, the previously served (superseded) publication continues to be available for this many seconds.
+This grace period prevents 404 errors for clients that began downloading from the old publication before the switch occurred.
+
+Set to `0` to disable the grace period and serve only the latest publication immediately.
+
+Defaults to `259200` seconds (3 days).
+
 ### DJANGO\_GUID
 
 Pulp uses `django-guid` to append correlation IDs to logging messages.

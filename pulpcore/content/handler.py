@@ -823,6 +823,17 @@ class Handler:
                             request, StreamResponse(headers=headers), ca
                         )
 
+        # Grace-period fallback: serve from a recently-superseded publication
+        if distro.SERVE_FROM_PUBLICATION:
+            ca = await sync_to_async(distro.get_fallback_ca)(original_rel_path)
+            if ca is not None:
+                if ca.artifact:
+                    return await self._serve_content_artifact(ca, headers, request)
+                else:
+                    return await self._stream_content_artifact(
+                        request, StreamResponse(headers=headers), ca
+                    )
+
         if repo_version and not publication and not distro.SERVE_FROM_PUBLICATION:
             # Look for index.html or list the directory
             index_path = "{}index.html".format(rel_path)

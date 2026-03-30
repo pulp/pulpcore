@@ -337,6 +337,10 @@ CACHE_SETTINGS = {
 # The time in seconds a RemoteArtifact will be ignored after failure.
 REMOTE_CONTENT_FETCH_FAILURE_COOLDOWN = 5 * 60  # 5 minutes
 
+# The time in seconds that a superseded publication will continue to be served for distributions
+# that have switched to a newer publication. Prevents 404s for clients mid-download.
+DISTRIBUTED_PUBLICATION_RETENTION_PERIOD = 3 * 24 * 60 * 60  # 3 days
+
 SPECTACULAR_SETTINGS = {
     "OAS_VERSION": "3.1.1",
     "SERVE_URLCONF": ROOT_URLCONF,
@@ -573,6 +577,16 @@ otel_metrics_dispatch_interval_validator = Validator(
     },
 )
 
+distributed_publication_retention_period_validator = Validator(
+    "DISTRIBUTED_PUBLICATION_RETENTION_PERIOD",
+    is_type_of=int,
+    gte=0,
+    messages={
+        "is_type_of": "{name} must be an integer (number of seconds).",
+        "gte": "{name} must be a non-negative integer. Set to 0 to disable the grace period.",
+    },
+)
+
 
 def otel_middleware_hook(settings):
     data = {"dynaconf_merge": True}
@@ -603,6 +617,7 @@ settings = DjangoDynaconf(
         authentication_json_header_openapi_security_scheme_validator,
         otel_pulp_api_histogram_buckets_validator,
         otel_metrics_dispatch_interval_validator,
+        distributed_publication_retention_period_validator,
     ],
     post_hooks=(otel_middleware_hook,),
 )
