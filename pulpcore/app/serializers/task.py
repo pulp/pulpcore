@@ -17,10 +17,29 @@ from pulpcore.app.serializers import (
     fields,
 )
 from pulpcore.constants import TASK_STATES
-from pulpcore.app.util import reverse
+from pulpcore.app.util import get_prn, reverse
 
 
 class CreatedResourceField(RelatedResourceField):
+    class Meta:
+        model = models.CreatedResource
+        fields = []
+
+
+class CreatedResourcePrnField(RelatedResourceField):
+    """
+    A field that returns PRNs for created resources instead of HREFs.
+    """
+
+    def to_representation(self, data):
+        # If content_type is already cached, build PRN without a DB hit
+        if models.GenericRelationModel.content_type.is_cached(data):
+            model = data.content_type.model_class()
+            return f"prn:{model._meta.label_lower}:{data.object_id}"
+        if data.content_object is None:
+            return "<unavailable>"
+        return get_prn(instance=data.content_object)
+
     class Meta:
         model = models.CreatedResource
         fields = []
@@ -82,6 +101,13 @@ class TaskSerializer(ModelSerializer):
         read_only=True,
         view_name="None",  # This is a polymorphic field. The serializer does not need a view name.
     )
+    created_resource_prns = CreatedResourcePrnField(
+        help_text=_("Resources created by this task as PRNs."),
+        many=True,
+        read_only=True,
+        view_name="None",  # This is a polymorphic field. The serializer does not need a view name.
+        source="created_resources",
+    )
     reserved_resources_record = serializers.ListField(
         child=serializers.CharField(),
         help_text=_("A list of resources required by that task."),
@@ -120,6 +146,7 @@ class TaskSerializer(ModelSerializer):
             "task_group",
             "progress_reports",
             "created_resources",
+            "created_resource_prns",
             "reserved_resources_record",
             "result",
         )

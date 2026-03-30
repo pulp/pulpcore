@@ -189,3 +189,26 @@ def test_task_result(add_to_cleanup, file_bindings, monitor_task):
     assert task_2.result["base_path"] == updated_body["base_path"]
 
     add_to_cleanup(file_bindings.DistributionsFileApi, dist_href)
+
+
+@pytest.mark.parallel
+def test_created_resource_prns(
+    basic_manifest_path,
+    file_bindings,
+    file_remote_factory,
+    file_repo,
+    monitor_task,
+):
+    """
+    Test that created_resource_prns returns PRNs matching the created resources.
+    """
+    remote = file_remote_factory(basic_manifest_path)
+    task = monitor_task(
+        file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, {"remote": remote.prn}).task
+    )
+    assert len(task.created_resources) == 1
+    assert len(task.created_resource_prns) == 1
+
+    # The PRN should correspond to the repository version that was created
+    repo_ver = file_bindings.RepositoriesFileVersionsApi.read(task.created_resources[0])
+    assert repo_ver.prn == task.created_resource_prns[0] == task.result["prn"]
