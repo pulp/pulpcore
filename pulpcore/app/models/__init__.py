@@ -51,6 +51,7 @@ from .importer import (
 from .publication import (
     ContentGuard,
     Distribution,
+    DistributedPublication,
     Publication,
     PublishedArtifact,
     PublishedMetadata,
@@ -138,6 +139,7 @@ __all__ = [
     "PulpImporter",
     "ContentGuard",
     "Distribution",
+    "DistributedPublication",
     "Publication",
     "PublishedArtifact",
     "PublishedMetadata",

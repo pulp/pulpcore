@@ -59,6 +59,7 @@ pulp_settings:
   content_path_prefix: "/somewhere/else/"
   csrf_trusted_origins:
     - "https://pulp:443"
+  distributed_publication_retention_period: 3
   orphan_protection_time: 0
   task_diagnostics:
     - "memory"
