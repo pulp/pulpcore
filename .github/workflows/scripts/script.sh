@@ -123,6 +123,7 @@ CERTIFI=$(cmd_prefix python3 -c 'import certifi; print(certifi.where())')
 cmd_prefix bash -c "cat /etc/pulp/certs/pulp_webserver.crt >> '$CERTIFI'"
 
 export PULP_FIXTURES_URL="http://pulp-fixtures:8080"
+export PULP_API_ROOT="$(EDITOR=cat pulp config edit 2>/dev/null | grep api_root | awk -F'"' '/api_root/{print $2; exit}')"
 pushd ../pulp-cli
 pip install -r test_requirements.txt
 pytest -v tests -m "pulpcore or pulp_file or pulp_certguard"
