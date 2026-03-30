@@ -1,5 +1,5 @@
 [allowlist]
-  description = "Allow various test-certificates."
+  description = "Allow specific test-keys."
   paths = [
     "pulp_certguard/tests/functional/artifacts/rhsm/v3/5527980418107729172-key.pem",
     "pulp_certguard/tests/functional/artifacts/x509/keys/server.pem",
@@ -13,4 +13,5 @@
     "pulp_certguard/tests/functional/artifacts/rhsm/katello-default-ca.key",
     "pulp_certguard/tests/functional/artifacts/thirdparty_ca/keys/ca.pem"
   ]
+regexes = ['''AKIAIT2Z5TDYPX3ARJBA''', '''Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw''', '''fqRvjWaPU5o0fCqQuUWbj9Fainj2pVZtBCiDiieS''', '''qR\+vjWPU50fCqQuUWbj9Fain/j2pV\+ZtBCiDiieS''']
 
