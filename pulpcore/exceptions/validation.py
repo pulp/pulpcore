@@ -96,14 +96,12 @@ class UnsupportedDigestValidationError(ValidationError):
 
     error_code = "PLP0020"
 
-    def __init__(self, digest_name=None):
-        self.digest_name = digest_name
+    def __init__(self, message=None):
+        self.message = message
 
     def __str__(self):
-        if self.digest_name:
-            return f"[{self.error_code}] " + _(
-                "Checksum type '{digest}' is not supported or enabled."
-            ).format(digest=self.digest_name)
+        if self.message:
+            return f"[{self.error_code}] {self.message}"
         return f"[{self.error_code}] " + _("Unsupported checksum type.")
 
 
