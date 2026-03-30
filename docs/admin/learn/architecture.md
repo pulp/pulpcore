@@ -23,6 +23,12 @@ Pulp's REST API is a Django application that runs standalone using the `gunicorn
     A simple way to run the REST API as a standalone service is using the provided `pulpcore-api`
     entrypoint. It is `gunicorn` based and provides many of its options.
 
+!!! note "API worker recycling"
+    By default, `pulpcore-api` enables gunicorn ``--max-requests`` and ``--max-requests-jitter`` so
+    worker processes are periodically replaced. That limits memory growth from allocator
+    fragmentation in long-lived workers. Override via gunicorn's usual mechanisms (CLI flags,
+    ``GUNICORN_CMD_ARGS``, or a config file). Use ``--max-requests 0`` to disable recycling and
+    keep unbounded worker lifetime (not recommended for production).
 
 The REST API should only be deployed via the `pulpcore-api` entrypoint.
 
