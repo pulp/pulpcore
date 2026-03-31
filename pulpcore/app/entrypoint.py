@@ -96,6 +96,13 @@ class PulpcoreApiApplication(PulpcoreGunicornApplication):
             PulpApiWorker.__module__ + "." + PulpApiWorker.__qualname__,
             enforced=True,
         )
+        # Gunicorn's default for max_requests is 0 (unlimited worker lifetime). Apply Pulp defaults
+        # only when the user did not pass --max-requests on the pulpcore-api CLI. An explicit
+        # --max-requests 0 means "disable recycling" and must not be replaced.
+        if self.cfg.max_requests == 0 and self.options.get("max_requests") is None:
+            self.cfg.set("max_requests", 10000)
+            if self.options.get("max_requests_jitter") is None:
+                self.cfg.set("max_requests_jitter", 500)
 
     def load(self):
         using_pulp_api_worker.set(True)
