@@ -124,16 +124,24 @@ def finalize_replication(server_pk, distro_repo_pairs):
     if task_group.tasks.exclude(pk=task.pk).exclude(state=TASK_STATES.COMPLETED).exists():
         raise Exception("Replication failed.")
 
-    # Atomically update all managed distributions to point to their repo's latest version.
+    # Atomically update all managed distributions to point to their repo's latest version,
+    # clearing any previous repository or publication references.
     with transaction.atomic():
         for distro_name, repo_pk in distro_repo_pairs:
             distro = Distribution.objects.get(name=distro_name, pulp_domain=server.pulp_domain)
             repo = Repository.objects.get(pk=repo_pk)
             latest_version = repo.latest_version()
             if latest_version:
-                if distro.repository_version != latest_version:
+                needs_update = (
+                    distro.repository_version != latest_version
+                    or distro.repository is not None
+                    or distro.publication is not None
+                )
+                if needs_update:
+                    distro.repository = None
+                    distro.publication = None
                     distro.repository_version = latest_version
-                    distro.save(update_fields=["repository_version"])
+                    distro.save(update_fields=["repository", "publication", "repository_version"])
 
     # Record timestamp of last successful replication.
     started_at = task_group.tasks.aggregate(Min("started_at"))["started_at__min"]

@@ -13,8 +13,8 @@ def test_replication(
     pulp_settings,
     gen_object_with_cleanup,
 ):
-    # This test assures that an Upstream Pulp can be created in a non-default domain and that this
-    # Upstream Pulp configuration can be used to execute the replicate task.
+    """This test assures that an Upstream Pulp can be created in a non-default domain and that this
+    Upstream Pulp configuration can be used to execute the replicate task."""
 
     # Create a non-default domain
     non_default_domain = domain_factory()
@@ -57,8 +57,8 @@ def test_replication_idempotence(
     tmp_path,
     add_domain_objects_to_cleanup,
 ):
-    # This test assures that an Upstream Pulp can be created in a non-default domain and that this
-    # Upstream Pulp configuration can be used to execute the replicate task.
+    """This test assures that an Upstream Pulp can be created in a non-default domain and that this
+    Upstream Pulp configuration can be used to execute the replicate task."""
 
     # Create a domain to replicate from
     source_domain = domain_factory()
@@ -169,6 +169,186 @@ def test_replication_idempotence(
 
 
 @pytest.mark.parallel
+def test_replication_with_repo_based_distribution(
+    domain_factory,
+    bindings_cfg,
+    pulpcore_bindings,
+    file_bindings,
+    monitor_task,
+    monitor_task_group,
+    pulp_settings,
+    gen_object_with_cleanup,
+    file_distribution_factory,
+    file_repository_factory,
+    file_remote_factory,
+    basic_manifest_path,
+    add_domain_objects_to_cleanup,
+):
+    """Test replication when upstream distribution uses repository (not publication)."""
+    source_domain = domain_factory()
+    add_domain_objects_to_cleanup(source_domain)
+
+    # Create a repo with autopublish, sync it, and distribute via repository (not publication)
+    remote = file_remote_factory(
+        pulp_domain=source_domain.name, manifest_path=basic_manifest_path, policy="immediate"
+    )
+    repo = file_repository_factory(pulp_domain=source_domain.name, autopublish=True)
+    sync_data = file_bindings.module.RepositorySyncURL(remote=remote.pulp_href, mirror=True)
+    monitor_task(file_bindings.RepositoriesFileApi.sync(repo.pulp_href, sync_data).task)
+    _ = file_distribution_factory(pulp_domain=source_domain.name, repository=repo.pulp_href)
+
+    # Replicate
+    replica_domain = domain_factory()
+    add_domain_objects_to_cleanup(replica_domain)
+    upstream_pulp = gen_object_with_cleanup(
+        pulpcore_bindings.UpstreamPulpsApi,
+        {
+            "name": str(uuid.uuid4()),
+            "base_url": bindings_cfg.host,
+            "api_root": pulp_settings.API_ROOT,
+            "domain": source_domain.name,
+            "username": bindings_cfg.username,
+            "password": bindings_cfg.password,
+        },
+        pulp_domain=replica_domain.name,
+    )
+    response = pulpcore_bindings.UpstreamPulpsApi.replicate(upstream_pulp.pulp_href)
+    monitor_task_group(response.task_group)
+
+    # Verify replica distribution uses repository_version, not repository or publication
+    replica_distro = file_bindings.DistributionsFileApi.list(
+        pulp_domain=replica_domain.name
+    ).results[0]
+    assert replica_distro.repository is None
+    assert replica_distro.repository_version is not None
+    assert replica_distro.publication is None
+
+    # Verify content was replicated
+    source_repo = file_bindings.RepositoriesFileApi.read(repo.pulp_href)
+    source_present = file_bindings.RepositoriesFileVersionsApi.read(
+        source_repo.latest_version_href
+    ).content_summary.present
+    replica_present = file_bindings.RepositoriesFileVersionsApi.read(
+        replica_distro.repository_version
+    ).content_summary.present
+    assert source_present["file.file"]["count"] == replica_present["file.file"]["count"]
+
+
+@pytest.mark.parallel
+def test_replication_multi_distribution_content_update(
+    domain_factory,
+    bindings_cfg,
+    pulpcore_bindings,
+    file_bindings,
+    monitor_task,
+    monitor_task_group,
+    pulp_settings,
+    gen_object_with_cleanup,
+    file_distribution_factory,
+    file_repository_factory,
+    file_publication_factory,
+    add_domain_objects_to_cleanup,
+    tmp_path,
+):
+    """Test that all distributions are updated after re-replication with new content."""
+    source_domain = domain_factory()
+    add_domain_objects_to_cleanup(source_domain)
+
+    # Create 3 repos with content and publication-based distributions
+    distros = []
+    repos = []
+    for i in range(3):
+        repo = file_repository_factory(pulp_domain=source_domain.name)
+        repos.append(repo)
+        file_path = tmp_path / f"file_{i}.txt"
+        file_path.write_text(f"content_{i}")
+        monitor_task(
+            file_bindings.ContentFilesApi.create(
+                file=str(file_path),
+                relative_path=f"file_{i}.txt",
+                repository=repo.pulp_href,
+                pulp_domain=source_domain.name,
+            ).task
+        )
+        pub = file_publication_factory(pulp_domain=source_domain.name, repository=repo.pulp_href)
+        distros.append(
+            file_distribution_factory(pulp_domain=source_domain.name, publication=pub.pulp_href)
+        )
+
+    # Initial replication
+    replica_domain = domain_factory()
+    add_domain_objects_to_cleanup(replica_domain)
+    upstream_pulp = gen_object_with_cleanup(
+        pulpcore_bindings.UpstreamPulpsApi,
+        {
+            "name": str(uuid.uuid4()),
+            "base_url": bindings_cfg.host,
+            "api_root": pulp_settings.API_ROOT,
+            "domain": source_domain.name,
+            "username": bindings_cfg.username,
+            "password": bindings_cfg.password,
+        },
+        pulp_domain=replica_domain.name,
+    )
+    response = pulpcore_bindings.UpstreamPulpsApi.replicate(upstream_pulp.pulp_href)
+    monitor_task_group(response.task_group)
+
+    # Record initial versions
+    replica_distros = file_bindings.DistributionsFileApi.list(
+        pulp_domain=replica_domain.name
+    ).results
+    assert len(replica_distros) == 3
+    initial_versions = {}
+    for rd in replica_distros:
+        assert rd.repository is None
+        assert rd.repository_version is not None
+        assert rd.publication is None
+        initial_versions[rd.name] = rd.repository_version
+
+    # Add new content to all source repos and update publications
+    for i, repo in enumerate(repos):
+        file_path = tmp_path / f"file_{i}_v2.txt"
+        file_path.write_text(f"new_content_{i}")
+        monitor_task(
+            file_bindings.ContentFilesApi.create(
+                file=str(file_path),
+                relative_path=f"file_{i}_v2.txt",
+                repository=repo.pulp_href,
+                pulp_domain=source_domain.name,
+            ).task
+        )
+        repo = file_bindings.RepositoriesFileApi.read(repo.pulp_href)
+        pub = file_publication_factory(
+            pulp_domain=source_domain.name,
+            repository_version=repo.latest_version_href,
+        )
+        monitor_task(
+            file_bindings.DistributionsFileApi.partial_update(
+                distros[i].pulp_href, {"publication": pub.pulp_href}
+            ).task
+        )
+
+    # Re-replicate
+    response = pulpcore_bindings.UpstreamPulpsApi.replicate(upstream_pulp.pulp_href)
+    monitor_task_group(response.task_group)
+
+    # Verify all distributions were updated to new versions with new content
+    replica_distros = file_bindings.DistributionsFileApi.list(
+        pulp_domain=replica_domain.name
+    ).results
+    assert len(replica_distros) == 3
+    for rd in replica_distros:
+        assert rd.repository is None
+        assert rd.repository_version is not None
+        assert rd.publication is None
+        # Version should have changed
+        assert rd.repository_version != initial_versions[rd.name]
+        # Verify new content is present (original file + new file = 2)
+        version = file_bindings.RepositoriesFileVersionsApi.read(rd.repository_version)
+        assert version.content_summary.present["file.file"]["count"] == 2
+
+
+@pytest.mark.parallel
 def test_replication_with_wrong_ca_cert(
     domain_factory,
     bindings_cfg,
@@ -177,9 +357,9 @@ def test_replication_with_wrong_ca_cert(
     pulp_settings,
     gen_object_with_cleanup,
 ):
-    # This test assures that setting ca_cert on an Upstream Pulp causes that CA bundle to be used
-    # to verify the certificate presented by the Upstream Pulp's REST API. The replication tasks
-    # are expected to fail.
+    """This test assures that setting ca_cert on an Upstream Pulp causes that CA bundle to be used
+    to verify the certificate presented by the Upstream Pulp's REST API. The replication tasks
+    are expected to fail."""
 
     if not bindings_cfg.host.startswith("https"):
         pytest.skip("HTTPS is not enabled for Pulp's API.")

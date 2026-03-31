@@ -174,18 +174,10 @@ class Replicator:
         """
         Return the fields that need to be updated/cleared on distributions for idempotence.
 
-        Note: repository_version is computed here but filtered out for updates/creates.
-        It will be set atomically in finalize_replication after sync completes.
+        Note: repository, publication, and repository_version are NOT included here.
+        They are all updated atomically in finalize_replication after all syncs complete.
         """
-        latest = repository.latest_version()
-        if latest:
-            repo_version_href = get_url(repository) + "versions/{}/".format(latest.number)
-        else:
-            repo_version_href = None
         return {
-            "repository": None,
-            "repository_version": repo_version_href,
-            "publication": None,
             "base_path": upstream_distribution["base_path"],
         }
 
@@ -198,13 +190,8 @@ class Replicator:
             )
             if not self._is_managed(distro):
                 return None
-            # Don't update repository_version here — that happens atomically in
-            # finalize_replication after all syncs complete.
-            # Do clear repository and publication so they don't conflict.
-            update_data = {k: v for k, v in distribution_data.items() if k != "repository_version"}
-            needs_update = self.needs_update(update_data, distro)
+            needs_update = self.needs_update(distribution_data, distro)
             if needs_update:
-                # Update the distribution
                 dispatch(
                     ageneral_update,
                     task_group=self.task_group,
@@ -212,21 +199,13 @@ class Replicator:
                     exclusive_resources=self.distros_uris,
                     args=(distro.pk, self.app_label, self.distribution_serializer_name),
                     kwargs={
-                        "data": update_data,
+                        "data": distribution_data,
                         "partial": True,
                     },
                 )
         except self.distribution_model_cls.DoesNotExist:
-            # Dispatch a task to create the distribution
-            # Don't set repository_version for new distributions - it will be set in
-            # finalize_replication after sync completes.
-            create_data = {
-                k: v
-                for k, v in distribution_data.items()
-                if k not in ("repository_version", "repository", "publication")
-            }
+            create_data = dict(distribution_data)
             create_data["name"] = upstream_distribution["name"]
-            create_data["pulp_labels"] = distribution_data["pulp_labels"]
             dispatch(
                 general_create,
                 task_group=self.task_group,
