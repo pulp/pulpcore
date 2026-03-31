@@ -1,1 +1,4 @@
-
+# Prevent pip resolution-too-deep by limiting backtracking on transitive deps.
+multidict>=6.0.5
+importlib-metadata>=7.0
+gitdb>=4.0.10
