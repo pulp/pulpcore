@@ -90,15 +90,22 @@ class TestDistributedPublication:
     def test_created_when_publication_added_to_distribution(self, db):
         pub = pub_factory()
         dist = dist_factory(pub=pub)
-        active = DistributedPublication.get_active(dist)
-        assert active.count() == 1
-        assert active.first().publication_id == pub.pk
-        assert active.first().expires_at is None
+        non_expired = DistributedPublication.get_non_expired(include_current=True).filter(
+            distribution=dist
+        )
+        assert non_expired.count() == 1
+        assert non_expired.first().publication_id == pub.pk
+        assert non_expired.first().expires_at is None
 
     def test_first_distributed_publication_is_active(self, db):
         dist = dist_factory(pub=pub_factory())
-        assert DistributedPublication.get_active(dist).count() == 1
-        assert DistributedPublication.get_expired(dist).count() == 0
+        assert (
+            DistributedPublication.get_non_expired(include_current=True)
+            .filter(distribution=dist)
+            .count()
+            == 1
+        )
+        assert DistributedPublication.get_expired().filter(distribution=dist).count() == 0
 
     def test_switching_publication_expires_old_and_activates_new(self, db):
         pub1 = pub_factory()
@@ -107,10 +114,12 @@ class TestDistributedPublication:
         pub2 = pub_factory()
         update_dist(dist, pub=pub2)
 
-        active = DistributedPublication.get_active(dist)
-        assert active.count() == 2
-        assert active.filter(expires_at__isnull=True).first().publication_id == pub2.pk
-        assert active.filter(expires_at__isnull=False).first().publication_id == pub1.pk
+        non_expired = DistributedPublication.get_non_expired(include_current=True).filter(
+            distribution=dist
+        )
+        assert non_expired.count() == 2
+        assert non_expired.filter(expires_at__isnull=True).first().publication_id == pub2.pk
+        assert non_expired.filter(expires_at__isnull=False).first().publication_id == pub1.pk
 
 
 @pytest.mark.django_db

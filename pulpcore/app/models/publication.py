@@ -756,9 +756,8 @@ class Distribution(MasterModel):
         if not retain_distributed_pub_enabled():
             return None
         recent_dp = (
-            self.core_distributedpublications.filter(
-                models.Q(expires_at__gte=timezone.now()) | models.Q(expires_at__isnull=True)
-            )
+            DistributedPublication.get_non_expired()
+            .filter(distribution=self)
             .order_by("-pulp_created")
             .select_related("publication__repository_version")
         )
@@ -881,11 +880,8 @@ class DistributedPublication(BaseModel):
     """
     Records the history of publications served by each Distribution.
 
-    Keeps superseded publications alive and serveable for a configurable grace period
-    so clients mid-download don't receive 404 errors when a distribution switches publications.
-
-    - ``expires_at=null``       — currently active
-    - ``expires_at=<datetime>`` — superseded; still served until that time
+    Keeps superseded publications alive and serveable for a configurable grace period.
+    Null `expired_at` means the publication was not superseded yet.
     """
 
     distribution = models.ForeignKey(
@@ -897,21 +893,21 @@ class DistributedPublication(BaseModel):
     expires_at = models.DateTimeField(null=True)
 
     @classmethod
-    def get_active(cls, distribution):
-        """Return records that are still being served (current or within grace period)."""
-        return cls.objects.filter(distribution=distribution).filter(
-            models.Q(expires_at__isnull=True) | models.Q(expires_at__gte=timezone.now())
-        )
+    def get_non_expired(cls, include_current=True):
+        if include_current:
+            return cls.objects.filter(
+                models.Q(expires_at__isnull=True) | models.Q(expires_at__gte=timezone.now())
+            )
+        return cls.objects.filter(expires_at__gte=timezone.now())
 
     @classmethod
-    def get_expired(cls, distribution):
-        """Return records whose grace period has elapsed for a distribution."""
-        return cls.objects.filter(distribution=distribution, expires_at__lt=timezone.now())
+    def get_expired(cls):
+        return cls.objects.filter(expires_at__lt=timezone.now())
 
     @hook(AFTER_CREATE)
     def cleanup(self):
         """Expire older active DistributedPublications; delete already-expired ones."""
-        DistributedPublication.objects.filter(expires_at__lt=timezone.now()).delete()
+        DistributedPublication.get_expired().delete()
         superseded = DistributedPublication.objects.exclude(pk=self.pk).filter(
             distribution=self.distribution, expires_at__isnull=True
         )
