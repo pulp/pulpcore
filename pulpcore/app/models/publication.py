@@ -7,7 +7,6 @@ import re
 
 from base64 import b64decode
 from binascii import Error as Base64DecodeError
-from contextlib import suppress
 from datetime import timedelta
 from gettext import gettext as _
 from url_normalize import url_normalize
@@ -33,19 +32,6 @@ from pulpcore.responses import ArtifactResponse
 from pulpcore.app.util import get_domain_pk, cache_key, get_url
 
 _logger = logging.getLogger(__name__)
-
-
-def _latest_publication_for_repository(repository):
-    """Return the latest complete Publication for a repository, or None."""
-    with suppress(Publication.DoesNotExist):
-        return (
-            Publication.objects.filter(
-                repository_version__in=repository.versions.all(), complete=True
-            )
-            .select_related("repository_version")
-            .latest("repository_version", "pulp_created")
-        )
-    return None
 
 
 class PublicationQuerySet(models.QuerySet):
@@ -252,7 +238,9 @@ class Publication(MasterModel):
                 detail_distro = distro.cast()
                 if not detail_distro.SERVE_FROM_PUBLICATION:
                     continue
-                latest_repo_publication = _latest_publication_for_repository(self.repository)
+                _, _, latest_repo_publication = (
+                    detail_distro.get_repository_publication_and_version()
+                )
                 if self == latest_repo_publication:
                     DistributedPublication(distribution=distro, publication=self).save()
 
@@ -798,18 +786,10 @@ class Distribution(MasterModel):
     @hook(AFTER_UPDATE, when="repository_version", has_changed=True, is_not=None)
     def set_distributed_publication(self):
         """Track the publication being served when a distribution is created or changed."""
-        if not self.cast().SERVE_FROM_PUBLICATION:
+        detail = self.cast()
+        if not detail.SERVE_FROM_PUBLICATION:
             return
-        pub = None
-        if self.publication:
-            pub = self.publication
-        elif self.repository:
-            pub = _latest_publication_for_repository(self.repository)
-        elif self.repository_version:
-            with suppress(Publication.DoesNotExist):
-                pub = Publication.objects.filter(
-                    repository_version=self.repository_version, complete=True
-                ).latest("pulp_created")
+        _, _, pub = detail.get_repository_publication_and_version()
         if pub is None:
             return
         DistributedPublication(distribution=self, publication=pub).save()

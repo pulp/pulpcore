@@ -7,7 +7,9 @@ import pytest
 import requests
 from pulpcore.client.pulp_file import FileFilePublication, FileFileDistribution
 from pulpcore.client.pulp_file import RepositorySyncURL
-from pulpcore.tests.functional.utils import wait_distributed_publication_retention_period
+
+import time
+from django.conf import settings
 
 
 @dataclass
@@ -26,6 +28,12 @@ class DistributionPublicationContext:
 
     def clear_dist_cache(self, dist: FileFileDistribution) -> None:
         raise NotImplementedError
+
+    def wait_retention_period(self):
+        assert (
+            settings.DISTRIBUTED_PUBLICATION_RETENTION_PERIOD <= 5
+        ), "DISTRIBUTED_PUBLICATION_RETENTION_PERIOD is too long for testing."
+        time.sleep(settings.DISTRIBUTED_PUBLICATION_RETENTION_PERIOD + 1)
 
 
 class TestDistributionPublicationRetention:
@@ -52,7 +60,7 @@ class TestDistributionPublicationRetention:
         file_url = ctx.get_file_url(dist)
 
         ctx.update_distribution(dist, publication=ctx.pub_without_file)
-        wait_distributed_publication_retention_period()
+        ctx.wait_retention_period()
         ctx.clear_dist_cache(dist)  # if redis is enabled it interferes with the assertion
         assert requests.get(file_url).status_code == 404
 
