@@ -3,7 +3,7 @@ Redis-based worker implementation using distributed lock-based task fetching.
 
 This implementation uses a fundamentally different algorithm where workers compete
 directly for task resources using Redis distributed locks, eliminating the need
-for the unblocking mechanism and all task cancellation support.
+for the unblocking mechanism.
 """
 
 from gettext import gettext as _
@@ -104,7 +104,6 @@ class RedisWorker:
     4. Process resources in deterministic (sorted) order to prevent deadlocks
     5. Lock values contain worker names to enable cleanup of stale locks
 
-    Note: This implementation does NOT support task cancellation.
     """
 
     def __init__(self):

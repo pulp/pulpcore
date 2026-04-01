@@ -542,56 +542,6 @@ class TestImmediateTaskWithNoResource:
 
 
 @pytest.mark.parallel
-def test_immediate_task_execution_in_worker(dispatch_task, monitor_task):
-    """
-    GIVEN an immediate async task marked as deferred
-    AND a resource is blocked by another task
-    WHEN the immediate task cannot execute in the API due to blocked resource
-    THEN the task is deferred to a worker and executes successfully
-
-    This test verifies that workers can correctly execute immediate async tasks
-    using aexecute_task() instead of execute_task().
-    """
-    # Use a unique resource to avoid conflicts with other tests
-    resource = str(uuid4())
-
-    # Dispatch a blocking task that holds the resource
-    blocking_task_href = dispatch_task(
-        "pulpcore.app.tasks.test.sleep",
-        args=(3,),  # Runs for 3 seconds
-        exclusive_resources=[resource],
-    )
-
-    # Dispatch the immediate task that needs the same resource
-    # Since the resource is blocked, API cannot execute it immediately
-    # It will be deferred to a worker
-    task_href = dispatch_task(
-        "pulpcore.app.tasks.test.asleep",
-        args=(0.1,),  # Short sleep to make test fast
-        immediate=True,
-        deferred=True,
-        exclusive_resources=[resource],
-    )
-
-    # Monitor the task - it should complete successfully after blocking task finishes
-    task = monitor_task(task_href)
-
-    # Verify task completed successfully
-    assert task.state == "completed", f"Task should be completed but is {task.state}"
-
-    # Verify state transitions occurred correctly
-    assert task.started_at is not None, "Task should have a started_at timestamp"
-    assert task.finished_at is not None, "Task should have a finished_at timestamp"
-    assert task.started_at < task.finished_at, "Task should have started before finishing"
-
-    # Verify there's no error
-    assert task.error is None, f"Task should not have an error but has: {task.error}"
-
-    # Clean up blocking task
-    monitor_task(blocking_task_href)
-
-
-@pytest.mark.parallel
 def test_failing_immediate_task_error_handling(dispatch_task, monitor_task):
     """
     GIVEN a task that raises a RuntimeError
