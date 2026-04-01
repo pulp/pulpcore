@@ -1,5 +1,7 @@
 from drf_spectacular.utils import extend_schema
+from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.response import Response
 
 from pulpcore.app import tasks
 from pulpcore.app.models import RepositoryVersion
@@ -8,6 +10,7 @@ from pulpcore.app.serializers import (
     AsyncOperationResponseSerializer,
     RepositoryAddRemoveContentSerializer,
 )
+from pulpcore.exceptions import ContentOverwriteError
 from pulpcore.tasking.tasks import dispatch
 
 __all__ = ["ModifyRepositoryActionMixin"]
@@ -35,14 +38,33 @@ class ModifyRepositoryActionMixin:
         else:
             base_version_pk = None
 
+        add_content_units = serializer.validated_data.get("add_content_units", [])
+        remove_content_units = serializer.validated_data.get("remove_content_units", [])
+        overwrite = serializer.validated_data.get("overwrite", True)
+
+        if not overwrite and add_content_units:
+            version = (
+                RepositoryVersion.objects.get(pk=base_version_pk)
+                if base_version_pk
+                else repository.latest_version()
+            )
+            if version:
+                remove_pks = None if "*" in remove_content_units else remove_content_units
+                try:
+                    repository.cast().check_content_overwrite(
+                        version, add_content_units, remove_content_pks=remove_pks
+                    )
+                except ContentOverwriteError as e:
+                    return Response({"detail": str(e)}, status=status.HTTP_409_CONFLICT)
+
         task = dispatch(
             self.modify_task,
             exclusive_resources=[repository],
             kwargs={
                 "repository_pk": pk,
                 "base_version_pk": base_version_pk,
-                "add_content_units": serializer.validated_data.get("add_content_units", []),
-                "remove_content_units": serializer.validated_data.get("remove_content_units", []),
+                "add_content_units": add_content_units,
+                "remove_content_units": remove_content_units,
             },
         )
         return OperationPostponedResponse(task, request)
