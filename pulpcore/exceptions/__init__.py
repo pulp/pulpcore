@@ -20,6 +20,7 @@ from .base import (
     PublishError,
 )
 from .validation import (
+    ContentOverwriteError,
     DigestValidationError,
     InvalidSignatureError,
     SizeValidationError,

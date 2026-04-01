@@ -332,6 +332,15 @@ class RepositoryAddRemoveContentSerializer(ModelSerializer, NestedHyperlinkedMod
             "for the new repository version"
         ),
     )
+    overwrite = serializers.BooleanField(
+        required=False,
+        default=True,
+        help_text=_(
+            "When set to true, existing content in the repository with the same unique key "
+            "will be silently overwritten. When set to false, the task will fail if content "
+            "would be overwritten. Defaults to true."
+        ),
+    )
 
     def validate_add_content_units(self, value):
         add_content_units = {}
@@ -365,4 +374,4 @@ class RepositoryAddRemoveContentSerializer(ModelSerializer, NestedHyperlinkedMod
 
     class Meta:
         model = models.RepositoryVersion
-        fields = ["add_content_units", "remove_content_units", "base_version"]
+        fields = ["add_content_units", "remove_content_units", "base_version", "overwrite"]
