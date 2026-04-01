@@ -37,6 +37,11 @@ _model_viewset_cache = {}
 STRIPPED_API_ROOT = settings.API_ROOT.strip("/")
 
 
+@lru_cache(maxsize=None)
+def retain_distributed_pub_enabled():
+    return settings.DISTRIBUTED_PUBLICATION_RETENTION_PERIOD > 0
+
+
 def reverse(viewname, args=None, kwargs=None, request=None, relative_url=True, **extra):
     """
     Customized reverse to handle Pulp specific parameters like domains and API_ROOT rewrite.

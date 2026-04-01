@@ -29,7 +29,7 @@ from pulpcore.cache import Cache
 from rest_framework.exceptions import APIException
 from pulpcore.app.models import AutoAddObjPermsMixin
 from pulpcore.responses import ArtifactResponse
-from pulpcore.app.util import get_domain_pk, cache_key, get_url
+from pulpcore.app.util import get_domain_pk, cache_key, get_url, retain_distributed_pub_enabled
 
 _logger = logging.getLogger(__name__)
 
@@ -233,16 +233,17 @@ class Publication(MasterModel):
                 self.delete()
                 raise
 
-            # Register with distributed publication tracking
-            for distro in Distribution.objects.filter(repository=self.repository):
-                detail_distro = distro.cast()
-                if not detail_distro.SERVE_FROM_PUBLICATION:
-                    continue
-                _, _, latest_repo_publication = (
-                    detail_distro.get_repository_publication_and_version()
-                )
-                if self == latest_repo_publication:
-                    DistributedPublication(distribution=distro, publication=self).save()
+            # Create distributed publication for repository auto-publish scenario
+            if retain_distributed_pub_enabled():
+                for distro in Distribution.objects.filter(repository=self.repository):
+                    detail_distro = distro.cast()
+                    if not detail_distro.SERVE_FROM_PUBLICATION:
+                        continue
+                    _, _, latest_repo_publication = (
+                        detail_distro.get_repository_publication_and_version()
+                    )
+                    if self == latest_repo_publication:
+                        DistributedPublication(distribution=distro, publication=self).save()
 
             # Unmark old checkpoints if retention is configured
             if self.checkpoint:
@@ -749,7 +750,11 @@ class Distribution(MasterModel):
         Iterates DistributedPublication records for this distribution from newest to oldest,
         trying each publication until the path is found.  Handles both pass-through and
         non-pass-through (PublishedArtifact) publications.
+
+        Returns None immediately when DISTRIBUTED_PUBLICATION_RETENTION_PERIOD is 0.
         """
+        if not retain_distributed_pub_enabled():
+            return None
         recent_dp = (
             self.core_distributedpublications.filter(
                 models.Q(expires_at__gte=timezone.now()) | models.Q(expires_at__isnull=True)
@@ -781,13 +786,16 @@ class Distribution(MasterModel):
         return None
 
     @hook(AFTER_CREATE)
-    @hook(AFTER_UPDATE, when="publication", has_changed=True, is_not=None)
-    @hook(AFTER_UPDATE, when="repository", has_changed=True, is_not=None)
-    @hook(AFTER_UPDATE, when="repository_version", has_changed=True, is_not=None)
+    @hook(
+        AFTER_UPDATE,
+        when_any=["publication", "repository", "repository_version"],
+        has_changed=True,
+        is_not=None,
+    )
     def set_distributed_publication(self):
         """Track the publication being served when a distribution is created or changed."""
         detail = self.cast()
-        if not detail.SERVE_FROM_PUBLICATION:
+        if not detail.SERVE_FROM_PUBLICATION or not retain_distributed_pub_enabled():
             return
         _, _, pub = detail.get_repository_publication_and_version()
         if pub is None:
@@ -904,11 +912,11 @@ class DistributedPublication(BaseModel):
     def cleanup(self):
         """Expire older active DistributedPublications; delete already-expired ones."""
         DistributedPublication.objects.filter(expires_at__lt=timezone.now()).delete()
-        DistributedPublication.objects.exclude(pk=self.pk).filter(
+        superseded = DistributedPublication.objects.exclude(pk=self.pk).filter(
             distribution=self.distribution, expires_at__isnull=True
-        ).update(
-            expires_at=(
-                timezone.now()
-                + timedelta(seconds=settings.DISTRIBUTED_PUBLICATION_RETENTION_PERIOD)
-            )
         )
+        if not retain_distributed_pub_enabled():
+            superseded.delete()
+        else:
+            retention = settings.DISTRIBUTED_PUBLICATION_RETENTION_PERIOD
+            superseded.update(expires_at=timezone.now() + timedelta(seconds=retention))
