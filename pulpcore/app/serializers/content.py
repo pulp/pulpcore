@@ -33,6 +33,16 @@ class NoArtifactContentSerializer(base.ModelSerializer):
         view_name_pattern=r"repositories(-.*/.*)-detail",
         queryset=models.Repository.objects.all(),
     )
+    overwrite = serializers.BooleanField(
+        required=False,
+        default=True,
+        write_only=True,
+        help_text=_(
+            "When set to true, existing content in the repository with the same unique key "
+            "will be silently overwritten. When set to false, the task will fail if content "
+            "would be overwritten. Only used when 'repository' is specified. Defaults to true."
+        ),
+    )
     vuln_report = RelatedField(
         read_only=True,
         view_name="vuln_report-detail",
@@ -77,6 +87,7 @@ class NoArtifactContentSerializer(base.ModelSerializer):
             validated_data (dict): Data to save to the database
         """
         repository = validated_data.pop("repository", None)
+        overwrite = validated_data.pop("overwrite", True)
         artifacts = self.get_artifacts(validated_data)
 
         content = self.retrieve(validated_data)
@@ -113,8 +124,13 @@ class NoArtifactContentSerializer(base.ModelSerializer):
                 )
 
         if repository:
-            repository.cast()
+            repository = repository.cast()
             content_to_add = self.Meta.model.objects.filter(pk=content.pk)
+
+            if not overwrite:
+                version = repository.latest_version()
+                if version:
+                    repository.check_content_overwrite(version, [content.pk])
 
             # create new repo version with uploaded package
             with repository.new_version() as new_version:
@@ -126,6 +142,7 @@ class NoArtifactContentSerializer(base.ModelSerializer):
         model = models.Content
         fields = base.ModelSerializer.Meta.fields + (
             "repository",
+            "overwrite",
             "pulp_labels",
             "vuln_report",
         )

@@ -29,7 +29,7 @@ from pulpcore.app.util import (
 from pulpcore.cache import Cache
 from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS, PROTECTED_REPO_VERSION_MESSAGE
 from pulpcore.download.factory import DownloaderFactory
-from pulpcore.exceptions import ResourceImmutableError
+from pulpcore.exceptions import ContentOverwriteError, ResourceImmutableError
 
 from .base import BaseModel, MasterModel
 from .content import Artifact, Content, ContentArtifact, RemoteArtifact
@@ -240,6 +240,62 @@ class Repository(MasterModel):
 
         """
         pass
+
+    def check_content_overwrite(self, version, add_content_pks, remove_content_pks=None):
+        """
+        Check that content being added would not overwrite existing repository content.
+
+        Uses repo_key_fields to determine if any content to be added conflicts with content
+        already present in the version. Raises ContentOverwriteError (HTTP 409) if a conflict
+        is detected.
+
+        Plugin writers may override this method to customize overwrite-check behavior.
+
+        Args:
+            version (pulpcore.app.models.RepositoryVersion): The version to check against.
+            add_content_pks (list): List of primary keys for Content to be added.
+            remove_content_pks (list): Optional list of primary keys for Content being removed.
+                These are excluded from the conflict check.
+        """
+        existing_content = version.content
+        if remove_content_pks:
+            existing_content = existing_content.exclude(pk__in=remove_content_pks)
+
+        for type_obj in self.CONTENT_TYPES:
+            repo_key_fields = type_obj.repo_key_fields
+            if not repo_key_fields:
+                continue
+
+            for batch in batch_qs(
+                type_obj.objects.filter(pk__in=add_content_pks).values("pk", *repo_key_fields)
+            ):
+                find_dup_qs = Q()
+                incoming_by_key = {}
+                for content_dict in batch:
+                    pk = content_dict.pop("pk")
+                    key = tuple(content_dict[f] for f in repo_key_fields)
+                    incoming_by_key[key] = pk
+                    find_dup_qs |= Q(**content_dict)
+
+                existing_by_key = {
+                    tuple(row[f] for f in repo_key_fields): row["pk"]
+                    for row in type_obj.objects.filter(pk__in=existing_content)
+                    .filter(find_dup_qs)
+                    .values("pk", *repo_key_fields)
+                }
+                conflict_map = {
+                    incoming_by_key[key]: existing_by_key[key]
+                    for key in incoming_by_key
+                    if key in existing_by_key
+                }
+                if conflict_map:
+                    pulp_type = type_obj.get_pulp_type()
+                    _logger.info(
+                        "Content overwrite conflict: type=%s, incoming->existing=%s",
+                        pulp_type,
+                        conflict_map,
+                    )
+                    raise ContentOverwriteError(pulp_type, conflict_map)
 
     def latest_version(self):
         """

@@ -25,6 +25,7 @@ from .base import (
     RemoteConnectionError,
 )
 from .validation import (
+    ContentOverwriteError,
     DigestValidationError,
     InvalidSignatureError,
     SizeValidationError,
