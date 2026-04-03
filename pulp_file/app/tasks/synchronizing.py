@@ -9,10 +9,9 @@ from urllib.parse import quote, urlparse, urlunparse
 
 import git as gitpython
 from gitdb.exc import BadName, BadObject
-from django.core.files import File
 
 from pulpcore.plugin.exceptions import SyncError
-from pulpcore.plugin.models import Artifact, ProgressReport, Remote, PublishedMetadata
+from pulpcore.plugin.models import Artifact, ProgressReport, Remote
 from pulpcore.plugin.serializers import RepositoryVersionSerializer
 from pulpcore.plugin.stages import (
     DeclarativeArtifact,
@@ -26,14 +25,10 @@ from pulp_file.app.models import (
     FileContent,
     FileGitRemote,
     FileRepository,
-    FilePublication,
 )
 from pulp_file.manifest import Manifest
 
 log = logging.getLogger(__name__)
-
-
-metadata_files = []
 
 
 def synchronize(remote_pk, repository_pk, mirror, url=None):
@@ -70,24 +65,7 @@ def synchronize(remote_pk, repository_pk, mirror, url=None):
     else:
         first_stage = FileFirstStage(remote, url)
         dv = DeclarativeVersion(first_stage, repository, mirror=mirror, acs=True)
-    rv = dv.create()
-    if rv and mirror:
-        # TODO: this is awful, we really should rewrite the DeclarativeVersion API to
-        # accomodate this use case
-        global metadata_files
-        with FilePublication.create(rv, pass_through=True) as publication:
-            mdfile_path, relative_path = metadata_files.pop()
-            PublishedMetadata.create_from_file(
-                file=File(open(mdfile_path, "rb")),
-                relative_path=relative_path,
-                publication=publication,
-            )
-            publication.manifest = relative_path
-            publication.save()
-
-        log.info(_("Publication: {publication} created").format(publication=publication.pk))
-
-    if rv:
+    if rv := dv.create():
         rv = RepositoryVersionSerializer(instance=rv, context={"request": None}).data
 
     return rv
@@ -115,7 +93,6 @@ class FileFirstStage(Stage):
         """
         Build and emit `DeclarativeContent` from the Manifest data.
         """
-        global metadata_files
 
         deferred_download = self.remote.policy != Remote.IMMEDIATE  # Interpret download policy
         async with ProgressReport(
@@ -126,7 +103,6 @@ class FileFirstStage(Stage):
             downloader = self.remote.get_downloader(url=self.url)
             result = await downloader.run()
             await pb.aincrement()
-            metadata_files.append((result.path, self.url.split("/")[-1]))
 
         async with ProgressReport(
             message="Parsing Metadata Lines", code="sync.parsing.metadata"
