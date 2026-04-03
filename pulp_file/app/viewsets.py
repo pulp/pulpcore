@@ -7,6 +7,7 @@ from rest_framework.decorators import action
 from rest_framework import status
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
+from rest_framework.exceptions import ValidationError
 
 from pulpcore.plugin.actions import ModifyRepositoryActionMixin
 from pulpcore.plugin.models import (
@@ -268,6 +269,8 @@ class FileRepositoryViewSet(RepositoryViewSet, ModifyRepositoryActionMixin, Role
         remote = serializer.validated_data.get("remote", repository.remote)
 
         mirror = serializer.validated_data.get("mirror", False)
+        if mirror and repository.autopublish:
+            raise ValidationError("Cannot use mirror mode with autopublished repository.")
         result = dispatch(
             tasks.synchronize,
             shared_resources=[remote],

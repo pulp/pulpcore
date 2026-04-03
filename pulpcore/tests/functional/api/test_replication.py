@@ -108,12 +108,13 @@ def test_replication_idempotence(
         file_bindings.RemotesFileApi,
         file_bindings.RepositoriesFileApi,
         file_bindings.ContentFilesApi,
+        file_bindings.PublicationsFileApi,
     ):
         result = api_client.list(pulp_domain=replica_domain.name)
         assert result.count == 1
         obj = result.results[0]
-        # Test that each new object (besides Content) has a source UpstreamPulp label
-        if api_client != file_bindings.ContentFilesApi:
+        # Test that each new object (besides Content/Publication) has a source UpstreamPulp label
+        if api_client not in (file_bindings.ContentFilesApi, file_bindings.PublicationsFileApi):
             assert "UpstreamPulp" in obj.pulp_labels
             assert upstream_pulp.prn.split(":")[-1] == obj.pulp_labels["UpstreamPulp"]
 
@@ -167,6 +168,11 @@ def test_replication_idempotence(
     assert "UpstreamPulp" in new_remote.pulp_labels
     assert upstream_pulp2.prn.split(":")[-1] == new_remote.pulp_labels["UpstreamPulp"]
 
+    result = file_bindings.PublicationsFileApi.list(pulp_domain=source_domain.name)
+    assert result.count == 1  # old publication got deleted when repository was deleted
+    new_publication = result.results[0]
+    assert new_publication.pulp_href != publication.pulp_href
+
 
 @pytest.mark.parallel
 def test_replication_with_repo_based_distribution(
@@ -188,11 +194,11 @@ def test_replication_with_repo_based_distribution(
     source_domain = domain_factory()
     add_domain_objects_to_cleanup(source_domain)
 
-    # Create a repo with autopublish, sync it, and distribute via repository (not publication)
+    # Create a repo, sync it w/ mirror=True, and distribute via repository (not publication)
     remote = file_remote_factory(
         pulp_domain=source_domain.name, manifest_path=basic_manifest_path, policy="immediate"
     )
-    repo = file_repository_factory(pulp_domain=source_domain.name, autopublish=True)
+    repo = file_repository_factory(pulp_domain=source_domain.name)
     sync_data = file_bindings.module.RepositorySyncURL(remote=remote.pulp_href, mirror=True)
     monitor_task(file_bindings.RepositoriesFileApi.sync(repo.pulp_href, sync_data).task)
     _ = file_distribution_factory(pulp_domain=source_domain.name, repository=repo.pulp_href)

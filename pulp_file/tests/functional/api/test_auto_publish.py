@@ -73,6 +73,13 @@ def test_auto_publish_and_distribution(
     )
     assert files_in_first_publication == expected_files
 
+    # Assert that mirror=True is not allowed when autopublish=True
+    body = RepositorySyncURL(remote=remote.pulp_href, mirror=True)
+    with pytest.raises(file_bindings.ApiException) as exc:
+        file_bindings.RepositoriesFileApi.sync(repo.pulp_href, body)
+    assert exc.value.status == 400
+    assert "Cannot use mirror mode with autopublished repository." in exc.value.body
+
     # Add a new content unit to the repository and assert that a publication gets created and the
     # new content unit is in it
     monitor_task(
