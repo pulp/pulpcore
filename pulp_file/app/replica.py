@@ -44,7 +44,7 @@ class FileReplicator(Replicator):
         return f"{upstream_distribution['base_url']}{manifest}"
 
     def repository_extra_fields(self, remote):
-        return dict(manifest=remote.url.split("/")[-1], autopublish=True)
+        return dict(manifest=remote.url.split("/")[-1], autopublish=False)
 
     def sync_params(self, repository, remote):
         return dict(
