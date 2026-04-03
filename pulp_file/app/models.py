@@ -91,6 +91,7 @@ class FileRepository(Repository, AutoAddObjPermsMixin):
 
     manifest = models.TextField(default="PULP_MANIFEST", null=True)
     autopublish = models.BooleanField(default=False)
+    last_sync_details = models.JSONField(default=dict)
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"

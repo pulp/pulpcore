@@ -1,0 +1,3 @@
+Add backend support for sync-optimization for the file plugin
+
+We can't actually use it yet due to zero-downtime upgrade restrictions
