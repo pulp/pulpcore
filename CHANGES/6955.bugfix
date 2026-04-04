@@ -1,0 +1,1 @@
+Fixed content app directory listing generating broken links when distribution base paths contain colons.
