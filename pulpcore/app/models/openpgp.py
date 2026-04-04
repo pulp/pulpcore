@@ -3,8 +3,9 @@ import re
 from aiohttp.web_response import Response
 from django.db import models
 from django.utils import timezone
+from pysequoia import armor, ArmorKind
+
 from pulpcore.app.models import AutoAddObjPermsMixin, Content, Distribution, Repository
-from pulpcore.app.openpgp import wrap_armor
 from pulpcore.app.util import get_domain_pk, gpg_verify
 
 
@@ -47,6 +48,7 @@ class OpenPGPPublicKey(_OpenPGPContent):
         else:
             content_filter = {}
         data = self.packet()
+        # note: because these queries aren't ordered, the result may be nondetermininistic
         for signature in self.openpgp_signatures.filter(**content_filter):
             data += signature.packet()
         for user_id in self.user_ids.filter(**content_filter):
@@ -61,7 +63,7 @@ class OpenPGPPublicKey(_OpenPGPContent):
             data += public_subkey.packet()
             for signature in public_subkey.openpgp_signatures.filter(**content_filter):
                 data += signature.packet()
-        return wrap_armor(data)
+        return armor(data, ArmorKind.PublicKey).strip()  # avoid trailing newline
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
@@ -127,11 +129,11 @@ class OpenPGPSignature(_OpenPGPContent):
 
     sha256 = models.CharField(max_length=128)
     signature_type = models.PositiveSmallIntegerField()
-    created = models.DateTimeField()  # 2
-    expiration_time = models.DurationField(null=True)  # 3
-    key_expiration_time = models.DurationField(null=True)  # 9
-    issuer = models.CharField(max_length=16, null=True)  # 16
-    signers_user_id = models.CharField(null=True)  # 28
+    created = models.DateTimeField()
+    expiration_time = models.DurationField(null=True)
+    key_expiration_time = models.DurationField(null=True)
+    issuer = models.CharField(max_length=16, null=True)
+    signers_user_id = models.CharField(null=True)
     signed_content = models.ForeignKey(
         Content, related_name="openpgp_signatures", on_delete=models.PROTECT
     )

@@ -1,6 +1,5 @@
 import aiohttp
 import asyncio
-import gnupg
 import json
 import os
 import pathlib
@@ -1149,22 +1148,36 @@ def signing_gpg_metadata(signing_gpg_homedir_path):
         with suppress(FileNotFoundError, PermissionError):
             key_file.write_text(private_key_data)
 
-    gpg = gnupg.GPG(gnupghome=signing_gpg_homedir_path)
-    gpg.import_keys(private_key_data)
+    from pysequoia import Cert
 
-    fingerprint = gpg.list_keys()[0]["fingerprint"]
-    keyid = gpg.list_keys()[0]["keyid"]
+    cert = Cert.from_bytes(private_key_data.encode())
+    fingerprint = cert.fingerprint.upper()
+    keyid = fingerprint[-16:]
 
-    gpg.trust_keys(fingerprint, "TRUST_ULTIMATE")
+    gpg_cmd = ["gpg", "--homedir", str(signing_gpg_homedir_path)]
+    subprocess.run(
+        gpg_cmd + ["--import"],
+        input=private_key_data,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    subprocess.run(
+        gpg_cmd + ["--import-ownertrust"],
+        input=f"{fingerprint}:6:\n",
+        capture_output=True,
+        text=True,
+        check=True,
+    )
 
-    return gpg, fingerprint, keyid
+    return cert, fingerprint, keyid
 
 
 @pytest.fixture(scope="session")
 def pulp_trusted_public_key(signing_gpg_metadata):
     """Fixture to extract the ascii armored trusted public test key."""
-    gpg, _, keyid = signing_gpg_metadata
-    return gpg.export_keys([keyid])
+    cert, _, keyid = signing_gpg_metadata
+    return str(cert)
 
 
 @pytest.fixture(scope="session")
@@ -1180,7 +1193,7 @@ def _ascii_armored_detached_signing_service_name(
     signing_gpg_homedir_path,
 ):
     service_name = str(uuid.uuid4())
-    gpg, fingerprint, keyid = signing_gpg_metadata
+    _, fingerprint, keyid = signing_gpg_metadata
 
     cmd = (
         "pulpcore-manager",
