@@ -1,0 +1,2 @@
+Set default ``--max-requests 10000`` and ``--max-requests-jitter 500`` for API workers
+to prevent unbounded RSS growth from glibc heap fragmentation over long-lived worker processes.
