@@ -403,7 +403,14 @@ HIDE_GUARDED_DISTRIBUTIONS = False
 
 DOMAIN_ENABLED = False
 
-MAX_CONCURRENT_CONTENT = 25
+MAX_CONCURRENT_CONTENT = 200
+
+# Resource budget for sync pipeline: limits total in-flight artifact data between
+# the ArtifactDownloader and ArtifactSaver stages. When set, these allow higher download
+# concurrency for small artifacts while preventing disk exhaustion for large ones.
+# None means no limit for that dimension.
+SYNC_MAX_IN_FLIGHT_MB = None  # Maximum megabytes of in-flight downloaded artifacts
+SYNC_MAX_IN_FLIGHT_ITEMS = None
 
 SHELL_PLUS_IMPORTS = [
     "from pulpcore.app.util import get_domain, get_domain_pk, set_domain, get_url, extract_pk",

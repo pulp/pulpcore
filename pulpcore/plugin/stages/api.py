@@ -77,7 +77,7 @@ class Stage:
                 break
             yield content
 
-    async def batches(self, minsize=500):
+    async def batches(self, minsize=500, flush_event=None):
         """
         Asynchronous iterator yielding batches of [DeclarativeContent][] from `self._in_q`.
 
@@ -87,6 +87,9 @@ class Stage:
 
         Args:
             minsize (int): The minimum batch size to yield (unless it is the final batch)
+            flush_event (asyncio.Event): Optional event that, when set, causes the current
+                batch to be yielded immediately regardless of `minsize`. This is used by
+                `ArtifactSaver` to flush when the resource budget is under pressure.
 
         Yields:
             A list of [DeclarativeContent][] instances
@@ -124,12 +127,19 @@ class Stage:
 
         get_listener = asyncio.ensure_future(self._in_q.get())
         thaw_event_listener = asyncio.ensure_future(thaw_queue_event.wait())
+        flush_event_listener = asyncio.ensure_future(flush_event.wait()) if flush_event else None
         while not shutdown:
-            done, pending = await asyncio.wait(
-                [thaw_event_listener, get_listener], return_when=asyncio.FIRST_COMPLETED
-            )
+            waitables = [thaw_event_listener, get_listener]
+            if flush_event_listener:
+                waitables.append(flush_event_listener)
+            done, pending = await asyncio.wait(waitables, return_when=asyncio.FIRST_COMPLETED)
             if thaw_event_listener in done:
                 thaw_event_listener = asyncio.ensure_future(thaw_queue_event.wait())
+                no_block = True
+            if flush_event_listener and flush_event_listener in done:
+                # Don't re-arm until after we yield a batch, to avoid a spin loop
+                # when the event stays set but the batch is empty.
+                flush_event_listener = None
                 no_block = True
             if get_listener in done:
                 content = await get_listener
@@ -153,8 +163,13 @@ class Stage:
                 yield batch
                 batch = []
                 no_block = False
+                # Re-arm the flush listener after yielding
+                if flush_event and flush_event_listener is None:
+                    flush_event_listener = asyncio.ensure_future(flush_event.wait())
         thaw_event_listener.cancel()
         get_listener.cancel()
+        if flush_event_listener:
+            flush_event_listener.cancel()
 
     async def put(self, item):
         """

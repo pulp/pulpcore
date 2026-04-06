@@ -6,6 +6,7 @@ from pulpcore.plugin.stages.api import EndStage, create_pipeline
 from pulpcore.plugin.stages.artifact_stages import (
     ACSArtifactHandler,
     ArtifactDownloader,
+    ArtifactResourceBudget,
     ArtifactSaver,
     QueryExistingArtifacts,
     RemoteArtifactSaver,
@@ -129,6 +130,8 @@ class DeclarativeVersion:
             list: List of [pulpcore.plugin.stages.Stage][] instances
 
         """
+        resource_budget = ArtifactResourceBudget.from_settings()
+
         pipeline = [
             self.first_stage,
             QueryExistingArtifacts(),
@@ -137,8 +140,8 @@ class DeclarativeVersion:
             pipeline.append(ACSArtifactHandler())
         pipeline.extend(
             [
-                ArtifactDownloader(),
-                ArtifactSaver(),
+                ArtifactDownloader(resource_budget=resource_budget),
+                ArtifactSaver(resource_budget=resource_budget),
                 QueryExistingContents(),
                 ContentSaver(),
                 RemoteArtifactSaver(),
