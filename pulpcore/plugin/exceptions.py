@@ -1,4 +1,5 @@
 from pulpcore.exceptions import (
+    ContentOverwriteError,
     ValidationError,
     DigestValidationError,
     InvalidSignatureError,
@@ -15,6 +16,7 @@ from pulpcore.exceptions import (
 )
 
 __all__ = [
+    "ContentOverwriteError",
     "ValidationError",
     "DigestValidationError",
     "InvalidSignatureError",

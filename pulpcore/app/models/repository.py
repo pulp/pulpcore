@@ -28,7 +28,7 @@ from pulpcore.app.util import (
 )
 from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS, PROTECTED_REPO_VERSION_MESSAGE
 from pulpcore.download.factory import DownloaderFactory
-from pulpcore.exceptions import ResourceImmutableError
+from pulpcore.exceptions import ContentOverwriteError, ResourceImmutableError
 
 from pulpcore.cache import Cache
 
@@ -241,6 +241,73 @@ class Repository(MasterModel):
 
         """
         pass
+
+    def check_content_overwrite(self, version, add_content_pks, remove_content_pks=None):
+        """
+        Check that content being added would not overwrite existing repository content.
+
+        Uses repo_key_fields to determine if any content to be added conflicts with content
+        already present in the version. Raises ContentOverwriteError (HTTP 409) if a conflict
+        is detected.
+
+        Plugin writers may override this method to customize overwrite-check behavior.
+
+        Args:
+            version (pulpcore.app.models.RepositoryVersion): The version to check against.
+            add_content_pks (list): List of primary keys for Content to be added.
+            remove_content_pks (list): Optional list of primary keys for Content being removed.
+                These are excluded from the conflict check.
+        """
+        existing_content = version.content
+        if remove_content_pks:
+            existing_content = existing_content.exclude(pk__in=remove_content_pks)
+        if not existing_content.exists():
+            return
+
+        add_content = Content.objects.filter(pk__in=add_content_pks)
+
+        for type_obj in self.CONTENT_TYPES:
+            repo_key_fields = type_obj.repo_key_fields
+            if not repo_key_fields:
+                continue
+
+            pulp_type = type_obj.get_pulp_type()
+            incoming_qs = type_obj.objects.filter(pk__in=add_content.filter(pulp_type=pulp_type))
+            if not incoming_qs.exists():
+                continue
+
+            for batch in batch_qs(incoming_qs.values(*repo_key_fields)):
+                find_dup_qs = Q()
+                for content_dict in batch:
+                    find_dup_qs |= Q(**content_dict)
+
+                existing_dups = (
+                    type_obj.objects.filter(pk__in=existing_content)
+                    .filter(find_dup_qs)
+                    .values("pk", *repo_key_fields)
+                )
+                if not existing_dups.exists():
+                    continue
+
+                existing_by_key = {
+                    tuple(row[f] for f in repo_key_fields): row["pk"] for row in existing_dups
+                }
+                incoming_by_key = {
+                    tuple(row[f] for f in repo_key_fields): row["pk"]
+                    for row in incoming_qs.filter(find_dup_qs).values("pk", *repo_key_fields)
+                }
+                conflict_map = {
+                    str(incoming_by_key[key]): str(existing_by_key[key])
+                    for key in incoming_by_key
+                    if key in existing_by_key
+                }
+                if conflict_map:
+                    _logger.info(
+                        "Content overwrite conflict: type=%s, incoming->existing=%s",
+                        pulp_type,
+                        conflict_map,
+                    )
+                    raise ContentOverwriteError(pulp_type, conflict_map)
 
     def latest_version(self):
         """
