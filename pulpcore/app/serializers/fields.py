@@ -478,6 +478,9 @@ class PgpKeyFingerprintField(serializers.CharField):
 
     def to_internal_value(self, data):
         value = super().to_internal_value(data)
+        # Allow blank strings through when allow_blank=True (e.g. for override deletion).
+        if self.allow_blank and not value:
+            return value
         if self.BARE_HEX_RE.match(value):
             value = f"{self.DEFAULT_PREFIX}:{value}"
         value = self.normalize(value)

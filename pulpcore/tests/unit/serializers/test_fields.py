@@ -207,3 +207,27 @@ def test_pgp_key_fingerprint_field_custom_max_length():
 def test_pgp_key_fingerprint_field_normalize(value, expected):
     """PgpKeyFingerprintField.normalize should uppercase hex after the colon."""
     assert PgpKeyFingerprintField.normalize(value) == expected
+
+
+def test_pgp_key_fingerprint_field_rejects_blank_by_default():
+    """With the default allow_blank=False, empty strings should raise ValidationError."""
+    field = PgpKeyFingerprintField()
+    with pytest.raises(serializers.ValidationError):
+        field.to_internal_value("")
+
+
+def test_pgp_key_fingerprint_field_allow_blank():
+    """With allow_blank=True, empty strings should pass through without format validation."""
+    field = PgpKeyFingerprintField(allow_blank=True)
+    assert field.to_internal_value("") == ""
+
+
+def test_pgp_key_fingerprint_field_allow_blank_still_validates_non_empty():
+    """With allow_blank=True, non-empty values should still be validated as fingerprints."""
+    field = PgpKeyFingerprintField(allow_blank=True)
+    assert (
+        field.to_internal_value("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+        == "v4:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+    )
+    with pytest.raises(serializers.ValidationError):
+        field.to_internal_value("not-a-fingerprint")
