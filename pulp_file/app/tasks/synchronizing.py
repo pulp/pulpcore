@@ -3,6 +3,7 @@ import os
 import re
 import shutil
 import tempfile
+from hashlib import sha256
 
 from gettext import gettext as _
 from urllib.parse import quote, urlparse, urlunparse
@@ -10,6 +11,7 @@ from urllib.parse import quote, urlparse, urlunparse
 import git as gitpython
 from gitdb.exc import BadName, BadObject
 from django.core.files import File
+from django.conf import settings
 
 from pulpcore.plugin.exceptions import SyncError
 from pulpcore.plugin.models import Artifact, ProgressReport, Remote, PublishedMetadata
@@ -36,7 +38,51 @@ log = logging.getLogger(__name__)
 metadata_files = []
 
 
-def synchronize(remote_pk, repository_pk, mirror, url=None):
+def _get_sha256(file_path):
+    """Compute the SHA256 hex digest of a file."""
+    with open(file_path, "rb") as f:
+        return sha256(f.read()).hexdigest()
+
+
+def _should_optimize_sync(sync_details, last_sync_details):
+    """
+    Check whether the sync can be skipped by comparing with the previous sync.
+
+    Args:
+        sync_details (dict): Details about the current sync configuration.
+        last_sync_details (dict): Details about the previous sync configuration.
+
+    Returns:
+        bool: True if sync can be skipped; False otherwise.
+
+    """
+    if not last_sync_details:
+        return False
+
+    # If switching to immediate download, we may need to download content
+    if (
+        last_sync_details.get("download_policy") != "immediate"
+        and sync_details["download_policy"] == "immediate"
+    ):
+        return False
+
+    # If switching to mirror mode, we need to create a publication
+    if not last_sync_details.get("mirror") and sync_details["mirror"]:
+        return False
+
+    if last_sync_details.get("url") != sync_details["url"]:
+        return False
+
+    if last_sync_details.get("most_recent_version") != sync_details["most_recent_version"]:
+        return False
+
+    if last_sync_details.get("manifest_checksum") != sync_details["manifest_checksum"]:
+        return False
+
+    return True
+
+
+def synchronize(remote_pk, repository_pk, mirror, optimize=False, url=None, **kwargs):
     """
     Sync content from the remote repository.
 
@@ -46,6 +92,7 @@ def synchronize(remote_pk, repository_pk, mirror, url=None):
         remote_pk (str): The remote PK.
         repository_pk (str): The repository PK.
         mirror (bool): True for mirror mode, False for additive.
+        optimize (bool): Whether to skip sync if nothing has changed.
         url (str): The url to synchronize. If omitted, the url of the remote is used.
 
     Raises:
@@ -54,6 +101,8 @@ def synchronize(remote_pk, repository_pk, mirror, url=None):
     """
     remote = Remote.objects.get(pk=remote_pk).cast()
     repository = FileRepository.objects.get(pk=repository_pk)
+
+    optimize = optimize or settings.FILE_SYNC_OPTIMIZATION
 
     if not remote.url:
         raise ValueError(_("A remote must have a url specified to synchronize."))
@@ -67,10 +116,42 @@ def synchronize(remote_pk, repository_pk, mirror, url=None):
             for stage in old_pipeline_stages(new_version)
             if not isinstance(stage, (RemoteArtifactSaver))
         ]
+        rv = dv.create()
     else:
-        first_stage = FileFirstStage(remote, url)
+        sync_url = url or remote.url
+        version = repository.latest_version()
+
+        # Download the manifest to compute its checksum for optimization
+        downloader = remote.get_downloader(url=sync_url)
+        manifest_result = downloader.fetch()
+
+        sync_details = {
+            "url": remote.url,
+            "download_policy": remote.policy,
+            "mirror": mirror,
+            "most_recent_version": version.number,
+            "manifest_checksum": _get_sha256(manifest_result.path),
+        }
+
+        if optimize and _should_optimize_sync(sync_details, repository.last_sync_details):
+            with ProgressReport(
+                message="Skipping Sync (no change from previous sync)",
+                code="sync.was_skipped",
+            ) as pb:
+                pb.total = 1
+                pb.done = 1
+            return
+
+        first_stage = FileFirstStage(remote, url, manifest_path=manifest_result.path)
         dv = DeclarativeVersion(first_stage, repository, mirror=mirror, acs=True)
-    rv = dv.create()
+        rv = dv.create()
+
+        # Update last_sync_details after sync
+        if rv:
+            sync_details["most_recent_version"] = rv.number
+        repository.last_sync_details = sync_details
+        repository.save()
+
     if rv and mirror:
         # TODO: this is awful, we really should rewrite the DeclarativeVersion API to
         # accomodate this use case
@@ -98,18 +179,21 @@ class FileFirstStage(Stage):
     The first stage of a pulp_file sync pipeline.
     """
 
-    def __init__(self, remote, url):
+    def __init__(self, remote, url, manifest_path=None):
         """
         The first stage of a pulp_file sync pipeline.
 
         Args:
             remote (FileRemote): The remote data to be used when syncing
             url (str): The base url of custom remote
+            manifest_path (str): Path to an already-downloaded manifest file. If provided,
+                the manifest will not be downloaded again.
 
         """
         super().__init__()
         self.remote = remote
         self.url = url if url else remote.url
+        self.manifest_path = manifest_path
 
     async def run(self):
         """
@@ -123,15 +207,19 @@ class FileFirstStage(Stage):
         ) as pb:
             parsed_url = urlparse(self.url)
             root_dir = os.path.dirname(parsed_url.path)
-            downloader = self.remote.get_downloader(url=self.url)
-            result = await downloader.run()
+            if self.manifest_path:
+                result_path = self.manifest_path
+            else:
+                downloader = self.remote.get_downloader(url=self.url)
+                result = await downloader.run()
+                result_path = result.path
             await pb.aincrement()
-            metadata_files.append((result.path, self.url.split("/")[-1]))
+            metadata_files.append((result_path, self.url.split("/")[-1]))
 
         async with ProgressReport(
             message="Parsing Metadata Lines", code="sync.parsing.metadata"
         ) as pb:
-            manifest = Manifest(result.path)
+            manifest = Manifest(result_path)
             entries = list(manifest.read())
 
             pb.total = len(entries)
