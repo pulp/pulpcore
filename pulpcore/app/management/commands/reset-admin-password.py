@@ -1,3 +1,6 @@
+import string
+import secrets
+
 from getpass import getpass
 from gettext import gettext as _
 
@@ -34,7 +37,8 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         user = User.objects.get_or_create(username="admin", is_superuser=True, is_staff=True)[0]
         if options["random"]:
-            password = User.objects.make_random_password(length=20)
+            alphabet = string.ascii_letters + string.digits
+            password = "".join(secrets.choice(alphabet) for i in range(20))
             user.set_password(password)
             user.save()
             self.stdout.write(_('Successfully set "admin" user\'s password to "%s".') % password)
