@@ -171,7 +171,13 @@ class DeclarativeContent:
 
     async def resolution(self):
         """Coroutine that waits for the content to be saved to database.
-        Returns the content unit."""
+        Returns the content unit.
+
+        If this item is currently sitting in a `batches()` queue waiting
+        for `minsize` to be reached, calling this signals the queue to
+        flush early so the item can proceed through the pipeline. This
+        prevents deadlock when two related items depend on each other.
+        """
         if self._resolved:
             # Already resolved ~> shortcut
             return self.content

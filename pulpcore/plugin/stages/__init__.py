@@ -4,6 +4,7 @@ from .api import create_pipeline, EndStage, Stage
 from .artifact_stages import (
     ACSArtifactHandler,
     ArtifactDownloader,
+    ArtifactResourceBudget,
     ArtifactSaver,
     GenericDownloader,
     QueryExistingArtifacts,

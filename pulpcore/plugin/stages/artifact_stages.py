@@ -23,6 +23,107 @@ from .api import Stage
 log = logging.getLogger(__name__)
 
 
+class ArtifactResourceBudget:
+    """Tracks aggregate resource consumption of in-flight artifacts.
+
+    Coordinates between `ArtifactDownloader` (acquires budget) and
+    `ArtifactSaver` (releases budget) to limit total temporary disk usage
+    from downloaded-but-not-yet-saved artifacts.
+
+    This allows higher download concurrency for small artifacts while still
+    protecting against disk exhaustion when syncing large artifacts.
+
+    Args:
+        max_bytes (int): Maximum total bytes of in-flight downloaded artifacts.
+            `None` means no byte limit (only item limit applies).
+        max_items (int): Maximum number of in-flight downloaded artifacts.
+            `None` means no item limit (only byte limit applies).
+    """
+
+    def __init__(self, max_bytes=None, max_items=None):
+        self.max_bytes = max_bytes
+        self.max_items = max_items
+        self._current_bytes = 0  # total bytes currently acquired and not yet released
+        self._current_items = 0  # total items currently acquired and not yet released
+        self._available = asyncio.Event()  # cleared when budget is exhausted; set on release
+        self._available.set()
+        self._lock = asyncio.Lock()  # serializes acquire checks to prevent races
+        # set when acquire is blocked; signals the stage to flush its batch early
+        self.flush_event = asyncio.Event()
+
+    @classmethod
+    def from_settings(cls):
+        """Create an `ArtifactResourceBudget` from Django settings, or return `None`.
+
+        Reads `SYNC_MAX_IN_FLIGHT_MB` and `SYNC_MAX_IN_FLIGHT_ITEMS` from settings.
+        Falls back to the deprecated `MAX_CONCURRENT_CONTENT` for `max_items` if the
+        user set it and `SYNC_MAX_IN_FLIGHT_ITEMS` is not configured.
+        Returns `None` if no settings are configured.
+        """
+        max_mb = settings.SYNC_MAX_IN_FLIGHT_MB
+        max_items = settings.SYNC_MAX_IN_FLIGHT_ITEMS
+
+        # Backward compatibility: honor deprecated MAX_CONCURRENT_CONTENT
+        if max_items is None:
+            max_items = settings.MAX_CONCURRENT_CONTENT
+
+        if max_mb is None and max_items is None:
+            return None
+        return cls(
+            max_bytes=max_mb * 1024 * 1024 if max_mb is not None else None,
+            max_items=max_items,
+        )
+
+    async def acquire(self, nbytes=0):
+        """Block until resource budget is available.
+
+        Always allows at least one item through (even if over budget) when nothing
+        is currently in flight, to prevent deadlock.
+
+        When the budget is exhausted and `acquire` must wait, the `flush_event`
+        is set to signal downstream stages (e.g. `ArtifactSaver`) to flush their
+        batches early and free up budget.
+
+        Args:
+            nbytes (int): Size in bytes of the artifact(s) to be downloaded.
+                When 0 (e.g. because the remote did not advertise a size), the
+                artifact is invisible to the byte budget but still counts toward
+                the item limit ()`SYNC_MAX_IN_FLIGHT_ITEMS`).
+        """
+        while True:
+            async with self._lock:
+                # Always allow if nothing is in flight (prevents deadlock)
+                if self._current_items == 0:
+                    self._current_bytes += nbytes
+                    self._current_items += 1
+                    return
+
+                bytes_ok = self.max_bytes is None or (
+                    self._current_bytes + nbytes <= self.max_bytes
+                )
+                items_ok = self.max_items is None or self._current_items < self.max_items
+
+                if bytes_ok and items_ok:
+                    self._current_bytes += nbytes
+                    self._current_items += 1
+                    return
+
+                self._available.clear()
+                self.flush_event.set()
+            await self._available.wait()
+
+    def release(self, nbytes=0):
+        """Release resources after an artifact is saved and its temp file deleted.
+
+        Args:
+            nbytes (int): Size in bytes of the artifact that was saved.
+        """
+        self._current_bytes = max(0, self._current_bytes - nbytes)
+        self._current_items = max(0, self._current_items - 1)
+        self.flush_event.clear()
+        self._available.set()
+
+
 def _check_for_forbidden_checksum_type(artifact):
     """Check if content doesn't have forbidden checksum type.
 
@@ -122,7 +223,7 @@ class GenericDownloader(Stage):
     downloads completed. Since it's a stream the total count isn't known until it's finished.
 
     This stage drains all available items from `self._in_q` and starts as many concurrent
-    downloading tasks as possible, up to the limit defined by ``self.max_concurrent_content``.
+    downloading tasks as possible, up to the limit defined by `self.max_concurrent_content`.
 
     Each [pulpcore.plugin.stages.DeclarativeContent][] is sent to `_handle_content_unit`,
     which must be implemented by the subclass, to handle processing the content unit and starting
@@ -220,10 +321,22 @@ class ArtifactDownloader(GenericDownloader):
 
     Each [pulpcore.plugin.stages.DeclarativeContent][] is sent to `self._out_q` after all of
     its [pulpcore.plugin.stages.DeclarativeArtifact][] objects have been handled.
+
+    Args:
+        resource_budget (ArtifactResourceBudget): Optional shared resource budget that
+            limits total in-flight artifact bytes/items between download and save.
+        args: unused positional arguments passed along to
+            [pulpcore.plugin.stages.GenericDownloader][].
+        kwargs: unused keyword arguments passed along to
+            [pulpcore.plugin.stages.GenericDownloader][].
     """
 
     PROGRESS_REPORTING_MESSAGE = "Downloading Artifacts"
     PROGRESS_REPORTING_CODE = "sync.downloading.artifacts"
+
+    def __init__(self, resource_budget=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.resource_budget = resource_budget
 
     async def _handle_content_unit(self, d_content):
         """Handle one content unit.
@@ -231,17 +344,32 @@ class ArtifactDownloader(GenericDownloader):
         Returns:
             The number of downloads
         """
-        downloaders_for_content = [
-            d_artifact.download()
+        d_artifacts_to_download = [
+            d_artifact
             for d_artifact in d_content.d_artifacts
             if d_artifact.artifact._state.adding
             and not d_artifact.deferred_download
             and not d_artifact.artifact.file
         ]
-        if downloaders_for_content:
-            await asyncio.gather(*downloaders_for_content)
-        await self.put(d_content)
-        return len(downloaders_for_content)
+
+        budget_bytes = 0
+        if d_artifacts_to_download and self.resource_budget:
+            budget_bytes = sum(
+                d_artifact.artifact.size or 0 for d_artifact in d_artifacts_to_download
+            )
+            await self.resource_budget.acquire(budget_bytes)
+
+        try:
+            if d_artifacts_to_download:
+                await asyncio.gather(*(da.download() for da in d_artifacts_to_download))
+
+            await self.put(d_content)
+        except BaseException:
+            if budget_bytes and self.resource_budget:
+                self.resource_budget.release(budget_bytes)
+            raise
+
+        return len(d_artifacts_to_download)
 
 
 class ArtifactSaver(Stage):
@@ -259,7 +387,17 @@ class ArtifactSaver(Stage):
 
     This stage drains all available items from `self._in_q` and batches everything into one large
     call to the db for efficiency.
+
+    Args:
+        resource_budget (ArtifactResourceBudget): Optional shared resource budget.
+            When provided, budget is released after artifacts are saved and temp files deleted.
+        args: unused positional arguments passed along to [pulpcore.plugin.stages.Stage][].
+        kwargs: unused keyword arguments passed along to [pulpcore.plugin.stages.Stage][].
     """
+
+    def __init__(self, resource_budget=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.resource_budget = resource_budget
 
     async def run(self):
         """
@@ -268,7 +406,9 @@ class ArtifactSaver(Stage):
         Returns:
             The coroutine for this stage.
         """
-        async for batch in self.batches(minsize=settings.MAX_CONCURRENT_CONTENT):
+        flush_event = self.resource_budget.flush_event if self.resource_budget else None
+        minsize = self.resource_budget.max_items if self.resource_budget else 200
+        async for batch in self.batches(minsize=minsize, flush_event=flush_event):
             da_to_save = []
             for d_content in batch:
                 for d_artifact in d_content.d_artifacts:
@@ -290,6 +430,16 @@ class ArtifactSaver(Stage):
                     # Delete the downloaded tmp file if it still exists to clear up space
                     if await aos.path.exists(tmp_file_path):
                         await aos.remove(tmp_file_path)
+
+            # Release budget after temp files are cleaned up so the downloader can proceed
+            if self.resource_budget:
+                for d_content in batch:
+                    budget_bytes = sum(
+                        d_artifact.artifact.size or 0
+                        for d_artifact in d_content.d_artifacts
+                        if not d_artifact.deferred_download
+                    )
+                    self.resource_budget.release(budget_bytes)
 
             for d_content in batch:
                 await self.put(d_content)
