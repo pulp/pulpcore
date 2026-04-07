@@ -66,6 +66,7 @@ pulp_settings:
   task_protection_time: 10
   tmpfile_protection_time: 10
   upload_protection_time: 10
+  domain_enabled: true
 pulp_settings_azure:
   MEDIA_ROOT: ""
   STORAGES:
