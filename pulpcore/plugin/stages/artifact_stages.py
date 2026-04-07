@@ -55,10 +55,17 @@ class ArtifactResourceBudget:
         """Create an `ArtifactResourceBudget` from Django settings, or return `None`.
 
         Reads `SYNC_MAX_IN_FLIGHT_MB` and `SYNC_MAX_IN_FLIGHT_ITEMS` from settings.
-        Returns `None` if neither setting is configured.
+        Falls back to the deprecated `MAX_CONCURRENT_CONTENT` for `max_items` if the
+        user set it and `SYNC_MAX_IN_FLIGHT_ITEMS` is not configured.
+        Returns `None` if no settings are configured.
         """
         max_mb = settings.SYNC_MAX_IN_FLIGHT_MB
         max_items = settings.SYNC_MAX_IN_FLIGHT_ITEMS
+
+        # Backward compatibility: honor deprecated MAX_CONCURRENT_CONTENT
+        if max_items is None:
+            max_items = settings.MAX_CONCURRENT_CONTENT
+
         if max_mb is None and max_items is None:
             return None
         return cls(
