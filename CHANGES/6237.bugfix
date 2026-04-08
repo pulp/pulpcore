@@ -1,1 +1,0 @@
-Fixed a performance issue causing operations that process large numbers of HREFs to be ~1000x slower than equivalent PRN-based operations.
