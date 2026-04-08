@@ -9,7 +9,7 @@ import uuid
 
 import pytest
 
-from pulpcore.client.pulp_file import RepositorySyncURL
+from pulpcore.client.pulp_file import FileRepositorySyncURL
 from pulpcore.client.pulpcore.exceptions import ApiException
 
 NUM_REPOS = 1
@@ -107,7 +107,7 @@ def publications(
         repo = file_repository_factory(autopublish=True)
         remote = file_remote_factory(manifest_path=basic_manifest_path, policy="immediate")
 
-        repository_sync_data = RepositorySyncURL(remote=remote.pulp_href)
+        repository_sync_data = FileRepositorySyncURL(remote=remote.pulp_href)
         sync_response = file_bindings.RepositoriesFileApi.sync(repo.pulp_href, repository_sync_data)
         monitor_task(sync_response.task)
 
@@ -163,7 +163,7 @@ def test_export_streamed_file_url_content(
         file_bindings.RemotesFileApi,
         {"name": str(uuid.uuid4()), "url": file_url, "policy": "streamed"},
     )
-    repository_sync_data = RepositorySyncURL(remote=remote.pulp_href)
+    repository_sync_data = FileRepositorySyncURL(remote=remote.pulp_href)
     sync_response = file_bindings.RepositoriesFileApi.sync(repo.pulp_href, repository_sync_data)
     monitor_task(sync_response.task)
     repo = file_bindings.RepositoriesFileApi.read(repo.pulp_href)

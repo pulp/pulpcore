@@ -18,7 +18,6 @@ from pulpcore.plugin.models import (
 )
 from pulpcore.plugin.serializers import (
     AsyncOperationResponseSerializer,
-    RepositorySyncURLSerializer,
     TaskGroupOperationResponseSerializer,
 )
 from pulpcore.plugin.tasking import dispatch
@@ -55,6 +54,7 @@ from .serializers import (
     FilePublicationSerializer,
     FileRemoteSerializer,
     FileRepositorySerializer,
+    FileRepositorySyncURLSerializer,
 )
 
 
@@ -257,14 +257,14 @@ class FileRepositoryViewSet(RepositoryViewSet, ModifyRepositoryActionMixin, Role
         summary="Sync from a remote",
         responses={202: AsyncOperationResponseSerializer},
     )
-    @action(detail=True, methods=["post"], serializer_class=RepositorySyncURLSerializer)
+    @action(detail=True, methods=["post"], serializer_class=FileRepositorySyncURLSerializer)
     def sync(self, request, pk):
         """
         Synchronizes a repository.
 
         The ``repository`` field has to be provided.
         """
-        serializer = RepositorySyncURLSerializer(
+        serializer = FileRepositorySyncURLSerializer(
             data=request.data, context={"request": request, "repository_pk": pk}
         )
         serializer.is_valid(raise_exception=True)
@@ -273,6 +273,7 @@ class FileRepositoryViewSet(RepositoryViewSet, ModifyRepositoryActionMixin, Role
         remote = serializer.validated_data.get("remote", repository.remote)
 
         mirror = serializer.validated_data.get("mirror", False)
+        optimize = serializer.validated_data.get("optimize", True)  # noqa
         if mirror and repository.autopublish:
             raise ValidationError("Cannot use mirror mode with autopublished repository.")
         result = dispatch(
@@ -283,6 +284,7 @@ class FileRepositoryViewSet(RepositoryViewSet, ModifyRepositoryActionMixin, Role
                 "remote_pk": str(remote.pk),
                 "repository_pk": str(repository.pk),
                 "mirror": mirror,
+                "optimize": optimize,
             },
         )
         return OperationPostponedResponse(result, request)

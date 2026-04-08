@@ -8,7 +8,7 @@ from uuid import uuid4
 import pytest
 from aiohttp import BasicAuth
 
-from pulpcore.client.pulp_file import RepositorySyncURL
+from pulpcore.client.pulp_file import FileRepositorySyncURL
 from pulpcore.client.pulpcore.exceptions import ApiException
 from pulpcore.tests.functional.utils import download_file
 
@@ -52,7 +52,7 @@ def setup_filter_fixture(
 ):
     remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="on_demand")
 
-    body = RepositorySyncURL(remote=remote.pulp_href)
+    body = FileRepositorySyncURL(remote=remote.pulp_href)
     repo_sync_task = monitor_task(
         file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task
     )

@@ -6,7 +6,7 @@ from pulpcore.tests.functional.utils import PulpTaskError
 
 
 def _run_basic_sync_and_assert(file_bindings, monitor_task, remote, file_repo):
-    body = file_bindings.RepositorySyncURL(remote=remote.pulp_href)
+    body = file_bindings.FileRepositorySyncURL(remote=remote.pulp_href)
     monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task)
 
     # Check content is present, but no artifacts are there
