@@ -22,7 +22,7 @@ def test_crud_publication_distribution(
 ):
     # Create a remote and sync from it to create the first repository version
     remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="on_demand")
-    body = file_bindings.RepositorySyncURL(remote=remote.pulp_href)
+    body = file_bindings.FileRepositorySyncURL(remote=remote.pulp_href)
     monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task)
 
     # Remove content to create two more repository versions
@@ -183,7 +183,7 @@ def test_distribution_filtering(
         repo = file_repository_factory()
         repo_manifest_path = write_3_iso_file_fixture_data_factory(str(uuid4()))
         remote = file_remote_factory(manifest_path=repo_manifest_path, policy="on_demand")
-        body = file_bindings.RepositorySyncURL(remote=remote.pulp_href)
+        body = file_bindings.FileRepositorySyncURL(remote=remote.pulp_href)
         task_response = file_bindings.RepositoriesFileApi.sync(repo.pulp_href, body).task
         version_href = monitor_task(task_response).created_resources[0]
         content = file_bindings.ContentFilesApi.list(repository_version_added=version_href).results[
@@ -319,7 +319,7 @@ def test_distribution_serves_publication_content(
     """
     # Sync to create version 1 (3 files)
     remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="immediate")
-    body = file_bindings.RepositorySyncURL(remote=remote.pulp_href)
+    body = file_bindings.FileRepositorySyncURL(remote=remote.pulp_href)
     monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task)
     file_repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
     v1_href = file_repo.latest_version_href
@@ -381,7 +381,7 @@ def test_distribution_mutually_exclusive_source(
     """Test that only one of publication, repository, and repository_version can be set."""
     # Sync to get a version and publication to reference
     remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="on_demand")
-    body = file_bindings.RepositorySyncURL(remote=remote.pulp_href)
+    body = file_bindings.FileRepositorySyncURL(remote=remote.pulp_href)
     monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task)
     file_repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
     version_href = file_repo.latest_version_href
@@ -440,7 +440,7 @@ def test_distribution_returns_404_without_servable_content(
     # Create a repo and sync it, but don't publish
     repo = file_repository_factory()
     remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="on_demand")
-    body = file_bindings.RepositorySyncURL(remote=remote.pulp_href)
+    body = file_bindings.FileRepositorySyncURL(remote=remote.pulp_href)
     monitor_task(file_bindings.RepositoriesFileApi.sync(repo.pulp_href, body).task)
     repo = file_bindings.RepositoriesFileApi.read(repo.pulp_href)
     v1_href = repo.latest_version_href

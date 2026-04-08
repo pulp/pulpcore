@@ -6,9 +6,9 @@ import pytest
 
 from pulpcore.client.pulp_file import (
     FileFilePublication,
+    FileRepositorySyncURL,
     PatchedfileFileDistribution,
     RepositoryAddRemoveContent,
-    RepositorySyncURL,
 )
 from pulpcore.tests.functional.utils import get_from_url
 
@@ -39,7 +39,7 @@ def test_full_workflow(
     # Sync from the remote and assert that a new repository version is created
     manifest_1, manifest_2 = duplicate_filename_paths
     remote = file_remote_factory(manifest_path=manifest_1, policy="immediate")
-    body = RepositorySyncURL(remote=remote.pulp_href)
+    body = FileRepositorySyncURL(remote=remote.pulp_href)
     monitor_task(
         file_bindings.RepositoriesFileApi.sync(file_repo_with_auto_publish.pulp_href, body).task
     )
@@ -132,7 +132,7 @@ def test_full_workflow(
 
     # Sync a new remote with same filenames but on-demand
     remote = file_remote_factory(manifest_path=manifest_2, policy="on_demand")
-    body = RepositorySyncURL(remote=remote.pulp_href)
+    body = FileRepositorySyncURL(remote=remote.pulp_href)
     monitor_task(
         file_bindings.RepositoriesFileApi.sync(file_repo_with_auto_publish.pulp_href, body).task
     )

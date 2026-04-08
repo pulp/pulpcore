@@ -2,7 +2,7 @@ import uuid
 
 import pytest
 
-from pulpcore.client.pulp_file import RepositorySyncURL
+from pulpcore.client.pulp_file import FileRepositorySyncURL
 from pulpcore.tests.functional.utils import PulpTaskError
 
 GIT_REMOTE_URL = "https://github.com/pulp/pulp-smash.git"
@@ -65,7 +65,7 @@ def test_git_sync(file_bindings, file_repo, file_git_remote_factory, monitor_tas
     """Test syncing from a public Git repository."""
     remote = file_git_remote_factory(url=GIT_REMOTE_URL, git_ref=git_ref)
 
-    body = RepositorySyncURL(remote=remote.pulp_href)
+    body = FileRepositorySyncURL(remote=remote.pulp_href)
     monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task)
 
     file_repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
@@ -81,7 +81,7 @@ def test_git_sync_idempotent(file_bindings, file_repo, file_git_remote_factory, 
     """Syncing the same Git ref twice should not create a new repository version."""
     remote = file_git_remote_factory(url=GIT_REMOTE_URL, git_ref="main")
 
-    body = RepositorySyncURL(remote=remote.pulp_href)
+    body = FileRepositorySyncURL(remote=remote.pulp_href)
     monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task)
 
     file_repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
@@ -104,7 +104,7 @@ def test_git_sync_invalid_url(file_bindings, file_repo, file_git_remote_factory,
     """Syncing with an invalid Git URL should raise a task error."""
     remote = file_git_remote_factory(url="https://invalid.example.com/no-such-repo.git")
 
-    body = RepositorySyncURL(remote=remote.pulp_href)
+    body = FileRepositorySyncURL(remote=remote.pulp_href)
     with pytest.raises(PulpTaskError) as exc:
         monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task)
     assert "Failed to clone git repository" in exc.value.task.error["description"]
@@ -115,7 +115,7 @@ def test_git_sync_invalid_ref(file_bindings, file_repo, file_git_remote_factory,
     """Syncing with a non-existent git ref should raise a task error."""
     remote = file_git_remote_factory(url=GIT_REMOTE_URL, git_ref="this-ref-does-not-exist-abc123")
 
-    body = RepositorySyncURL(remote=remote.pulp_href)
+    body = FileRepositorySyncURL(remote=remote.pulp_href)
     with pytest.raises(PulpTaskError) as exc:
         monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task)
     error_desc = exc.value.task.error["description"]
@@ -135,7 +135,7 @@ def test_git_sync_lfs(
     remote = file_git_remote_factory(url=LFS_REMOTE_URL)
     file_repo = file_repo_with_auto_publish
 
-    body = RepositorySyncURL(remote=remote.pulp_href)
+    body = FileRepositorySyncURL(remote=remote.pulp_href)
     monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task)
 
     file_repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)

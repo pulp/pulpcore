@@ -8,7 +8,11 @@ import pytest
 import requests
 from django.conf import settings
 
-from pulpcore.client.pulp_file import FileFileDistribution, FileFilePublication, RepositorySyncURL
+from pulpcore.client.pulp_file import (
+    FileFileDistribution,
+    FileFilePublication,
+    FileRepositorySyncURL,
+)
 
 
 @dataclass
@@ -82,7 +86,7 @@ class TestDistributionPublicationRetention:
         # Sync to get files into the repo
         monitor_task(
             file_bindings.RepositoriesFileApi.sync(
-                repo.pulp_href, RepositorySyncURL(remote=remote.pulp_href)
+                repo.pulp_href, FileRepositorySyncURL(remote=remote.pulp_href)
             ).task
         )
         repo = file_bindings.RepositoriesFileApi.read(repo.pulp_href)

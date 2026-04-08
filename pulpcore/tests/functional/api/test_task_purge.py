@@ -140,7 +140,7 @@ def test_purge_with_different_users(
 ):
     # create admin related data
     admin_remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="on_demand")
-    admin_sync_data = file_bindings.RepositorySyncURL(remote=admin_remote.pulp_href)
+    admin_sync_data = file_bindings.FileRepositorySyncURL(remote=admin_remote.pulp_href)
     admin_repo = file_repository_factory()
 
     # create random user related data
@@ -153,7 +153,7 @@ def test_purge_with_different_users(
     )
     with user:
         user_remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="on_demand")
-        user_sync_data = file_bindings.RepositorySyncURL(remote=user_remote.pulp_href)
+        user_sync_data = file_bindings.FileRepositorySyncURL(remote=user_remote.pulp_href)
         user_repo = file_repository_factory()
 
     # Sync as admin

@@ -5,7 +5,7 @@ import aiofiles
 import pytest
 from aiohttp import web
 
-from pulpcore.client.pulp_file import RepositorySyncURL
+from pulpcore.client.pulp_file import FileRepositorySyncURL
 
 
 @pytest.fixture
@@ -23,7 +23,7 @@ def perform_sync(
         }
         remote = gen_object_with_cleanup(file_bindings.RemotesFileApi, remote_data)
 
-        body = RepositorySyncURL(remote=remote.pulp_href)
+        body = FileRepositorySyncURL(remote=remote.pulp_href)
         monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task)
         return file_repo
 

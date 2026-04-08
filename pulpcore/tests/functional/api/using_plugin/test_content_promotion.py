@@ -5,7 +5,7 @@ from urllib.parse import urljoin
 
 import pytest
 
-from pulpcore.client.pulp_file import RepositorySyncURL
+from pulpcore.client.pulp_file import FileRepositorySyncURL
 from pulpcore.tests.functional.utils import download_file, get_files_in_manifest, get_from_url
 
 
@@ -27,7 +27,7 @@ def test_content_promotion(
     expected_files = get_files_in_manifest(remote.url)
 
     # Sync from the remote and assert that a new repository version is created
-    body = RepositorySyncURL(remote=remote.pulp_href)
+    body = FileRepositorySyncURL(remote=remote.pulp_href)
     created = monitor_task(
         file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task
     ).created_resources

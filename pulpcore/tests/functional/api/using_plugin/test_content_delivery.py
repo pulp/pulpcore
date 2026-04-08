@@ -10,7 +10,7 @@ import pytest
 import requests
 from aiohttp.client_exceptions import ClientPayloadError, ClientResponseError
 
-from pulpcore.client.pulp_file import RepositorySyncURL
+from pulpcore.client.pulp_file import FileRepositorySyncURL
 from pulpcore.tests.functional.utils import download_file, get_files_in_manifest
 
 
@@ -28,7 +28,7 @@ def test_delete_remote_on_demand(
     remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="on_demand")
 
     # Sync from the remote
-    body = RepositorySyncURL(remote=remote.pulp_href)
+    body = FileRepositorySyncURL(remote=remote.pulp_href)
     monitor_task(
         file_bindings.RepositoriesFileApi.sync(file_repo_with_auto_publish.pulp_href, body).task
     )
@@ -50,7 +50,7 @@ def test_delete_remote_on_demand(
 
     # Recreate the remote and sync into the repository using it
     remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="on_demand")
-    body = RepositorySyncURL(remote=remote.pulp_href)
+    body = FileRepositorySyncURL(remote=remote.pulp_href)
     monitor_task(file_bindings.RepositoriesFileApi.sync(repo.pulp_href, body).task)
 
     # Assert that files can now be downloaded from the distribution
@@ -76,7 +76,7 @@ def test_remote_artifact_url_update(
     remote = file_remote_ssl_factory(manifest_path=basic_manifest_only_path, policy="on_demand")
 
     # Sync from the remote
-    body = RepositorySyncURL(remote=remote.pulp_href)
+    body = FileRepositorySyncURL(remote=remote.pulp_href)
     monitor_task(
         file_bindings.RepositoriesFileApi.sync(file_repo_with_auto_publish.pulp_href, body).task
     )
@@ -99,7 +99,7 @@ def test_remote_artifact_url_update(
     remote2 = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="on_demand")
 
     # Sync from the remote and assert that content can now be downloaded
-    body = RepositorySyncURL(remote=remote2.pulp_href)
+    body = FileRepositorySyncURL(remote=remote2.pulp_href)
     monitor_task(
         file_bindings.RepositoriesFileApi.sync(file_repo_with_auto_publish.pulp_href, body).task
     )
@@ -135,7 +135,7 @@ def test_remote_content_changed_with_on_demand(
     # GIVEN
     basic_manifest_path = write_3_iso_file_fixture_data_factory("basic")
     remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="on_demand")
-    body = RepositorySyncURL(remote=remote.pulp_href)
+    body = FileRepositorySyncURL(remote=remote.pulp_href)
     monitor_task(
         file_bindings.RepositoriesFileApi.sync(file_repo_with_auto_publish.pulp_href, body).task
     )
@@ -192,7 +192,7 @@ def test_handling_remote_artifact_on_demand_streaming_failure(
     # Plumbing
     def create_simple_remote(manifest_path):
         remote = file_remote_factory(manifest_path=manifest_path, policy="on_demand")
-        body = RepositorySyncURL(remote=remote.pulp_href)
+        body = FileRepositorySyncURL(remote=remote.pulp_href)
         monitor_task(
             file_bindings.RepositoriesFileApi.sync(file_repo_with_auto_publish.pulp_href, body).task
         )
@@ -210,7 +210,7 @@ def test_handling_remote_artifact_on_demand_streaming_failure(
         return acs
 
     def sync_publish_and_distribute(remote):
-        body = RepositorySyncURL(remote=remote.pulp_href)
+        body = FileRepositorySyncURL(remote=remote.pulp_href)
         monitor_task(
             file_bindings.RepositoriesFileApi.sync(file_repo_with_auto_publish.pulp_href, body).task
         )
@@ -261,7 +261,7 @@ def test_head_request_large_on_demand_file(
     """Test that a HEAD request to a large on-demand file properly saves the file."""
     # range_header_manifest_path has 8 files, each 4MB
     remote = file_remote_factory(manifest_path=range_header_manifest_path, policy="on_demand")
-    body = RepositorySyncURL(remote=remote.pulp_href)
+    body = FileRepositorySyncURL(remote=remote.pulp_href)
     monitor_task(
         file_bindings.RepositoriesFileApi.sync(file_repo_with_auto_publish.pulp_href, body).task
     )

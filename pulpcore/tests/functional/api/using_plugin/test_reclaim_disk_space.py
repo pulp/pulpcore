@@ -4,7 +4,7 @@ from urllib.parse import urljoin
 
 import pytest
 
-from pulpcore.client.pulp_file import RepositorySyncURL
+from pulpcore.client.pulp_file import FileRepositorySyncURL
 from pulpcore.tests.functional.utils import download_file, get_files_in_manifest
 
 
@@ -24,7 +24,7 @@ def test_reclaim_immediate_content(
     remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="immediate")
 
     # sync the repository with immediate policy
-    repository_sync_data = RepositorySyncURL(remote=remote.pulp_href)
+    repository_sync_data = FileRepositorySyncURL(remote=remote.pulp_href)
     sync_response = file_bindings.RepositoriesFileApi.sync(
         file_repo.pulp_href, repository_sync_data
     )
@@ -43,7 +43,7 @@ def test_reclaim_immediate_content(
         assert artifacts == 0
 
     # sync repo again
-    repository_sync_data = RepositorySyncURL(remote=remote.pulp_href)
+    repository_sync_data = FileRepositorySyncURL(remote=remote.pulp_href)
     sync_response = file_bindings.RepositoriesFileApi.sync(
         file_repo.pulp_href, repository_sync_data
     )
@@ -67,7 +67,7 @@ def sync_repository_distribution(
     def _sync_repository_distribution(policy="immediate"):
         remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy=policy)
 
-        repository_sync_data = RepositorySyncURL(remote=remote.pulp_href)
+        repository_sync_data = FileRepositorySyncURL(remote=remote.pulp_href)
         sync_response = file_bindings.RepositoriesFileApi.sync(
             file_repo_with_auto_publish.pulp_href, repository_sync_data
         )

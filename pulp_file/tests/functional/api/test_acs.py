@@ -4,7 +4,7 @@ from urllib.parse import urljoin
 
 import pytest
 
-from pulpcore.client.pulp_file import RepositorySyncURL
+from pulpcore.client.pulp_file import FileRepositorySyncURL
 from pulpcore.client.pulp_file.exceptions import ApiException
 from pulpcore.tests.functional.utils import (
     download_file,
@@ -108,7 +108,7 @@ def test_acs_sync(
     assert acs_server.requests_record[0].path == basic_manifest_path
 
     # Sync the repository
-    repository_sync_data = RepositorySyncURL(remote=main_remote.pulp_href)
+    repository_sync_data = FileRepositorySyncURL(remote=main_remote.pulp_href)
     monitor_task(
         file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, repository_sync_data).task
     )
@@ -167,7 +167,7 @@ def test_acs_sync_with_paths(
     assert expected_request_paths == actual_requested_paths
 
     # Sync the repository
-    repository_sync_data = RepositorySyncURL(remote=main_remote.pulp_href)
+    repository_sync_data = FileRepositorySyncURL(remote=main_remote.pulp_href)
     monitor_task(
         file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, repository_sync_data).task
     )
@@ -231,7 +231,7 @@ def test_serving_acs_content(
     )
 
     # Sync the repository
-    repository_sync_data = RepositorySyncURL(remote=main_remote.pulp_href)
+    repository_sync_data = FileRepositorySyncURL(remote=main_remote.pulp_href)
     monitor_task(
         file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, repository_sync_data).task
     )
