@@ -8,6 +8,39 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.107.0 (2026-04-01) {: #3.107.0 }
+
+### REST API {: #3.107.0-rest-api }
+
+#### Features {: #3.107.0-rest-api-feature }
+
+- Added the `created_resource_prns` field to Task, returning the PRN of each created resource.
+  [#7003](https://github.com/pulp/pulpcore/issues/7003)
+- Add REDACT_UNSAFE_EXCEPTIONS setting for strict exception handling.
+
+#### Bugfixes {: #3.107.0-rest-api-bugfix }
+
+- Fixed a performance issue causing operations that process large numbers of HREFs to be ~1000x slower than equivalent PRN-based operations.
+  [#6237](https://github.com/pulp/pulpcore/issues/6237)
+- Pulp Replicas now present all of their distribution updates at the end of the replication process, rather than each individual repository-distribution pair being updated individually as syncs and publishes are completed. Unfortunately for users with existing replicated setups the very first replication post-upgrade will still have the old behavior - but afterwards it should work as expected.
+  [#7333](https://github.com/pulp/pulpcore/issues/7333)
+
+### Plugin API {: #3.107.0-plugin-api }
+
+#### Features {: #3.107.0-plugin-api-feature }
+
+- Made the prefix on `PgpKeyFingerprintField` optional, defaulting to `v4:` when omitted.
+
+### Pulp File {: #3.107.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.107.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.106.0 (2026-03-24) {: #3.106.0 }
 
 ### REST API {: #3.106.0-rest-api }
