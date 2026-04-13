@@ -282,11 +282,16 @@ class Replicator:
         ]
 
         if repository_ids or remote_ids:
+            # Lock distros_uris to prevent concurrent distribution create/update tasks
+            # from racing with this deletion. Deleting a repository CASCADE-deletes its
+            # publications (and RVs, etc.), which SET_NULLs any distribution FK pointing
+            # to them. A concurrent distribution update could then write back the stale FK,
+            # causing an IntegrityError.
             dispatch(
                 general_multi_delete,
                 task_group=self.task_group,
                 shared_resources=[self.server],
-                exclusive_resources=repositories + remotes,
+                exclusive_resources=self.distros_uris + repositories + remotes,
                 args=(repository_ids + remote_ids,),
             )
 

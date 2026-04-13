@@ -1,0 +1,1 @@
+Fixed a race condition that could sometimes occur when converting an existing non-replica Pulp instance into a replica ("reverse-replication"). Likely rare in real world use.
