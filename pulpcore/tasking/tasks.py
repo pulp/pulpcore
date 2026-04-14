@@ -193,6 +193,8 @@ def dispatch(
     Raises:
         ValueError: When `resources` is an unsupported type.
     """
+    if settings.TASK_PREFER_DEFER and deferred and immediate:
+        immediate = False
 
     # Can't run short tasks immediately if running from thread pool
     immediate = immediate and not running_from_thread_pool()
