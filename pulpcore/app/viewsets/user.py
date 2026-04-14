@@ -26,6 +26,7 @@ from pulpcore.app.serializers import (
     GroupUserSerializer,
     GroupRoleSerializer,
     LoginSerializer,
+    LoginUpdateSerializer,
     RoleSerializer,
     UserSerializer,
     UserRoleSerializer,
@@ -452,6 +453,20 @@ class LoginViewSet(generics.CreateAPIView):
     def delete(self, request):
         auth_logout(request)
         return Response(status=204)
+
+    @extend_schema(
+        operation_id="login_update",
+        request=LoginUpdateSerializer,
+        responses={200: LoginUpdateSerializer},
+    )
+    def patch(self, request):
+        instance = request.user
+        serializer = LoginUpdateSerializer(
+            instance, data=request.data, context={"request": request}, partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 # Annotate without redefining the post method.
