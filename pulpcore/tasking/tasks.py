@@ -289,6 +289,8 @@ def dispatch(
     Raises:
         ValueError: When `resources` is an unsupported type.
     """
+    if settings.TASK_PREFER_DEFER and deferred and immediate:
+        immediate = False
     # Check WORKER_TYPE setting and delegate to appropriate implementation
     if settings.WORKER_TYPE == "redis":
         from pulpcore.tasking.redis_tasks import dispatch as redis_dispatch
@@ -347,6 +349,8 @@ async def adispatch(
     versions=None,
 ):
     """Async version of dispatch."""
+    if settings.TASK_PREFER_DEFER and deferred and immediate:
+        immediate = False
     # Check WORKER_TYPE setting and delegate to appropriate implementation
     if settings.WORKER_TYPE == "redis":
         from pulpcore.tasking.redis_tasks import adispatch as redis_adispatch

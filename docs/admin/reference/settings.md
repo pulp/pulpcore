@@ -392,6 +392,16 @@ This time is only accurate to one worker heartbeat corresponding to `WORKER_TTL 
 
 Defaults to `600` seconds.
 
+### TASK\_PREFER\_DEFER
+
+For tasks that are designed to run immediately, but could be deferred to a task worker, always choose to defer to the worker.
+This is helpful for systems with slow databases that could cause the immediate task to timeout after its 5 second limit.
+
+!!! note
+    Setting this to `True` will slow your Pulp's task throughput, especially if you perform many immediate tasks frequently.
+
+Defaults to `False`.
+
 ### TASK\_PROTECTION\_TIME, TMPFILE\_PROTECTION\_TIME and UPLOAD\_PROTECTION\_TIME
 
 Pulp uses `tasks`, `pulp temporary files` and `uploads` to pass data from the api to worker tasks.
