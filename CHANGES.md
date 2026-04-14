@@ -8,6 +8,29 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.85.16 (2026-04-14) {: #3.85.16 }
+
+### REST API {: #3.85.16-rest-api }
+
+#### Bugfixes {: #3.85.16-rest-api-bugfix }
+
+- Fixed `reset-admin-password` command failing when using `--random` option on Django 5.
+  [#7533](https://github.com/pulp/pulpcore/issues/7533)
+
+### Plugin API {: #3.85.16-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.85.16-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.16-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.85.15 (2026-03-24) {: #3.85.15 }
 
 ### REST API {: #3.85.15-rest-api }
