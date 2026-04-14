@@ -8,6 +8,44 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.108.0 (2026-04-14) {: #3.108.0 }
+
+### REST API {: #3.108.0-rest-api }
+
+#### Features {: #3.108.0-rest-api-feature }
+
+- Added WORKER_TYPE setting. Defaults to 'pulpcore'. 'redis' is also available.
+  [#7210](https://github.com/pulp/pulpcore/issues/7210)
+- Added OTEL_METRICS_DISPATCH_INTERVAL_MINUTES setting to allow configuring the periodic telemetry
+  dispatch interval (default: 5 minutes).
+  [#7532](https://github.com/pulp/pulpcore/issues/7532)
+- Added `pulpcore.app.find_url.find_api_root()` to standardize Pulp url-creation.
+
+#### Bugfixes {: #3.108.0-rest-api-bugfix }
+
+- Set default ``--max-requests 10000`` and ``--max-requests-jitter 500`` for API workers
+  to prevent unbounded RSS growth from glibc heap fragmentation over long-lived worker processes.
+  [#7482](https://github.com/pulp/pulpcore/issues/7482)
+- Fixed `reset-admin-password` command failing when using `--random` option on Django 5.
+  [#7533](https://github.com/pulp/pulpcore/issues/7533)
+- Fixed a race condition that could sometimes occur when converting an existing non-replica Pulp instance into a replica ("reverse-replication"). Likely rare in real world use.
+
+### Plugin API {: #3.108.0-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.108.0-pulp-file }
+
+#### Misc {: #3.108.0-pulp-file-misc }
+
+- 
+
+### Pulp Cert Guard {: #3.108.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.107.1 (2026-04-09) {: #3.107.1 }
 
 ### REST API {: #3.107.1-rest-api }
