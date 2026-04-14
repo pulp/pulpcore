@@ -5,7 +5,7 @@ from gettext import gettext as _
 from django.contrib.auth import get_user_model
 from django.contrib.auth import login as auth_login
 from django.contrib.auth.models import Permission
-from django.contrib.auth.hashers import make_password
+from django.contrib.auth.hashers import make_password, check_password
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.contenttypes.models import ContentType
 from rest_framework import serializers
@@ -548,3 +548,62 @@ class LoginSerializer(serializers.Serializer):
         user = self.context["request"].user
         auth_login(self.context["request"], user)
         return user
+
+
+class LoginUpdateSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(
+        help_text=_("150 characters or fewer. Letters, digits and @/./+/-/_ only."),
+        max_length=150,
+        validators=[UniqueValidator(queryset=User.objects.all())],
+        required=False,
+    )
+    old_password = serializers.CharField(
+        help_text=_("Old password"),
+        write_only=True,
+        required=False,
+        style={"input_type": "password"},
+    )
+    new_password = serializers.CharField(
+        help_text=_("New password"),
+        write_only=True,
+        required=False,
+        style={"input_type": "password"},
+    )
+    first_name = serializers.CharField(
+        help_text=_("First name"),
+        max_length=150,
+        allow_blank=True,
+        required=False,
+    )
+    last_name = serializers.CharField(
+        help_text=_("Last name"),
+        max_length=150,
+        allow_blank=True,
+        required=False,
+    )
+    email = serializers.EmailField(
+        help_text=_("Email address"),
+        allow_blank=True,
+        required=False,
+    )
+
+    def validate(self, data):
+        data = super().validate(data)
+        if "new_password" in data and "old_password" not in data:
+            raise serializers.ValidationError(_("Old password is required to update the password."))
+        if "new_password" in data and "old_password" in data:
+            old_password = data.pop("old_password")
+            new_password = data.pop("new_password")
+            if not check_password(old_password, self.context["request"].user.password):
+                raise serializers.ValidationError(_("Old password is incorrect."))
+            if new_password == old_password:
+                raise serializers.ValidationError(
+                    _("New password cannot be the same as the old password.")
+                )
+            validate_password(new_password)
+            data["password"] = make_password(new_password)
+        return data
+
+    class Meta:
+        model = User
+        fields = ("username", "old_password", "new_password", "first_name", "last_name", "email")
