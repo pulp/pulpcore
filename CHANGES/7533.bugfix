@@ -1,1 +1,0 @@
-Fixed `reset-admin-password` command failing when using `--random` option on Django 5.
