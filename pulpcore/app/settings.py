@@ -391,6 +391,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 # NOTE: "memray" and "pyinstrument" require additional packages to be installed on the system.
 TASK_DIAGNOSTICS = []  # ["memory", "pyinstrument", "memray", "logs", "debug-logs"]
 
+# For immediate tasks that can be deferred, always defer them to a worker.
+TASK_PREFER_DEFER = False
+
 ANALYTICS = True
 
 HIDE_GUARDED_DISTRIBUTIONS = False
