@@ -1,0 +1,1 @@
+Added new setting `TASK_PREFER_DEFER` to always defer immediate tasks to a task worker. Useful for systems with slow databases that frequently timeout immediate tasks.

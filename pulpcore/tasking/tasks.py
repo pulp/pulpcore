@@ -261,6 +261,8 @@ def dispatch(
     Raises:
         ValueError: When `resources` is an unsupported type.
     """
+    if settings.TASK_PREFER_DEFER and deferred and immediate:
+        immediate = False
 
     execute_now = immediate and not called_from_content_app()
     assert deferred or immediate, "A task must be at least `deferred` or `immediate`."
@@ -303,6 +305,9 @@ async def adispatch(
     versions=None,
 ):
     """Async version of dispatch."""
+    if settings.TASK_PREFER_DEFER and deferred and immediate:
+        immediate = False
+
     execute_now = immediate and not called_from_content_app()
     assert deferred or immediate, "A task must be at least `deferred` or `immediate`."
     function_name = get_function_name(func)
