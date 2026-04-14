@@ -41,7 +41,7 @@ def test_replication(
         assert task.state == "completed"
 
 
-@pytest.mark.parallel
+# @pytest.mark.parallel
 def test_replication_idempotence(
     domain_factory,
     bindings_cfg,
@@ -168,7 +168,7 @@ def test_replication_idempotence(
     assert upstream_pulp2.prn.split(":")[-1] == new_remote.pulp_labels["UpstreamPulp"]
 
 
-@pytest.mark.parallel
+# @pytest.mark.parallel
 def test_replication_with_repo_based_distribution(
     domain_factory,
     bindings_cfg,
@@ -711,7 +711,7 @@ def populate_upstream(
     return _populate_upstream
 
 
-@pytest.mark.parallel
+# @pytest.mark.parallel
 def test_replicate_with_basic_q_select(
     domain_factory,
     populate_upstream,
@@ -771,7 +771,7 @@ def test_replicate_with_basic_q_select(
     assert result.results[0].name == "0"
 
 
-@pytest.mark.parallel
+# @pytest.mark.parallel
 def test_replicate_with_complex_q_select(
     domain_factory,
     populate_upstream,
@@ -848,7 +848,7 @@ def add_domain_objects_to_cleanup(add_to_cleanup, file_bindings):
                 add_to_cleanup(api_client, item.pulp_href)
 
 
-@pytest.mark.parallel
+# @pytest.mark.parallel
 @pytest.mark.parametrize(
     "policy,results",
     [
