@@ -246,7 +246,7 @@ class PulpAppConfig(PulpPluginAppConfig):
     label = "core"
 
     # The version of this app
-    version = "3.73.31"
+    version = "3.73.32.dev"
 
     # The python package name providing this app
     python_package_name = "pulpcore"
