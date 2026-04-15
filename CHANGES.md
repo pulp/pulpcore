@@ -8,6 +8,44 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.108.0 (2026-04-14) {: #3.108.0 }
+
+### REST API {: #3.108.0-rest-api }
+
+#### Features {: #3.108.0-rest-api-feature }
+
+- Added WORKER_TYPE setting. Defaults to 'pulpcore'. 'redis' is also available.
+  [#7210](https://github.com/pulp/pulpcore/issues/7210)
+- Added OTEL_METRICS_DISPATCH_INTERVAL_MINUTES setting to allow configuring the periodic telemetry
+  dispatch interval (default: 5 minutes).
+  [#7532](https://github.com/pulp/pulpcore/issues/7532)
+- Added `pulpcore.app.find_url.find_api_root()` to standardize Pulp url-creation.
+
+#### Bugfixes {: #3.108.0-rest-api-bugfix }
+
+- Set default ``--max-requests 10000`` and ``--max-requests-jitter 500`` for API workers
+  to prevent unbounded RSS growth from glibc heap fragmentation over long-lived worker processes.
+  [#7482](https://github.com/pulp/pulpcore/issues/7482)
+- Fixed `reset-admin-password` command failing when using `--random` option on Django 5.
+  [#7533](https://github.com/pulp/pulpcore/issues/7533)
+- Fixed a race condition that could sometimes occur when converting an existing non-replica Pulp instance into a replica ("reverse-replication"). Likely rare in real world use.
+
+### Plugin API {: #3.108.0-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.108.0-pulp-file }
+
+#### Misc {: #3.108.0-pulp-file-misc }
+
+- 
+
+### Pulp Cert Guard {: #3.108.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.107.1 (2026-04-09) {: #3.107.1 }
 
 ### REST API {: #3.107.1-rest-api }
@@ -122,6 +160,29 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.106.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.105.3 (2026-04-14) {: #3.105.3 }
+
+### REST API {: #3.105.3-rest-api }
+
+#### Bugfixes {: #3.105.3-rest-api-bugfix }
+
+- Fixed `reset-admin-password` command failing when using `--random` option on Django 5.
+  [#7533](https://github.com/pulp/pulpcore/issues/7533)
+
+### Plugin API {: #3.105.3-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.105.3-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.105.3-pulp-cert-guard }
 
 No significant changes.
 
@@ -1155,6 +1216,29 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.86.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.85.16 (2026-04-14) {: #3.85.16 }
+
+### REST API {: #3.85.16-rest-api }
+
+#### Bugfixes {: #3.85.16-rest-api-bugfix }
+
+- Fixed `reset-admin-password` command failing when using `--random` option on Django 5.
+  [#7533](https://github.com/pulp/pulpcore/issues/7533)
+
+### Plugin API {: #3.85.16-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.85.16-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.16-pulp-cert-guard }
 
 No significant changes.
 
@@ -2279,6 +2363,29 @@ No significant changes.
   [#6244](https://github.com/pulp/pulpcore/issues/6244)
 
 ### Pulp Cert Guard {: #3.74.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.73.31 (2026-04-14) {: #3.73.31 }
+
+### REST API {: #3.73.31-rest-api }
+
+#### Bugfixes {: #3.73.31-rest-api-bugfix }
+
+- Fixed `reset-admin-password` command failing when using `--random` option on Django 5.
+  [#7533](https://github.com/pulp/pulpcore/issues/7533)
+
+### Plugin API {: #3.73.31-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.73.31-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.31-pulp-cert-guard }
 
 No significant changes.
 
@@ -3675,6 +3782,29 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.64.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.63.35 (2026-04-14) {: #3.63.35 }
+
+### REST API {: #3.63.35-rest-api }
+
+#### Bugfixes {: #3.63.35-rest-api-bugfix }
+
+- Fixed `reset-admin-password` command failing when using `--random` option on Django 5.
+  [#7533](https://github.com/pulp/pulpcore/issues/7533)
+
+### Plugin API {: #3.63.35-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.35-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.35-pulp-cert-guard }
 
 No significant changes.
 
@@ -5314,6 +5444,29 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard
+
+No significant changes.
+
+---
+
+## 3.49.58 (2026-04-14) {: #3.49.58 }
+
+### REST API {: #3.49.58-rest-api }
+
+#### Bugfixes {: #3.49.58-rest-api-bugfix }
+
+- Fixed `reset-admin-password` command failing when using `--random` option on Django 5.
+  [#7533](https://github.com/pulp/pulpcore/issues/7533)
+
+### Plugin API {: #3.49.58-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.58-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.58-pulp-cert-guard }
 
 No significant changes.
 
