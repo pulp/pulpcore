@@ -439,8 +439,8 @@ def gpg_verify(public_keys, signature, detached_data=None):
             sig_data = signature.read()
 
     try:
-        sig = Sig.from_bytes(sig_data)
         if detached_data is not None:
+            sig = Sig.from_bytes(sig_data)
             result = verify(file=detached_data, store=store, signature=sig)
         else:
             result = verify(bytes=sig_data, store=store)
