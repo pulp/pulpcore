@@ -30,11 +30,32 @@ oci-env test --help # run the functional/unit tests
 oci-env pulpcore-manager  # run any pulpcore or Django commands
 ```
 
+## Generating client bindings
+
+Functional tests require Python client bindings (generated from the OpenAPI spec). The bindings must be regenerated whenever the API spec changes (e.g. new fields, endpoints, or serializer changes). The `pulp-openapi-generator` repo must be cloned as a sibling directory (`../pulp-openapi-generator`).
+
+```bash
+# Generate and install client bindings for ALL plugins in DEV_SOURCE_PATH
+oci-env generate-client -i
+
+# Generate and install bindings for a specific plugin only
+oci-env generate-client -i pulpcore
+oci-env generate-client -i pulp_file
+
+# Generate without installing (e.g. to inspect the generated code)
+oci-env generate-client pulp_file
+
+# Generate Ruby bindings instead of Python
+oci-env generate-client -l ruby pulp_file
+```
+
+**Common gotcha:** If functional tests fail with `AttributeError` or missing client classes, it usually means the bindings are stale. Regenerate and reinstall them with `oci-env generate-client -i`.
+
 ## Running/Writing tests
 
 Prefer writing functional tests for new changes/bugfixes and only fallback on unit tests when the change is not easily testable through the API.
 
-pulpcore & pulp-file functional tests require both client bindings to be installed. The bindings must be regenerated for any changes to the API spec.
+pulpcore & pulp-file functional tests require both client bindings to be installed. The bindings must be regenerated for any changes to the API spec (see [Generating client bindings](#generating-client-bindings) above).
 
 **Always** use the `oci-env` to run the functional and unit tests.
 
