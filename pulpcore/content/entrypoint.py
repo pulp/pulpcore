@@ -2,7 +2,10 @@ import sys
 
 import click
 from pulpcore.app.netutil import has_ipv6
-from pulpcore.app.pulpcore_gunicorn_application import PulpcoreGunicornApplication
+from pulpcore.app.pulpcore_gunicorn_application import (
+    handle_control_interface_feature,
+    PulpcoreGunicornApplication,
+)
 from django.conf import settings
 
 
@@ -51,6 +54,11 @@ class PulpcoreContentApplication(PulpcoreGunicornApplication):
 @click.option("--user", "-u")
 @click.option("--group", "-g")
 @click.option(
+    "--control-socket",
+    "control_socket",
+    help="Path to the gunicorn control socket (requires gunicorn>=25.1).",
+)
+@click.option(
     "--name-template",
     type=str,
     help="Format string to use for the status name. "
@@ -61,5 +69,6 @@ def main(bind, name_template, **options):
     if name_template:
         settings.set("WORKER_NAME_TEMPLATE", name_template)
     options["bind"] = list(bind)
+    handle_control_interface_feature(options)
     sys.argv = sys.argv[:1]
     PulpcoreContentApplication(options).run()
