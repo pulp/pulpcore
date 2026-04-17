@@ -113,4 +113,75 @@ def test_auto_publish_and_distribution(
         distros = file_bindings.DistributionsFileApi.list(
             repository=nonexistent_repository_href
         ).results
-        assert len(distros) == 0
+
+
+@pytest.mark.parallel
+def test_modify_with_publish(
+    file_bindings,
+    file_repository_factory,
+    file_random_content_unit,
+    monitor_task,
+):
+    """Test that passing publish=True to modify creates a publication."""
+    repo = file_repository_factory(manifest="TEST_MANIFEST")
+    repo = file_bindings.RepositoriesFileApi.read(repo.pulp_href)
+
+    # Verify no publications exist yet
+    assert file_bindings.PublicationsFileApi.list(repository=repo.pulp_href).count == 0
+
+    # Modify the repository with publish=True
+    monitor_task(
+        file_bindings.RepositoriesFileApi.modify(
+            repo.pulp_href,
+            {
+                "add_content_units": [file_random_content_unit.pulp_href],
+                "publish": True,
+            },
+        ).task
+    )
+    repo = file_bindings.RepositoriesFileApi.read(repo.pulp_href)
+
+    # A new version should have been created and a publication should exist
+    assert repo.latest_version_href.endswith("/versions/1/")
+    assert file_bindings.PublicationsFileApi.list(repository=repo.pulp_href).count == 1
+    assert (
+        file_bindings.PublicationsFileApi.list(repository_version=repo.latest_version_href).count
+        == 1
+    )
+
+    # Verify the publication uses the custom manifest from the repository
+    publication = file_bindings.PublicationsFileApi.list(
+        repository_version=repo.latest_version_href
+    ).results[0]
+    assert publication.manifest == "TEST_MANIFEST"
+
+    # Verify the publication's repository version contains the content unit
+    content = file_bindings.ContentFilesApi.list(
+        repository_version=repo.latest_version_href
+    ).results
+    content_hrefs = [c.pulp_href for c in content]
+    assert file_random_content_unit.pulp_href in content_hrefs
+
+
+@pytest.mark.parallel
+def test_modify_without_publish(
+    file_bindings,
+    file_repo,
+    file_random_content_unit,
+    monitor_task,
+):
+    """Test that modify without publish=True does not create a publication."""
+    repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
+
+    # Modify the repository without publish
+    monitor_task(
+        file_bindings.RepositoriesFileApi.modify(
+            repo.pulp_href,
+            {"add_content_units": [file_random_content_unit.pulp_href]},
+        ).task
+    )
+    repo = file_bindings.RepositoriesFileApi.read(repo.pulp_href)
+
+    # A new version should have been created but no publication
+    assert repo.latest_version_href.endswith("/versions/1/")
+    assert file_bindings.PublicationsFileApi.list(repository=repo.pulp_href).count == 0

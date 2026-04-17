@@ -1,5 +1,8 @@
+import inspect
+
 from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 
 from pulpcore.app import tasks
 from pulpcore.app.models import RepositoryVersion
@@ -35,14 +38,26 @@ class ModifyRepositoryActionMixin:
         else:
             base_version_pk = None
 
+        publish = serializer.validated_data.get("publish", False)
+
+        task_kwargs = {
+            "repository_pk": pk,
+            "base_version_pk": base_version_pk,
+            "add_content_units": serializer.validated_data.get("add_content_units", []),
+            "remove_content_units": serializer.validated_data.get("remove_content_units", []),
+        }
+
+        if publish:
+            sig = inspect.signature(self.modify_task)
+            if "publish" not in sig.parameters:
+                raise ValidationError(
+                    {"publish": "This repository type does not support the publish parameter."}
+                )
+            task_kwargs["publish"] = True
+
         task = dispatch(
             self.modify_task,
             exclusive_resources=[repository],
-            kwargs={
-                "repository_pk": pk,
-                "base_version_pk": base_version_pk,
-                "add_content_units": serializer.validated_data.get("add_content_units", []),
-                "remove_content_units": serializer.validated_data.get("remove_content_units", []),
-            },
+            kwargs=task_kwargs,
         )
         return OperationPostponedResponse(task, request)

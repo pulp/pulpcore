@@ -102,19 +102,20 @@ class FileRepository(Repository, AutoAddObjPermsMixin):
             ("repair_filerepository", "Can repair repository versions"),
         ]
 
-    def on_new_version(self, version):
+    def on_new_version(self, version, publish=False):
         """
         Called when new repository versions are created.
 
         Args:
             version: The new repository version.
+            publish: Whether to publish this version.
         """
         super().on_new_version(version)
 
         # avoid circular import issues
         from pulp_file.app import tasks
 
-        if self.autopublish:
+        if self.autopublish or publish:
             tasks.publish(
                 manifest=self.manifest,
                 repository_version_pk=version.pk,

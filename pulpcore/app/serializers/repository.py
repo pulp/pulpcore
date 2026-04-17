@@ -332,6 +332,14 @@ class RepositoryAddRemoveContentSerializer(ModelSerializer, NestedHyperlinkedMod
             "for the new repository version"
         ),
     )
+    publish = serializers.BooleanField(
+        required=False,
+        default=False,
+        help_text=_(
+            "Whether to publish the repository version created by this modification. "
+            "The repository's modify task must support the ``publish`` parameter."
+        ),
+    )
 
     def validate_add_content_units(self, value):
         add_content_units = {}
@@ -365,4 +373,4 @@ class RepositoryAddRemoveContentSerializer(ModelSerializer, NestedHyperlinkedMod
 
     class Meta:
         model = models.RepositoryVersion
-        fields = ["add_content_units", "remove_content_units", "base_version"]
+        fields = ["add_content_units", "remove_content_units", "base_version", "publish"]
