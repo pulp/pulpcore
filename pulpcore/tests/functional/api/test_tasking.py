@@ -463,6 +463,18 @@ def test_scope_task_groups(pulpcore_bindings, task_group, gen_user):
 
 
 @pytest.mark.parallel
+def test_finalizer_task_runs_after_all_siblings(dispatch_task_group, monitor_task_group):
+    """
+    A finalizer task that holds an exclusive resource lock should not start before all
+    sibling tasks holding shared locks on that resource have completed.
+    """
+    resource = str(uuid4())
+    group_task = "pulpcore.app.tasks.test.group_task_with_finalizer"
+    tgroup_href = dispatch_task_group(group_task, args=(resource,))
+    monitor_task_group(tgroup_href)
+
+
+@pytest.mark.parallel
 def test_cancel_task_group(pulpcore_bindings, dispatch_task_group, gen_user):
     """Test that task groups can be canceled."""
     kwargs = {"inbetween": 1, "intervals": [10, 10, 10, 10, 10]}
