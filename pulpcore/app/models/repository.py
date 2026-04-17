@@ -323,20 +323,31 @@ class Repository(MasterModel):
         """
         from .publication import Distribution, Publication
 
+        protected_pks = set()
+
         # find all repo versions set on a distribution
-        qs = self.versions.filter(pk__in=Distribution.objects.values_list("repository_version_id"))
+        protected_pks.update(
+            Distribution.objects.filter(
+                repository_version__repository=self,
+            ).values_list("repository_version_id", flat=True)
+        )
 
         # find all repo versions with publications set on a distribution
-        qs |= self.versions.filter(
-            publication__pk__in=Distribution.objects.values_list("publication_id")
+        dist_pub_ids = Distribution.objects.values_list("publication_id", flat=True)
+        protected_pks.update(
+            Publication.objects.filter(
+                pk__in=dist_pub_ids,
+                repository_version__repository=self,
+            ).values_list("repository_version_id", flat=True)
         )
 
         # Protect repo versions of distributed checkpoint publications.
         if Distribution.objects.filter(repository=self.pk, checkpoint=True).exists():
-            qs |= self.versions.filter(
-                publication__pk__in=Publication.objects.filter(checkpoint=True).values_list(
-                    "pulp_id"
-                )
+            protected_pks.update(
+                Publication.objects.filter(
+                    checkpoint=True,
+                    repository_version__repository=self,
+                ).values_list("repository_version_id", flat=True)
             )
 
         if distro := Distribution.objects.filter(repository=self.pk, checkpoint=False).first():
@@ -352,9 +363,12 @@ class Repository(MasterModel):
                 version = self.latest_version()
 
             if version:
-                qs |= self.versions.filter(pk=version.pk)
+                protected_pks.add(version.pk)
 
-        return qs.distinct()
+        # Discard None values from distributions with no repository_version set
+        protected_pks.discard(None)
+
+        return self.versions.filter(pk__in=protected_pks)
 
     def pull_through_add_content(self, content_artifact):
         """
@@ -416,7 +430,9 @@ class Repository(MasterModel):
         if self.retain_repo_versions:
             # Consider only completed versions that aren't protected for cleanup
             versions = self.versions.complete().exclude(pk__in=self.protected_versions())
-            for version in versions.order_by("-number")[self.retain_repo_versions :]:
+            for version in versions.defer("content_ids").order_by("-number")[
+                self.retain_repo_versions :
+            ]:
                 _logger.info(
                     "Deleting repository version {} due to version retention limit.".format(version)
                 )
