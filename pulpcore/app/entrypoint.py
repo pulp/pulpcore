@@ -14,7 +14,10 @@ from gunicorn.workers.sync import SyncWorker
 
 from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app.netutil import has_ipv6
-from pulpcore.app.pulpcore_gunicorn_application import PulpcoreGunicornApplication
+from pulpcore.app.pulpcore_gunicorn_application import (
+    handle_control_interface_feature,
+    PulpcoreGunicornApplication,
+)
 
 logger = getLogger(__name__)
 
@@ -146,7 +149,7 @@ class PulpcoreApiApplication(PulpcoreGunicornApplication):
 
 
 @click.option(
-    "--bind", "-b", default=[f"{ '[::]' if has_ipv6() else '0.0.0.0' }:24817"], multiple=True
+    "--bind", "-b", default=[f"{'[::]' if has_ipv6() else '0.0.0.0'}:24817"], multiple=True
 )
 @click.option("--workers", "-w", type=int)
 # @click.option("--threads", "-w", type=int)  # We don't use a threaded worker...
@@ -181,6 +184,11 @@ class PulpcoreApiApplication(PulpcoreGunicornApplication):
 @click.option("--user", "-u")
 @click.option("--group", "-g")
 @click.option(
+    "--control-socket",
+    "control_socket",
+    help="Path to the gunicorn control socket (requires gunicorn>=25.1).",
+)
+@click.option(
     "--name-template",
     type=str,
     help="Format string to use for the status name. "
@@ -190,5 +198,6 @@ class PulpcoreApiApplication(PulpcoreGunicornApplication):
 def main(bind, name_template, **options):
     name_template_var.set(name_template)
     options["bind"] = list(bind)
+    handle_control_interface_feature(options)
     sys.argv = sys.argv[:1]
     PulpcoreApiApplication(options).run()
