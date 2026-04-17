@@ -1,0 +1,2 @@
+Optimized cleanup_old_versions() by rewriting protected_versions() to avoid expensive JOINs
+on large databases and deferring the content_ids field during version deletion.
