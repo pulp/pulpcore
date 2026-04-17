@@ -1,6 +1,22 @@
 import sys
+from importlib.metadata import version as pkg_version
 
 from gunicorn.app.base import Application
+
+
+def handle_control_interface_feature(options):
+    """Drop control_socket from options if gunicorn<25.1, which introduced the feature."""
+    # TODO: remove this function when gunicorn lowerbound>=25.1
+    if options.get("control_socket") is None:
+        return
+
+    gunicorn_version = tuple(int(x) for x in pkg_version("gunicorn").split(".")[:2])
+    if gunicorn_version < (25, 1):
+        sys.stderr.write(
+            "Warning: --control-socket requires gunicorn>=25.1, ignoring "
+            f"(installed: {'.'.join(str(x) for x in gunicorn_version)}).\n"
+        )
+        options["control_socket"] = None
 
 
 class PulpcoreGunicornApplication(Application):

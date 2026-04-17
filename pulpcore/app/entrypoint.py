@@ -12,7 +12,10 @@ from gunicorn.workers.sync import SyncWorker
 
 from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app.netutil import has_ipv6
-from pulpcore.app.pulpcore_gunicorn_application import PulpcoreGunicornApplication
+from pulpcore.app.pulpcore_gunicorn_application import (
+    PulpcoreGunicornApplication,
+    handle_control_interface_feature,
+)
 
 logger = getLogger(__name__)
 
@@ -145,6 +148,11 @@ class PulpcoreApiApplication(PulpcoreGunicornApplication):
 @click.option("--user", "-u")
 @click.option("--group", "-g")
 @click.option(
+    "--control-socket",
+    "control_socket",
+    help="Path to the gunicorn control socket (requires gunicorn>=25.1).",
+)
+@click.option(
     "--name-template",
     type=str,
     help="Format string to use for the status name. "
@@ -154,5 +162,6 @@ class PulpcoreApiApplication(PulpcoreGunicornApplication):
 def main(bind, name_template, **options):
     name_template_var.set(name_template)
     options["bind"] = list(bind)
+    handle_control_interface_feature(options)
     sys.argv = sys.argv[:1]
     PulpcoreApiApplication(options).run()
