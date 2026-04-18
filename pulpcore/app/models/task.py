@@ -443,6 +443,8 @@ class TaskSchedule(BaseModel):
     next_dispatch = models.DateTimeField(default=timezone.now, null=True)
     dispatch_interval = models.DurationField(null=True)
     task_name = models.TextField()
+    task_args = EncryptedJSONField(default=list)
+    task_kwargs = EncryptedJSONField(default=dict)
     last_task = models.ForeignKey(Task, null=True, on_delete=models.SET_NULL)
 
     class Meta:
