@@ -300,6 +300,8 @@ def dispatch_scheduled_tasks():
             with transaction.atomic():
                 task_schedule.last_task = dispatch(
                     task_schedule.task_name,
+                    args=task_schedule.task_args,
+                    kwargs=task_schedule.task_kwargs,
                 )
                 task_schedule.save(update_fields=["next_dispatch", "last_task"])
 
