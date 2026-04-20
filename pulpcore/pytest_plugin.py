@@ -1,6 +1,5 @@
 import aiohttp
 import asyncio
-import gnupg
 import json
 import os
 import pathlib
@@ -1153,6 +1152,10 @@ def signing_gpg_metadata(signing_gpg_homedir_path):
     """A fixture that returns a GPG instance and related metadata (i.e., fingerprint, keyid)."""
     PRIVATE_KEY_URL = "https://raw.githubusercontent.com/pulp/pulp-fixtures/master/common/GPG-PRIVATE-KEY-fixture-signing"  # noqa: E501
 
+    try:
+        import gnupg
+    except ImportError:
+        pytest.fail("python-gnupg is not installed, add to your functest_requirements.txt")
     key_file = pathlib.Path(__file__).parent / "GPG-PRIVATE-KEY-fixture-signing"
     if key_file.exists():
         private_key_data = key_file.read_text()
