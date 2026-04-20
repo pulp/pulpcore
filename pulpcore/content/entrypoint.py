@@ -23,7 +23,7 @@ class PulpcoreContentApplication(PulpcoreGunicornApplication):
 
 
 @click.option(
-    "--bind", "-b", default=[f"{ '[::]' if has_ipv6() else '0.0.0.0' }:24816"], multiple=True
+    "--bind", "-b", default=[f"{'[::]' if has_ipv6() else '0.0.0.0'}:24816"], multiple=True
 )
 @click.option("--workers", "-w", type=int)
 # @click.option("--threads", "-w", type=int)  # We don't use a threaded worker...
