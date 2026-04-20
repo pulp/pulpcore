@@ -1,0 +1,3 @@
+Fixed RedisWorker stalling when more than 20 tasks are waiting on the same resource.
+The worker now doubles its fetch limit and retries until a runnable task is found or the
+entire queue has been examined.
