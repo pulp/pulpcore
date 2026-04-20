@@ -431,89 +431,88 @@ class RedisWorker:
         3. If resource locks acquired, attempts to claim the task
            with a Redis task lock (24h expiration)
         4. Returns the first task for which both locks can be acquired
+        5. If no task found in the batch, doubles the fetch limit and retries from the oldest
 
         Returns:
             Task: A task object if one was successfully locked, None otherwise
         """
-        # Query waiting tasks, sorted by creation time, limited
-        # Filter for app_lock__isnull=True to avoid tasks being executed immediately by API
-        waiting_tasks = (
-            Task.objects.filter(state=TASK_STATES.WAITING, app_lock=None)
-            .exclude(pk__in=self.ignored_task_ids)
-            .order_by("pulp_created")
-            .select_related("pulp_domain")[:FETCH_TASK_LIMIT]
-        )
+        fetch_limit = FETCH_TASK_LIMIT
 
-        # Track resources that are blocked to preserve FIFO ordering
-        # blocked_exclusive: resources where an earlier task wanted exclusive access and failed
-        # blocked_shared: resources where an earlier task wanted shared access and failed
-        blocked_exclusive = set()
-        blocked_shared = set()
+        while True:
+            blocked_exclusive = set()
+            blocked_shared = set()
 
-        # Try to acquire locks for each task
-        for task in waiting_tasks:
-            try:
-                # Extract resources from task
-                exclusive_resources, shared_resources = extract_task_resources(task)
+            waiting_tasks = list(
+                Task.objects.filter(state=TASK_STATES.WAITING, app_lock=None)
+                .exclude(pk__in=self.ignored_task_ids)
+                .order_by("pulp_created")
+                .select_related("pulp_domain")[:fetch_limit]
+            )
 
-                # Check if this task should skip to preserve FIFO ordering
-                should_skip = False
+            if not waiting_tasks:
+                break
 
-                # Skip if we need exclusive access but an earlier task already tried and failed
-                for resource in exclusive_resources:
-                    if resource in blocked_exclusive or resource in blocked_shared:
-                        should_skip = True
-                        break
+            for task in waiting_tasks:
+                try:
+                    exclusive_resources, shared_resources = extract_task_resources(task)
 
-                # Skip if we need shared access but earlier task wanted it and exclusive lock exists
-                if not should_skip:
-                    for resource in shared_resources:
-                        if resource in blocked_shared:
+                    should_skip = False
+
+                    for resource in exclusive_resources:
+                        if resource in blocked_exclusive or resource in blocked_shared:
                             should_skip = True
                             break
 
-                if should_skip:
-                    continue
-
-                # Acquire Redis locks first — avoids wasted DB writes for blocked tasks
-                task_lock_key = get_task_lock_key(task.pk)
-
-                blocked_resource_list = acquire_locks(
-                    self.redis_conn, self.name, task_lock_key, exclusive_resources, shared_resources
-                )
-
-                if blocked_resource_list:
-                    # Failed to acquire locks — no DB writes needed
-                    if "__task_lock__" not in blocked_resource_list:
-                        # Block ALL exclusive resources this task needed to preserve FIFO ordering.
-                        # A later task must not acquire a resource that an earlier task also needs,
-                        # even if the earlier task failed due to a different resource being blocked.
-                        blocked_exclusive.update(exclusive_resources)
-                        # Block shared resources that were explicitly blocked by an exclusive lock.
+                    if not should_skip:
                         for resource in shared_resources:
-                            if resource in blocked_resource_list:
-                                blocked_shared.add(resource)
+                            if resource in blocked_shared:
+                                should_skip = True
+                                break
+
+                    if should_skip:
+                        continue
+
+                    task_lock_key = get_task_lock_key(task.pk)
+
+                    blocked_resource_list = acquire_locks(
+                        self.redis_conn,
+                        self.name,
+                        task_lock_key,
+                        exclusive_resources,
+                        shared_resources,
+                    )
+
+                    if blocked_resource_list:
+                        if "__task_lock__" not in blocked_resource_list:
+                            blocked_exclusive.update(exclusive_resources)
+                            for resource in shared_resources:
+                                if resource in blocked_resource_list:
+                                    blocked_shared.add(resource)
+                        continue
+
+                    rows = Task.objects.filter(
+                        pk=task.pk, state=TASK_STATES.WAITING, app_lock__isnull=True
+                    ).update(app_lock=self.app_status)
+
+                    if rows == 0:
+                        safe_release_task_locks(task, lock_owner=self.name)
+                        _logger.debug(
+                            "WORKER: Task %s no longer claimable, releasing locks", task.pk
+                        )
+                        continue
+
+                    task.app_lock = self.app_status
+                    return task
+
+                except Exception as e:
+                    _logger.error("Error processing task %s: %s", task.pk, e)
                     continue
 
-                # Redis locks acquired — now claim the task in the DB
-                rows = Task.objects.filter(
-                    pk=task.pk, state=TASK_STATES.WAITING, app_lock__isnull=True
-                ).update(app_lock=self.app_status)
+            if len(waiting_tasks) < fetch_limit:
+                break
 
-                if rows == 0:
-                    # Task was canceled or state changed between SELECT and lock attempt
-                    safe_release_task_locks(task, lock_owner=self.name)
-                    _logger.debug("WORKER: Task %s no longer claimable, releasing locks", task.pk)
-                    continue
+            fetch_limit *= 2
 
-                task.app_lock = self.app_status
-                return task
-
-            except Exception as e:
-                _logger.error("Error processing task %s: %s", task.pk, e)
-                continue
-
-        # No task could be locked
         return None
 
     def supervise_immediate_task(self, task):
