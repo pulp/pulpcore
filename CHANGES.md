@@ -8,6 +8,31 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.108.1 (2026-04-20) {: #3.108.1 }
+
+### REST API {: #3.108.1-rest-api }
+
+#### Bugfixes {: #3.108.1-rest-api-bugfix }
+
+- Optimized cleanup_old_versions() by rewriting protected_versions() to avoid expensive JOINs
+  on large databases and deferring the content_ids field during version deletion.
+  [#7594](https://github.com/pulp/pulpcore/issues/7594)
+- Added new setting `TASK_PREFER_DEFER` to always defer immediate tasks to a task worker. Useful for systems with slow databases that frequently timeout immediate tasks.
+
+### Plugin API {: #3.108.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.108.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.108.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.108.0 (2026-04-14) {: #3.108.0 }
 
 ### REST API {: #3.108.0-rest-api }
