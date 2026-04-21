@@ -8,6 +8,28 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.85.17 (2026-04-21) {: #3.85.17 }
+
+### REST API {: #3.85.17-rest-api }
+
+#### Bugfixes {: #3.85.17-rest-api-bugfix }
+
+- Added new setting `TASK_PREFER_DEFER` to always defer immediate tasks to a task worker. Useful for systems with slow databases that frequently timeout immediate tasks.
+
+### Plugin API {: #3.85.17-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.85.17-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.17-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.85.16 (2026-04-14) {: #3.85.16 }
 
 ### REST API {: #3.85.16-rest-api }
