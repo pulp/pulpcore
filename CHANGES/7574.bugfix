@@ -1,4 +1,0 @@
-Added option to `pulpcore-content` and `pulpcore-api` to configure the gunicorn control socket path.
-The default path could cause permission errors on certain deployments setups.
-
-This feature was added in gunicorn>=25.1 and is ignored for lower version.
