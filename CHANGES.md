@@ -8,6 +8,45 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.109.0 (2026-04-21) {: #3.109.0 }
+
+### REST API {: #3.109.0-rest-api }
+
+#### Features {: #3.109.0-rest-api-feature }
+
+- Added support for serving superseded publications for a configurable retention period.
+  [#7514](https://github.com/pulp/pulpcore/issues/7514)
+- Added ability for non-admin users to update their personal account fields
+
+#### Bugfixes {: #3.109.0-rest-api-bugfix }
+
+- Added option to `pulpcore-content` and `pulpcore-api` to configure the gunicorn control socket path.
+  The default path could cause permission errors on certain deployments setups.
+
+  This feature was added in gunicorn>=25.1 and is ignored for lower version.
+  [#7574](https://github.com/pulp/pulpcore/issues/7574)
+- Optimized cleanup_old_versions() by rewriting protected_versions() to avoid expensive JOINs
+  on large databases and deferring the content_ids field during version deletion.
+  [#7594](https://github.com/pulp/pulpcore/issues/7594)
+- Added new setting `TASK_PREFER_DEFER` to always defer immediate tasks to a task worker. Useful for systems with slow databases that frequently timeout immediate tasks.
+
+### Plugin API {: #3.109.0-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.109.0-pulp-file }
+
+#### Bugfixes {: #3.109.0-pulp-file-bugfix }
+
+- Fixed double publish when performing file replication.
+  [#7557](https://github.com/pulp/pulpcore/issues/7557)
+
+### Pulp Cert Guard {: #3.109.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.108.1 (2026-04-20) {: #3.108.1 }
 
 ### REST API {: #3.108.1-rest-api }
@@ -185,6 +224,31 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.106.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.105.4 (2026-04-21) {: #3.105.4 }
+
+### REST API {: #3.105.4-rest-api }
+
+#### Bugfixes {: #3.105.4-rest-api-bugfix }
+
+- Optimized cleanup_old_versions() by rewriting protected_versions() to avoid expensive JOINs
+  on large databases and deferring the content_ids field during version deletion.
+  [#7594](https://github.com/pulp/pulpcore/issues/7594)
+- Added new setting `TASK_PREFER_DEFER` to always defer immediate tasks to a task worker. Useful for systems with slow databases that frequently timeout immediate tasks.
+
+### Plugin API {: #3.105.4-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.105.4-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.105.4-pulp-cert-guard }
 
 No significant changes.
 
@@ -1241,6 +1305,28 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.86.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.85.17 (2026-04-21) {: #3.85.17 }
+
+### REST API {: #3.85.17-rest-api }
+
+#### Bugfixes {: #3.85.17-rest-api-bugfix }
+
+- Added new setting `TASK_PREFER_DEFER` to always defer immediate tasks to a task worker. Useful for systems with slow databases that frequently timeout immediate tasks.
+
+### Plugin API {: #3.85.17-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.85.17-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.17-pulp-cert-guard }
 
 No significant changes.
 
