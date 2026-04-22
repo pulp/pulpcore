@@ -8,6 +8,33 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.109.1 (2026-04-22) {: #3.109.1 }
+
+### REST API {: #3.109.1-rest-api }
+
+#### Bugfixes {: #3.109.1-rest-api-bugfix }
+
+- Fixed RedisWorker stalling when more than 20 tasks are waiting on the same resource.
+  The worker now doubles its fetch limit and retries until a runnable task is found or the
+  entire queue has been examined.
+  [#7612](https://github.com/pulp/pulpcore/issues/7612)
+- Fixed RedisWorker not always respecting FIFO order of tasks with shared resources.
+  [#7616](https://github.com/pulp/pulpcore/issues/7616)
+
+### Plugin API {: #3.109.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.109.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.109.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.109.0 (2026-04-21) {: #3.109.0 }
 
 ### REST API {: #3.109.0-rest-api }
