@@ -439,8 +439,8 @@ class RedisWorker:
         fetch_limit = FETCH_TASK_LIMIT
 
         while True:
-            blocked_exclusive = set()
-            blocked_shared = set()
+            taken_exclusive = set()
+            taken_shared = set()
 
             waiting_tasks = list(
                 Task.objects.filter(state=TASK_STATES.WAITING, app_lock=None)
@@ -455,25 +455,25 @@ class RedisWorker:
             for task in waiting_tasks:
                 try:
                     exclusive_resources, shared_resources = extract_task_resources(task)
-
                     should_skip = False
 
                     for resource in exclusive_resources:
-                        if resource in blocked_exclusive or resource in blocked_shared:
+                        if resource in taken_exclusive or resource in taken_shared:
                             should_skip = True
                             break
 
                     if not should_skip:
                         for resource in shared_resources:
-                            if resource in blocked_shared:
+                            if resource in taken_exclusive:
                                 should_skip = True
                                 break
 
+                    taken_exclusive.update(exclusive_resources)
+                    taken_shared.update(shared_resources)
                     if should_skip:
                         continue
 
                     task_lock_key = get_task_lock_key(task.pk)
-
                     blocked_resource_list = acquire_locks(
                         self.redis_conn,
                         self.name,
@@ -481,13 +481,7 @@ class RedisWorker:
                         exclusive_resources,
                         shared_resources,
                     )
-
                     if blocked_resource_list:
-                        if "__task_lock__" not in blocked_resource_list:
-                            blocked_exclusive.update(exclusive_resources)
-                            for resource in shared_resources:
-                                if resource in blocked_resource_list:
-                                    blocked_shared.add(resource)
                         continue
 
                     rows = Task.objects.filter(
