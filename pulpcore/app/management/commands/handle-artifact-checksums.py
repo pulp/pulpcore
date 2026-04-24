@@ -135,7 +135,7 @@ class Command(BaseCommand):
                                 restored = True
                                 break
                 if not restored:
-                    self.stdout.write(_("Deleting unrepairable file {}".format(file_path)))
+                    self.stdout.write(_("Deleting unrepairable file {}").format(file_path))
                     artifact.file.delete(save=False)
             else:
                 break
