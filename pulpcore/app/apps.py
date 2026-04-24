@@ -1,5 +1,4 @@
 import random
-
 from collections import defaultdict
 from gettext import gettext as _
 from importlib import import_module
@@ -159,8 +158,8 @@ class PulpPluginAppConfig(apps.AppConfig):
     def import_viewsets(self):
         # TODO do not include imported ViewSets
         # circular import avoidance
+        from pulpcore.app.models import Content, Repository
         from pulpcore.app.viewsets import NamedModelViewSet
-        from pulpcore.app.models import Repository, Content
 
         self.named_viewsets = defaultdict(list)
         if module_has_submodule(self.module, VIEWSETS_MODULE_NAME):

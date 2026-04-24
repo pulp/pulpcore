@@ -1,6 +1,5 @@
 import asyncio
 import logging
-
 from gettext import gettext as _
 
 from pulpcore.app.util import get_domain

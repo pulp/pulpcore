@@ -1,13 +1,13 @@
 """Tests that CRUD repositories."""
 
 import json
-import pytest
 import re
-
-from uuid import uuid4
-from aiohttp import BasicAuth
 from subprocess import run
 from urllib.parse import urljoin
+from uuid import uuid4
+
+import pytest
+from aiohttp import BasicAuth
 
 from pulpcore.client.pulp_file.exceptions import ApiException
 from pulpcore.tests.functional.utils import download_file

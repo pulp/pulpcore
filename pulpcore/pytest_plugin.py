@@ -1,9 +1,7 @@
-import aiohttp
 import asyncio
 import json
 import os
 import pathlib
-import requests
 import shutil
 import socket
 import ssl
@@ -11,16 +9,18 @@ import subprocess
 import sys
 import threading
 import uuid
-
-import pytest
-
-from aiohttp import web
 from contextlib import suppress
 from dataclasses import dataclass
-from packaging.version import parse as parse_version
 from time import sleep
+
+import aiohttp
+import pytest
+import requests
+from aiohttp import web
+from packaging.version import parse as parse_version
 from yarl import URL
 
+from pulpcore.plugin.find_url import find_api_root
 from pulpcore.tests.functional.utils import (
     SLEEP_TIME,
     TASK_TIMEOUT,
@@ -29,8 +29,6 @@ from pulpcore.tests.functional.utils import (
     PulpTaskGroupError,
     add_recording_route,
 )
-
-from pulpcore.plugin.find_url import find_api_root
 
 try:
     import pulp_smash  # noqa: F401

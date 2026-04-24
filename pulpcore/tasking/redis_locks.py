@@ -6,6 +6,7 @@ resource locks using Redis.
 """
 
 import logging
+
 import redis
 from asgiref.sync import sync_to_async
 

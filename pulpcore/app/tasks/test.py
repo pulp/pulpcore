@@ -1,12 +1,13 @@
 import asyncio
-import backoff
 import os
 import signal
 import time
-from pulpcore.app.models import TaskGroup
-from pulpcore.app.models import Task
-from pulpcore.tasking.tasks import dispatch
+
+import backoff
+
+from pulpcore.app.models import Task, TaskGroup
 from pulpcore.constants import TASK_STATES
+from pulpcore.tasking.tasks import dispatch
 
 
 def dummy_task():

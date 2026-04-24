@@ -1,12 +1,11 @@
 from gettext import gettext as _
 
-from django.db import connection
+import cryptography
 from django.conf import settings
 from django.core.management import BaseCommand, CommandError
+from django.db import connection
 from django.db.models import Q
 from django.utils.encoding import force_bytes, force_str
-
-import cryptography
 
 from pulpcore.app import models
 

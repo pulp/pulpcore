@@ -3,18 +3,17 @@ import os
 import re
 import shutil
 import tempfile
-from hashlib import sha256
-
 from gettext import gettext as _
+from hashlib import sha256
 from urllib.parse import quote, urlparse, urlunparse
 
 import git as gitpython
-from gitdb.exc import BadName, BadObject
-from django.core.files import File
 from django.conf import settings
+from django.core.files import File
+from gitdb.exc import BadName, BadObject
 
 from pulpcore.plugin.exceptions import SyncError
-from pulpcore.plugin.models import Artifact, ProgressReport, Remote, PublishedMetadata
+from pulpcore.plugin.models import Artifact, ProgressReport, PublishedMetadata, Remote
 from pulpcore.plugin.serializers import RepositoryVersionSerializer
 from pulpcore.plugin.stages import (
     DeclarativeArtifact,
@@ -27,8 +26,8 @@ from pulpcore.plugin.stages import (
 from pulp_file.app.models import (
     FileContent,
     FileGitRemote,
-    FileRepository,
     FilePublication,
+    FileRepository,
 )
 from pulp_file.manifest import Manifest
 

@@ -30,18 +30,22 @@ def repair_7272(dry_run=False):
     repos = models.Repository.objects.filter(pulp_domain=domain)
     total_versions = models.RepositoryVersion.objects.filter(repository__in=repos).count()
 
-    with ProgressReport(
-        message="Repositories checked",
-        code="repair.7272.repos_checked",
-        total=repos.count(),
-    ) as repos_progress, ProgressReport(
-        message="Repository versions checked",
-        code="repair.7272.versions_checked",
-        total=total_versions,
-    ) as versions_progress, ProgressReport(
-        message="Repository versions fixed",
-        code="repair.7272.versions_fixed",
-    ) as fixed_progress:
+    with (
+        ProgressReport(
+            message="Repositories checked",
+            code="repair.7272.repos_checked",
+            total=repos.count(),
+        ) as repos_progress,
+        ProgressReport(
+            message="Repository versions checked",
+            code="repair.7272.versions_checked",
+            total=total_versions,
+        ) as versions_progress,
+        ProgressReport(
+            message="Repository versions fixed",
+            code="repair.7272.versions_fixed",
+        ) as fixed_progress,
+    ):
         for repo in repos:
             for rv in models.RepositoryVersion.objects.filter(repository=repo):
                 needs_fix = False
@@ -122,18 +126,22 @@ def repair_7465(dry_run=False):
     repos = models.Repository.objects.filter(pulp_domain=domain)
     total_versions = models.RepositoryVersion.objects.filter(repository__in=repos).count()
 
-    with ProgressReport(
-        message="Repositories checked",
-        code="repair.7465.repos_checked",
-        total=repos.count(),
-    ) as repos_progress, ProgressReport(
-        message="Repository versions checked",
-        code="repair.7465.versions_checked",
-        total=total_versions,
-    ) as versions_progress, ProgressReport(
-        message="Repository versions fixed",
-        code="repair.7465.versions_fixed",
-    ) as fixed_progress:
+    with (
+        ProgressReport(
+            message="Repositories checked",
+            code="repair.7465.repos_checked",
+            total=repos.count(),
+        ) as repos_progress,
+        ProgressReport(
+            message="Repository versions checked",
+            code="repair.7465.versions_checked",
+            total=total_versions,
+        ) as versions_progress,
+        ProgressReport(
+            message="Repository versions fixed",
+            code="repair.7465.versions_fixed",
+        ) as fixed_progress,
+    ):
         for repo in repos:
             for rv in models.RepositoryVersion.objects.filter(repository=repo):
                 versions_progress.increment()

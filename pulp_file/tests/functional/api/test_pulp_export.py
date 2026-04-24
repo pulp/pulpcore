@@ -1,12 +1,11 @@
 import json
+import uuid
 from pathlib import Path
 
 import pytest
-import uuid
 
-from pulpcore.client.pulpcore.exceptions import ApiException
-from pulpcore.client.pulpcore.exceptions import BadRequestException
 from pulpcore.app import settings
+from pulpcore.client.pulpcore.exceptions import ApiException, BadRequestException
 from pulpcore.constants import TASK_STATES
 
 pytestmark = [
@@ -455,9 +454,9 @@ def test_export_chunk_ordering_and_naming(
     toc_filenames = list(toc_data["files"].keys())
     expected_filenames = [p.name for p in tar_chunks]
 
-    assert (
-        toc_filenames == expected_filenames
-    ), f"TOC order mismatch.\nExpected: {expected_filenames}\nActual: {toc_filenames}"
+    assert toc_filenames == expected_filenames, (
+        f"TOC order mismatch.\nExpected: {expected_filenames}\nActual: {toc_filenames}"
+    )
 
     assert toc_data["meta"]["chunk_size"] == chunk_size_bytes
     assert toc_data["meta"]["checksum_type"] == "crc32"

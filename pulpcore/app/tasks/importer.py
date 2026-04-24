@@ -1,22 +1,26 @@
 import json
 import os
 import re
-import tempfile
 import tarfile
+import tempfile
 from contextlib import ExitStack, nullcontext
 from gettext import gettext as _
+from io import StringIO
 from logging import getLogger
 
 import json_stream
 from django.conf import settings
 from django.core.files.storage import default_storage
 from django.db.models import F
-from io import StringIO
 from rest_framework.serializers import ValidationError
 from tablib import Dataset
 
-from pulpcore.exceptions.plugin import MissingPlugin
 from pulpcore.app.apps import get_plugin_config
+from pulpcore.app.modelresource import (
+    ArtifactResource,
+    ContentArtifactResource,
+    RepositoryResource,
+)
 from pulpcore.app.models import (
     AppStatus,
     Artifact,
@@ -30,21 +34,16 @@ from pulpcore.app.models import (
     Task,
     TaskGroup,
 )
-from pulpcore.app.modelresource import (
-    ArtifactResource,
-    ContentArtifactResource,
-    RepositoryResource,
-)
 from pulpcore.app.util import (
-    compute_file_hash,
     Crc32Hasher,
+    compute_file_hash,
     get_domain,
     get_domain_pk,
 )
 from pulpcore.constants import TASK_STATES
-from pulpcore.tasking.tasks import dispatch
-
+from pulpcore.exceptions.plugin import MissingPlugin
 from pulpcore.plugin.importexport import BaseContentResource
+from pulpcore.tasking.tasks import dispatch
 
 log = getLogger(__name__)
 
@@ -88,9 +87,9 @@ class ChunkedFile(ExitStack):
         self.chunk_paths = [os.path.join(toc_dir, chunk_name) for chunk_name in self.chunk_names]
         self.chunk_size = int(self.toc["meta"].get("chunk_size", 0))
         if not self.chunk_size:
-            assert (
-                len(self.toc["files"]) == 1
-            ), "chunk_size must exist and be non-zero if more than one chunk exists"
+            assert len(self.toc["files"]) == 1, (
+                "chunk_size must exist and be non-zero if more than one chunk exists"
+            )
             self.chunk_size = os.path.getsize(self.chunk_paths[0])
 
     def __enter__(self):

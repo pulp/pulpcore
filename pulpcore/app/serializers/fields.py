@@ -5,15 +5,15 @@ from gettext import gettext as _
 from urllib.parse import urljoin
 
 from django.conf import settings
-from drf_spectacular.utils import extend_schema_field
 from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 from rest_framework.fields import empty
 
 from pulpcore.app import models
-from pulpcore.constants import LABEL_KEY_REGEX
 from pulpcore.app.serializers import DetailIdentityField, IdentityField, RelatedField
 from pulpcore.app.util import reverse
+from pulpcore.constants import LABEL_KEY_REGEX
 
 
 def relative_path_validator(relative_path):

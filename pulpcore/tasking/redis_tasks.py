@@ -7,28 +7,33 @@ Redis distributed locks for task coordination.
 
 import contextvars
 import logging
+
 import redis
 from asgiref.sync import sync_to_async
 
-from pulpcore.app.models import Task, TaskGroup, AppStatus
+from pulpcore.app.models import AppStatus, Task, TaskGroup
 from pulpcore.app.redis_connection import get_redis_connection
-from pulpcore.constants import TASK_STATES, TASK_FINAL_STATES
+from pulpcore.constants import TASK_FINAL_STATES, TASK_STATES
 from pulpcore.tasking.redis_locks import (
     acquire_locks,
+    async_safe_release_task_locks,
     extract_task_resources,
     get_task_lock_key,
     safe_release_task_locks,
-    async_safe_release_task_locks,
+)
+from pulpcore.tasking.tasks import (
+    _aexecute_task as _apulpcoreworker_execute_task,
+)
+from pulpcore.tasking.tasks import (
+    _execute_task as _pulpcoreworker_execute_task,
 )
 from pulpcore.tasking.tasks import (
     called_from_content_app,
     get_function_name,
-    get_version,
     get_resources,
     get_task_payload,
+    get_version,
     using_workdir,
-    _execute_task as _pulpcoreworker_execute_task,
-    _aexecute_task as _apulpcoreworker_execute_task,
 )
 
 _logger = logging.getLogger(__name__)

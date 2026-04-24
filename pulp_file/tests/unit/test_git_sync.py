@@ -1,10 +1,9 @@
 """Unit tests for Git sync helper functions."""
 
 import os
-
 from unittest import mock
 
-from pulp_file.app.tasks.synchronizing import _build_clone_url, _build_clone_env
+from pulp_file.app.tasks.synchronizing import _build_clone_env, _build_clone_url
 
 
 class TestBuildCloneUrl:

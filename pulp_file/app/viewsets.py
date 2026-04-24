@@ -3,11 +3,11 @@ import os
 from django.db import transaction
 from django_filters import CharFilter
 from drf_spectacular.utils import extend_schema
-from rest_framework.decorators import action
 from rest_framework import status
+from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
-from rest_framework.exceptions import ValidationError
 
 from pulpcore.plugin.actions import ModifyRepositoryActionMixin
 from pulpcore.plugin.models import (
@@ -28,8 +28,8 @@ from pulpcore.plugin.viewsets import (
     OperationPostponedResponse,
     PublicationViewSet,
     RemoteViewSet,
-    RepositoryViewSet,
     RepositoryVersionViewSet,
+    RepositoryViewSet,
     RolesMixin,
     SingleArtifactContentUploadViewSet,
     TaskGroupOperationResponse,
@@ -41,9 +41,9 @@ from .models import (
     FileContent,
     FileDistribution,
     FileGitRemote,
+    FilePublication,
     FileRemote,
     FileRepository,
-    FilePublication,
 )
 from .serializers import (
     FileAlternateContentSourceSerializer,
@@ -51,9 +51,9 @@ from .serializers import (
     FileContentUploadSerializer,
     FileDistributionSerializer,
     FileGitRemoteSerializer,
+    FilePublicationSerializer,
     FileRemoteSerializer,
     FileRepositorySerializer,
-    FilePublicationSerializer,
 )
 
 

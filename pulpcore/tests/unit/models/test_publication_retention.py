@@ -9,6 +9,7 @@ from pulpcore.app.models import (
     DistributedPublication,
     PublishedArtifact,
 )
+
 from pulp_file.app.models import (
     FileContent,
     FileDistribution,
@@ -36,9 +37,9 @@ def pub_factory(repo_version=None, pass_through=False, create_pa=False):
 
 
 def dist_factory(repo=None, repover=None, pub=None, name=None):
-    assert [repo, repover, pub].count(
-        None
-    ) == 2, "Exactly one of repo, repover, or pub must be provided"
+    assert [repo, repover, pub].count(None) == 2, (
+        "Exactly one of repo, repover, or pub must be provided"
+    )
     name = name or f"dist-{uuid.uuid4().hex[:8]}"
     return FileDistribution.objects.create(
         name=name, base_path=name, repository=repo, repository_version=repover, publication=pub
@@ -46,9 +47,9 @@ def dist_factory(repo=None, repover=None, pub=None, name=None):
 
 
 def update_dist(dist, repo=UNSET, repover=UNSET, pub=UNSET):
-    assert (repo, repover, pub).count(
-        UNSET
-    ) == 2, "Exactly one of repo, repover, or pub must be provided"
+    assert (repo, repover, pub).count(UNSET) == 2, (
+        "Exactly one of repo, repover, or pub must be provided"
+    )
     if repo is not UNSET:
         dist.repository = repo
     if repover is not UNSET:
@@ -74,14 +75,14 @@ def create_version(repo, add=None, remove=None):
             repo_version.remove_content(Content.objects.filter(pk=ca.content_id))
     for path in add or []:
         ca = ContentArtifact.objects.get(relative_path=path)
-        assert repo_version.content.filter(
-            pk=ca.content_id
-        ).exists(), f"{path!r} not found in repository version content"
+        assert repo_version.content.filter(pk=ca.content_id).exists(), (
+            f"{path!r} not found in repository version content"
+        )
     for path in remove or []:
         ca = ContentArtifact.objects.get(relative_path=path)
-        assert not repo_version.content.filter(
-            pk=ca.content_id
-        ).exists(), f"{path!r} should not be in repository version content after removal"
+        assert not repo_version.content.filter(pk=ca.content_id).exists(), (
+            f"{path!r} should not be in repository version content after removal"
+        )
     return repo_version
 
 

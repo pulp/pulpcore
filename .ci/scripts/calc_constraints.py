@@ -7,11 +7,12 @@
 
 import argparse
 import fileinput
-import urllib.request
 import sys
+import urllib.request
+
+import yaml
 from packaging.requirements import Requirement
 from packaging.version import Version
-import yaml
 
 try:
     import tomllib

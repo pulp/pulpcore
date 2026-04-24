@@ -1,9 +1,9 @@
+import asyncio
+import hashlib
 from concurrent.futures import ThreadPoolExecutor
 from contextvars import copy_context
 from gettext import gettext as _
 from logging import getLogger
-import asyncio
-import hashlib
 
 from asgiref.sync import sync_to_async
 from django.db import transaction
@@ -123,13 +123,11 @@ async def _repair_artifacts_for_content(subset=None, verify_checksums=True):
 
     query_set = query_set.filter(content__in=subset.values("pk"))
 
-    async with ProgressReport(
-        message="Identify missing units", code="repair.missing"
-    ) as missing, ProgressReport(
-        message="Identify corrupted units", code="repair.corrupted"
-    ) as corrupted, ProgressReport(
-        message="Repair corrupted units", code="repair.repaired"
-    ) as repaired:
+    async with (
+        ProgressReport(message="Identify missing units", code="repair.missing") as missing,
+        ProgressReport(message="Identify corrupted units", code="repair.corrupted") as corrupted,
+        ProgressReport(message="Repair corrupted units", code="repair.repaired") as repaired,
+    ):
         with ThreadPoolExecutor(max_workers=2) as checksum_executor:
             storage = domain.get_storage()
             async for content_artifact in query_set.select_related("artifact").aiterator():

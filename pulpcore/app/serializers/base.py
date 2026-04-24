@@ -1,19 +1,19 @@
-from gettext import gettext as _
-from logging import getLogger
 import functools
 import re
 import traceback
 from collections import namedtuple
+from gettext import gettext as _
+from logging import getLogger
 from typing import List, TypedDict
 from urllib.parse import urljoin
 
 from cryptography.x509 import load_pem_x509_certificate
 from django.conf import settings
-from django.core.validators import URLValidator
 from django.core.exceptions import ObjectDoesNotExist
-from django.urls.exceptions import NoReverseMatch
+from django.core.validators import URLValidator
 from django.db import IntegrityError
 from django.db.models import Model
+from django.urls.exceptions import NoReverseMatch
 from drf_queryfields.mixins import QueryFieldsMixin
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
@@ -23,21 +23,21 @@ from rest_framework_nested.relations import (
 )
 
 from pulpcore.app.models import (
-    Task,
-    TaskGroup,
-    MasterModel,
     GenericRelationModel,
+    MasterModel,
     Repository,
     RepositoryVersion,
+    Task,
+    TaskGroup,
 )
 from pulpcore.app.util import (
+    get_domain,
+    get_prn,
+    get_request_without_query_params,
     get_view_name_for_model,
     get_viewset_for_model,
-    get_request_without_query_params,
-    get_domain,
-    reverse,
-    get_prn,
     resolve_prn,
+    reverse,
 )
 
 log = getLogger(__name__)
