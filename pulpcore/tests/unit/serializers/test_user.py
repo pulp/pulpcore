@@ -1,12 +1,13 @@
-import pytest
 from unittest.mock import Mock
 
+import pytest
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from rest_framework.exceptions import ValidationError
 
-from pulpcore.app.util import get_url, get_prn
-from pulpcore.app.serializers import UserRoleSerializer, GroupRoleSerializer
+from pulpcore.app.serializers import GroupRoleSerializer, UserRoleSerializer
+from pulpcore.app.util import get_prn, get_url
+
 from pulp_file.app.models import FileRepository
 
 pytestmark = [pytest.mark.django_db]

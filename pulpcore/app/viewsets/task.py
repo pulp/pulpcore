@@ -10,18 +10,18 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.serializers import DictField, URLField, ValidationError
 
-from pulpcore.filters import BaseFilterSet
 from pulpcore.app.models import (
     AppStatus,
+    CreatedResource,
     ProfileArtifact,
+    RepositoryVersion,
     Task,
     TaskGroup,
     TaskSchedule,
-    CreatedResource,
-    RepositoryVersion,
 )
 from pulpcore.app.models.role import UserRole
 from pulpcore.app.response import OperationPostponedResponse
+from pulpcore.app.role_util import get_objects_for_user
 from pulpcore.app.serializers import (
     AsyncOperationResponseSerializer,
     MinimalTaskSerializer,
@@ -33,17 +33,17 @@ from pulpcore.app.serializers import (
     WorkerSerializer,
 )
 from pulpcore.app.tasks import purge
-from pulpcore.app.util import get_domain, get_artifact_url, get_current_user
+from pulpcore.app.util import get_artifact_url, get_current_user, get_domain
 from pulpcore.app.viewsets import NamedModelViewSet, RolesMixin
 from pulpcore.app.viewsets.base import DATETIME_FILTER_OPTIONS, NAME_FILTER_OPTIONS
 from pulpcore.app.viewsets.custom_filters import (
+    CreatedResourcesFilter,
     ReservedResourcesFilter,
     ReservedResourcesInFilter,
-    CreatedResourcesFilter,
 )
 from pulpcore.constants import TASK_INCOMPLETE_STATES, TASK_STATES
-from pulpcore.tasking.tasks import dispatch, cancel_task, cancel_task_group
-from pulpcore.app.role_util import get_objects_for_user
+from pulpcore.filters import BaseFilterSet
+from pulpcore.tasking.tasks import cancel_task, cancel_task_group, dispatch
 
 
 class TaskFilter(BaseFilterSet):

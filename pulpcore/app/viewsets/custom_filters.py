@@ -3,13 +3,11 @@ This module contains custom filters that might be used by more than one ViewSet.
 """
 
 import re
-
 from collections import defaultdict
-from itertools import chain
 from gettext import gettext as _
+from itertools import chain
 
 from django.conf import settings
-from pulpcore.constants import LABEL_KEY_CHARS
 from django.db.models import ObjectDoesNotExist
 from django_filters import BaseInFilter, CharFilter, Filter
 from drf_spectacular.types import OpenApiTypes
@@ -17,9 +15,10 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 from rest_framework.serializers import ValidationError as DRFValidationError
 
-from pulpcore.app.models import Content, ContentArtifact, Repository, RepositoryVersion, Publication
+from pulpcore.app.models import Content, ContentArtifact, Publication, Repository, RepositoryVersion
+from pulpcore.app.util import extract_pk, get_domain_pk, get_prn, raise_for_unknown_content_units
 from pulpcore.app.viewsets import NamedModelViewSet
-from pulpcore.app.util import get_prn, get_domain_pk, extract_pk, raise_for_unknown_content_units
+from pulpcore.constants import LABEL_KEY_CHARS
 
 # Lookup conversion table from old resource hrefs to new PDRN resource names
 OLD_RESOURCE_HREFS = {
@@ -39,9 +38,9 @@ class ReservedResourcesFilter(Filter):
     def __init__(self, *args, exclusive=True, shared=True, **kwargs):
         self.exclusive = exclusive
         self.shared = shared
-        assert (
-            exclusive or shared
-        ), "ReservedResourceFilter must have either exclusive or shared set."
+        assert exclusive or shared, (
+            "ReservedResourceFilter must have either exclusive or shared set."
+        )
         super().__init__(*args, **kwargs)
 
     def filter(self, qs, value):

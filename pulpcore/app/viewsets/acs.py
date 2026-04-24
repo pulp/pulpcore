@@ -6,11 +6,11 @@ from rest_framework.decorators import action
 
 from pulpcore.app import tasks
 from pulpcore.app.models import AlternateContentSource
-from pulpcore.app.serializers import (
-    AsyncOperationResponseSerializer,
-    AlternateContentSourceSerializer,
-)
 from pulpcore.app.response import OperationPostponedResponse
+from pulpcore.app.serializers import (
+    AlternateContentSourceSerializer,
+    AsyncOperationResponseSerializer,
+)
 from pulpcore.app.viewsets import (
     AsyncUpdateMixin,
     NamedModelViewSet,

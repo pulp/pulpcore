@@ -1,8 +1,8 @@
+import uuid
 from collections import defaultdict
 
-import pytest
-import uuid
 import aiofiles
+import pytest
 from aiohttp import web
 
 from pulpcore.client.pulp_file import RepositorySyncURL

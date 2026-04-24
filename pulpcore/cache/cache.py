@@ -1,28 +1,24 @@
 import enum
 import json
 import time
-
 from functools import wraps
 
-from django.http import HttpResponseRedirect, HttpResponse, FileResponse as ApiFileResponse
-
+from aiohttp.web import FileResponse, HTTPSuccessful, Request, Response, StreamResponse
+from aiohttp.web_exceptions import HTTPFound
+from django.http import FileResponse as ApiFileResponse
+from django.http import HttpResponse, HttpResponseRedirect
+from redis import ConnectionError
+from redis.asyncio import ConnectionError as AConnectionError
 from rest_framework.request import Request as ApiRequest
 from rest_framework.response import Response as ApiResponse
 
-from aiohttp.web import FileResponse, Response, HTTPSuccessful, Request, StreamResponse
-from aiohttp.web_exceptions import HTTPFound
-
-from redis import ConnectionError
-from redis.asyncio import ConnectionError as AConnectionError
-
-from pulpcore.app.settings import settings
 from pulpcore.app.redis_connection import (
-    get_redis_connection,
     get_async_redis_connection,
+    get_redis_connection,
 )
-from pulpcore.responses import ArtifactResponse
-
+from pulpcore.app.settings import settings
 from pulpcore.metrics import artifacts_size_counter
+from pulpcore.responses import ArtifactResponse
 
 DEFAULT_EXPIRES_TTL = settings.CACHE_SETTINGS["EXPIRES_TTL"]
 

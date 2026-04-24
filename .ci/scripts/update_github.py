@@ -6,6 +6,7 @@
 # For more info visit https://github.com/pulp/plugin_template
 
 import os
+
 from github import Github
 
 g = Github(os.environ.get("GITHUB_TOKEN"))

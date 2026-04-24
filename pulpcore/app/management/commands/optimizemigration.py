@@ -1,13 +1,13 @@
 from collections import defaultdict
 from gettext import gettext as _
 
+from django.conf import settings
+from django.core.management import BaseCommand
 from django.db import connection
 from django.db.migrations.loader import MigrationLoader
 from django.db.migrations.migration import SwappableTuple
 from django.db.migrations.optimizer import MigrationOptimizer
 from django.db.migrations.writer import MigrationWriter
-from django.conf import settings
-from django.core.management import BaseCommand
 
 
 def print_stats(migration):

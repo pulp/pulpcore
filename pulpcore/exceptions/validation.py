@@ -1,5 +1,6 @@
-from gettext import gettext as _
 import http.client
+from gettext import gettext as _
+
 from pulpcore.exceptions import PulpException
 
 

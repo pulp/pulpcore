@@ -5,8 +5,8 @@ from django.conf import settings
 from django.db import DatabaseError
 from rest_framework import serializers
 
-from pulpcore.plugin.files import PulpTemporaryUploadedFile
 from pulpcore.plugin import models
+from pulpcore.plugin.files import PulpTemporaryUploadedFile
 from pulpcore.plugin.serializers import (
     AlternateContentSourceSerializer,
     ArtifactSerializer,
@@ -25,9 +25,9 @@ from pulp_file.app.models import (
     FileContent,
     FileDistribution,
     FileGitRemote,
+    FilePublication,
     FileRemote,
     FileRepository,
-    FilePublication,
 )
 
 

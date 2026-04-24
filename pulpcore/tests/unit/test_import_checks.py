@@ -1,5 +1,4 @@
 import pytest
-
 from rest_framework.serializers import ValidationError
 
 import pulpcore.app.apps

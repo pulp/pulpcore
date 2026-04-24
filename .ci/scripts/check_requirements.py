@@ -7,12 +7,12 @@
 
 import tomllib
 import warnings
+
 from packaging.requirements import Requirement
 
 CHECK_MATRIX = [
     ("pyproject.toml", True, True, True),
     ("requirements.txt", True, True, True),
-    ("dev_requirements.txt", False, True, False),
     ("ci_requirements.txt", False, True, True),
     ("doc_requirements.txt", False, True, False),
     ("lint_requirements.txt", False, True, True),

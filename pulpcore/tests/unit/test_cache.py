@@ -1,5 +1,6 @@
-import pytest
 from time import sleep
+
+import pytest
 
 import pulpcore.app.redis_connection
 from pulpcore.cache import Cache

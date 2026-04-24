@@ -1,9 +1,9 @@
 import typing as t
 from gettext import gettext as _
 
-from rest_framework import serializers
-from drf_spectacular.utils import extend_schema_serializer
 from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema_serializer
+from rest_framework import serializers
 
 from pulpcore.app import models
 from pulpcore.app.serializers import (
@@ -16,8 +16,8 @@ from pulpcore.app.serializers import (
     TaskGroupStatusCountField,
     fields,
 )
-from pulpcore.constants import TASK_STATES
 from pulpcore.app.util import reverse
+from pulpcore.constants import TASK_STATES
 
 
 class CreatedResourceField(RelatedResourceField):

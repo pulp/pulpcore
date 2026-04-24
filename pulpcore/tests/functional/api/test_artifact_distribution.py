@@ -1,6 +1,7 @@
-import requests
 import subprocess
 from hashlib import sha256
+
+import requests
 
 OBJECT_STORAGES = (
     "storages.backends.s3boto3.S3Boto3Storage",

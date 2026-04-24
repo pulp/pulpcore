@@ -1,9 +1,10 @@
-import typing as t
-from cryptography import x509
-from heapq import heappush, heappop
 import itertools
 import re
+import typing as t
 import zlib
+from heapq import heappop, heappush
+
+from cryptography import x509
 
 RH_OID = "1.3.6.1.4.1.2312.9"
 RH_ORDER_NAME_OID = RH_OID + ".4.1"

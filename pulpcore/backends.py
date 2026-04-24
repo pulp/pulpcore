@@ -1,12 +1,12 @@
 from gettext import gettext as _
-
-from django.contrib.contenttypes.models import ContentType
-from django.contrib.auth.backends import BaseBackend
-from django.contrib.auth.models import Permission
 from itertools import chain
 
-from pulpcore.app.models.role import GroupRole
+from django.contrib.auth.backends import BaseBackend
+from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
+
 from pulpcore.app.models import Domain
+from pulpcore.app.models.role import GroupRole
 
 
 class ObjectRolePermissionBackend(BaseBackend):
