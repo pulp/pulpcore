@@ -29,22 +29,22 @@ from pulpcore.responses import ArtifactResponse
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pulpcore.app.settings")
 django.setup()
 
-from django.conf import settings  # noqa: E402: module level not at top of file
-from django.core.exceptions import (  # noqa: E402: module level not at top of file
+from django.conf import settings  # noqa: E402
+from django.core.exceptions import (  # noqa: E402
     MultipleObjectsReturned,
     ObjectDoesNotExist,
 )
-from django.db import (  # noqa: E402: module level not at top of file
+from django.db import (  # noqa: E402
     DatabaseError,
     IntegrityError,
     connection,
     models,
     transaction,
 )
-from jinja2 import Template  # noqa: E402: module level not at top of file
+from jinja2 import Template  # noqa: E402
 
-from pulpcore.app import mime_types  # noqa: E402: module level not at top of file
-from pulpcore.app.models import (  # noqa: E402: module level not at top of file
+from pulpcore.app import mime_types  # noqa: E402
+from pulpcore.app.models import (  # noqa: E402
     Artifact,
     ArtifactDistribution,
     ContentArtifact,
@@ -53,7 +53,7 @@ from pulpcore.app.models import (  # noqa: E402: module level not at top of file
     Remote,
     RemoteArtifact,
 )
-from pulpcore.app.util import (  # noqa: E402: module level not at top of file
+from pulpcore.app.util import (  # noqa: E402
     cache_key,
     get_domain,
 )

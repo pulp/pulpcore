@@ -288,10 +288,8 @@ def _clean_app_status(sender, apps, verbosity, **kwargs):
         except LookupError:
             if verbosity >= 1:
                 print(
-                    _(
-                        "{app_name} model does not exist. Skipping initialization.".format(
-                            app_name=app_name
-                        )
+                    _("{app_name} model does not exist. Skipping initialization.").format(
+                        app_name=app_name
                     )
                 )
         else:

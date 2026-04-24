@@ -65,7 +65,7 @@ class HyperlinkRelatedFilter(filters.Filter):
                 match = resolve(urlparse(uri).path)
             except Resolver404:
                 raise serializers.ValidationError(
-                    detail=_("URI couldn't be resolved: {uri}".format(uri=uri))
+                    detail=_("URI couldn't be resolved: {uri}").format(uri=uri)
                 )
             match = UPMatch(match.func.cls.queryset.model, match.kwargs.get("pk"))
         return match

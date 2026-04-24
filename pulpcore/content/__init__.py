@@ -11,19 +11,19 @@ from asgiref.sync import sync_to_async
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pulpcore.app.settings")
 django.setup()
 
-from django.conf import settings  # noqa: E402: module level not at top of file
-from django.db.utils import (  # noqa: E402: module level not at top of file
+from django.conf import settings  # noqa: E402
+from django.db.utils import (  # noqa: E402
     DatabaseError,
     InterfaceError,
 )
 
-from pulpcore.app.apps import pulp_plugin_configs  # noqa: E402: module level not at top of file
-from pulpcore.app.models import ContentAppStatus  # noqa: E402: module level not at top of file
-from pulpcore.app.util import get_worker_name  # noqa: E402: module level not at top of file
+from pulpcore.app.apps import pulp_plugin_configs  # noqa: E402
+from pulpcore.app.models import ContentAppStatus  # noqa: E402
+from pulpcore.app.util import get_worker_name  # noqa: E402
 
-from .authentication import authenticate  # noqa: E402: module level not at top of file
-from .handler import Handler  # noqa: E402: module level not at top of file
-from .instrumentation import instrumentation  # noqa: E402: module level not at top of file
+from .authentication import authenticate  # noqa: E402
+from .handler import Handler  # noqa: E402
+from .instrumentation import instrumentation  # noqa: E402
 
 log = logging.getLogger(__name__)
 
