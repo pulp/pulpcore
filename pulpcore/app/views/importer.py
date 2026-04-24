@@ -15,8 +15,8 @@ def _check_allowed_import_path(a_path):
     for allowed_path in settings.ALLOWED_IMPORT_PATHS:
         if user_provided_realpath.startswith(allowed_path):
             return True, None
-    return False, _(
-        "{} is not an allowed import path".format(os.path.dirname(os.path.realpath(a_path)))
+    return False, _("{} is not an allowed import path").format(
+        os.path.dirname(os.path.realpath(a_path))
     )
 
 
@@ -61,15 +61,15 @@ def _validate_file(in_param, data):
 
     rc = isfile and readable
     if not isfile:
-        msgs.append(_("{} is not a file".format(real_file)))
+        msgs.append(_("{} is not a file").format(real_file))
     if not readable:
-        msgs.append(_("{} exists but cannot be read".format(real_file)))
+        msgs.append(_("{} exists but cannot be read").format(real_file))
 
     # extra check for toc-dir-write
     if in_param == "toc":
         if not os.access(owning_dir, os.W_OK):
             rc = False
-            msgs.append(_("directory {} must allow pulp write-access".format(owning_dir)))
+            msgs.append(_("directory {} must allow pulp write-access").format(owning_dir))
 
     return rc, msgs
 

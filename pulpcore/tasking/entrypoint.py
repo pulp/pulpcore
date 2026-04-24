@@ -8,10 +8,10 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pulpcore.app.settings")
 
 django.setup()
 
-from django.conf import settings  # noqa: E402: module level not at top
+from django.conf import settings  # noqa: E402
 
-from pulpcore.tasking.redis_worker import RedisWorker  # noqa: E402: module level not at top
-from pulpcore.tasking.worker import PulpcoreWorker  # noqa: E402: module level not at top
+from pulpcore.tasking.redis_worker import RedisWorker  # noqa: E402
+from pulpcore.tasking.worker import PulpcoreWorker  # noqa: E402
 
 _logger = logging.getLogger(__name__)
 
