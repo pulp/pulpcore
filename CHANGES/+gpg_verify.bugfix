@@ -1,1 +1,0 @@
-Fixed an issue where gpg_verify() was rejecting some valid PGP signatures after changes made in pulpcore 3.108.
