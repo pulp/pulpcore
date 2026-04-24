@@ -1,8 +1,10 @@
-import pytest
 from uuid import uuid4
 
+import pytest
+
 from pulpcore.app.models import AutoAddObjPermsMixin, Repository
-from pulp_file.app.models import FileRepository, FileRemote
+
+from pulp_file.app.models import FileRemote, FileRepository
 
 
 @pytest.mark.django_db

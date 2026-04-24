@@ -11,25 +11,24 @@ from pulpcore.app.role_util import (
     get_users_with_perms_attached_roles,
     remove_role,
 )
-
 from pulpcore.app.util import (
     batch_qs,
     cache_key,
     extract_pk,
     get_artifact_url,
+    get_current_authenticated_user,
+    get_current_user,
+    get_default_domain,
+    get_domain,
+    get_domain_pk,
     get_prn,
     get_url,
     gpg_verify,
     raise_for_unknown_content_units,
-    get_default_domain,
-    get_domain,
-    get_domain_pk,
-    set_domain,
-    get_current_user,
-    get_current_authenticated_user,
+    resolve_prn,
     reverse,
     set_current_user,
-    resolve_prn,
+    set_domain,
 )
 
 __all__ = [

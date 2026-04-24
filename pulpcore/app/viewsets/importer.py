@@ -1,7 +1,9 @@
+from gettext import gettext as _
+
 from django.conf import settings
 from django.http import Http404
 from drf_spectacular.utils import extend_schema
-from rest_framework import mixins, exceptions
+from rest_framework import exceptions, mixins
 
 from pulpcore.app.models import (
     Import,
@@ -12,8 +14,8 @@ from pulpcore.app.models import (
 )
 from pulpcore.app.response import TaskGroupOperationResponse
 from pulpcore.app.serializers import (
-    ImportSerializer,
     ImporterSerializer,
+    ImportSerializer,
     PulpImporterSerializer,
     PulpImportSerializer,
     TaskGroupOperationResponseSerializer,
@@ -24,8 +26,6 @@ from pulpcore.app.viewsets import (
 )
 from pulpcore.app.viewsets.base import NAME_FILTER_OPTIONS
 from pulpcore.tasking.tasks import dispatch
-
-from gettext import gettext as _
 
 
 class ImporterViewSet(

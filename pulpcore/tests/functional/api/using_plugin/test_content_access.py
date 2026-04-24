@@ -1,12 +1,12 @@
 """Tests related to content delivery."""
 
-import pytest
 import uuid
+
+import pytest
 
 from pulpcore.client.pulp_file import (
     RepositorySyncURL,
 )
-
 from pulpcore.tests.functional.utils import (
     download_file,
 )

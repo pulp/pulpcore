@@ -1,5 +1,6 @@
-import pytest
 import uuid
+
+import pytest
 
 from pulpcore.client.pulp_file import (
     RepositorySyncURL,

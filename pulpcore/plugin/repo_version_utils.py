@@ -1,5 +1,5 @@
-from gettext import gettext as _
 import logging
+from gettext import gettext as _
 
 from django.db.models import Q
 

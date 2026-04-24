@@ -9,16 +9,16 @@
 # ///
 
 import argparse
-import re
 import os
+import re
 import sys
-import tomllib
 import typing as t
 from pathlib import Path
 
+import tomllib
 import yaml
-from packaging.version import Version
 from git import Repo
+from packaging.version import Version
 
 RELEASE_BRANCH_REGEX = r"^([0-9]+)\.([0-9]+)$"
 Y_CHANGELOG_EXTS = [".feature"]
@@ -157,9 +157,9 @@ def main(options: argparse.Namespace, template_config: dict[str, t.Any]) -> int:
 
             if reasons:
                 curr_version = Version(last_tag)
-                assert curr_version.base_version.startswith(
-                    branch
-                ), "Current-version has to belong to the current branch!"
+                assert curr_version.base_version.startswith(branch), (
+                    "Current-version has to belong to the current branch!"
+                )
                 next_version = Version(f"{branch}.{curr_version.micro + 1}")
                 print(
                     f"A Z-release is needed for {branch}, "

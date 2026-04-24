@@ -13,18 +13,18 @@ from django.contrib.postgres.fields import ArrayField, HStoreField
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import connection, models
 from django.utils import timezone
-from django_lifecycle import hook, AFTER_CREATE
+from django_lifecycle import AFTER_CREATE, hook
 
 from pulpcore.app.models import (
     AutoAddObjPermsMixin,
     BaseModel,
     GenericRelationModel,
 )
-from pulpcore.app.models.status import BaseAppStatus
 from pulpcore.app.models.fields import EncryptedJSONField
+from pulpcore.app.models.status import BaseAppStatus
+from pulpcore.app.util import current_task, get_domain_pk
 from pulpcore.constants import TASK_CHOICES, TASK_INCOMPLETE_STATES, TASK_STATES
 from pulpcore.exceptions import AdvisoryLockError, exception_to_dict
-from pulpcore.app.util import get_domain_pk, current_task
 
 _logger = logging.getLogger(__name__)
 

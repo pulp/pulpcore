@@ -1,8 +1,7 @@
 import json
-
 from gettext import gettext as _
-
 from tempfile import NamedTemporaryFile
+from urllib.parse import urlparse
 
 from django.db import DatabaseError
 from rest_framework.serializers import (
@@ -11,13 +10,13 @@ from rest_framework.serializers import (
     Serializer,
     ValidationError,
 )
-from urllib.parse import urlparse
+
 from pulpcore.app.files import PulpTemporaryUploadedFile
 from pulpcore.app.models import Artifact, PulpTemporaryFile, Remote, Upload, UploadChunk
 from pulpcore.app.serializers import (
-    RelatedField,
     ArtifactSerializer,
     NoArtifactContentSerializer,
+    RelatedField,
     SingleArtifactContentSerializer,
 )
 from pulpcore.app.util import get_domain_pk

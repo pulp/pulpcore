@@ -9,16 +9,15 @@ For the full list of settings and their values, see
 """
 
 import sys
-
 from contextlib import suppress
 from importlib import import_module
 from logging import getLogger
 from pathlib import Path
 
 from cryptography.fernet import Fernet
-from django.core.files.storage import storages
 from django.conf import global_settings
 from django.core.exceptions import ImproperlyConfigured
+from django.core.files.storage import storages
 
 from pulpcore import constants
 

@@ -1,8 +1,9 @@
 import sys
 
 import click
-from pulpcore.app.pulpcore_gunicorn_application import PulpcoreGunicornApplication
 from django.conf import settings
+
+from pulpcore.app.pulpcore_gunicorn_application import PulpcoreGunicornApplication
 
 
 class PulpcoreContentApplication(PulpcoreGunicornApplication):

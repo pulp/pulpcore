@@ -1,8 +1,9 @@
-import pytest
 from unittest.mock import Mock
 
-from pulpcore.app.models import Remote
+import pytest
+
 from pulpcore.app import migrations
+from pulpcore.app.models import Remote
 
 
 @pytest.mark.django_db

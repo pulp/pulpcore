@@ -4,8 +4,9 @@ Repository related Django models.
 
 from django.db import models
 
-from .base import MasterModel, BaseModel
 from pulpcore.app.util import get_domain_pk
+
+from .base import BaseModel, MasterModel
 
 
 class AlternateContentSource(MasterModel):

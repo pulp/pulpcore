@@ -1,7 +1,7 @@
 """A wrapper around `hashlib` providing only hashers named in settings.ALLOWED_CONTENT_CHECKSUMS"""
 
-from gettext import gettext as _
 import hashlib as the_real_hashlib
+from gettext import gettext as _
 
 from django.conf import settings
 

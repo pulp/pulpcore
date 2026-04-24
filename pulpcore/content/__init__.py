@@ -1,30 +1,29 @@
 import asyncio
-from contextlib import suppress
-from importlib import import_module
 import logging
 import os
-
-from asgiref.sync import sync_to_async
-from aiohttp import web
+from contextlib import suppress
+from importlib import import_module
 
 import django
+from aiohttp import web
+from asgiref.sync import sync_to_async
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pulpcore.app.settings")
 django.setup()
 
 from django.conf import settings  # noqa: E402: module level not at top of file
 from django.db.utils import (  # noqa: E402: module level not at top of file
-    InterfaceError,
     DatabaseError,
+    InterfaceError,
 )
 
 from pulpcore.app.apps import pulp_plugin_configs  # noqa: E402: module level not at top of file
 from pulpcore.app.models import ContentAppStatus  # noqa: E402: module level not at top of file
 from pulpcore.app.util import get_worker_name  # noqa: E402: module level not at top of file
 
+from .authentication import authenticate  # noqa: E402: module level not at top of file
 from .handler import Handler  # noqa: E402: module level not at top of file
 from .instrumentation import instrumentation  # noqa: E402: module level not at top of file
-from .authentication import authenticate  # noqa: E402: module level not at top of file
 
 log = logging.getLogger(__name__)
 

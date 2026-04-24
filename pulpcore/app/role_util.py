@@ -1,15 +1,14 @@
-from gettext import gettext as _
-
 from collections import defaultdict
 from functools import lru_cache
+from gettext import gettext as _
 
 from django.conf import settings
-from django.core.exceptions import BadRequest
-from django.db.models import Q, Exists, OuterRef, CharField
-from django.db.models.functions import Cast
 from django.contrib.auth import get_user_model as django_get_user_model
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import BadRequest
+from django.db.models import CharField, Exists, OuterRef, Q
+from django.db.models.functions import Cast
 
 from pulpcore.app.models import Group
 from pulpcore.app.models.role import GroupRole, Role, UserRole

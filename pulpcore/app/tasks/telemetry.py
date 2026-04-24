@@ -1,12 +1,10 @@
 from django.db.models import Sum
-
-from pulpcore.app.models import Artifact
-
-from opentelemetry.sdk.metrics import MeterProvider
-
 from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
+from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.sdk.resources import Resource
+
+from pulpcore.app.models import Artifact
 
 
 def otel_metrics():

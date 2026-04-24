@@ -1,10 +1,10 @@
 import asyncio
+
+import mock
 import pytest
 import pytest_asyncio
 
-import mock
-
-from pulpcore.plugin.stages import Stage, EndStage, DeclarativeContent
+from pulpcore.plugin.stages import DeclarativeContent, EndStage, Stage
 
 pytestmark = pytest.mark.usefixtures("fake_domain")
 

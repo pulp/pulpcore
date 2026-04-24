@@ -4,12 +4,10 @@ from django.core.management.base import BaseCommand, CommandError
 from django.http import HttpRequest
 from django.utils import translation
 from django.utils.module_loading import import_string
-
-from rest_framework.request import Request
-
 from drf_spectacular.renderers import OpenApiJsonRenderer, OpenApiYamlRenderer
 from drf_spectacular.settings import patched_settings
 from drf_spectacular.validation import validate_schema
+from rest_framework.request import Request
 
 from pulpcore.openapi import PulpSchemaGenerator
 
