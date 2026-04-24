@@ -10,8 +10,8 @@ from pulpcore.app.serializers.openpgp import (
 )
 from pulpcore.app.viewsets.base import NAME_FILTER_OPTIONS, RolesMixin
 from pulpcore.app.viewsets.content import ContentFilter, ReadOnlyContentViewSet
-from pulpcore.app.viewsets.repository import RepositoryViewSet
 from pulpcore.app.viewsets.publication import DistributionFilter, DistributionViewSet
+from pulpcore.app.viewsets.repository import RepositoryViewSet
 from pulpcore.plugin.actions import ModifyRepositoryActionMixin
 from pulpcore.plugin.viewsets import NoArtifactContentUploadViewSet
 

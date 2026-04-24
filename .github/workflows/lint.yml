@@ -36,20 +36,13 @@ jobs:
         run: |
           yamllint -s -d '{extends: relaxed, rules: {line-length: disable}}' .github/workflows
 
-      # run black separately from flake8 to get a diff
-      - name: "Run black"
+      - name: "Check formating"
         run: |
-          black --version
-          black --check --diff .
+          ruff format --check --diff
 
-      # Lint code.
-      - name: "Run flake8"
+      - name: "Lint code"
         run: |
-          flake8
-
-      - name: "Check for common gettext problems"
-        run: |
-          sh .ci/scripts/check_gettext.sh
+          ruff check
 
       - name: "Run extra lint checks"
         run: |

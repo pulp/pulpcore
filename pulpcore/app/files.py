@@ -1,14 +1,13 @@
-import os
 import concurrent.futures
-from concurrent.futures import ThreadPoolExecutor, ALL_COMPLETED
+import os
+from concurrent.futures import ALL_COMPLETED, ThreadPoolExecutor
 from gettext import gettext as _
 
 from django.core.files.uploadedfile import TemporaryUploadedFile
 from django.core.files.uploadhandler import TemporaryFileUploadHandler
 from pygtrie import StringTrie
 
-from pulpcore.app import models
-from pulpcore.app import pulp_hashlib
+from pulpcore.app import models, pulp_hashlib
 
 
 class PulpTemporaryUploadedFile(TemporaryUploadedFile):

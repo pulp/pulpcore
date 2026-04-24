@@ -1,5 +1,4 @@
 import pytest
-
 from rest_framework import serializers
 
 from pulpcore.app.serializers import OrphansCleanupSerializer

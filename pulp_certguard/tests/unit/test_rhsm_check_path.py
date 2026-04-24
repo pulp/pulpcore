@@ -1,17 +1,17 @@
-from cryptography import x509
 import pytest
-
-from . import certdata
+from cryptography import x509
 
 from pulp_certguard.rhsm import check_path
 from pulp_certguard.rhsm.rhsm_check_path import (
-    bitstream,
+    V1_PATH_OID_REGEX,
     Entitlement,
     HuffmannNode,
+    bitstream,
     cert_version,
     split_count,
-    V1_PATH_OID_REGEX,
 )
+
+from . import certdata
 
 
 @pytest.fixture(scope="session")

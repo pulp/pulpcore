@@ -1,8 +1,9 @@
-import pytest
 import uuid
 
-from pulpcore.client.pulpcore.exceptions import ApiException
+import pytest
+
 from pulpcore.app import settings
+from pulpcore.client.pulpcore.exceptions import ApiException
 from pulpcore.constants import TASK_STATES
 
 pytestmark = [

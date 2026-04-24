@@ -1,8 +1,8 @@
 from gettext import gettext as _
 
+from django.core.management import BaseCommand
 from django.db import connection
 from django.db.migrations.loader import MigrationLoader
-from django.core.management import BaseCommand
 
 
 class Command(BaseCommand):

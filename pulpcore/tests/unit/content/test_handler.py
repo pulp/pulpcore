@@ -1,22 +1,22 @@
-from datetime import timedelta
-import pytest
 import uuid
+from datetime import timedelta
+from unittest.mock import AsyncMock, Mock
 
-from unittest.mock import Mock, AsyncMock
-
+import pytest
 from aiohttp.web_exceptions import HTTPMovedPermanently
 from django.db import IntegrityError
-from pulpcore.content.handler import Handler, CheckpointListings, PathNotResolved
+
+from pulpcore.content.handler import CheckpointListings, Handler, PathNotResolved
 from pulpcore.plugin.models import (
     Artifact,
     Content,
     ContentArtifact,
     Distribution,
+    Publication,
     Remote,
     RemoteArtifact,
     Repository,
     RepositoryVersion,
-    Publication,
 )
 
 
@@ -433,15 +433,15 @@ def test_handle_checkpoint_listing(
     with pytest.raises(CheckpointListings):
         Handler._select_checkpoint_publication(checkpoint_distribution, "")
     assert len(checkpoint_list) == 2
-    assert (
-        f"{checkpoint_pub_1_ts}/" in checkpoint_list
-    ), f"{checkpoint_pub_1_ts} not found in error body"
-    assert (
-        f"{checkpoint_pub_2_ts}/" in checkpoint_list
-    ), f"{checkpoint_pub_2_ts} not found in error body"
-    assert (
-        f"{noncheckpoint_pub_ts}/" not in checkpoint_list
-    ), f"{noncheckpoint_pub_ts} found in error body"
+    assert f"{checkpoint_pub_1_ts}/" in checkpoint_list, (
+        f"{checkpoint_pub_1_ts} not found in error body"
+    )
+    assert f"{checkpoint_pub_2_ts}/" in checkpoint_list, (
+        f"{checkpoint_pub_2_ts} not found in error body"
+    )
+    assert f"{noncheckpoint_pub_ts}/" not in checkpoint_list, (
+        f"{noncheckpoint_pub_ts} found in error body"
+    )
 
 
 @pytest.mark.django_db
@@ -498,9 +498,9 @@ def test_handle_checkpoint_arbitrary_ts(
         )
     expected_location = excinfo.value.location
 
-    assert (
-        redirect_location == expected_location
-    ), f"Unexpected redirect location: {redirect_location}"
+    assert redirect_location == expected_location, (
+        f"Unexpected redirect location: {redirect_location}"
+    )
 
 
 @pytest.mark.django_db

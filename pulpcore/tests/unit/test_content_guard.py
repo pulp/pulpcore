@@ -1,9 +1,9 @@
 import json
-import pytest
 import re
-
-from unittest.mock import Mock
 from base64 import b64encode
+from unittest.mock import Mock
+
+import pytest
 
 from pulpcore.app.models import ContentRedirectContentGuard, HeaderContentGuard
 

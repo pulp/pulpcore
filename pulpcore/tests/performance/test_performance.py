@@ -1,13 +1,13 @@
 import datetime
 import logging
 import multiprocessing
-import requests
 import tempfile
 import time
-
 from collections import namedtuple
 from urllib.parse import urljoin
 from uuid import uuid4
+
+import requests
 
 Args = namedtuple("Arguments", "limit processes repositories")
 

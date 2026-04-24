@@ -1,12 +1,12 @@
-from aiohttp import BasicAuth
-from base64 import b64encode
 import json
-import pytest
 import uuid
+from base64 import b64encode
+
+import pytest
+from aiohttp import BasicAuth
 
 from pulpcore.client.pulp_file import PatchedfileFileDistribution
 from pulpcore.client.pulpcore import PatchedCompositeContentGuard
-
 from pulpcore.tests.functional.utils import get_from_url
 
 

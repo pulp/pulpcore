@@ -1,7 +1,7 @@
 from pulpcore.download import (
     BaseDownloader,
-    DownloadResult,
     DownloaderFactory,
+    DownloadResult,
     FileDownloader,
     HttpDownloader,
 )

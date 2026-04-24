@@ -1,27 +1,26 @@
 import os
-from cryptography.x509 import load_pem_x509_certificate
 from gettext import gettext as _
 from urllib.parse import urlparse
 
+from cryptography.x509 import load_pem_x509_certificate
 from rest_framework import fields, serializers
 from rest_framework_nested.serializers import NestedHyperlinkedModelSerializer
 
 from pulpcore.app import models, settings
-from pulpcore.app.util import get_prn, reverse
 from pulpcore.app.serializers import (
     DetailIdentityField,
     DetailRelatedField,
     DomainUniqueValidator,
+    HiddenFieldsMixin,
     LatestVersionField,
     ModelSerializer,
     RepositoryVersionIdentityField,
     RepositoryVersionRelatedField,
     RepositoryVersionsIdentityFromRepositoryField,
     ValidateFieldsMixin,
-    HiddenFieldsMixin,
     pulp_labels_validator,
 )
-from pulpcore.app.util import extract_pk, raise_for_unknown_content_units
+from pulpcore.app.util import extract_pk, get_prn, raise_for_unknown_content_units, reverse
 
 
 class RepositorySerializer(ModelSerializer):

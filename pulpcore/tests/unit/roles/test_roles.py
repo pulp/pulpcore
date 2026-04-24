@@ -1,6 +1,6 @@
-import pytest
 from uuid import uuid4
 
+import pytest
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 
@@ -8,9 +8,9 @@ from pulpcore.app.models import Group, Remote, Repository
 from pulpcore.app.models.role import Role
 from pulpcore.app.role_util import (
     assign_role,
-    remove_role,
     get_objects_for_user,
     get_users_with_perms_attached_roles,
+    remove_role,
 )
 
 User = get_user_model()

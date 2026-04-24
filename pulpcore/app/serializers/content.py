@@ -1,16 +1,16 @@
 from gettext import gettext as _
 
-from django.db import transaction, IntegrityError
+from django.db import IntegrityError, transaction
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
 from pulpcore.app import models
 from pulpcore.app.serializers import (
+    DetailRelatedField,
+    RelatedField,
     base,
     fields,
     pulp_labels_validator,
-    DetailRelatedField,
-    RelatedField,
 )
 from pulpcore.app.util import get_domain
 

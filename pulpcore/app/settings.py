@@ -9,7 +9,6 @@ For the full list of settings and their values, see
 """
 
 import sys
-
 from contextlib import suppress
 from importlib import import_module
 from importlib.metadata import entry_points

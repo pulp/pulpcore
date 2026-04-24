@@ -6,9 +6,7 @@
 # After editing this file please always reapply the plugin template before committing any changes.
 
 ---
-black: true
 check_commit_message: true
-check_gettext: true
 check_manifest: true
 check_stray_pulpcore_imports: false
 ci_base_image: "ghcr.io/pulp/pulp-ci-centos9"
@@ -26,11 +24,10 @@ docker_fixtures: true
 extra_files:
   - destination: "/etc/nginx/pulp/api_root_rewrite.conf"
     origin: "pulpcore/pulpcore/tests/functional/assets/api_root_rewrite.conf"
-flake8: true
-flake8_ignore:
-  - "./pulpcore/app/protobuf/*"
 github_org: "pulp"
 latest_release_branch: "3.84"
+lint_ignore:
+  - "./pulpcore/app/protobuf/*"
 lint_requirements: true
 os_required_packages: []
 parallel_test_workers: 8
@@ -121,7 +118,6 @@ pulp_settings_s3:
   rest_framework__default_permission_classes:
     - "pulpcore.plugin.access_policy.AccessPolicyFromSettings"
   spectacular_settings__oas_version: "3.0.3"
-pydocstyle: true
 release_email: "pulp-infra@redhat.com"
 release_user: "pulpbot"
 stalebot: true
