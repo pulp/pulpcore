@@ -1,8 +1,8 @@
 """Test the status page."""
 
 import pytest
-
 from jsonschema import validate
+
 from pulpcore.client.pulpcore import ApiException
 
 STATUS = {

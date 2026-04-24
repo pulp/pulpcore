@@ -18,10 +18,10 @@ import itertools
 import json
 import os
 import re
-import tomllib
 import urllib.request
 from pathlib import Path
 
+import tomllib
 from git import GitCommandError, Repo
 from packaging.version import parse as parse_version
 

@@ -1,11 +1,11 @@
+from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
-from django.conf import settings
-
-from pulp_file.app.serializers import FileContentSerializer
-from pulp_file.app.models import FileContent
 
 from pulpcore.plugin.models import Artifact
+
+from pulp_file.app.models import FileContent
+from pulp_file.app.serializers import FileContentSerializer
 
 V3_API_ROOT = (
     settings.V3_API_ROOT

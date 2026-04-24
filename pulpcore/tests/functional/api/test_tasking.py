@@ -1,15 +1,14 @@
 """Tests related to the tasking system."""
 
 import json
-import pytest
 import time
-
-from aiohttp import BasicAuth
 from urllib.parse import urljoin
 from uuid import uuid4
 
-from pulpcore.client.pulpcore import ApiException
+import pytest
+from aiohttp import BasicAuth
 
+from pulpcore.client.pulpcore import ApiException
 from pulpcore.tests.functional.utils import download_file
 
 
@@ -434,9 +433,10 @@ def test_cancel_task_group(pulpcore_bindings, dispatch_task_group, gen_user):
     for task in tgroup.tasks:
         assert task.state in ["canceled", "canceling"]
 
-    with gen_user(model_roles=["core.task_viewer"]), pytest.raises(
-        pulpcore_bindings.ApiException
-    ) as e:
+    with (
+        gen_user(model_roles=["core.task_viewer"]),
+        pytest.raises(pulpcore_bindings.ApiException) as e,
+    ):
         pulpcore_bindings.TaskGroupsApi.task_groups_cancel(tgroup_href, {"state": "canceled"})
         assert "You do not have permission" in e.value.message
 

@@ -4,13 +4,13 @@ For more information, see the documentation on `Authentication
 <https://docs.pulpproject.org/restapi.html#section/Authentication>`_.
 """
 
-import pytest
 import json
-
 from base64 import b64encode
-from pulpcore.client.pulpcore import ApiException
+
+import pytest
 
 from pulpcore.app import settings
+from pulpcore.client.pulpcore import ApiException
 
 
 @pytest.mark.parallel

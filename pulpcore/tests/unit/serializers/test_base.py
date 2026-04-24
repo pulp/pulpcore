@@ -1,13 +1,12 @@
 import pytest
-
 from rest_framework import serializers
 
-from pulpcore.app.serializers import (
-    validate_unknown_fields,
-    RBACContentGuardSerializer,
-    GetOrCreateSerializerMixin,
-)
 from pulpcore.app.models import RBACContentGuard
+from pulpcore.app.serializers import (
+    GetOrCreateSerializerMixin,
+    RBACContentGuardSerializer,
+    validate_unknown_fields,
+)
 from pulpcore.app.util import get_domain
 
 

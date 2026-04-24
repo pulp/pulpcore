@@ -2,14 +2,12 @@
 
 import os
 import uuid
+from urllib.parse import urljoin
 
 import pytest
 
-from urllib.parse import urljoin
-
-from pulpcore.tests.functional.utils import PulpTaskError
-
 from pulpcore.client.pulp_file import RepositorySyncURL
+from pulpcore.tests.functional.utils import PulpTaskError
 
 
 def test_sync_file_protocol_handler(

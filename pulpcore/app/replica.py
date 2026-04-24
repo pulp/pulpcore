@@ -2,16 +2,16 @@ import logging
 
 from django.db.models import Model
 from django.utils.dateparse import parse_datetime
-
 from pulp_glue.common.context import PulpContext
-from pulpcore.tasking.tasks import dispatch
+
+from pulpcore.app.loggers import deprecation_logger
 from pulpcore.app.tasks.base import (
-    general_update,
     general_create,
     general_multi_delete,
+    general_update,
 )
-from pulpcore.plugin.util import get_url, get_domain
-from pulpcore.app.loggers import deprecation_logger
+from pulpcore.plugin.util import get_domain, get_url
+from pulpcore.tasking.tasks import dispatch
 
 _logger = logging.getLogger(__name__)
 

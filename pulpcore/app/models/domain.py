@@ -1,8 +1,8 @@
 from django.core.files.storage import default_storage
 from django.db import models
-from django_lifecycle import hook, BEFORE_DELETE, BEFORE_UPDATE
+from django_lifecycle import BEFORE_DELETE, BEFORE_UPDATE, hook
 
-from pulpcore.app.models import BaseModel, AutoAddObjPermsMixin
+from pulpcore.app.models import AutoAddObjPermsMixin, BaseModel
 from pulpcore.exceptions import DomainProtectedError
 
 from .fields import EncryptedJSONField

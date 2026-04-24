@@ -1,11 +1,10 @@
-from logging import getLogger
-from gettext import gettext as _
 import re
+from gettext import gettext as _
+from logging import getLogger
 from urllib.parse import unquote
 
 from django.conf import settings
 from django.db import models
-
 from OpenSSL import crypto as openssl
 
 from pulpcore.plugin.models import ContentGuard

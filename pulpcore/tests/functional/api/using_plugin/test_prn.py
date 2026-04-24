@@ -1,6 +1,6 @@
-import pytest
+from random import choice, sample
 
-from random import sample, choice
+import pytest
 
 
 @pytest.mark.parallel

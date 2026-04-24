@@ -1,8 +1,7 @@
-from packaging.version import parse as parse_version
-
 from django.conf import settings
-from django.utils import timezone
 from django.db.migrations.operations.base import Operation
+from django.utils import timezone
+from packaging.version import parse as parse_version
 
 
 class RequireVersion(Operation):
@@ -40,16 +39,14 @@ class RequireVersion(Operation):
                 present_version = worker.versions.get(self.plugin)
                 if present_version is not None and parse_version(present_version) < needed_version:
                     errors.append(
-                        f"  - '{self.plugin}'='{present_version}' "
-                        f"with {class_name} '{worker.name}'"
+                        f"  - '{self.plugin}'='{present_version}' with {class_name} '{worker.name}'"
                     )
 
         if errors:
             raise RuntimeError(
                 "\n".join(
                     [
-                        "Incompatible versions detected "
-                        f"({self.plugin} >= {self.version} needed):",
+                        f"Incompatible versions detected ({self.plugin} >= {self.version} needed):",
                         *errors,
                         "Please shutdown or upgrade the outdated components before you "
                         "continue the migration. \n"

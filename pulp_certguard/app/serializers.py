@@ -1,12 +1,12 @@
 from gettext import gettext as _
 
 from OpenSSL import crypto as openssl
+from rest_framework import serializers
 
 from pulpcore.plugin.serializers import ContentGuardSerializer
 
-from rest_framework import serializers
-
 from pulp_certguard.app.utils import get_rhsm
+
 from .models import RHSMCertGuard, X509CertGuard
 
 

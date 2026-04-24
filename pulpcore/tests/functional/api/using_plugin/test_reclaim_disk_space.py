@@ -1,12 +1,11 @@
 """Tests that perform actions over reclaim disk space."""
 
-import pytest
-
 from urllib.parse import urljoin
 
-from pulpcore.client.pulp_file import RepositorySyncURL
+import pytest
 
-from pulpcore.tests.functional.utils import get_files_in_manifest, download_file
+from pulpcore.client.pulp_file import RepositorySyncURL
+from pulpcore.tests.functional.utils import download_file, get_files_in_manifest
 
 
 @pytest.mark.parallel
