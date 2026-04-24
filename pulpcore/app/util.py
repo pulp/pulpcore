@@ -1,30 +1,28 @@
 import hashlib
-import zlib
 import os
 import socket
 import tempfile
-import gnupg
-
-from functools import lru_cache
-from gettext import gettext as _
-from urllib.parse import urlparse
+import zlib
 from contextlib import ExitStack
 from contextvars import ContextVar
 from datetime import timedelta
+from functools import lru_cache
+from gettext import gettext as _
+from urllib.parse import urlparse
 from uuid import UUID
 
+import gnupg
 from django.apps import apps
 from django.conf import settings
 from django.db import connection
 from django.db.models import Model, UUIDField
 from django.urls import Resolver404, resolve
-
-from rest_framework.serializers import ValidationError
 from rest_framework.reverse import reverse as drf_reverse
+from rest_framework.serializers import ValidationError
 
-from pulpcore.app.loggers import deprecation_logger
-from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app import models
+from pulpcore.app.apps import pulp_plugin_configs
+from pulpcore.app.loggers import deprecation_logger
 from pulpcore.exceptions import AdvisoryLockError
 from pulpcore.exceptions.validation import InvalidSignatureError
 

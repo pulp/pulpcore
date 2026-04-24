@@ -5,25 +5,26 @@ import os
 import resource
 import signal
 import sys
+import tempfile
 import threading
 import time
-import tempfile
 from gettext import gettext as _
 
 from django.conf import settings
-from django.db import connection, transaction, IntegrityError
+from django.db import IntegrityError, connection, transaction
 from django.db.models import Q
 from django.utils import timezone
 from django_guid import set_guid
 from django_guid.utils import generate_guid
-from pulpcore.app.models import Artifact, Content, Task, TaskSchedule, ProfileArtifact
+
+from pulpcore.app.models import Artifact, Content, ProfileArtifact, Task, TaskSchedule
 from pulpcore.app.role_util import get_users_with_perms
 from pulpcore.app.util import (
-    set_current_user,
-    set_domain,
     configure_analytics,
     configure_cleanup,
     configure_periodic_telemetry,
+    set_current_user,
+    set_domain,
 )
 from pulpcore.constants import TASK_FINAL_STATES, TASK_STATES
 from pulpcore.tasking.tasks import dispatch, execute_task

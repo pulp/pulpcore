@@ -1,5 +1,6 @@
 import atexit
 import sys
+
 import coverage
 
 cov = coverage.Coverage()

@@ -1,12 +1,12 @@
-import pytest
 from uuid import uuid4
-from cryptography.fernet import InvalidToken
 
+import pytest
+from cryptography.fernet import InvalidToken
 from django.core.management import call_command
 from django.db import connection
 
-from pulpcore.app.models import Remote, Domain
-from pulpcore.app.models.fields import _fernet, EncryptedTextField
+from pulpcore.app.models import Domain, Remote
+from pulpcore.app.models.fields import EncryptedTextField, _fernet
 
 TEST_KEY1 = b"hPCIFQV/upbvPRsEpgS7W32XdFA2EQgXnMtyNAekebQ="
 TEST_KEY2 = b"6Xyv+QezAQ+4R870F5qsgKcngzmm46caDB2gyo9qnpc="

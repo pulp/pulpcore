@@ -1,7 +1,7 @@
-import pytest
-
-from django.core.files.storage import default_storage
 from random import sample
+
+import pytest
+from django.core.files.storage import default_storage
 
 from pulpcore.tests.functional.utils import get_files_in_manifest
 

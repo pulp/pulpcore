@@ -6,8 +6,9 @@ https://pulpproject.org/pulpcore/docs/dev/learn/plugin-concepts/
 """
 
 from django.db import models
-from pulpcore.plugin.models import BaseModel, EncryptedTextField, AutoAddObjPermsMixin
+
 from pulpcore.app.util import get_domain_pk
+from pulpcore.plugin.models import AutoAddObjPermsMixin, BaseModel, EncryptedTextField
 
 
 class UpstreamPulp(BaseModel, AutoAddObjPermsMixin):

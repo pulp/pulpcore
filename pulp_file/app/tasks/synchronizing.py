@@ -1,12 +1,11 @@
 import logging
 import os
-
 from gettext import gettext as _
 from urllib.parse import quote, urlparse, urlunparse
 
 from django.core.files import File
 
-from pulpcore.plugin.models import Artifact, ProgressReport, Remote, PublishedMetadata
+from pulpcore.plugin.models import Artifact, ProgressReport, PublishedMetadata, Remote
 from pulpcore.plugin.stages import (
     DeclarativeArtifact,
     DeclarativeContent,
@@ -14,7 +13,7 @@ from pulpcore.plugin.stages import (
     Stage,
 )
 
-from pulp_file.app.models import FileContent, FileRemote, FileRepository, FilePublication
+from pulp_file.app.models import FileContent, FilePublication, FileRemote, FileRepository
 from pulp_file.manifest import Manifest
 
 log = logging.getLogger(__name__)

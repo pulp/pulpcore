@@ -1,44 +1,42 @@
-from gettext import gettext as _
-
+import contextlib
 import logging
 import os
 import random
 import select
 import signal
-import contextlib
 from datetime import datetime, timedelta
+from gettext import gettext as _
 from multiprocessing import Process
 from tempfile import TemporaryDirectory
-from packaging.version import parse as parse_version
 
 from django.conf import settings
-from django.db import connection, DatabaseError, IntegrityError
+from django.db import DatabaseError, IntegrityError, connection
 from django.db.models import Case, Count, F, Max, Value, When
 from django.db.models.functions import Random
 from django.utils import timezone
+from packaging.version import parse as parse_version
 
-from pulpcore.constants import (
-    TASK_STATES,
-    TASK_INCOMPLETE_STATES,
-    TASK_SCHEDULING_LOCK,
-    TASK_UNBLOCKING_LOCK,
-    TASK_METRICS_HEARTBEAT_LOCK,
-    TASK_WAKEUP_UNBLOCK,
-    TASK_WAKEUP_HANDLE,
-)
-from pulpcore.metrics import init_otel_meter
 from pulpcore.app.apps import pulp_plugin_configs
-from pulpcore.app.models import Worker, Task, AppStatus, ApiAppStatus, ContentAppStatus
+from pulpcore.app.models import ApiAppStatus, AppStatus, ContentAppStatus, Task, Worker
 from pulpcore.app.util import PGAdvisoryLock, get_worker_name
+from pulpcore.constants import (
+    TASK_INCOMPLETE_STATES,
+    TASK_METRICS_HEARTBEAT_LOCK,
+    TASK_SCHEDULING_LOCK,
+    TASK_STATES,
+    TASK_UNBLOCKING_LOCK,
+    TASK_WAKEUP_HANDLE,
+    TASK_WAKEUP_UNBLOCK,
+)
 from pulpcore.exceptions import AdvisoryLockError
-
-from pulpcore.tasking.storage import WorkerDirectory
+from pulpcore.metrics import init_otel_meter
 from pulpcore.tasking._util import (
     delete_incomplete_resources,
     dispatch_scheduled_tasks,
     perform_task,
     startup_hook,
 )
+from pulpcore.tasking.storage import WorkerDirectory
 
 _logger = logging.getLogger(__name__)
 random.seed()
@@ -530,8 +528,9 @@ class PulpcoreWorker:
     def _record_unblocked_waiting_tasks_metric(self):
         now = timezone.now()
         if now > self.last_metric_heartbeat + self.heartbeat_period:
-            with contextlib.suppress(AdvisoryLockError), PGAdvisoryLock(
-                TASK_METRICS_HEARTBEAT_LOCK
+            with (
+                contextlib.suppress(AdvisoryLockError),
+                PGAdvisoryLock(TASK_METRICS_HEARTBEAT_LOCK),
             ):
                 # For performance reasons we aggregate these statistics on a single database call.
                 unblocked_tasks_stats = (

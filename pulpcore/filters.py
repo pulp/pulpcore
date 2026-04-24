@@ -1,26 +1,23 @@
-from gettext import gettext as _
-
-import pyparsing as pp
-
+from collections import namedtuple
 from functools import lru_cache, partial
+from gettext import gettext as _
 from urllib.parse import urlparse
 from uuid import UUID
-from collections import namedtuple
+
+import pyparsing as pp
 from django import forms
+from django.core.exceptions import FieldDoesNotExist
 from django.db import models
 from django.forms.utils import ErrorList
 from django.urls import Resolver404, resolve
 from django_filters.constants import EMPTY_VALUES
-from django_filters.rest_framework import DjangoFilterBackend, filterset, filters, BaseInFilter
-from django.core.exceptions import FieldDoesNotExist
+from django_filters.rest_framework import BaseInFilter, DjangoFilterBackend, filters, filterset
+from drf_spectacular.contrib.django_filters import DjangoFilterExtension
+from drf_spectacular.plumbing import build_basic_type
+from drf_spectacular.types import OpenApiTypes
 from rest_framework import serializers
 
-
-from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.plumbing import build_basic_type
-from drf_spectacular.contrib.django_filters import DjangoFilterExtension
-
-from pulpcore.app.util import extract_pk, resolve_prn, get_domain_pk
+from pulpcore.app.util import extract_pk, get_domain_pk, resolve_prn
 
 EMPTY_VALUES = (*EMPTY_VALUES, "null")
 UPMatch = namedtuple("UPMatch", ("model", "pk"))

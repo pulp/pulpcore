@@ -5,15 +5,16 @@ import importlib
 import logging
 import os
 import sys
-import traceback
 import tempfile
 import threading
+import traceback
 from gettext import gettext as _
 
 from django.conf import settings
 from django.db import connection, transaction
 from django.db.models import Model
 from django_guid import get_guid
+
 from pulpcore.app.apps import MODULE_PLUGIN_VERSIONS
 from pulpcore.app.models import Task, TaskGroup
 from pulpcore.app.util import (
@@ -22,10 +23,10 @@ from pulpcore.app.util import (
     get_prn,
 )
 from pulpcore.constants import (
+    IMMEDIATE_TIMEOUT,
     TASK_FINAL_STATES,
     TASK_INCOMPLETE_STATES,
     TASK_STATES,
-    IMMEDIATE_TIMEOUT,
     TASK_WAKEUP_UNBLOCK,
 )
 from pulpcore.middleware import x_task_diagnostics_var

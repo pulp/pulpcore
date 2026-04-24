@@ -2,19 +2,20 @@ import gettext
 import http.cookies
 import logging
 
+from aiohttp.web import HTTPBadRequest, middleware
 from asgiref.sync import sync_to_async
-from aiohttp.web import middleware, HTTPBadRequest
 from django.conf import settings
-from django.db.utils import InterfaceError, DatabaseError
+from django.db.utils import DatabaseError, InterfaceError
 from django.http.request import HttpRequest
 from django_guid import set_guid
 from django_guid.utils import generate_guid
-from rest_framework.views import APIView
 from rest_framework.exceptions import APIException
+from rest_framework.views import APIView
 
-from .handler import Handler, PathNotResolved
 from pulpcore.app.models import Domain
 from pulpcore.app.util import set_domain
+
+from .handler import Handler, PathNotResolved
 
 log = logging.getLogger(__name__)
 _ = gettext.gettext
