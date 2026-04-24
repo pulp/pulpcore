@@ -31,6 +31,16 @@ By default, Pulp has two types of authentication enabled, and they fall back for
 To change the authentication types Pulp will use, modify the `AUTHENTICATION_BACKENDS` settings.
 See the [Django authentication documentation] for more information.
 
+#### SAML2
+
+When installed with the `[saml2]` option, and the `SAML_CONFIG` is set,
+SSO authentification according to the SAML2 protocols is available.
+
+See [django] and [pysaml2] for details.
+
+!!! warning
+    This is in feature-preview.
+
 ### DATABASES
 
 By default, Pulp uses PostgreSQL on localhost.
@@ -602,6 +612,7 @@ Defaults to `pulpcore.tasking.status`.
 [Django database settings]: https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 [Django documentation on logging]: https://docs.djangoproject.com/en/4.2/topics/logging/#configuring-logging
 [django-guid settings documentation]: https://django-guid.readthedocs.io/en/latest/settings.html
+[djangosaml2]: https://djangosaml2.readthedocs.io
 [Django secret key]: https://docs.djangoproject.com/en/4.2/ref/settings/#secret-key
 [Django setting]: https://docs.djangoproject.com/en/4.2/ref/settings/
 [django-storages]: https://django-storages.readthedocs.io/en/latest/index.html
@@ -609,6 +620,7 @@ Defaults to `pulpcore.tasking.status`.
 [Enabling Debug Logging]: site:pulpcore/docs/admin/guides/troubleshooting/#enabling-debug-logging
 [librdkafka configuration documentation]: https://github.com/confluentinc/librdkafka/blob/master/CONFIGURATION.md
 [on-demand and streaming limitations]: site:pulpcore/docs/user/learn/on-demand-downloading/#on-demand-and-streamed-limitations
+[pysaml2]: https://pysaml2.readthedocs.io
 [recommended by aiohttp]: https://docs.aiohttp.org/en/stable/third_party.html#approved-third-party-libraries
 [task diagnostics documentation]: site:pulpcore/docs/dev/learn/tasks/diagnostics.md
 [uvloop]: https://github.com/MagicStack/uvloop
