@@ -1,12 +1,12 @@
 """Tests that perform actions over distributions."""
 
-import pytest
 import json
 from urllib.parse import urljoin
 from uuid import uuid4
 
-from pulpcore.client.pulp_file.exceptions import ApiException
+import pytest
 
+from pulpcore.client.pulp_file.exceptions import ApiException
 from pulpcore.tests.functional.utils import download_file, get_from_url
 
 

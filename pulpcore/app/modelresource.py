@@ -1,9 +1,9 @@
 import re
+from logging import getLogger
 
 from django.conf import settings
 from import_export import fields
 from import_export.widgets import ForeignKeyWidget
-from logging import getLogger
 
 from pulpcore.app.models.content import (
     Artifact,
@@ -11,7 +11,7 @@ from pulpcore.app.models.content import (
     ContentArtifact,
 )
 from pulpcore.app.models.repository import Repository
-from pulpcore.app.util import get_domain_pk, get_domain
+from pulpcore.app.util import get_domain, get_domain_pk
 from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS
 from pulpcore.plugin.importexport import QueryModelResource
 
@@ -55,7 +55,7 @@ class ArtifactResource(QueryModelResource):
                 row["file"] = row["file"].replace("artifact", f"artifact/{domain}")
         else:  # Strip domain-id out of the artifact-file *if there is one there*
             if upstream_domain_enabled:
-                row["file"] = row["file"].replace(f'artifact/{row["pulp_domain"]}/', "artifact/")
+                row["file"] = row["file"].replace(f"artifact/{row['pulp_domain']}/", "artifact/")
 
         super().before_import_row(row, **kwargs)
 
@@ -81,7 +81,6 @@ class ArtifactResource(QueryModelResource):
 
 
 class RepositoryResource(QueryModelResource):
-
     def set_up_queryset(self):
         """
         :return: Repositories for a specific domain

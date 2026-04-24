@@ -5,12 +5,12 @@ NOTE: assumes ALLOWED_EXPORT_PATHS setting contains "/tmp" - all tests will fail
 the case.
 """
 
-import pytest
 import uuid
 
-from pulpcore.client.pulpcore.exceptions import ApiException
+import pytest
 
 from pulpcore.client.pulp_file import RepositorySyncURL
+from pulpcore.client.pulpcore.exceptions import ApiException
 
 NUM_REPOS = 1
 NUM_EXPORTERS = 4

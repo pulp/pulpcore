@@ -4,7 +4,7 @@ from uuid import uuid4
 from django.conf import settings
 from django.core.files import locks
 from django.core.files.move import file_move_safe
-from django.core.files.storage import Storage, FileSystemStorage
+from django.core.files.storage import FileSystemStorage, Storage
 
 from pulpcore.app.util import get_domain
 

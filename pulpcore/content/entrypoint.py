@@ -1,12 +1,13 @@
 import sys
 
 import click
+from django.conf import settings
+
 from pulpcore.app.netutil import has_ipv6
 from pulpcore.app.pulpcore_gunicorn_application import (
-    handle_control_interface_feature,
     PulpcoreGunicornApplication,
+    handle_control_interface_feature,
 )
-from django.conf import settings
 
 
 class PulpcoreContentApplication(PulpcoreGunicornApplication):

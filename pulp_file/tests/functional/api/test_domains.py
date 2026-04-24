@@ -1,9 +1,10 @@
-import pytest
-import uuid
 import json
+import uuid
+
+import pytest
 
 from pulpcore.app import settings
-from pulpcore.tests.functional.utils import generate_iso, download_file
+from pulpcore.tests.functional.utils import download_file, generate_iso
 
 pytestmark = pytest.mark.skipif(not settings.DOMAIN_ENABLED, reason="Domains not enabled.")
 

@@ -1,10 +1,9 @@
 """Tests related to content path."""
 
-import pytest
 import uuid
-
 from urllib.parse import urljoin
 
+import pytest
 
 from pulpcore.tests.functional.utils import get_from_url
 

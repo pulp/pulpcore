@@ -3,7 +3,7 @@ import re
 from aiohttp.web_response import Response
 from django.db import models
 from django.utils import timezone
-from pysequoia import armor, ArmorKind
+from pysequoia import ArmorKind, armor
 
 from pulpcore.app.models import AutoAddObjPermsMixin, Content, Distribution, Repository
 from pulpcore.app.util import get_domain_pk, gpg_verify

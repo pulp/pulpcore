@@ -7,16 +7,16 @@ from django.db import DatabaseError
 from rest_framework.serializers import (
     CharField,
     FileField,
-    ValidationError,
     Serializer,
+    ValidationError,
 )
 
 from pulpcore.app.files import PulpTemporaryUploadedFile
 from pulpcore.app.models import Artifact, PulpTemporaryFile, Remote, Upload, UploadChunk
 from pulpcore.app.serializers import (
-    RelatedField,
     ArtifactSerializer,
     NoArtifactContentSerializer,
+    RelatedField,
     SingleArtifactContentSerializer,
 )
 from pulpcore.app.serializers.base import RemoteNetworkConfigSerializer
@@ -232,11 +232,13 @@ class SingleArtifactContentUploadSerializer(
         during initialization (typically due to immutable QueryDict).
         """
         if "pulp_labels" in data and isinstance(data["pulp_labels"], str):
-            raise ValidationError(_("""
+            raise ValidationError(
+                _("""
                     Failed to deserialize pulp_labels!
                     This error often occurs when file didn't upload, is incomplete, or
                     when pulp_labels are not in a valid JSON format.
-                    """))
+                    """)
+            )
         return super().validate(data)
 
     def deferred_validate(self, data):

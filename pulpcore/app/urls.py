@@ -1,26 +1,25 @@
 """pulp URL Configuration"""
 
 from django.conf import settings
-from django.urls import path, include
+from django.urls import include, path
 from django.views.decorators.cache import cache_page
 from drf_spectacular.utils import extend_schema
 from drf_spectacular.views import (
     SpectacularJSONAPIView,
-    SpectacularYAMLAPIView,
     SpectacularRedocView,
     SpectacularSwaggerView,
+    SpectacularYAMLAPIView,
 )
-from rest_framework_nested import routers
 from rest_framework.routers import APIRootView
+from rest_framework_nested import routers
 
 from pulpcore.app.apps import pulp_plugin_configs
-from pulpcore.plugin.find_url import find_api_root
 from pulpcore.app.views import (
+    DataRepair7272View,
+    DataRepair7465View,
     LivezView,
     OrphansView,
     PulpImporterImportCheckView,
-    DataRepair7272View,
-    DataRepair7465View,
     RepairView,
     StatusView,
 )
@@ -30,6 +29,7 @@ from pulpcore.app.viewsets import (
     OrphansCleanupViewset,
     ReclaimSpaceViewSet,
 )
+from pulpcore.plugin.find_url import find_api_root
 
 _, PATH_DOMAIN_REWRITE_NOFRONT = find_api_root(lstrip=True, set_domain=True, rewrite_header=True)
 _, PATH_NODOMAIN_NOREWRITE_NOFRONT = find_api_root(

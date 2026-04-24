@@ -1,5 +1,6 @@
-import pytest
 import uuid
+
+import pytest
 
 from pulpcore.tests.functional.utils import PulpTaskGroupError, generate_iso
 
@@ -624,9 +625,9 @@ def try_action(pulpcore_bindings, monitor_task):
         except pulpcore_bindings.module.ApiException as e:
             assert e.status == outcome, f"{e}"
         else:
-            assert (
-                status_code == outcome
-            ), f"User performed {action} when they shouldn't been able to"
+            assert status_code == outcome, (
+                f"User performed {action} when they shouldn't been able to"
+            )
             return response
 
     return _try_action

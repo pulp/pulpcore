@@ -1,7 +1,7 @@
-import pytest
 from io import StringIO
 from unittest.mock import patch
 
+import pytest
 from django.core.management import call_command
 
 from pulpcore.app.models.content import AsciiArmoredDetachedSigningService

@@ -1,10 +1,10 @@
 """Tests that CRUD repositories."""
 
+import json
+import subprocess
 from uuid import uuid4
 
 import pytest
-import json
-import subprocess
 
 from pulpcore.client.pulp_file import RepositorySyncURL
 

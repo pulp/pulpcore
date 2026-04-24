@@ -1,6 +1,8 @@
-import pytest
 import sys
-from pulpcore.app.models import AppStatus, Task, ProgressReport
+
+import pytest
+
+from pulpcore.app.models import AppStatus, ProgressReport, Task
 from pulpcore.constants import TASK_STATES
 
 

@@ -1,12 +1,11 @@
-from pulpcore.app.access_policy import DefaultAccessPolicy, AccessPolicyFromSettings  # noqa: F401
-
 # Below this line there is the old version of the AccessPolicyFromDB that we cannot safely change.
 from rest_access_policy import AccessPolicy
 from rest_framework.exceptions import APIException
 
+from pulpcore.app.access_policy import AccessPolicyFromSettings, DefaultAccessPolicy  # noqa: F401
+from pulpcore.app.loggers import deprecation_logger
 from pulpcore.app.models import AccessPolicy as AccessPolicyModel
 from pulpcore.app.util import get_view_urlpattern, get_viewset_for_model
-from pulpcore.app.loggers import deprecation_logger
 
 
 class AccessPolicyFromDB(AccessPolicy):

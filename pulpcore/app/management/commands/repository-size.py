@@ -1,14 +1,14 @@
 import json
 import re
 import sys
+from argparse import RawDescriptionHelpFormatter
 from gettext import gettext as _
 
-from argparse import RawDescriptionHelpFormatter
-from django.core.management import BaseCommand, CommandError
 from django.conf import settings
+from django.core.management import BaseCommand, CommandError
 
 from pulpcore.app.models import Repository
-from pulpcore.app.util import get_url, extract_pk
+from pulpcore.app.util import extract_pk, get_url
 
 
 def gather_repository_sizes(repositories, include_versions=False, include_on_demand=False):

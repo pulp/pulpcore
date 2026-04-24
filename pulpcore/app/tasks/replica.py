@@ -5,15 +5,14 @@ from tempfile import NamedTemporaryFile
 
 from django.db import transaction
 from django.db.models import Min
-
-from pulpcore.constants import TASK_STATES
-from pulpcore.app.apps import pulp_plugin_configs, PulpAppConfig
-from pulpcore.app.models import Distribution, Repository, UpstreamPulp, Task, TaskGroup
-from pulpcore.app.replica import ReplicaContext
-from pulpcore.tasking.tasks import dispatch
-
 from pulp_glue.common import __version__ as pulp_glue_version
 from pulp_glue.common.context import PluginRequirement
+
+from pulpcore.app.apps import PulpAppConfig, pulp_plugin_configs
+from pulpcore.app.models import Distribution, Repository, Task, TaskGroup, UpstreamPulp
+from pulpcore.app.replica import ReplicaContext
+from pulpcore.constants import TASK_STATES
+from pulpcore.tasking.tasks import dispatch
 
 
 def user_agent():

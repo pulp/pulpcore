@@ -1,22 +1,22 @@
-from contextvars import ContextVar
-from logging import getLogger
 import os
 import sys
 import threading
 import time
+from contextvars import ContextVar
+from logging import getLogger
 
 import click
 import django
 from django.db import connection
-from django.db.utils import IntegrityError, InterfaceError, DatabaseError
+from django.db.utils import DatabaseError, IntegrityError, InterfaceError
 from gunicorn.arbiter import Arbiter
 from gunicorn.workers.sync import SyncWorker
 
 from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app.netutil import has_ipv6
 from pulpcore.app.pulpcore_gunicorn_application import (
-    handle_control_interface_feature,
     PulpcoreGunicornApplication,
+    handle_control_interface_feature,
 )
 
 logger = getLogger(__name__)
@@ -69,6 +69,7 @@ class PulpApiWorker(SyncWorker):
         django.setup()
 
         from django.conf import settings
+
         from pulpcore.app.models import AppStatus
         from pulpcore.app.util import get_worker_name
 
@@ -167,8 +168,7 @@ class PulpcoreApiApplication(PulpcoreGunicornApplication):
     "--access-logformat",
     "access_log_format",
     default=(
-        "pulp [%({correlation-id}o)s]: "
-        '%(h)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s "%(f)s" "%(a)s"',
+        'pulp [%({correlation-id}o)s]: %(h)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s "%(f)s" "%(a)s"',
     ),
 )
 @click.option("--error-logfile", "--log-file", "errorlog")

@@ -3,7 +3,6 @@ from gettext import gettext as _
 from rest_framework import fields, serializers
 
 from pulpcore.app.models import Repository
-
 from pulpcore.app.serializers import RepositoryVersionRelatedField, ValidateFieldsMixin
 from pulpcore.app.util import get_domain
 

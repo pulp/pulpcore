@@ -1,8 +1,8 @@
 import http
-import pytest
 import uuid
-
 from urllib.parse import urlparse
+
+import pytest
 
 pytestmark = [pytest.mark.parallel]
 

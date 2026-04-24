@@ -1,11 +1,11 @@
-import pytest
-from unittest.mock import call, Mock, AsyncMock
+from unittest.mock import AsyncMock, Mock, call
 
+import pytest
 from django.db.utils import InterfaceError, OperationalError
 
+from pulpcore.app.models.status import AppStatus, AppStatusManager
 from pulpcore.content import _heartbeat
 from pulpcore.content.handler import Handler
-from pulpcore.app.models.status import AppStatus, AppStatusManager
 
 
 class MockException(Exception):

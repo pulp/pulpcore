@@ -11,21 +11,21 @@ from django.contrib.postgres.indexes import GinIndex
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils import timezone
-from django_lifecycle import hook, AFTER_CREATE
+from django_lifecycle import AFTER_CREATE, hook
 
+from pulpcore.app.contexts import _current_task
+from pulpcore.app.loggers import deprecation_logger
 from pulpcore.app.models import (
     AutoAddObjPermsMixin,
     BaseModel,
     GenericRelationModel,
 )
-from pulpcore.app.models.status import AppStatus
 from pulpcore.app.models.fields import EncryptedJSONField
+from pulpcore.app.models.status import AppStatus
+from pulpcore.app.role_util import get_users_with_perms
+from pulpcore.app.util import get_domain_pk
 from pulpcore.constants import TASK_CHOICES, TASK_INCOMPLETE_STATES, TASK_STATES
 from pulpcore.exceptions import exception_to_dict
-from pulpcore.app.util import get_domain_pk
-from pulpcore.app.contexts import _current_task
-from pulpcore.app.role_util import get_users_with_perms
-from pulpcore.app.loggers import deprecation_logger
 
 _logger = logging.getLogger(__name__)
 

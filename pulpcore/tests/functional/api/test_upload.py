@@ -1,13 +1,14 @@
 """Tests related to content upload."""
 
 import hashlib
-import uuid
-import pytest
 import os
-
+import uuid
 from random import shuffle
-from pulpcore.client.pulpcore import ApiException
+
+import pytest
+
 from pulpcore.client.pulp_file import ApiException as FileApiException
+from pulpcore.client.pulpcore import ApiException
 from pulpcore.tests.functional.utils import generate_iso
 
 
