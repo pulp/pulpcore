@@ -4,28 +4,28 @@ from django.db.models import Prefetch
 from django_filters import Filter
 from rest_framework import mixins, serializers
 
-from pulpcore.app.models.publication import CompositeContentGuard
-from pulpcore.app.serializers.publication import CompositeContentGuardSerializer
-from pulpcore.filters import BaseFilterSet
 from pulpcore.app.models import (
-    ContentGuard,
-    RBACContentGuard,
-    ContentRedirectContentGuard,
-    HeaderContentGuard,
-    Distribution,
-    Publication,
-    Repository,
     ArtifactDistribution,
+    ContentGuard,
+    ContentRedirectContentGuard,
+    Distribution,
+    HeaderContentGuard,
+    Publication,
+    RBACContentGuard,
+    Repository,
 )
+from pulpcore.app.models.publication import CompositeContentGuard
 from pulpcore.app.serializers import (
+    ArtifactDistributionSerializer,
     ContentGuardSerializer,
+    ContentRedirectContentGuardSerializer,
     DistributionSerializer,
+    HeaderContentGuardSerializer,
     PublicationSerializer,
     RBACContentGuardSerializer,
-    ContentRedirectContentGuardSerializer,
-    HeaderContentGuardSerializer,
-    ArtifactDistributionSerializer,
 )
+from pulpcore.app.serializers.publication import CompositeContentGuardSerializer
+from pulpcore.app.util import get_domain
 from pulpcore.app.viewsets import (
     AsyncCreateMixin,
     AsyncRemoveMixin,
@@ -42,7 +42,7 @@ from pulpcore.app.viewsets.custom_filters import (
     WithContentFilter,
     WithContentInFilter,
 )
-from pulpcore.app.util import get_domain
+from pulpcore.filters import BaseFilterSet
 
 
 class RepositoryThroughVersionFilter(Filter):
@@ -439,7 +439,7 @@ class CompositeContentGuardViewSet(ContentGuardViewSet, RolesMixin):
                 "action": ["retrieve", "my_permissions"],
                 "principal": "authenticated",
                 "effect": "allow",
-                "condition": "has_model_or_domain_or_obj_perms:core." "view_compositecontentguard",
+                "condition": "has_model_or_domain_or_obj_perms:core.view_compositecontentguard",
             },
             {
                 "action": ["update", "partial_update"],

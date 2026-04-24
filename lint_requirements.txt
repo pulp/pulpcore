@@ -5,10 +5,8 @@
 #
 # For more info visit https://github.com/pulp/plugin_template
 
-black~=26.3  # Pin style to the year. https://black.readthedocs.io/en/stable/faq.html#how-stable-is-black-s-style
 bump-my-version
 check-manifest
-flake8
-flake8-black
 packaging
+ruff
 yamllint

@@ -1,15 +1,14 @@
 import logging
 import tempfile
-
 from gettext import gettext as _
 
 from django.core.files import File
 
 from pulpcore.plugin.models import (
     ContentArtifact,
-    RepositoryVersion,
     PublishedMetadata,
     RemoteArtifact,
+    RepositoryVersion,
 )
 
 from pulp_file.app.models import FilePublication

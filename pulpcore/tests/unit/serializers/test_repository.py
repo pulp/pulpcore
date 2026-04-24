@@ -1,7 +1,7 @@
-import pytest
 from types import SimpleNamespace
-
 from unittest.mock import Mock
+
+import pytest
 from rest_framework import serializers
 
 from pulpcore.app import models

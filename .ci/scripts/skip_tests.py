@@ -15,12 +15,13 @@ Returns:
     *: Error
 """
 
-import sys
+import argparse
 import os
 import re
-import git
+import sys
 import textwrap
-import argparse
+
+import git
 
 DOC_PATTERNS = [
     r"^docs/",

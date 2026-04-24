@@ -1,7 +1,7 @@
-import pytest
 import uuid
+from unittest.mock import AsyncMock, Mock
 
-from unittest.mock import Mock, AsyncMock
+import pytest
 from django.db import IntegrityError
 
 from pulpcore.content import Handler

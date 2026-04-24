@@ -7,15 +7,14 @@ will fail if this is not the case.
 
 import json
 import os
-import pytest
 import uuid
 from pathlib import Path
 
+import pytest
+
 from pulpcore.app import settings
-
-from pulpcore.client.pulpcore.exceptions import ApiException
-
 from pulpcore.client.pulp_file import RepositorySyncURL
+from pulpcore.client.pulpcore.exceptions import ApiException
 
 NUM_REPOS = 2
 

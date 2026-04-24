@@ -1,17 +1,17 @@
 """Tests for Pulp`s download policies."""
 
-from aiohttp.client_exceptions import ClientResponseError
-from bs4 import BeautifulSoup
 import hashlib
 import os
-import pytest
 import subprocess
 import uuid
 from urllib.parse import urljoin
 
-from pulpcore.tests.functional.utils import get_files_in_manifest, download_file
+import pytest
+from aiohttp.client_exceptions import ClientResponseError
+from bs4 import BeautifulSoup
 
 from pulpcore.client.pulp_file import FileFilePublication, RepositorySyncURL
+from pulpcore.tests.functional.utils import download_file, get_files_in_manifest
 
 OBJECT_STORAGES = (
     "storages.backends.s3boto3.S3Boto3Storage",

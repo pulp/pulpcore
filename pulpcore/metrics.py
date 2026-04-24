@@ -1,10 +1,9 @@
 from functools import lru_cache
 
 from django.conf import settings
-
+from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
-from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
 from opentelemetry.sdk.resources import Resource
 
 from pulpcore.app.util import get_domain, get_worker_name

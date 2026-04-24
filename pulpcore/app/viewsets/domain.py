@@ -5,18 +5,18 @@ from rest_framework import mixins
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 
-from pulpcore.filters import BaseFilterSet
 from pulpcore.app.models import Domain
 from pulpcore.app.response import OperationPostponedResponse
 from pulpcore.app.serializers import (
-    DomainSerializer,
-    DomainBackendMigratorSerializer,
     AsyncOperationResponseSerializer,
+    DomainBackendMigratorSerializer,
+    DomainSerializer,
 )
 from pulpcore.app.tasks import migrate_backend
-from pulpcore.app.viewsets import NamedModelViewSet, AsyncRemoveMixin, AsyncUpdateMixin, LabelsMixin
+from pulpcore.app.viewsets import AsyncRemoveMixin, AsyncUpdateMixin, LabelsMixin, NamedModelViewSet
 from pulpcore.app.viewsets.base import NAME_FILTER_OPTIONS
 from pulpcore.app.viewsets.custom_filters import LabelFilter
+from pulpcore.filters import BaseFilterSet
 from pulpcore.tasking.tasks import dispatch
 
 

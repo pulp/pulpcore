@@ -1,8 +1,7 @@
 from functools import lru_cache
 
 from django.db import models
-
-from django_lifecycle import hook, LifecycleModel
+from django_lifecycle import LifecycleModel, hook
 
 from pulpcore.app.models import pulp_uuid
 

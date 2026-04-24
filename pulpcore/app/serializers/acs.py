@@ -11,7 +11,6 @@ from pulpcore.app.serializers import (
     DomainUniqueValidator,
     ModelSerializer,
 )
-
 from pulpcore.app.util import get_url
 
 

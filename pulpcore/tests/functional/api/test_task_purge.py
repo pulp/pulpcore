@@ -6,8 +6,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from pulpcore.constants import TASK_STATES, TASK_FINAL_STATES
-
+from pulpcore.constants import TASK_FINAL_STATES, TASK_STATES
 from pulpcore.tests.functional.utils import PulpTaskError
 
 TOMORROW_STR = (datetime.now(timezone.utc) + timedelta(days=1)).strftime("%Y-%m-%dT%H:%M")

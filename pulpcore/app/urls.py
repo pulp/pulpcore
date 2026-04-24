@@ -1,16 +1,16 @@
 """pulp URL Configuration"""
 
 from django.conf import settings
-from django.urls import path, include
+from django.urls import include, path
 from drf_spectacular.utils import extend_schema
 from drf_spectacular.views import (
     SpectacularJSONAPIView,
-    SpectacularYAMLAPIView,
     SpectacularRedocView,
     SpectacularSwaggerView,
+    SpectacularYAMLAPIView,
 )
-from rest_framework_nested import routers
 from rest_framework.routers import APIRootView
+from rest_framework_nested import routers
 
 from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app.views import (

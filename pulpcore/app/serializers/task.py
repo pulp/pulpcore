@@ -13,8 +13,8 @@ from pulpcore.app.serializers import (
     TaskGroupStatusCountField,
     fields,
 )
-from pulpcore.constants import TASK_STATES
 from pulpcore.app.util import reverse
+from pulpcore.constants import TASK_STATES
 
 
 class CreatedResourceField(RelatedResourceField):
