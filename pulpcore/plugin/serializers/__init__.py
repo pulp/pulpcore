@@ -1,7 +1,9 @@
+# ruff: noqa: F401
+# isort: skip_file
 # Import Serializers in platform that are potentially useful to plugin writers
 from pulpcore.app.serializers import (
-    AlternateContentSourcePathSerializer,
     AlternateContentSourceSerializer,
+    AlternateContentSourcePathSerializer,
     ArtifactSerializer,
     AsyncOperationResponseSerializer,
     ContentChecksumSerializer,
@@ -21,12 +23,11 @@ from pulpcore.app.serializers import (
     MultipleArtifactContentSerializer,
     NestedRelatedField,
     NoArtifactContentSerializer,
-    PRNField,
     ProgressReportSerializer,
+    PRNField,
     PublicationSerializer,
     RelatedField,
     RemoteSerializer,
-    RepositoryAddRemoveContentSerializer,
     RepositorySerializer,
     RepositorySyncURLSerializer,
     RepositoryVersionRelatedField,
@@ -34,9 +35,10 @@ from pulpcore.app.serializers import (
     SingleArtifactContentSerializer,
     SingleContentArtifactField,
     TaskGroupOperationResponseSerializer,
-    TaskSerializer,
+    RepositoryAddRemoveContentSerializer,
     ValidateFieldsMixin,
     validate_unknown_fields,
+    TaskSerializer,
 )
 
 from .content import (

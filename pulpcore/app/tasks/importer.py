@@ -159,10 +159,8 @@ class ChunkedFile(ExitStack):
                 missing_files.append(chunk_path)
         if missing_files:
             raise ValidationError(
-                _(
-                    "Missing import-chunks named in table-of-contents: {}.".format(
-                        str(missing_files)
-                    )
+                _("Missing import-chunks named in table-of-contents: {}.").format(
+                    str(missing_files)
                 )
             )
 
