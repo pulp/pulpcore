@@ -2,16 +2,16 @@
 Repository related Django models.
 """
 
+import logging
+from collections import defaultdict
 from contextlib import suppress
 from gettext import gettext as _
 from os import path
-from collections import defaultdict
-import logging
 
 import django
 from asyncio_throttle import Throttler
 from django.conf import settings
-from django.contrib.postgres.fields import HStoreField, ArrayField
+from django.contrib.postgres.fields import ArrayField, HStoreField
 from django.core.validators import MinValueValidator
 from django.db import models, transaction
 from django.db.models import F, Func, Q, Value
@@ -20,19 +20,18 @@ from rest_framework.exceptions import APIException
 
 from pulpcore.app.util import (
     batch_qs,
+    cache_key,
+    get_domain_pk,
     get_prn,
     get_view_name_for_model,
-    get_domain_pk,
-    cache_key,
     reverse,
 )
+from pulpcore.cache import Cache
 from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS, PROTECTED_REPO_VERSION_MESSAGE
 from pulpcore.download.factory import DownloaderFactory
 from pulpcore.exceptions import ResourceImmutableError
 
-from pulpcore.cache import Cache
-
-from .base import MasterModel, BaseModel
+from .base import BaseModel, MasterModel
 from .content import Artifact, Content, ContentArtifact, RemoteArtifact
 from .fields import EncryptedTextField
 from .task import CreatedResource, Task
@@ -389,7 +388,7 @@ class Repository(MasterModel):
         if not cpk or already_present.exists():
             return None
 
-        from pulpcore.plugin.tasking import dispatch, aadd_and_remove
+        from pulpcore.plugin.tasking import aadd_and_remove, dispatch
 
         body = {"repository_pk": self.pk, "add_content_units": [cpk], "remove_content_units": []}
         return dispatch(aadd_and_remove, kwargs=body, exclusive_resources=[self], immediate=True)
@@ -402,7 +401,7 @@ class Repository(MasterModel):
         if not cpk or await already_present.aexists():
             return None
 
-        from pulpcore.plugin.tasking import adispatch, aadd_and_remove
+        from pulpcore.plugin.tasking import aadd_and_remove, adispatch
 
         body = {"repository_pk": self.pk, "add_content_units": [cpk], "remove_content_units": []}
         return await adispatch(

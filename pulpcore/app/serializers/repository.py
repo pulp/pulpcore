@@ -10,18 +10,17 @@ from pulpcore.app.serializers import (
     DetailIdentityField,
     DetailRelatedField,
     DomainUniqueValidator,
+    HiddenFieldsMixin,
     LatestVersionField,
     ModelSerializer,
     RepositoryVersionIdentityField,
     RepositoryVersionRelatedField,
     RepositoryVersionsIdentityFromRepositoryField,
     ValidateFieldsMixin,
-    HiddenFieldsMixin,
     pulp_labels_validator,
 )
 from pulpcore.app.serializers.base import RemoteNetworkConfigSerializer
-from pulpcore.app.util import extract_pk, raise_for_unknown_content_units
-from pulpcore.app.util import get_prn, reverse
+from pulpcore.app.util import extract_pk, get_prn, raise_for_unknown_content_units, reverse
 
 
 class RepositorySerializer(ModelSerializer):

@@ -1,5 +1,6 @@
 import logging
 import shutil
+from collections import namedtuple
 from gettext import gettext as _
 
 from django.conf import settings
@@ -7,13 +8,12 @@ from django.db.models import Sum
 from drf_spectacular.utils import extend_schema
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from collections import namedtuple
 
 from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app.models.content import Artifact
 from pulpcore.app.models.status import AppStatus
-from pulpcore.app.serializers.status import StatusSerializer
 from pulpcore.app.redis_connection import get_redis_connection
+from pulpcore.app.serializers.status import StatusSerializer
 from pulpcore.app.util import get_domain
 
 _logger = logging.getLogger(__name__)

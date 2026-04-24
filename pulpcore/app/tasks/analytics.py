@@ -12,12 +12,12 @@ except ImportError:
 
 from asgiref.sync import sync_to_async
 from django.conf import settings
-from django.db import connection
 from django.contrib.auth import get_user_model
+from django.db import connection
 from google.protobuf.json_format import MessageToJson
 
 from pulpcore.app.apps import pulp_plugin_configs
-from pulpcore.app.models import SystemID, Group, Domain, AccessPolicy
+from pulpcore.app.models import AccessPolicy, Domain, Group, SystemID
 from pulpcore.app.models.role import Role
 from pulpcore.app.models.status import AppStatus
 from pulpcore.app.protobuf.analytics_pb2 import Analytics
@@ -128,7 +128,7 @@ async def post_analytics():
                 async with session.post(url, data=analytics.SerializeToString()) as resp:
                     if resp.status == 200:
                         logger.info(
-                            ("Submitted analytics to %s. " "Information submitted includes %s"),
+                            ("Submitted analytics to %s. Information submitted includes %s"),
                             url,
                             json.loads(MessageToJson(analytics)),
                         )

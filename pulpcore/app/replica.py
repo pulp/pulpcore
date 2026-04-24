@@ -1,18 +1,18 @@
 import logging
+from urllib.parse import urljoin
 
 from django.db.models import Model
 from django.utils.dateparse import parse_datetime
-from urllib.parse import urljoin
-
 from pulp_glue.common.context import PulpContext
+
 from pulpcore.app.models import UpstreamPulp
-from pulpcore.tasking.tasks import dispatch
 from pulpcore.app.tasks.base import (
     ageneral_update,
     general_create,
     general_multi_delete,
 )
-from pulpcore.plugin.util import get_url, get_domain
+from pulpcore.plugin.util import get_domain, get_url
+from pulpcore.tasking.tasks import dispatch
 
 _logger = logging.getLogger(__name__)
 

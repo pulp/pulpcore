@@ -1,3 +1,4 @@
+from functools import lru_cache
 from gettext import gettext as _
 
 from django.contrib.contenttypes.fields import GenericRelation
@@ -5,7 +6,6 @@ from django.db import models
 from django.db.models import options
 from django.db.models.base import ModelBase
 from django_lifecycle import LifecycleModel
-from functools import lru_cache
 from uuid6 import uuid7
 
 

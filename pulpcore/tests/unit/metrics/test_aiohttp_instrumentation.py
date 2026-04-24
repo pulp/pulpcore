@@ -1,5 +1,4 @@
 import pytest
-
 from aiohttp import web
 
 from pulpcore.content.instrumentation import instrumentation

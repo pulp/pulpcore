@@ -1,7 +1,6 @@
 import pytest
-
-from django.test import RequestFactory
 from django.http import HttpResponse
+from django.test import RequestFactory
 
 from pulpcore.middleware import DjangoMetricsMiddleware
 

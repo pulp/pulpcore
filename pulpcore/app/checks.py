@@ -3,10 +3,16 @@ from pathlib import Path
 from django.conf import settings
 from django.core.checks import (
     Debug as CheckDebug,
+)
+from django.core.checks import (
     Error as CheckError,
-    Warning as CheckWarning,
+)
+from django.core.checks import (
     Tags,
     register,
+)
+from django.core.checks import (
+    Warning as CheckWarning,
 )
 from django.db.models import Q
 

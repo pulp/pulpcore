@@ -7,9 +7,9 @@ from uuid import uuid4
 
 import pytest
 from aiohttp import BasicAuth
+
 from pulpcore.client.pulp_file import RepositorySyncURL
 from pulpcore.client.pulpcore.exceptions import ApiException
-
 from pulpcore.tests.functional.utils import download_file
 
 

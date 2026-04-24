@@ -2,9 +2,9 @@ import hashlib
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import pytest
-from unittest import mock
 
 from pulpcore.app import models, util
 from pulpcore.app.util import HashingFileWriter

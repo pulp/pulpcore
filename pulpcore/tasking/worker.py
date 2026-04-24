@@ -1,5 +1,3 @@
-from gettext import gettext as _
-
 import functools
 import logging
 import os
@@ -7,38 +5,38 @@ import random
 import select
 import signal
 from datetime import datetime, timedelta
+from gettext import gettext as _
 from multiprocessing import Process
 from tempfile import TemporaryDirectory
-from packaging.version import parse as parse_version
 
 from django.conf import settings
-from django.db import connection, transaction, DatabaseError, IntegrityError
+from django.db import DatabaseError, IntegrityError, connection, transaction
 from django.db.models import Case, Count, F, Max, Value, When
 from django.utils import timezone
+from packaging.version import parse as parse_version
 
+from pulpcore.app.apps import pulp_plugin_configs
+from pulpcore.app.models import AppStatus, Task
+from pulpcore.app.util import get_worker_name
 from pulpcore.constants import (
-    TASK_STATES,
     TASK_INCOMPLETE_STATES,
-    TASK_SCHEDULING_LOCK,
-    TASK_UNBLOCKING_LOCK,
     TASK_METRICS_LOCK,
-    WORKER_CLEANUP_LOCK,
-    TASK_WAKEUP_UNBLOCK,
+    TASK_SCHEDULING_LOCK,
+    TASK_STATES,
+    TASK_UNBLOCKING_LOCK,
     TASK_WAKEUP_HANDLE,
+    TASK_WAKEUP_UNBLOCK,
+    WORKER_CLEANUP_LOCK,
 )
 from pulpcore.metrics import init_otel_meter
-from pulpcore.app.apps import pulp_plugin_configs
-from pulpcore.app.util import get_worker_name
-from pulpcore.app.models import Task, AppStatus
-
-from pulpcore.tasking.storage import WorkerDirectory
 from pulpcore.tasking._util import (
     delete_incomplete_resources,
     dispatch_scheduled_tasks,
     perform_task,
     startup_hook,
 )
-from pulpcore.tasking.tasks import using_workdir, execute_task
+from pulpcore.tasking.storage import WorkerDirectory
+from pulpcore.tasking.tasks import execute_task, using_workdir
 
 _logger = logging.getLogger(__name__)
 random.seed()

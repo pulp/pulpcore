@@ -1,14 +1,13 @@
-import pytest
 from collections import namedtuple
 
+import pytest
 from django.core.files.storage import default_storage as storage
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from pulpcore.plugin.exceptions import (
-    UnsupportedDigestValidationError,
     MissingDigestValidationError,
+    UnsupportedDigestValidationError,
 )
-
 from pulpcore.plugin.models import (
     Artifact,
     Content,

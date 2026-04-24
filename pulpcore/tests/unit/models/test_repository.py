@@ -1,7 +1,7 @@
-import pytest
+from itertools import compress
 from uuid import uuid4
 
-from itertools import compress
+import pytest
 
 from pulpcore.app.models import RepositoryVersionContentDetails
 from pulpcore.plugin.models import Artifact, Content, ContentArtifact, Repository

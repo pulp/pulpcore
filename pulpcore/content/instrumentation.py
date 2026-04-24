@@ -2,8 +2,8 @@ import time
 
 from aiohttp import web
 
-from pulpcore.metrics import init_otel_meter
 from pulpcore.app.util import get_worker_name, normalize_http_status
+from pulpcore.metrics import init_otel_meter
 
 
 def instrumentation(exporter=None, reader=None, provider=None):

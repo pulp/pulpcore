@@ -2,11 +2,10 @@
 
 import pytest
 
-from pulpcore.tests.functional.utils import get_files_in_manifest
-
 from pulpcore.client.pulp_file import (
     RepositorySyncURL,
 )
+from pulpcore.tests.functional.utils import get_files_in_manifest
 
 
 @pytest.fixture

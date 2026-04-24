@@ -2,10 +2,11 @@
 
 import hashlib
 import os
-import pytest
 import uuid
 
-from pulpcore.tests.functional.utils import generate_iso, PulpTaskError
+import pytest
+
+from pulpcore.tests.functional.utils import PulpTaskError, generate_iso
 
 
 @pytest.mark.parallel

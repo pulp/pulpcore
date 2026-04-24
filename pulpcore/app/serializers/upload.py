@@ -1,10 +1,10 @@
 import re
-
 from gettext import gettext as _
+
 from rest_framework import serializers
 
 from pulpcore.app import models
-from pulpcore.app.serializers import base, ValidateFieldsMixin
+from pulpcore.app.serializers import ValidateFieldsMixin, base
 
 CONTENT_RANGE_PATTERN = r"^bytes (\d+)-(\d+)/(\d+|[*])$"
 

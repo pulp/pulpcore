@@ -1,7 +1,6 @@
 """Test the status page."""
 
 import pytest
-
 from jsonschema import validate
 
 STATUS = {

@@ -9,6 +9,7 @@ This script modifies drf-spectacular schema validation to accept slashes and cur
 """
 
 import json
+
 from drf_spectacular.validation import JSON_SCHEMA_SPEC_PATH
 
 with open(JSON_SCHEMA_SPEC_PATH) as fh:

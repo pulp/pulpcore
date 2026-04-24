@@ -1,5 +1,6 @@
-from django.template.defaultfilters import stringfilter, urlize as orig_urlize, register
 from django.conf import settings
+from django.template.defaultfilters import register, stringfilter
+from django.template.defaultfilters import urlize as orig_urlize
 from django.utils.safestring import SafeData, mark_safe
 
 
