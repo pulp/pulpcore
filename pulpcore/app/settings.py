@@ -19,7 +19,6 @@ from cryptography.fernet import Fernet
 from django.core.exceptions import ImproperlyConfigured
 from dynaconf import DjangoDynaconf, Dynaconf, Validator
 from dynaconf.base import Settings
-from dynaconf.utils.functional import empty
 
 from pulpcore import constants
 
@@ -606,7 +605,23 @@ def otel_middleware_hook(settings):
     return data
 
 
+def saml2_settings_hook(settings):
+    data = {"dynaconf_merge": True}
+    if "SAML_CONFIG" in settings:
+        data["INSTALLED_APPS"] = ["djangosaml2"]
+        data["MIDDLEWARE"] = ["djangosaml2.middleware.SamlSessionMiddleware"]
+        data["AUTHENTICATION_BACKENDS"] = ["djangosaml2.backends.Saml2Backend"]
+        if "LOGIN_URL" not in settings:
+            data["LOGIN_URL"] = "/saml2/login/"
+        if "SESSION_COOKIE_SECURE" not in settings:
+            data["SESSION_COOKIE_SECURE"] = True
+        if "SESSION_EXPIRE_AT_BROWSER_CLOSE" not in settings:
+            data["SESSION_EXPIRE_AT_BROWSER_CLOSE"] = True
+    return data
+
+
 del preload_settings
+
 
 class PulpSettings(Settings):
     def _ready(self):
@@ -637,7 +652,7 @@ settings = DjangoDynaconf(
         otel_metrics_dispatch_interval_validator,
         distributed_publication_retention_period_validator,
     ],
-    post_hooks=(otel_middleware_hook,),
+    post_hooks=(otel_middleware_hook, saml2_settings_hook),
 )
 
 _logger = getLogger(__name__)
