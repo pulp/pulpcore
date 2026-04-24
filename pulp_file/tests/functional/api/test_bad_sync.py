@@ -1,7 +1,7 @@
-import pytest
 import uuid
-
 from collections import defaultdict
+
+import pytest
 
 from pulpcore.client.pulp_file import RepositorySyncURL
 

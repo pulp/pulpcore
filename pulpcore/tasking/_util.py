@@ -15,13 +15,14 @@ from django.db.models import Q
 from django.utils import timezone
 from django_guid import set_guid
 from django_guid.utils import generate_guid
+
 from pulpcore.app.models import Artifact, Content, Task, TaskSchedule
 from pulpcore.app.role_util import get_users_with_perms
 from pulpcore.app.util import (
-    set_current_user,
-    set_domain,
     configure_analytics,
     configure_cleanup,
+    set_current_user,
+    set_domain,
 )
 from pulpcore.constants import TASK_FINAL_STATES, TASK_STATES, VAR_TMP_PULP
 from pulpcore.exceptions import AdvisoryLockError

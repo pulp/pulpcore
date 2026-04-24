@@ -1,5 +1,4 @@
 import gc
-
 from logging import getLogger
 
 from django.conf import settings

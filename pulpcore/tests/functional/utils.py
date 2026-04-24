@@ -1,13 +1,13 @@
 """Utilities for Pulpcore tests."""
 
-import aiohttp
 import asyncio
 import hashlib
 import os
 import random
-
-from aiohttp import web
 from dataclasses import dataclass
+
+import aiohttp
+from aiohttp import web
 from multidict import CIMultiDict
 
 

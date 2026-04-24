@@ -5,14 +5,14 @@
 #
 # For more info visit https://github.com/pulp/plugin_template
 
-import tomllib
 import warnings
+
+import tomllib
 from packaging.requirements import Requirement
 
 CHECK_MATRIX = [
     ("pyproject.toml", True, True, True),
     ("requirements.txt", True, True, True),
-    ("dev_requirements.txt", False, True, False),
     ("ci_requirements.txt", False, True, True),
     ("doc_requirements.txt", False, True, False),
     ("lint_requirements.txt", False, True, True),

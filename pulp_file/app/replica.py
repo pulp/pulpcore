@@ -1,10 +1,10 @@
-from pulpcore.plugin.replica import Replicator
-
 from pulp_glue.file.context import (
     PulpFileDistributionContext,
     PulpFilePublicationContext,
     PulpFileRepositoryContext,
 )
+
+from pulpcore.plugin.replica import Replicator
 
 from pulp_file.app.models import FileDistribution, FileRemote, FileRepository
 from pulp_file.app.tasks import synchronize as file_synchronize

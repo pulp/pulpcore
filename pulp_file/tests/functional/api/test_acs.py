@@ -1,11 +1,11 @@
 import hashlib
-import pytest
 import uuid
 from urllib.parse import urljoin
 
+import pytest
+
 from pulpcore.client.pulp_file import RepositorySyncURL
 from pulpcore.client.pulp_file.exceptions import ApiException
-
 from pulpcore.tests.functional.utils import (
     download_file,
     get_files_in_manifest,

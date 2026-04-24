@@ -15,8 +15,8 @@ from pulpcore.app.serializers import (
     TaskGroupStatusCountField,
     fields,
 )
-from pulpcore.constants import TASK_STATES
 from pulpcore.app.util import get_domain
+from pulpcore.constants import TASK_STATES
 
 
 class CreatedResourceSerializer(RelatedResourceField):

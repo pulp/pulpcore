@@ -6,9 +6,7 @@
 # After editing this file please always reapply the plugin template before committing any changes.
 
 ---
-black: true
 check_commit_message: true
-check_gettext: true
 check_manifest: true
 check_stray_pulpcore_imports: false
 ci_base_image: "ghcr.io/pulp/pulp-ci-centos9"
@@ -24,11 +22,10 @@ disabled_redis_runners:
   - "s3"
 docker_fixtures: true
 extra_files: []
-flake8: true
-flake8_ignore:
-  - "./pulpcore/app/protobuf/*"
 github_org: "pulp"
 latest_release_branch: "3.48"
+lint_ignore:
+  - "./pulpcore/app/protobuf/*"
 lint_requirements: true
 os_required_packages: []
 parallel_test_workers: 8
@@ -95,7 +92,6 @@ pulp_settings_s3:
   domain_enabled: true
   hide_guarded_distributions: true
   rest_framework__default_authentication_classes: "@merge pulpcore.app.authentication.JSONHeaderRemoteAuthentication"
-pydocstyle: true
 release_email: "pulp-infra@redhat.com"
 release_user: "pulpbot"
 stalebot: true

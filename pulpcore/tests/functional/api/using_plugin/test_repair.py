@@ -1,11 +1,10 @@
-import pytest
-
-from django.core.files.storage import default_storage
 from random import sample
 
-from pulpcore.client.pulpcore import Repair
-from pulpcore.client.pulp_file import RepositorySyncURL
+import pytest
+from django.core.files.storage import default_storage
 
+from pulpcore.client.pulp_file import RepositorySyncURL
+from pulpcore.client.pulpcore import Repair
 from pulpcore.tests.functional.utils import get_files_in_manifest
 
 

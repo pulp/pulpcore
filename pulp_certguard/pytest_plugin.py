@@ -3,8 +3,8 @@ import pytest
 try:
     from pulpcore.client.pulp_certguard import (
         ApiClient,
-        ContentguardsX509Api,
         ContentguardsRhsmApi,
+        ContentguardsX509Api,
     )
 except ImportError:
     pass

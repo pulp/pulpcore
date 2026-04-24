@@ -3,11 +3,11 @@ import platform
 import sys
 from tempfile import NamedTemporaryFile
 
-from pulpcore.app.apps import pulp_plugin_configs, PulpAppConfig
-from pulpcore.app.models import UpstreamPulp, TaskGroup
-from pulpcore.app.replica import ReplicaContext
-
 from pulp_glue.common import __version__ as pulp_glue_version
+
+from pulpcore.app.apps import PulpAppConfig, pulp_plugin_configs
+from pulpcore.app.models import TaskGroup, UpstreamPulp
+from pulpcore.app.replica import ReplicaContext
 
 
 def user_agent():

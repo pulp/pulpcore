@@ -1,11 +1,10 @@
+from django.core.files.storage import default_storage
+from django.db import models
+from django.utils.module_loading import import_string
+from django_lifecycle import AFTER_CREATE, BEFORE_DELETE, BEFORE_UPDATE, hook
 from opentelemetry.metrics import Observation
 
-from django.core.files.storage import default_storage
-from django.utils.module_loading import import_string
-from django.db import models
-from django_lifecycle import hook, BEFORE_DELETE, BEFORE_UPDATE, AFTER_CREATE
-
-from pulpcore.app.models import BaseModel, AutoAddObjPermsMixin
+from pulpcore.app.models import AutoAddObjPermsMixin, BaseModel
 from pulpcore.exceptions import DomainProtectedError
 
 from .fields import EncryptedJSONField

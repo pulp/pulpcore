@@ -8,10 +8,10 @@ from rest_framework import mixins
 from rest_framework.decorators import action
 
 from pulpcore.app.models import TaskGroup, UpstreamPulp
-from pulpcore.app.serializers import TaskGroupOperationResponseSerializer, UpstreamPulpSerializer
-from pulpcore.app.viewsets import NamedModelViewSet, RolesMixin
 from pulpcore.app.response import TaskGroupOperationResponse
+from pulpcore.app.serializers import TaskGroupOperationResponseSerializer, UpstreamPulpSerializer
 from pulpcore.app.tasks import replicate_distributions
+from pulpcore.app.viewsets import NamedModelViewSet, RolesMixin
 from pulpcore.tasking.tasks import dispatch
 
 

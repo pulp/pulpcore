@@ -1,15 +1,15 @@
 """Tests related to the tasking system."""
 
 import json
-import pytest
 import subprocess
 import time
-from aiohttp import BasicAuth
 from urllib.parse import urljoin
 from uuid import uuid4
 
-from pulpcore.client.pulpcore import ApiException
+import pytest
+from aiohttp import BasicAuth
 
+from pulpcore.client.pulpcore import ApiException
 from pulpcore.tests.functional.utils import download_file
 
 

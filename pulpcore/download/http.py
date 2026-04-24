@@ -1,15 +1,16 @@
+import asyncio
 import logging
 
 import aiohttp
-import asyncio
 import backoff
 
-from .base import BaseDownloader, DownloadResult
 from pulpcore.exceptions import (
     DigestValidationError,
     SizeValidationError,
     TimeoutException,
 )
+
+from .base import BaseDownloader, DownloadResult
 
 log = logging.getLogger(__name__)
 

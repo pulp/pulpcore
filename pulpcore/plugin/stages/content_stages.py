@@ -5,9 +5,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError, transaction
 from django.db.models import Q
 
-from pulpcore.plugin.sync import sync_to_async_iterable
-
 from pulpcore.plugin.models import Content, ContentArtifact, ProgressReport
+from pulpcore.plugin.sync import sync_to_async_iterable
 
 from .api import Stage
 

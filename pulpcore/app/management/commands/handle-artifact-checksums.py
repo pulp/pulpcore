@@ -1,10 +1,11 @@
+import logging
 import os
-
 from gettext import gettext as _
 
 from django.conf import settings
 from django.core.management import BaseCommand, CommandError
 from django.db.models import Q, Sum
+
 from pulpcore import constants
 from pulpcore.app import pulp_hashlib
 from pulpcore.plugin.models import (
@@ -14,8 +15,6 @@ from pulpcore.plugin.models import (
     RemoteArtifact,
     RepositoryVersion,
 )
-
-import logging
 
 log = logging.getLogger("")
 

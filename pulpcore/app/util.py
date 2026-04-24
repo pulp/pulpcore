@@ -1,27 +1,24 @@
 import hashlib
-import zlib
-from functools import lru_cache
-from gettext import gettext as _
 import os
 import tempfile
-
-from urllib.parse import urlparse
-
+import zlib
 from contextlib import ExitStack
 from contextvars import ContextVar
 from datetime import timedelta
-import gnupg
+from functools import lru_cache
+from gettext import gettext as _
+from urllib.parse import urlparse
 
+import gnupg
 from django.conf import settings
 from django.db.models import Sum
 from django.urls import Resolver404, resolve, reverse
 from opentelemetry import metrics
-
 from rest_framework.serializers import ValidationError
 
-from pulpcore.app.loggers import deprecation_logger
-from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app import models
+from pulpcore.app.apps import pulp_plugin_configs
+from pulpcore.app.loggers import deprecation_logger
 from pulpcore.exceptions.validation import InvalidSignatureError
 
 # a little cache so viewset_for_model doesn't have to iterate over every app every time

@@ -1,9 +1,10 @@
 """Tests related to repository versions."""
 
-import pytest
 from random import choice
 from tempfile import NamedTemporaryFile
 from uuid import uuid4
+
+import pytest
 
 from pulpcore.tests.functional.utils import PulpTaskError, get_files_in_manifest
 

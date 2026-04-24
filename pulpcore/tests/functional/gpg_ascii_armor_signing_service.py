@@ -2,9 +2,9 @@ import json
 import subprocess
 import uuid
 
-import requests
 import gnupg
 import pytest
+import requests
 
 SIGNING_SCRIPT_STRING = r"""#!/usr/bin/env bash
 

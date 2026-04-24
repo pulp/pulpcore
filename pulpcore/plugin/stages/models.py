@@ -1,6 +1,5 @@
-from gettext import gettext as _
-
 import asyncio
+from gettext import gettext as _
 
 from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS
 from pulpcore.plugin.models import Artifact

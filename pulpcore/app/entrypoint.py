@@ -1,13 +1,13 @@
-from contextvars import ContextVar
-from logging import getLogger
 import os
 import socket
+from contextvars import ContextVar
+from logging import getLogger
 
 import click
 import django
 from django.conf import settings
 from django.db import connection
-from django.db.utils import InterfaceError, DatabaseError
+from django.db.utils import DatabaseError, InterfaceError
 from gunicorn.workers.sync import SyncWorker
 
 from pulpcore.app.apps import pulp_plugin_configs
@@ -119,8 +119,7 @@ class PulpcoreApiApplication(PulpcoreGunicornApplication):
     "--access-logformat",
     "access_log_format",
     default=(
-        "pulp [%({correlation-id}o)s]: "
-        '%(h)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s "%(f)s" "%(a)s"',
+        'pulp [%({correlation-id}o)s]: %(h)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s "%(f)s" "%(a)s"',
     ),
 )
 @click.option("--error-logfile", "--log-file", "errorlog")

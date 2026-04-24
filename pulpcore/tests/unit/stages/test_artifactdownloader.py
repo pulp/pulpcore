@@ -1,13 +1,13 @@
 import asyncio
+from contextlib import suppress
+from unittest import mock
+from uuid import uuid4
+
 import pytest
 import pytest_asyncio
-from uuid import uuid4
-from contextlib import suppress
 from aiotools.timer import VirtualClock
 
-from unittest import mock
-
-from pulpcore.plugin.stages import DeclarativeContent, DeclarativeArtifact
+from pulpcore.plugin.stages import DeclarativeArtifact, DeclarativeContent
 from pulpcore.plugin.stages.artifact_stages import ArtifactDownloader
 
 pytestmark = pytest.mark.usefixtures("fake_domain")

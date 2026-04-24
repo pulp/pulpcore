@@ -1,10 +1,11 @@
-import pytest
 from uuid import uuid4
+
+import pytest
 
 from pulpcore.app.models import Repository
 
 try:
-    from pulp_file.app.models import FileRepository, FileRemote
+    from pulp_file.app.models import FileRemote, FileRepository
 except ImportError:
     pytestmark = pytest.mark.skip("These tests need pulp_file to be installed.")
 

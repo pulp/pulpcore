@@ -1,29 +1,28 @@
 import typing
-
 from gettext import gettext as _
 
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Permission
 from django.contrib.auth.hashers import make_password
+from django.contrib.auth.models import Permission
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.contenttypes.models import ContentType
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from rest_framework_nested.serializers import NestedHyperlinkedModelSerializer
 
-from pulpcore.app.models import Group, Domain
+from pulpcore.app.models import Domain, Group
 from pulpcore.app.models.role import GroupRole, Role, UserRole
 from pulpcore.app.serializers import (
-    NestedIdentityField,
-    IdentityField,
-    ValidateFieldsMixin,
-    ModelSerializer,
     HiddenFieldsMixin,
+    IdentityField,
+    ModelSerializer,
+    NestedIdentityField,
     RelatedField,
+    ValidateFieldsMixin,
 )
 from pulpcore.app.util import (
-    get_viewset_for_model,
     get_request_without_query_params,
+    get_viewset_for_model,
 )
 
 User = get_user_model()

@@ -9,7 +9,6 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 import sys
-
 from contextlib import suppress
 from importlib import import_module
 from logging import getLogger
@@ -17,8 +16,8 @@ from pathlib import Path
 
 from cryptography.fernet import Fernet
 from django.conf import global_settings
-from django.core.files.storage import storages  # noqa: F401
 from django.core.exceptions import ImproperlyConfigured
+from django.core.files.storage import storages  # noqa: F401
 
 from pulpcore import constants
 

@@ -1,15 +1,15 @@
-import pytest
 import uuid
+from urllib.parse import quote, urljoin
 
+import pytest
 import requests
-from urllib.parse import urljoin, quote
 
 from pulp_certguard.tests.functional.constants import (
     X509_BASE_PATH,
     X509_CA_CERT_FILE_PATH,
     X509_CLIENT_CERT_FILE_PATH,
-    X509_UNTRUSTED_CLIENT_CERT_FILE_PATH,
     X509_UN_URLENCODED_CLIENT_CERT_FILE_PATH,
+    X509_UNTRUSTED_CLIENT_CERT_FILE_PATH,
 )
 
 
