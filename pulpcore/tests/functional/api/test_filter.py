@@ -1,6 +1,7 @@
-import pytest
 import random
 import uuid
+
+import pytest
 
 # Warning: Do not use HEX digits here!
 NAMES = (

@@ -1,7 +1,7 @@
 import json
 
-from pulpcore.app.templatetags import pulp_urls
 from pulpcore.app.find_url import find_api_root
+from pulpcore.app.templatetags import pulp_urls
 
 
 def test_urlize_basic_url():

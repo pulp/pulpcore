@@ -1,35 +1,34 @@
 import hashlib
 import json
-import jq
 import logging
 import os
 import re
-
 from base64 import b64decode
 from binascii import Error as Base64DecodeError
 from datetime import timedelta
 from gettext import gettext as _
-from url_normalize import url_normalize
-from urllib.parse import urlparse, urljoin
+from urllib.parse import urljoin, urlparse
 
+import jq
 from aiohttp.web_exceptions import HTTPNotFound
-
 from django.conf import settings
 from django.contrib.postgres.fields import HStoreField
 from django.db import DatabaseError, IntegrityError, models, transaction
 from django.utils import timezone
-from django_lifecycle import hook, AFTER_CREATE, AFTER_UPDATE, BEFORE_DELETE
+from django_lifecycle import AFTER_CREATE, AFTER_UPDATE, BEFORE_DELETE, hook
+from rest_framework.exceptions import APIException
+from url_normalize import url_normalize
 
-from .base import MasterModel, BaseModel
+from pulpcore.app.files import PulpTemporaryUploadedFile
+from pulpcore.app.models import AutoAddObjPermsMixin
+from pulpcore.app.util import cache_key, get_domain_pk, get_url, retain_distributed_pub_enabled
+from pulpcore.cache import Cache
+from pulpcore.responses import ArtifactResponse
+
+from .base import BaseModel, MasterModel
 from .content import Artifact, Content, ContentArtifact
 from .repository import Remote, Repository, RepositoryVersion
 from .task import CreatedResource
-from pulpcore.app.files import PulpTemporaryUploadedFile
-from pulpcore.cache import Cache
-from rest_framework.exceptions import APIException
-from pulpcore.app.models import AutoAddObjPermsMixin
-from pulpcore.responses import ArtifactResponse
-from pulpcore.app.util import get_domain_pk, cache_key, get_url, retain_distributed_pub_enabled
 
 _logger = logging.getLogger(__name__)
 

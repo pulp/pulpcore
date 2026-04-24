@@ -1,13 +1,13 @@
 """Tests related to content delivery."""
 
 import hashlib
-import requests
 import subprocess
 import uuid
 from random import sample
 from urllib.parse import urljoin
 
 import pytest
+import requests
 from aiohttp.client_exceptions import ClientPayloadError, ClientResponseError
 
 from pulpcore.client.pulp_file import RepositorySyncURL

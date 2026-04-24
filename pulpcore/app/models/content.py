@@ -2,18 +2,16 @@
 Content related Django models.
 """
 
-from gettext import gettext as _
-
 import asyncio
 import datetime
 import json
 import os
-import tempfile
 import shutil
 import subprocess
-
+import tempfile
 from collections import defaultdict
 from functools import lru_cache, partial
+from gettext import gettext as _
 from itertools import chain
 
 from django.conf import settings
@@ -24,16 +22,16 @@ from django.db import IntegrityError, models, transaction
 from django.forms.models import model_to_dict
 from django.utils.timezone import now
 from django_guid import get_guid
-from django_lifecycle import BEFORE_UPDATE, BEFORE_SAVE, hook
+from django_lifecycle import BEFORE_SAVE, BEFORE_UPDATE, hook
 
-from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS
 from pulpcore.app import pulp_hashlib
-from pulpcore.app.util import gpg_verify, get_domain_pk
-from pulpcore.app.models import MasterModel, BaseModel, fields, storage
+from pulpcore.app.models import BaseModel, MasterModel, fields, storage
+from pulpcore.app.util import get_domain_pk, gpg_verify
+from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS
 from pulpcore.exceptions import (
     DigestValidationError,
-    SizeValidationError,
     MissingDigestValidationError,
+    SizeValidationError,
     UnsupportedDigestValidationError,
 )
 

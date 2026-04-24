@@ -1,12 +1,11 @@
 import asyncio
+import logging
 from collections import defaultdict
 from gettext import gettext as _
-import logging
-from django.conf import settings
-
 
 from aiofiles import os as aos
 from asgiref.sync import sync_to_async
+from django.conf import settings
 from django.db.models import Prefetch, prefetch_related_objects
 
 from pulpcore.plugin.exceptions import UnsupportedDigestValidationError
@@ -14,8 +13,8 @@ from pulpcore.plugin.models import (
     Artifact,
     ContentArtifact,
     ProgressReport,
-    RemoteArtifact,
     Remote,
+    RemoteArtifact,
 )
 from pulpcore.plugin.sync import sync_to_async_iterable
 

@@ -1,29 +1,29 @@
-import pytest
 import uuid
+from urllib.parse import quote, urljoin
 
+import pytest
 import requests
-from urllib.parse import urljoin, quote
 from django.conf import settings
 
 from pulp_certguard.tests.functional.constants import (
     RHSM_CA_CERT_FILE_PATH,
     RHSM_CLIENT_CERT_FROM_UNTRUSTED_CA,
     RHSM_CLIENT_CERT_TRUSTED_BUT_EXPIRED,
-    THIRDPARTY_CA_CERT_FILE_PATH,
     RHSM_UBER_CERT_BASE_PATH_ONE,
     RHSM_UBER_CERT_BASE_PATH_TWO,
     RHSM_UBER_CLIENT_CERT,
     RHSM_V1_ONE_AND_TWO_VAR_CLIENT_CERT,
     RHSM_V1_ONE_VAR_BASE_PATH,
     RHSM_V1_TWO_VAR_BASE_PATH,
-    RHSM_V1_ZERO_VAR_CLIENT_CERT,
     RHSM_V1_ZERO_VAR_BASE_PATH,
+    RHSM_V1_ZERO_VAR_CLIENT_CERT,
     RHSM_V3_INVALID_BASE_PATH,
     RHSM_V3_ONE_AND_TWO_VAR_CLIENT_CERT,
     RHSM_V3_ONE_VAR_BASE_PATH,
     RHSM_V3_TWO_VAR_BASE_PATH,
-    RHSM_V3_ZERO_VAR_CLIENT_CERT,
     RHSM_V3_ZERO_VAR_BASE_PATH,
+    RHSM_V3_ZERO_VAR_CLIENT_CERT,
+    THIRDPARTY_CA_CERT_FILE_PATH,
 )
 
 if settings.DOMAIN_ENABLED:

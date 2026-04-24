@@ -1,8 +1,8 @@
-from contextlib import contextmanager, asynccontextmanager
+from contextlib import asynccontextmanager, contextmanager
 from contextvars import ContextVar
 
 from asgiref.sync import sync_to_async
-from django_guid import get_guid, set_guid, clear_guid
+from django_guid import clear_guid, get_guid, set_guid
 
 _current_task = ContextVar("current_task", default=None)
 _current_user_func = ContextVar("current_user", default=lambda: None)

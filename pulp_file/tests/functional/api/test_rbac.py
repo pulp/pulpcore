@@ -1,5 +1,6 @@
-import pytest
 import uuid
+
+import pytest
 
 
 @pytest.fixture()
@@ -38,9 +39,9 @@ def try_action(file_bindings, monitor_task):
         except file_bindings.module.ApiException as e:
             assert e.status == outcome, f"{e}"
         else:
-            assert (
-                status_code == outcome
-            ), f"User performed {action} when they shouldn't been able to"
+            assert status_code == outcome, (
+                f"User performed {action} when they shouldn't been able to"
+            )
             return data
 
     return _try_action

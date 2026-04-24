@@ -1,15 +1,15 @@
-from gettext import gettext as _
 import logging
+from collections import defaultdict
+from gettext import gettext as _
+from typing import NamedTuple
 
 from django.db.models import Q
+from django_guid import get_guid
 
 from pulpcore.app.files import validate_file_paths
 from pulpcore.app.models import Content, ContentArtifact
 from pulpcore.app.util import batch_qs
 from pulpcore.exceptions import DuplicateContentInRepositoryError
-from collections import defaultdict
-from django_guid import get_guid
-from typing import NamedTuple
 
 _logger = logging.getLogger(__name__)
 

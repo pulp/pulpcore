@@ -1,11 +1,11 @@
-from gettext import gettext as _
-from functools import lru_cache
 import json
 import sys
+from functools import lru_cache
+from gettext import gettext as _
 
-from django.db import connection
-from django.core.management import BaseCommand, CommandError
 from django.contrib.contenttypes.models import ContentType
+from django.core.management import BaseCommand, CommandError
+from django.db import connection
 
 from pulpcore.app.util import get_url
 

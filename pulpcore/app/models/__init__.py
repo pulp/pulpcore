@@ -1,36 +1,30 @@
 # https://docs.djangoproject.com/en/3.2/topics/db/models/#organizing-models-in-a-package
 
 # Must be imported first as other models depend on it
-from .base import (
-    BaseModel,
-    MasterModel,
-    pulp_uuid,
-)
-
 from .access_policy import (
     AccessPolicy,
     AutoAddObjPermsMixin,
     Group,
 )
-
-from .domain import Domain
-
 from .acs import AlternateContentSource, AlternateContentSourcePath
-
+from .analytics import SystemID
+from .base import (
+    BaseModel,
+    MasterModel,
+    pulp_uuid,
+)
 from .content import (
     Artifact,
     AsciiArmoredDetachedSigningService,
     Content,
-    ContentManager,
     ContentArtifact,
+    ContentManager,
     PulpTemporaryFile,
     RemoteArtifact,
     SigningService,
     UnsupportedDigestValidationError,
 )
-
-from .generic import GenericRelationModel
-
+from .domain import Domain
 from .exporter import (
     Export,
     ExportedResource,
@@ -40,61 +34,13 @@ from .exporter import (
     PulpExport,
     PulpExporter,
 )
-
+from .generic import GenericRelationModel
 from .importer import (
     Import,
     Importer,
     PulpImport,
     PulpImporter,
 )
-
-from .publication import (
-    ContentGuard,
-    Distribution,
-    DistributedPublication,
-    Publication,
-    PublishedArtifact,
-    PublishedMetadata,
-    RBACContentGuard,
-    CompositeContentGuard,
-    ContentRedirectContentGuard,
-    HeaderContentGuard,
-    ArtifactDistribution,
-)
-
-from .repository import (
-    Remote,
-    Repository,
-    RepositoryContent,
-    RepositoryVersion,
-    RepositoryVersionContentDetails,
-)
-
-from .status import AppStatus
-
-from .task import (
-    CreatedResource,
-    ProfileArtifact,
-    Task,
-    TaskGroup,
-    TaskSchedule,
-)
-
-from .analytics import SystemID
-
-from .upload import (
-    Upload,
-    UploadChunk,
-)
-
-from .vulnerability_report import VulnerabilityReport
-
-# Moved here to avoid a circular import with Task
-from .progress import GroupProgressReport, ProgressReport
-
-# Moved here to avoid a circular import with GroupProgressReport
-from .replica import UpstreamPulp
-
 from .openpgp import (
     OpenPGPDistribution,
     OpenPGPKeyring,
@@ -104,6 +50,45 @@ from .openpgp import (
     OpenPGPUserAttribute,
     OpenPGPUserID,
 )
+
+# Moved here to avoid a circular import with Task
+from .progress import GroupProgressReport, ProgressReport
+from .publication import (
+    ArtifactDistribution,
+    CompositeContentGuard,
+    ContentGuard,
+    ContentRedirectContentGuard,
+    DistributedPublication,
+    Distribution,
+    HeaderContentGuard,
+    Publication,
+    PublishedArtifact,
+    PublishedMetadata,
+    RBACContentGuard,
+)
+
+# Moved here to avoid a circular import with GroupProgressReport
+from .replica import UpstreamPulp
+from .repository import (
+    Remote,
+    Repository,
+    RepositoryContent,
+    RepositoryVersion,
+    RepositoryVersionContentDetails,
+)
+from .status import AppStatus
+from .task import (
+    CreatedResource,
+    ProfileArtifact,
+    Task,
+    TaskGroup,
+    TaskSchedule,
+)
+from .upload import (
+    Upload,
+    UploadChunk,
+)
+from .vulnerability_report import VulnerabilityReport
 
 __all__ = [
     "AppStatus",

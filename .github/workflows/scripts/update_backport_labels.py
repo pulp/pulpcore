@@ -5,10 +5,11 @@
 #
 # For more info visit https://github.com/pulp/plugin_template
 
+import os
+import random
+
 import requests
 import yaml
-import random
-import os
 
 
 def random_color():

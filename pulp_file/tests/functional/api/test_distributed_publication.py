@@ -1,15 +1,14 @@
 """Tests for the distributed publication grace-period feature."""
 
+import time
 from dataclasses import dataclass
 from urllib.parse import urljoin
 
 import pytest
 import requests
-from pulpcore.client.pulp_file import FileFilePublication, FileFileDistribution
-from pulpcore.client.pulp_file import RepositorySyncURL
-
-import time
 from django.conf import settings
+
+from pulpcore.client.pulp_file import FileFileDistribution, FileFilePublication, RepositorySyncURL
 
 
 @dataclass
@@ -30,9 +29,9 @@ class DistributionPublicationContext:
         raise NotImplementedError
 
     def wait_retention_period(self):
-        assert (
-            settings.DISTRIBUTED_PUBLICATION_RETENTION_PERIOD <= 5
-        ), "DISTRIBUTED_PUBLICATION_RETENTION_PERIOD is too long for testing."
+        assert settings.DISTRIBUTED_PUBLICATION_RETENTION_PERIOD <= 5, (
+            "DISTRIBUTED_PUBLICATION_RETENTION_PERIOD is too long for testing."
+        )
         time.sleep(settings.DISTRIBUTED_PUBLICATION_RETENTION_PERIOD + 1)
 
 

@@ -1,5 +1,7 @@
-import pytest
 from unittest import mock
+
+import pytest
+
 from pulp_file.app.tasks.synchronizing import _get_safe_path
 
 

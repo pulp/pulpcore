@@ -1,11 +1,11 @@
+import os
+import uuid
 from uuid import uuid4
 
-import os
 import pytest
-import uuid
 
+from pulpcore.client.pulp_file.exceptions import BadRequestException, ForbiddenException
 from pulpcore.client.pulp_file.models import SetLabel, UnsetLabel
-from pulpcore.client.pulp_file.exceptions import ForbiddenException, BadRequestException
 
 
 @pytest.mark.parallel
