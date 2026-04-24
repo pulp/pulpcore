@@ -43,7 +43,7 @@ def _details_reporting(current_reports, current_details, totals_pb):
             current_reports[key].increase_by(curr_detail)
         else:
             pb = ProgressReport(
-                message=_("Purged task-objects of type {}".format(key)),
+                message=_("Purged task-objects of type {}").format(key),
                 code="purge.tasks.key.{}".format(key),
                 total=None,
                 done=curr_detail,
@@ -97,7 +97,7 @@ def purge(finished_before, states):
     expected_total = candidate_qs.count()
     # Build and save a progress-report for that detail
     pb = ProgressReport(
-        message=_("Purged task-objects of type {}".format(TASK_KEY)),
+        message=_("Purged task-objects of type {}").format(TASK_KEY),
         total=expected_total,
         code="purge.tasks.key.{}".format(TASK_KEY),
         done=0,

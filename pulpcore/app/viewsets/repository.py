@@ -230,7 +230,7 @@ class RepositoryVersionFilter(BaseFilterSet):
                 href_match = {}
             if "repository_pk" not in href_match or "number" not in href_match:
                 raise serializers.ValidationError(
-                    _("Invalid RepositoryVersion HREF: {}".format(uri))
+                    _("Invalid RepositoryVersion HREF: {}").format(uri)
                 )
             repo_versions[href_match["repository_pk"]].append(int(href_match["number"]))
 
