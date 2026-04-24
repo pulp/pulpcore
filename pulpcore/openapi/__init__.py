@@ -1,5 +1,8 @@
-import re
+# ruff: noqa: F401
+# isort: skip_file
 from gettext import gettext as _
+
+import re
 from urllib.parse import urljoin
 
 from django.conf import settings
@@ -7,7 +10,6 @@ from django.core.exceptions import FieldDoesNotExist
 from django.http import HttpRequest
 from django.utils.html import strip_tags
 from drf_spectacular.drainage import reset_generator_stats
-from drf_spectacular.extensions import OpenApiAuthenticationExtension, OpenApiViewExtension
 from drf_spectacular.generators import SchemaGenerator
 from drf_spectacular.openapi import AutoSchema
 from drf_spectacular.plumbing import (
@@ -23,6 +25,7 @@ from drf_spectacular.plumbing import (
 from drf_spectacular.settings import spectacular_settings
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_field
+from drf_spectacular.extensions import OpenApiViewExtension, OpenApiAuthenticationExtension
 from rest_framework import mixins, serializers
 from rest_framework.exceptions import ParseError
 from rest_framework.request import Request

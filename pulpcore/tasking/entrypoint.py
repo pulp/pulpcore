@@ -8,7 +8,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pulpcore.app.settings")
 
 django.setup()
 
-from pulpcore.tasking.worker import PulpcoreWorker  # noqa: E402: module level not at top
+from pulpcore.tasking.worker import PulpcoreWorker  # noqa: E402
 
 _logger = logging.getLogger(__name__)
 

@@ -177,7 +177,7 @@ class DownloaderFactory:
             builder = self._handler_map[scheme]
             download_class = self._download_class_map[scheme]
         except KeyError:
-            raise ValueError(_("URL: {u} not supported.".format(u=url)))
+            raise ValueError(_("URL: {u} not supported.").format(u=url))
         else:
             return builder(download_class, url, **kwargs)
 

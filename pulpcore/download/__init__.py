@@ -1,3 +1,4 @@
+# ruff: noqa: F401
 from .base import BaseDownloader, DownloadResult
 from .factory import DownloaderFactory
 from .file import FileDownloader

@@ -180,10 +180,6 @@ extend-select = [
   "T10",
 ]
 
-[tool.ruff.lint.flake8-tidy-imports.banned-api]
-# This section is managed by the plugin template. Do not edit manually.
-"pulpcore.app".msg = "The 'pulpcore' apis must only be consumed via 'pulpcore.plugin'."
-
 [tool.ruff.lint.isort]
 # This section is managed by the plugin template. Do not edit manually.
 sections = { second-party = ["pulpcore"] }

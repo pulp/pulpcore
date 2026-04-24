@@ -59,7 +59,7 @@ class HyperlinkRelatedFilter(filters.Filter):
             return resolve(urlparse(uri).path)
         except Resolver404:
             raise serializers.ValidationError(
-                detail=_("URI couldn't be resolved: {uri}".format(uri=uri))
+                detail=_("URI couldn't be resolved: {uri}").format(uri=uri)
             )
 
     def _check_subclass(self, qs, uri, match):

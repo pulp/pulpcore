@@ -55,7 +55,7 @@ def remove_duplicates(repository_version):
             continue
 
         if new_content_qs.count() and existing_content.count():
-            _logger.debug(_("Removing duplicates for type: {}".format(type_obj.get_pulp_type())))
+            _logger.debug(_("Removing duplicates for type: {}").format(type_obj.get_pulp_type()))
 
             for batch in batch_qs(new_content_qs):
                 find_dup_qs = Q()
