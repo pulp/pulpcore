@@ -13,24 +13,24 @@ from gunicorn.arbiter import Arbiter
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pulpcore.app.settings")
 django.setup()
 
-from django.conf import settings  # noqa: E402: module level not at top of file
-from django.db.utils import (  # noqa: E402: module level not at top of file
+from django.conf import settings  # noqa: E402
+from django.db.utils import (  # noqa: E402
     DatabaseError,
     IntegrityError,
     InterfaceError,
 )
 
-from pulpcore.app.apps import pulp_plugin_configs  # noqa: E402: module level not at top of file
-from pulpcore.app.models import AppStatus  # noqa: E402: module level not at top of file
-from pulpcore.app.util import get_worker_name  # noqa: E402: module level not at top of file
+from pulpcore.app.apps import pulp_plugin_configs  # noqa: E402
+from pulpcore.app.models import AppStatus  # noqa: E402
+from pulpcore.app.util import get_worker_name  # noqa: E402
 
-from .authentication import authenticate, guid  # noqa: E402: module level not at top of file
-from .handler import Handler  # noqa: E402: module level not at top of file
+from .authentication import authenticate, guid  # noqa: E402
+from .handler import Handler  # noqa: E402
 
 log = logging.getLogger(__name__)
 
 if settings.OTEL_ENABLED:
-    from .instrumentation import instrumentation  # noqa: E402: module level not at top of file
+    from .instrumentation import instrumentation  # noqa: E402
 
     app = web.Application(middlewares=[guid, authenticate, instrumentation()])
 else:
