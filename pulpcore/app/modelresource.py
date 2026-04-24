@@ -1,7 +1,8 @@
+from logging import getLogger
+
 from django.conf import settings
 from import_export import fields
 from import_export.widgets import ForeignKeyWidget
-from logging import getLogger
 
 from pulpcore.app.models.content import (
     Artifact,

@@ -1,10 +1,11 @@
+import sys
+
 import pytest
-from pulpcore.tests.functional.utils import PulpTaskError
 
 from pulpcore.client.pulp_file import (
     RepositorySyncURL,
 )
-import sys
+from pulpcore.tests.functional.utils import PulpTaskError
 
 
 def _run_basic_sync_and_assert(file_bindings, monitor_task, remote, file_repo):

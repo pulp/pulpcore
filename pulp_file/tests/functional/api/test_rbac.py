@@ -1,8 +1,8 @@
-import pytest
 import uuid
 
-from pulpcore.client.pulp_file import ApiException
-from pulpcore.client.pulp_file import AsyncOperationResponse
+import pytest
+
+from pulpcore.client.pulp_file import ApiException, AsyncOperationResponse
 
 
 @pytest.fixture()

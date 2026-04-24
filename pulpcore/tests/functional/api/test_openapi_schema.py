@@ -3,12 +3,11 @@
 import copy
 import json
 import os
-
-import pytest
-import jsonschema
-
-from drf_spectacular import validation
 from collections import defaultdict
+
+import jsonschema
+import pytest
+from drf_spectacular import validation
 
 JSON_SCHEMA_SPEC_PATH = os.path.join(
     os.path.dirname(validation.__file__), "openapi_3_0_schema.json"

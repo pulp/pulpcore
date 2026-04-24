@@ -1,10 +1,9 @@
-from gettext import gettext as _
-
 import asyncio
-from collections import namedtuple
 import logging
 import os
 import tempfile
+from collections import namedtuple
+from gettext import gettext as _
 from urllib.parse import urlsplit
 
 from pulpcore.app import pulp_hashlib

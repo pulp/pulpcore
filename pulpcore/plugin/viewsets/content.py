@@ -1,14 +1,13 @@
-from drf_spectacular.utils import extend_schema
-
 from django.db import DatabaseError
 from django.db.utils import IntegrityError
+from drf_spectacular.utils import extend_schema
 
 from pulpcore.app import tasks
+from pulpcore.plugin.models import Artifact, PulpTemporaryFile
 from pulpcore.plugin.serializers import (
     ArtifactSerializer,
     AsyncOperationResponseSerializer,
 )
-from pulpcore.plugin.models import Artifact, PulpTemporaryFile
 from pulpcore.plugin.tasking import dispatch
 from pulpcore.plugin.viewsets import (
     ContentViewSet,

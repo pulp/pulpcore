@@ -1,6 +1,7 @@
-import pytest
-import uuid
 import json
+import uuid
+
+import pytest
 
 """
 To run these tests:

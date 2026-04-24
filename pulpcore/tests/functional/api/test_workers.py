@@ -1,11 +1,12 @@
 """Tests related to the workers."""
 
-import pytest
 import subprocess
 import uuid
 from datetime import datetime, timedelta
 from random import choice
 from time import sleep
+
+import pytest
 
 _DYNAMIC_WORKER_ATTRS = ("last_heartbeat", "current_task")
 """Worker attributes that are dynamically set by Pulp, not set by a user."""

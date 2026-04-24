@@ -1,15 +1,15 @@
-import pytest
 from types import SimpleNamespace
 
+import pytest
 from rest_framework import serializers
 
 from pulpcore.app.serializers.domain import (
-    FileSystemSettingsSerializer,
     # SFTPSettingsSerializer,
     AmazonS3SettingsSerializer,
     AzureSettingsSerializer,
     # GoogleSettingsSerializer,
     DomainSerializer,
+    FileSystemSettingsSerializer,
 )
 
 MIN_DOMAIN_SETTINGS = {

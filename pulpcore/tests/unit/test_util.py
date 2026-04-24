@@ -1,5 +1,6 @@
-import pytest
 from unittest import mock
+
+import pytest
 
 from pulpcore.app import models, util
 

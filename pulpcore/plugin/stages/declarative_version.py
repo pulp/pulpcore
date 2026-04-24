@@ -2,7 +2,7 @@ import asyncio
 import tempfile
 
 from pulpcore.plugin.models import AlternateContentSource
-from pulpcore.plugin.stages.api import create_pipeline, EndStage
+from pulpcore.plugin.stages.api import EndStage, create_pipeline
 from pulpcore.plugin.stages.artifact_stages import (
     ACSArtifactHandler,
     ArtifactDownloader,

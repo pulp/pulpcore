@@ -6,7 +6,6 @@ from django_filters import NumberFilter
 from rest_framework import mixins, status
 from rest_framework.response import Response
 
-from pulpcore.filters import BaseFilterSet
 from pulpcore.app.loggers import deprecation_logger
 from pulpcore.app.models import Artifact, Content, PublishedMetadata, SigningService
 from pulpcore.app.serializers import (
@@ -16,6 +15,7 @@ from pulpcore.app.serializers import (
 )
 from pulpcore.app.util import get_viewset_for_model
 from pulpcore.app.viewsets.base import NamedModelViewSet
+from pulpcore.filters import BaseFilterSet
 
 from .custom_filters import (
     ArtifactRepositoryVersionFilter,

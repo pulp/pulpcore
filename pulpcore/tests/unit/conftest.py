@@ -1,5 +1,6 @@
-import pytest
 from uuid import uuid4
+
+import pytest
 
 from pulpcore.app.models import Domain
 from pulpcore.app.util import set_domain

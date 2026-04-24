@@ -10,10 +10,10 @@
 # make sure this script runs at the repo root
 cd "$(dirname "$(realpath -e "$0")")"/../..
 
-set -uv
+set -u
 
 # check for imports not from pulpcore.plugin. exclude tests
-MATCHES=$(grep -n -r --include \*.py "from pulpcore.*import" . | grep -v "tests\|plugin")
+MATCHES="$(grep -n -r --include \*.py "from pulpcore.*import" pulpcore pulp_file pulp_certguard | grep -v "tests\|plugin")"
 
 if [ $? -ne 1 ]; then
   printf "\nERROR: Detected bad imports from pulpcore:\n"

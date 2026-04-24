@@ -1,7 +1,7 @@
 from gettext import gettext as _
 
-from pulpcore.app.models import ContentArtifact
 from pulpcore.app.files import validate_file_paths
+from pulpcore.app.models import ContentArtifact
 
 
 def validate_publication_paths(publication):

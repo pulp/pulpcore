@@ -1,5 +1,6 @@
-import pytest
 import json
+
+import pytest
 
 from pulpcore.app.templatetags import pulp_urls
 

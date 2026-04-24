@@ -1,33 +1,31 @@
 from gettext import gettext as _
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldError
+from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import filters
-from django.db.models import Q, Count
-from django.contrib.auth.models import Permission
-
+from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework import mixins, status
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import SAFE_METHODS
 from rest_framework.response import Response
 from rest_framework.serializers import ValidationError
 
-from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
-
-from pulpcore.filters import BaseFilterSet, HyperlinkRelatedFilter
 from pulpcore.app.models import Group
 from pulpcore.app.models.role import GroupRole, Role, UserRole
-from pulpcore.app.viewsets import NamedModelViewSet, RolesMixin, NAME_FILTER_OPTIONS
 from pulpcore.app.serializers import (
+    GroupRoleSerializer,
     GroupSerializer,
     GroupUserSerializer,
-    GroupRoleSerializer,
     RoleSerializer,
-    UserSerializer,
     UserRoleSerializer,
+    UserSerializer,
 )
+from pulpcore.app.viewsets import NAME_FILTER_OPTIONS, NamedModelViewSet, RolesMixin
+from pulpcore.filters import BaseFilterSet, HyperlinkRelatedFilter
 
 User = get_user_model()
 

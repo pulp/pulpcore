@@ -1,12 +1,12 @@
 """Tests related to content promotion."""
 
 import hashlib
-import pytest
 from urllib.parse import urljoin
 
-from pulpcore.tests.functional.utils import download_file, get_files_in_manifest, get_from_url
+import pytest
 
 from pulpcore.client.pulp_file import RepositorySyncURL
+from pulpcore.tests.functional.utils import download_file, get_files_in_manifest, get_from_url
 
 
 @pytest.mark.parallel

@@ -3,12 +3,12 @@ from gettext import gettext as _
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
-from pulpcore.app.serializers import HiddenFieldsMixin
+from pulpcore.app.models import UpstreamPulp
 from pulpcore.app.serializers import (
+    HiddenFieldsMixin,
     IdentityField,
     ModelSerializer,
 )
-from pulpcore.app.models import UpstreamPulp
 
 
 class UpstreamPulpSerializer(ModelSerializer, HiddenFieldsMixin):

@@ -3,7 +3,7 @@ from gettext import gettext as _
 from django.core.management import BaseCommand, CommandError
 from django.urls import reverse
 
-from pulpcore.app.models import Publication, Artifact, Distribution
+from pulpcore.app.models import Artifact, Distribution, Publication
 from pulpcore.app.util import get_view_name_for_model
 
 
