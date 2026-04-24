@@ -413,7 +413,7 @@ class BackendSettingsValidator:
         except ImproperlyConfigured as e:
             raise serializers.ValidationError(
                 detail={
-                    "storage_settings": _("Backend settings contain incorrect values: {}".format(e))
+                    "storage_settings": _("Backend settings contain incorrect values: {}").format(e)
                 }
             )
 
