@@ -8,7 +8,7 @@ from pulpcore.app.models import (
     Task,
 )
 from pulpcore.app.role_util import get_objects_for_user
-from pulpcore.app.util import get_domain, get_current_authenticated_user
+from pulpcore.app.util import get_current_authenticated_user, get_domain
 from pulpcore.constants import TASK_STATES
 
 log = getLogger(__name__)

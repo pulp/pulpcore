@@ -2,13 +2,13 @@
 
 import hashlib
 import os
-import pytest
 import uuid
 
-from pulpcore.tests.functional.utils import PulpTaskError
+import pytest
 
-from pulpcore.client.pulpcore.exceptions import ApiException as coreApiException
 from pulpcore.client.pulp_file.exceptions import ApiException
+from pulpcore.client.pulpcore.exceptions import ApiException as coreApiException
+from pulpcore.tests.functional.utils import PulpTaskError
 
 
 @pytest.mark.parallel

@@ -1,5 +1,4 @@
-from drf_spectacular.utils import extend_schema
-from drf_spectacular.utils import OpenApiParameter
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import mixins
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -11,8 +10,8 @@ from pulpcore.app.serializers import (
     AsyncOperationResponseSerializer,
     UploadChunkSerializer,
     UploadCommitSerializer,
-    UploadSerializer,
     UploadDetailSerializer,
+    UploadSerializer,
 )
 from pulpcore.app.viewsets import NamedModelViewSet, RolesMixin
 from pulpcore.tasking.tasks import dispatch

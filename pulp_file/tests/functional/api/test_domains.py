@@ -1,12 +1,13 @@
-import pytest
-import uuid
 import json
+import uuid
+
+import pytest
 
 from pulpcore.app import settings
 from pulpcore.client.pulp_file import ApiException
 from pulpcore.client.pulpcore import ApiException as CoreApiException
 from pulpcore.client.pulpcore import Repair
-from pulpcore.tests.functional.utils import generate_iso, download_file
+from pulpcore.tests.functional.utils import download_file, generate_iso
 
 pytestmark = pytest.mark.skipif(not settings.DOMAIN_ENABLED, reason="Domains not enabled.")
 

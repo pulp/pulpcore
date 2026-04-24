@@ -1,22 +1,20 @@
-from gettext import gettext as _
-
-import pyparsing as pp
-
 from functools import lru_cache, partial
+from gettext import gettext as _
 from urllib.parse import urlparse
 from uuid import UUID
+
+import pyparsing as pp
 from django import forms
+from django.core.exceptions import FieldDoesNotExist
 from django.db import models
 from django.forms.utils import ErrorList
 from django.urls import Resolver404, resolve
 from django_filters.constants import EMPTY_VALUES
-from django_filters.rest_framework import DjangoFilterBackend, filterset, filters, BaseInFilter
-from django.core.exceptions import FieldDoesNotExist
-from rest_framework import serializers
-
-from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.plumbing import build_basic_type
+from django_filters.rest_framework import BaseInFilter, DjangoFilterBackend, filters, filterset
 from drf_spectacular.contrib.django_filters import DjangoFilterExtension
+from drf_spectacular.plumbing import build_basic_type
+from drf_spectacular.types import OpenApiTypes
+from rest_framework import serializers
 
 from pulpcore.app.util import extract_pk
 

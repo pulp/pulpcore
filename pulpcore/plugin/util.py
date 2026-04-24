@@ -11,19 +11,18 @@ from pulpcore.app.role_util import (  # noqa: F401
     get_users_with_perms_attached_roles,
     remove_role,
 )
-
 from pulpcore.app.util import (  # noqa: F401
     batch_qs,
     extract_pk,
     get_artifact_url,
-    get_url,
-    gpg_verify,
-    raise_for_unknown_content_units,
+    get_current_authenticated_user,
+    get_current_user,
     get_default_domain,
     get_domain,
     get_domain_pk,
-    set_domain,
-    get_current_user,
-    get_current_authenticated_user,
+    get_url,
+    gpg_verify,
+    raise_for_unknown_content_units,
     set_current_user,
+    set_domain,
 )

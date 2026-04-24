@@ -1,5 +1,4 @@
 from gettext import gettext as _
-
 from tempfile import NamedTemporaryFile
 
 from django.db import DatabaseError
@@ -8,12 +7,13 @@ from rest_framework.serializers import (
     Serializer,
     ValidationError,
 )
+
 from pulpcore.app.files import PulpTemporaryUploadedFile
 from pulpcore.app.models import Artifact, PulpTemporaryFile, Upload, UploadChunk
 from pulpcore.app.serializers import (
-    RelatedField,
     ArtifactSerializer,
     NoArtifactContentSerializer,
+    RelatedField,
     SingleArtifactContentSerializer,
 )
 from pulpcore.app.util import get_domain_pk

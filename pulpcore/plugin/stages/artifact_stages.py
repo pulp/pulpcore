@@ -1,7 +1,7 @@
 import asyncio
+import logging
 from collections import defaultdict
 from gettext import gettext as _
-import logging
 
 from aiofiles import os as aos
 from asgiref.sync import sync_to_async
@@ -12,8 +12,8 @@ from pulpcore.plugin.models import (
     Artifact,
     ContentArtifact,
     ProgressReport,
-    RemoteArtifact,
     Remote,
+    RemoteArtifact,
 )
 from pulpcore.plugin.sync import sync_to_async_iterable
 

@@ -8,14 +8,13 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.serializers import ValidationError
 
-from pulpcore.filters import BaseFilterSet
 from pulpcore.app.models import (
+    CreatedResource,
+    RepositoryVersion,
     Task,
     TaskGroup,
     TaskSchedule,
     Worker,
-    CreatedResource,
-    RepositoryVersion,
 )
 from pulpcore.app.models.role import UserRole
 from pulpcore.app.response import OperationPostponedResponse
@@ -34,13 +33,14 @@ from pulpcore.app.util import get_domain
 from pulpcore.app.viewsets import NamedModelViewSet, RolesMixin
 from pulpcore.app.viewsets.base import DATETIME_FILTER_OPTIONS, NAME_FILTER_OPTIONS
 from pulpcore.app.viewsets.custom_filters import (
+    CreatedResourcesFilter,
     ReservedResourcesFilter,
     ReservedResourcesInFilter,
     ReservedResourcesRecordFilter,
-    CreatedResourcesFilter,
 )
 from pulpcore.constants import TASK_INCOMPLETE_STATES, TASK_STATES
-from pulpcore.tasking.tasks import dispatch, cancel_task
+from pulpcore.filters import BaseFilterSet
+from pulpcore.tasking.tasks import cancel_task, dispatch
 
 
 class TaskFilter(BaseFilterSet):

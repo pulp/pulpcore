@@ -4,9 +4,9 @@
 
 import re
 import sys
-import tomllib
 from pathlib import Path
 
+import tomllib
 from git import Repo
 
 

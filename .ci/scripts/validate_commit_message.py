@@ -5,10 +5,10 @@ import os
 import re
 import subprocess
 import sys
-import tomllib
-import yaml
 from pathlib import Path
 
+import tomllib
+import yaml
 from github import Github
 
 

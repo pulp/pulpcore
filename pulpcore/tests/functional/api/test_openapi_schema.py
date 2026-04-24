@@ -3,14 +3,13 @@
 import asyncio
 import copy
 import json
+from collections import defaultdict
 from pathlib import Path
 
 import aiohttp
-import pytest
 import jsonschema
-
+import pytest
 from drf_spectacular import validation
-from collections import defaultdict
 
 
 @pytest.fixture(scope="session")

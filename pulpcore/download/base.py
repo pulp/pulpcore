@@ -1,14 +1,14 @@
-from gettext import gettext as _
-
 import asyncio
-from collections import namedtuple
 import logging
 import os
 import tempfile
+from collections import namedtuple
+from gettext import gettext as _
 from pathlib import Path
 from urllib.parse import urlsplit
 
 from django.conf import settings
+
 from pulpcore.app import pulp_hashlib
 from pulpcore.app.models import Artifact
 from pulpcore.exceptions import (

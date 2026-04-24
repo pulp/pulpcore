@@ -1,6 +1,5 @@
-import string
 import secrets
-
+import string
 from getpass import getpass
 from gettext import gettext as _
 

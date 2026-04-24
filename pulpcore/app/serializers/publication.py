@@ -5,6 +5,7 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from pulpcore.app import models
+from pulpcore.app.role_util import get_groups_with_perms, get_users_with_perms
 from pulpcore.app.serializers import (
     BaseURLField,
     DetailIdentityField,
@@ -15,8 +16,7 @@ from pulpcore.app.serializers import (
     RepositoryVersionRelatedField,
     pulp_labels_validator,
 )
-from pulpcore.app.serializers.user import GroupUserSerializer, GroupSerializer
-from pulpcore.app.role_util import get_users_with_perms, get_groups_with_perms
+from pulpcore.app.serializers.user import GroupSerializer, GroupUserSerializer
 from pulpcore.app.util import get_domain
 
 
@@ -53,10 +53,7 @@ class PublicationSerializer(ModelSerializer):
                     detail=_("Repository has no version available to create Publication from")
                 )
         raise serializers.ValidationError(
-            _(
-                "Either the 'repository' or 'repository_version' need to be specified "
-                "but not both."
-            )
+            _("Either the 'repository' or 'repository_version' need to be specified but not both.")
         )
 
     class Meta:
@@ -200,8 +197,10 @@ class DistributionSerializer(ModelSerializer):
     pulp_labels = serializers.HStoreField(required=False, validators=[pulp_labels_validator])
 
     base_path = serializers.CharField(
-        help_text=_('The base (relative) path component of the published url. Avoid paths that \
-                    overlap with other distribution base paths (e.g. "foo" and "foo/bar")'),
+        help_text=_(
+            'The base (relative) path component of the published url. Avoid paths that \
+                    overlap with other distribution base paths (e.g. "foo" and "foo/bar")'
+        ),
         validators=[DomainUniqueValidator(queryset=models.Distribution.objects.all())],
     )
     base_url = BaseURLField(

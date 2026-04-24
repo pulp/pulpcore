@@ -1,17 +1,15 @@
-from gettext import gettext as _
-
 from collections import defaultdict
-from django.db.models import Q, Max
+from gettext import gettext as _
+from urllib.parse import urlparse
+
+from django.db.models import Max, Q
 from django.urls.base import Resolver404, resolve
 from django_filters import Filter
 from drf_spectacular.utils import extend_schema
 from rest_framework import mixins, serializers
 from rest_framework.decorators import action
 from rest_framework.viewsets import GenericViewSet
-from urllib.parse import urlparse
 
-from pulpcore.constants import PROTECTED_REPO_VERSION_MESSAGE
-from pulpcore.filters import BaseFilterSet
 from pulpcore.app import tasks
 from pulpcore.app.models import (
     Content,
@@ -40,8 +38,9 @@ from pulpcore.app.viewsets.base import (
     NULLABLE_NUMERIC_FILTER_OPTIONS,
 )
 from pulpcore.app.viewsets.custom_filters import LabelFilter
+from pulpcore.constants import PROTECTED_REPO_VERSION_MESSAGE
+from pulpcore.filters import BaseFilterSet, HyperlinkRelatedFilter
 from pulpcore.tasking.tasks import dispatch
-from pulpcore.filters import HyperlinkRelatedFilter
 
 
 class RepositoryContentFilter(Filter):

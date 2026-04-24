@@ -1,10 +1,10 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group as BaseGroup
 from django.db import models
-from django_lifecycle import hook, LifecycleModelMixin
+from django_lifecycle import LifecycleModelMixin, hook
 
 from pulpcore.app.models import BaseModel
-from pulpcore.app.util import get_viewset_for_model, get_current_authenticated_user
+from pulpcore.app.util import get_current_authenticated_user, get_viewset_for_model
 
 
 def _ensure_iterable(obj):

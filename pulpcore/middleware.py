@@ -1,6 +1,7 @@
+from django.http.response import Http404
+
 from pulpcore.app.models import Domain
 from pulpcore.app.util import set_current_user_lazy, set_domain
-from django.http.response import Http404
 
 
 class DomainMiddleware:

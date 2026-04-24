@@ -1,16 +1,15 @@
 from gettext import gettext as _
 
 from django.conf import settings
-from django.utils.module_loading import import_string
 from django.core.exceptions import ImproperlyConfigured
+from django.utils.module_loading import import_string
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema_field
-
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
 from pulpcore.app import models
-from pulpcore.app.serializers import IdentityField, ModelSerializer, HiddenFieldsMixin
+from pulpcore.app.serializers import HiddenFieldsMixin, IdentityField, ModelSerializer
 
 BACKEND_CHOICES = (
     ("pulpcore.app.models.storage.FileSystem", "Use local filesystem as storage"),

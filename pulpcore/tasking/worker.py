@@ -1,39 +1,37 @@
-from gettext import gettext as _
-
+import contextlib
 import logging
 import os
 import random
 import select
 import signal
 import socket
-import contextlib
 from datetime import timedelta
+from gettext import gettext as _
 from multiprocessing import Process
 from tempfile import TemporaryDirectory
-from packaging.version import parse as parse_version
 
 from django.conf import settings
 from django.db import connection
 from django.utils import timezone
+from packaging.version import parse as parse_version
 
+from pulpcore.app.apps import pulp_plugin_configs
+from pulpcore.app.models import ApiAppStatus, ContentAppStatus, Task, Worker
 from pulpcore.constants import (
-    TASK_STATES,
     TASK_INCOMPLETE_STATES,
     TASK_SCHEDULING_LOCK,
+    TASK_STATES,
     TASK_UNBLOCKING_LOCK,
 )
 from pulpcore.exceptions import AdvisoryLockError
-from pulpcore.app.apps import pulp_plugin_configs
-from pulpcore.app.models import Worker, Task, ApiAppStatus, ContentAppStatus
-
-from pulpcore.tasking.storage import WorkerDirectory
 from pulpcore.tasking._util import (
+    PGAdvisoryLock,
     delete_incomplete_resources,
     dispatch_scheduled_tasks,
     perform_task,
     startup_hook,
-    PGAdvisoryLock,
 )
+from pulpcore.tasking.storage import WorkerDirectory
 
 _logger = logging.getLogger(__name__)
 random.seed()
@@ -350,8 +348,9 @@ class PulpcoreWorker:
                         cancel_state = TASK_STATES.CANCELED
                         self.cancel_task = False
                     if self.wakeup:
-                        with contextlib.suppress(AdvisoryLockError), PGAdvisoryLock(
-                            TASK_UNBLOCKING_LOCK
+                        with (
+                            contextlib.suppress(AdvisoryLockError),
+                            PGAdvisoryLock(TASK_UNBLOCKING_LOCK),
                         ):
                             self.identify_unblocked_tasks()
                         self.wakeup = False

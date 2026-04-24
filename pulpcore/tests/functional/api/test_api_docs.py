@@ -1,6 +1,7 @@
 """Tests related to the api docs page."""
 
 import pytest
+
 from pulpcore.client.pulpcore import ApiException
 
 

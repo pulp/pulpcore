@@ -5,8 +5,7 @@ from django.core.files.uploadedfile import TemporaryUploadedFile
 from django.core.files.uploadhandler import TemporaryFileUploadHandler
 from pygtrie import StringTrie
 
-from pulpcore.app import models
-from pulpcore.app import pulp_hashlib
+from pulpcore.app import models, pulp_hashlib
 
 
 class PulpTemporaryUploadedFile(TemporaryUploadedFile):

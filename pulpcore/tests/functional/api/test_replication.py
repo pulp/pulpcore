@@ -1,9 +1,8 @@
-import pytest
 import uuid
 
-from pulpcore.client.pulpcore import ApiException
-from pulpcore.client.pulpcore import AsyncOperationResponse
+import pytest
 
+from pulpcore.client.pulpcore import ApiException, AsyncOperationResponse
 from pulpcore.tests.functional.utils import PulpTaskGroupError
 
 

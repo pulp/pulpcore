@@ -2,11 +2,11 @@
 Repository related Django models.
 """
 
+import logging
+from collections import defaultdict
 from contextlib import suppress
 from gettext import gettext as _
 from os import path
-from collections import defaultdict
-import logging
 
 import django
 from asyncio_throttle import Throttler
@@ -21,19 +21,18 @@ from rest_framework.exceptions import APIException
 
 from pulpcore.app.util import (
     batch_qs,
-    get_url,
-    get_view_name_for_model,
+    cache_key,
     get_domain,
     get_domain_pk,
-    cache_key,
+    get_url,
+    get_view_name_for_model,
 )
+from pulpcore.cache import Cache
 from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS, PROTECTED_REPO_VERSION_MESSAGE
 from pulpcore.download.factory import DownloaderFactory
 from pulpcore.exceptions import ResourceImmutableError
 
-from pulpcore.cache import Cache
-
-from .base import MasterModel, BaseModel
+from .base import BaseModel, MasterModel
 from .content import Artifact, Content, ContentArtifact, RemoteArtifact
 from .fields import EncryptedTextField
 from .task import CreatedResource, Task

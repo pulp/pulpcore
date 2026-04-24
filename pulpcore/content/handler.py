@@ -1,15 +1,15 @@
 import asyncio
 import logging
-from multidict import CIMultiDict
 import os
 import re
 import socket
 import struct
-from gettext import gettext as _
 from datetime import timedelta
+from gettext import gettext as _
 
-from aiohttp.client_exceptions import ClientResponseError, ClientConnectionError
-from aiohttp.web import FileResponse, StreamResponse, HTTPOk
+import django
+from aiohttp.client_exceptions import ClientConnectionError, ClientResponseError
+from aiohttp.web import FileResponse, HTTPOk, StreamResponse
 from aiohttp.web_exceptions import (
     HTTPError,
     HTTPForbidden,
@@ -18,12 +18,10 @@ from aiohttp.web_exceptions import (
     HTTPNotFound,
     HTTPRequestRangeNotSatisfiable,
 )
-from yarl import URL
-
 from asgiref.sync import sync_to_async
-
-import django
 from django.utils import timezone
+from multidict import CIMultiDict
+from yarl import URL
 
 from pulpcore.constants import STORAGE_RESPONSE_MAP
 from pulpcore.responses import ArtifactResponse
@@ -37,12 +35,15 @@ from django.core.exceptions import (  # noqa: E402: module level not at top of f
     ObjectDoesNotExist,
 )
 from django.db import (  # noqa: E402: module level not at top of file
-    connection,
     DatabaseError,
     IntegrityError,
+    connection,
     models,
     transaction,
 )
+from jinja2 import Template  # noqa: E402: module level not at top of file
+
+from pulpcore.app import mime_types  # noqa: E402: module level not at top of file
 from pulpcore.app.models import (  # noqa: E402: module level not at top of file
     Artifact,
     ArtifactDistribution,
@@ -52,16 +53,12 @@ from pulpcore.app.models import (  # noqa: E402: module level not at top of file
     Remote,
     RemoteArtifact,
 )
-from pulpcore.app import mime_types  # noqa: E402: module level not at top of file
-from pulpcore.app.util import get_domain, cache_key  # noqa: E402: module level not at top of file
-
-from pulpcore.exceptions import (  # noqa: E402
-    UnsupportedDigestValidationError,
-    DigestValidationError,
-)
-
-from jinja2 import Template  # noqa: E402: module level not at top of file
+from pulpcore.app.util import cache_key, get_domain  # noqa: E402: module level not at top of file
 from pulpcore.cache import AsyncContentCache  # noqa: E402
+from pulpcore.exceptions import (  # noqa: E402
+    DigestValidationError,
+    UnsupportedDigestValidationError,
+)
 
 log = logging.getLogger(__name__)
 

@@ -9,16 +9,17 @@ from datetime import timedelta
 from gettext import gettext as _
 
 from django.db import connection, transaction
-from django.db.models import Model, Max
+from django.db.models import Max, Model
 from django_guid import get_guid
+
 from pulpcore.app.apps import MODULE_PLUGIN_VERSIONS
 from pulpcore.app.models import Task
 from pulpcore.app.util import current_task, get_domain, get_url
 from pulpcore.constants import (
+    TASK_DISPATCH_LOCK,
     TASK_FINAL_STATES,
     TASK_INCOMPLETE_STATES,
     TASK_STATES,
-    TASK_DISPATCH_LOCK,
 )
 
 _logger = logging.getLogger(__name__)

@@ -1,13 +1,14 @@
 """Tests that publish file plugin repositories."""
 
-from aiohttp import BasicAuth
 import json
-import pytest
 from urllib.parse import urljoin
 
+import pytest
+from aiohttp import BasicAuth
+
 from pulpcore.client.pulp_file import (
-    RepositorySyncURL,
     FileFilePublication,
+    RepositorySyncURL,
 )
 from pulpcore.client.pulp_file.exceptions import ApiException
 from pulpcore.tests.functional.utils import download_file

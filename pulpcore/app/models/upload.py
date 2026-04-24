@@ -1,6 +1,5 @@
 import hashlib
 import os
-
 from gettext import gettext as _
 
 from django.core.files.base import ContentFile
