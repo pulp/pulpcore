@@ -1,20 +1,19 @@
 """Tests related to the tasking system."""
 
 import json
-import pytest
 import time
-
-from aiohttp import BasicAuth
+from contextlib import contextmanager
 from datetime import datetime
 from urllib.parse import urljoin
 from uuid import uuid4
 
+import pytest
+from aiohttp import BasicAuth
+
 from pulpcore.app import settings
 from pulpcore.client.pulpcore import ApiException
-from contextlib import contextmanager
-
-from pulpcore.tests.functional.utils import download_file, PulpTaskError
 from pulpcore.constants import IMMEDIATE_TIMEOUT
+from pulpcore.tests.functional.utils import PulpTaskError, download_file
 
 
 @pytest.fixture(scope="module")
@@ -484,9 +483,10 @@ def test_cancel_task_group(pulpcore_bindings, dispatch_task_group, gen_user):
     for task in tgroup.tasks:
         assert task.state in ["canceled", "canceling"]
 
-    with gen_user(model_roles=["core.task_viewer"]), pytest.raises(
-        pulpcore_bindings.ApiException
-    ) as e:
+    with (
+        gen_user(model_roles=["core.task_viewer"]),
+        pytest.raises(pulpcore_bindings.ApiException) as e,
+    ):
         pulpcore_bindings.TaskGroupsApi.task_groups_cancel(tgroup_href, {"state": "canceled"})
         assert "You do not have permission" in e.value.message
 
@@ -505,7 +505,6 @@ GT_TIMEOUT = IMMEDIATE_TIMEOUT * 2
 
 
 class TestImmediateTaskWithNoResource:
-
     @pytest.mark.parallel
     def test_succeeds_on_api_worker(self, pulpcore_bindings, dispatch_task):
         """
@@ -667,7 +666,6 @@ def test_immediate_task_with_available_resources(dispatch_task, pulpcore_binding
 
 
 class TestImmediateTaskWithBlockedResource:
-
     @pytest.mark.parallel
     def test_executes_in_task_worker(
         self, resource_blocker, dispatch_task, monitor_task, pulpcore_bindings

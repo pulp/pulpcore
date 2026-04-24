@@ -1,8 +1,8 @@
-import pytest
-from pytest_django.asserts import assertQuerySetEqual
 import unittest
 
+import pytest
 from django.http import Http404, QueryDict
+from pytest_django.asserts import assertQuerySetEqual
 
 from pulpcore.app import models, serializers, viewsets
 

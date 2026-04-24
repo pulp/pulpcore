@@ -1,16 +1,17 @@
 import json
-import jq
 import logging
-
 from base64 import b64decode
 from binascii import Error as Base64DecodeError
 from gettext import gettext as _
 
+import jq
 from django.contrib.auth import authenticate
 from django.contrib.auth.backends import RemoteUserBackend
 from rest_framework.authentication import (
     BaseAuthentication,
     RemoteUserAuthentication,
+)
+from rest_framework.authentication import (
     BasicAuthentication as OrigBasicAuthentication,
 )
 from rest_framework.exceptions import AuthenticationFailed

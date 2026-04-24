@@ -3,18 +3,18 @@ from gettext import gettext as _
 from urllib.parse import urlparse
 
 from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import FieldError, ValidationError
 from django.db import transaction
 from django.db.models.expressions import RawSQL
-from django.core.exceptions import FieldError, ValidationError
 from django.urls import Resolver404, resolve
-from django.contrib.contenttypes.models import ContentType
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
-from pulpcore.openapi import PulpAutoSchema, InheritSerializer
-from rest_framework.serializers import ValidationError as DRFValidationError, ListField, CharField
+from rest_framework.serializers import CharField, ListField
+from rest_framework.serializers import ValidationError as DRFValidationError
 
 from pulpcore.app import tasks
 from pulpcore.app.models import MasterModel
@@ -28,6 +28,7 @@ from pulpcore.app.serializers import (
     UnsetLabelSerializer,
 )
 from pulpcore.app.util import get_viewset_for_model, resolve_prn
+from pulpcore.openapi import InheritSerializer, PulpAutoSchema
 from pulpcore.tasking.tasks import dispatch
 
 # These should be used to prevent duplication and keep things consistent
@@ -444,7 +445,7 @@ class AsyncReservedObjectMixin:
 
         """
         assert instance is not None, (
-            "'{}' must not use the default `async_reserved_resources` method " "when using create."
+            "'{}' must not use the default `async_reserved_resources` method when using create."
         ).format(self.__class__.__name__)
         return [instance]
 

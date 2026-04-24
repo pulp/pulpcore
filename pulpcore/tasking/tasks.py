@@ -4,35 +4,36 @@ import importlib
 import logging
 import os
 import sys
-import traceback
 import tempfile
+import traceback
+from contextlib import contextmanager
 from functools import partial
 from gettext import gettext as _
-from contextlib import contextmanager
-from asgiref.sync import sync_to_async, async_to_sync
 
+from asgiref.sync import async_to_sync, sync_to_async
 from django.conf import settings
 from django.db import connection
 from django.db.models import Model
 from django_guid import get_guid
+
 from pulpcore.app.apps import MODULE_PLUGIN_VERSIONS
-from pulpcore.app.models import Task, TaskGroup, AppStatus
+from pulpcore.app.contexts import awith_task_context, with_task_context, x_task_diagnostics_var
+from pulpcore.app.loggers import deprecation_logger
+from pulpcore.app.models import AppStatus, Task, TaskGroup
 from pulpcore.app.util import (
     get_domain,
     get_prn,
 )
-from pulpcore.exceptions import PulpException, InternalErrorException
-from pulpcore.app.contexts import with_task_context, awith_task_context, x_task_diagnostics_var
 from pulpcore.constants import (
+    IMMEDIATE_TIMEOUT,
     TASK_FINAL_STATES,
     TASK_INCOMPLETE_STATES,
     TASK_STATES,
-    IMMEDIATE_TIMEOUT,
     TASK_WAKEUP_HANDLE,
     TASK_WAKEUP_UNBLOCK,
 )
+from pulpcore.exceptions import InternalErrorException, PulpException
 from pulpcore.tasking.kafka import send_task_notification
-from pulpcore.app.loggers import deprecation_logger
 
 _logger = logging.getLogger(__name__)
 

@@ -2,37 +2,37 @@
 # Any models defined in the pulpcore.plugin namespace should probably be proxy models.
 
 from pulpcore.app.models import (
+    AccessPolicy,
     AlternateContentSource,
     AlternateContentSourcePath,
-    AccessPolicy,
-    AutoAddObjPermsMixin,
     Artifact,
     AsciiArmoredDetachedSigningService,
+    AutoAddObjPermsMixin,
     BaseModel,
     Content,
     ContentArtifact,
-    ContentManager,
     ContentGuard,
+    ContentManager,
     ContentRedirectContentGuard,
     CreatedResource,
     Distribution,
     Domain,
     Export,
     Exporter,
+    FilesystemExporter,
     Group,
     GroupProgressReport,
     Import,
     Importer,
-    FilesystemExporter,
     MasterModel,
     ProgressReport,
     Publication,
     PublishedArtifact,
     PublishedMetadata,
     PulpTemporaryFile,
-    Repository,
     Remote,
     RemoteArtifact,
+    Repository,
     RepositoryContent,
     RepositoryVersion,
     SigningService,
@@ -43,10 +43,8 @@ from pulpcore.app.models import (
     UploadChunk,
     VulnerabilityReport,
 )
-
-
-from pulpcore.app.models.fields import EncryptedTextField
 from pulpcore.app.models.analytics import system_id
+from pulpcore.app.models.fields import EncryptedTextField
 
 __all__ = [
     "AlternateContentSource",

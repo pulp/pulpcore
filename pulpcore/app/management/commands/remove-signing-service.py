@@ -1,10 +1,8 @@
 from gettext import gettext as _
 
-from django.core.management import BaseCommand, CommandError
-
-from django.core.exceptions import ObjectDoesNotExist
-
 from django.apps import apps
+from django.core.exceptions import ObjectDoesNotExist
+from django.core.management import BaseCommand, CommandError
 from django.db.utils import IntegrityError
 
 from pulpcore.app.models.content import SigningService as BaseSigningService

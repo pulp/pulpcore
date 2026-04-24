@@ -1,32 +1,29 @@
 import hashlib
-import zlib
 import os
 import socket
+import zlib
+from contextlib import ExitStack
+from datetime import timedelta
+from functools import lru_cache
+from gettext import gettext as _
 from io import RawIOBase
 from pathlib import Path
 from types import TracebackType
-from typing import Self, IO, Any
-
-from functools import lru_cache
-from gettext import gettext as _
+from typing import IO, Any, Self
 from urllib.parse import urlparse
-from contextlib import ExitStack
-from datetime import timedelta
 from uuid import UUID
 
 from django.apps import apps
 from django.conf import settings
 from django.db import connection
 from django.db.models import Model, UUIDField
-
-
-from rest_framework.serializers import ValidationError
 from rest_framework.reverse import reverse as drf_reverse
+from rest_framework.serializers import ValidationError
 
-from pulpcore.app.loggers import deprecation_logger
-from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app import models
+from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app.contexts import _current_domain, _current_user_func
+from pulpcore.app.loggers import deprecation_logger
 from pulpcore.exceptions.validation import InvalidSignatureError
 
 # a little cache so viewset_for_model doesn't have to iterate over every app every time
@@ -406,8 +403,7 @@ class VerifyResult:
 
     def __repr__(self):
         return (
-            f"<VerifyResult valid={self.valid} fingerprint={self.fingerprint}"
-            f" key_id={self.key_id}>"
+            f"<VerifyResult valid={self.valid} fingerprint={self.fingerprint} key_id={self.key_id}>"
         )
 
 

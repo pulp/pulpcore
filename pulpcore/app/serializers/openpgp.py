@@ -1,5 +1,7 @@
 from gettext import gettext as _
 
+from rest_framework import serializers
+
 from pulpcore.app import models
 from pulpcore.app.openpgp import read_public_key
 from pulpcore.app.serializers import (
@@ -11,7 +13,6 @@ from pulpcore.app.serializers import (
 )
 from pulpcore.app.util import get_domain_pk
 from pulpcore.plugin.serializers import NoArtifactContentUploadSerializer
-from rest_framework import serializers
 
 
 class NestedOpenPGPSignatureSerializer(NoArtifactContentSerializer):

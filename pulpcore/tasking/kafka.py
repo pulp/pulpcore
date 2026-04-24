@@ -4,7 +4,6 @@ import socket
 from threading import Thread
 from typing import Optional
 
-
 from django.conf import settings
 
 _bootstrap_servers = settings.get("KAFKA_BOOTSTRAP_SERVERS")
@@ -16,11 +15,11 @@ if _bootstrap_servers is None:
         pass
 
 else:
-    from confluent_kafka import Producer
-
     # NOTE: in spite of the name, cloudevents.http.CloudEvent is appropriate for other protocols
     from cloudevents.http import CloudEvent
     from cloudevents.kafka import to_structured
+    from confluent_kafka import Producer
+
     from pulpcore.app.serializers.task import TaskStatusMessageSerializer
 
     _logger = logging.getLogger(__name__)

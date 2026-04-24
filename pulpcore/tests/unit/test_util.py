@@ -3,9 +3,9 @@ import tempfile
 import unittest
 from contextlib import nullcontext
 from pathlib import Path
+from unittest import mock
 
 import pytest
-from unittest import mock
 from rest_framework.exceptions import ValidationError
 
 from pulpcore.app import models, util

@@ -6,7 +6,7 @@ from django.core.management import BaseCommand
 from django.db import connection, transaction
 
 from pulpcore.app.models import MasterModel
-from pulpcore.app.models.fields import EncryptedTextField, EncryptedJSONField
+from pulpcore.app.models.fields import EncryptedJSONField, EncryptedTextField
 
 
 class DryRun(Exception):

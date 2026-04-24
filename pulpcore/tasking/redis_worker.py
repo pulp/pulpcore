@@ -6,51 +6,51 @@ directly for task resources using Redis distributed locks, eliminating the need
 for the unblocking mechanism.
 """
 
-from gettext import gettext as _
 import functools
 import logging
-import redis
 import os
 import random
 import select
 import signal
 import time
 from datetime import timedelta
+from gettext import gettext as _
 from multiprocessing import Process
 from tempfile import TemporaryDirectory
 
+import redis
 from django.conf import settings
-from django.db import connection, transaction, DatabaseError, IntegrityError
+from django.db import DatabaseError, IntegrityError, connection, transaction
 from django.utils import timezone
 
+from pulpcore.app.apps import pulp_plugin_configs
+from pulpcore.app.models import AppStatus, Task
+from pulpcore.app.redis_connection import get_redis_connection
+from pulpcore.app.util import get_worker_name
 from pulpcore.constants import (
-    TASK_STATES,
-    TASK_INCOMPLETE_STATES,
     TASK_FINAL_STATES,
-    TASK_SCHEDULING_LOCK,
-    WORKER_CLEANUP_LOCK,
+    TASK_INCOMPLETE_STATES,
     TASK_METRICS_LOCK,
+    TASK_SCHEDULING_LOCK,
+    TASK_STATES,
+    WORKER_CLEANUP_LOCK,
 )
 from pulpcore.metrics import init_otel_meter
-from pulpcore.app.apps import pulp_plugin_configs
-from pulpcore.app.util import get_worker_name
-from pulpcore.app.models import Task, AppStatus
-from pulpcore.app.redis_connection import get_redis_connection
-from pulpcore.tasking.storage import WorkerDirectory
 from pulpcore.tasking._util import (
     dispatch_scheduled_tasks,
     perform_task,
     startup_hook,
 )
 from pulpcore.tasking.redis_locks import (
-    release_resource_locks,
     acquire_locks,
     extract_task_resources,
     get_task_lock_key,
+    release_resource_locks,
     safe_release_task_locks,
 )
-from pulpcore.tasking.tasks import using_workdir
 from pulpcore.tasking.redis_tasks import execute_task
+from pulpcore.tasking.storage import WorkerDirectory
+from pulpcore.tasking.tasks import using_workdir
 
 _logger = logging.getLogger(__name__)
 random.seed()

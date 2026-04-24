@@ -1,12 +1,14 @@
 """Tests for checkpoint distribution and publications."""
 
-from datetime import datetime, timedelta
 import re
+import uuid
+from datetime import datetime, timedelta
 from time import sleep
 from urllib.parse import urlparse
-import uuid
-from aiohttp import ClientResponseError
+
 import pytest
+from aiohttp import ClientResponseError
+
 from pulpcore.client.pulp_file import exceptions
 from pulpcore.content.handler import Handler
 
