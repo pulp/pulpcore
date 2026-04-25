@@ -8,6 +8,28 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.109.2 (2026-04-24) {: #3.109.2 }
+
+### REST API {: #3.109.2-rest-api }
+
+#### Bugfixes {: #3.109.2-rest-api-bugfix }
+
+- Fixed an issue where gpg_verify() was rejecting some valid PGP signatures after changes made in pulpcore 3.108.
+
+### Plugin API {: #3.109.2-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.109.2-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.109.2-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.109.1 (2026-04-22) {: #3.109.1 }
 
 ### REST API {: #3.109.1-rest-api }
@@ -69,6 +91,28 @@ No significant changes.
   [#7557](https://github.com/pulp/pulpcore/issues/7557)
 
 ### Pulp Cert Guard {: #3.109.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.108.2 (2026-04-24) {: #3.108.2 }
+
+### REST API {: #3.108.2-rest-api }
+
+#### Bugfixes {: #3.108.2-rest-api-bugfix }
+
+- Fixed an issue where gpg_verify() was rejecting some valid PGP signatures after changes made in pulpcore 3.108.
+
+### Plugin API {: #3.108.2-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.108.2-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.108.2-pulp-cert-guard }
 
 No significant changes.
 
