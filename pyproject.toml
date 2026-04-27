@@ -184,3 +184,7 @@ extend-select = [
 # This section is managed by the plugin template. Do not edit manually.
 sections = { second-party = ["pulpcore"] }
 section-order = ["future", "standard-library", "third-party", "second-party", "first-party", "local-folder"]
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+# TODO Add this to the plugin template
+"distutils".msg = "The 'distutils' module has been deprecated since Python 3.9."
