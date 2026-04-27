@@ -4,7 +4,6 @@ import os
 import os.path
 import subprocess
 import tarfile
-from distutils.util import strtobool
 from gettext import gettext as _
 from glob import glob
 from pathlib import Path
@@ -42,6 +41,21 @@ class UnexportableArtifactException(RuntimeError):
 
     def __init__(self):
         super().__init__(_("Cannot export artifacts that haven't been downloaded."))
+
+
+def _ensure_bool(value):
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        if value.tolower() in ["yes", "y", "true", "t", "on", "1"]:
+            return True
+        if value.tolower() in ["no", "n", "false", "f", "off", "0"]:
+            return False
+    if value == 1:
+        return True
+    if value == 0:
+        return False
+    raise ValueError("Value {value:r} does not describe a boolean.")
 
 
 def _validate_fs_export(content_artifacts):
@@ -347,9 +361,7 @@ def _version_match(curr_versions, prev_versions):
 def _incremental_requested(the_export):
     """Figure out that a) an incremental is requested, and b) it's possible."""
     the_exporter = the_export.exporter
-    full = the_export.params.get("full", True)
-    if isinstance(full, str):
-        full = bool(strtobool(full))
+    full = _ensure_bool(the_export.params.get("full", True))
     starting_versions_provided = len(the_export.params.get("start_versions", [])) > 0
     last_exists = the_exporter.last_export
     return (starting_versions_provided or last_exists) and not full
