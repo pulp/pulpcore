@@ -7,7 +7,7 @@ build-backend = 'setuptools.build_meta'
 
 [project]
 name = "pulpcore"
-version = "3.110.0.dev"
+version = "3.111.0.dev"
 description = "Pulp Django Application and Related Modules"
 readme = "README.md"
 authors = [
@@ -207,7 +207,7 @@ ignore = [
 [tool.bumpversion]
 # This section is managed by the plugin template. Do not edit manually.
 
-current_version = "3.110.0.dev"
+current_version = "3.111.0.dev"
 commit = false
 tag = false
 parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<alpha>0a)?(?P<patch>\\d+)(\\.(?P<release>[a-z]+))?"
@@ -286,11 +286,11 @@ extend-select = [
   "T10",
 ]
 
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+# This section is managed by the plugin template. Do not edit manually.
+"distutils".msg = "The 'distutils' module has been deprecated since Python 3.9."
+
 [tool.ruff.lint.isort]
 # This section is managed by the plugin template. Do not edit manually.
 sections = { second-party = ["pulpcore"] }
 section-order = ["future", "standard-library", "third-party", "second-party", "first-party", "local-folder"]
-
-[tool.ruff.lint.flake8-tidy-imports.banned-api]
-# TODO Add this to the plugin template
-"distutils".msg = "The 'distutils' module has been deprecated since Python 3.9."
