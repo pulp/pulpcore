@@ -8,6 +8,44 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.110.0 (2026-04-28) {: #3.110.0 }
+
+### REST API {: #3.110.0-rest-api }
+
+#### Bugfixes {: #3.110.0-rest-api-bugfix }
+
+- Replace use of the deprecated distutils. The module has been removed in Python 3.12 .
+  [#7571](https://github.com/pulp/pulpcore/issues/7571)
+- Fixed RedisWorker stalling when more than 20 tasks are waiting on the same resource.
+  The worker now doubles its fetch limit and retries until a runnable task is found or the
+  entire queue has been examined.
+  [#7612](https://github.com/pulp/pulpcore/issues/7612)
+- Fixed RedisWorker not always respecting FIFO order of tasks with shared resources.
+  [#7616](https://github.com/pulp/pulpcore/issues/7616)
+- Fixed an issue where gpg_verify() was rejecting some valid PGP signatures after changes made in pulpcore 3.108.
+
+### Plugin API {: #3.110.0-plugin-api }
+
+#### Features {: #3.110.0-plugin-api-feature }
+
+- Added `task_args` and `task_kwargs` fields to `TaskSchedule`, allowing plugins to store positional
+  and keyword arguments that are forwarded to tasks when they are dispatched on schedule. Both fields
+  are encrypted at rest. `TaskSchedule` and `TaskScheduleSerializer` are now exposed via the plugin
+  API.
+  [#7608](https://github.com/pulp/pulpcore/issues/7608)
+- Allow plugins to access `pulp_plugin_configs` and `get_plugin_config` from `pulpcore.app.apps` via `pulpcore.plugin.apps`
+  [#7650](https://github.com/pulp/pulpcore/issues/7650)
+
+### Pulp File {: #3.110.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.110.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.109.2 (2026-04-24) {: #3.109.2 }
 
 ### REST API {: #3.109.2-rest-api }

@@ -1,1 +1,0 @@
-Fixed RedisWorker not always respecting FIFO order of tasks with shared resources.
