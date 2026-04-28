@@ -25,7 +25,7 @@ extra_files:
   - destination: "/etc/nginx/pulp/api_root_rewrite.conf"
     origin: "pulpcore/pulpcore/tests/functional/assets/api_root_rewrite.conf"
 github_org: "pulp"
-latest_release_branch: "3.109"
+latest_release_branch: "3.110"
 lint_ignore:
   - "./pulpcore/app/protobuf/*"
 lint_requirements: true

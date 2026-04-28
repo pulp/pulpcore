@@ -10,9 +10,8 @@ ADD ./{{ item.origin }} {{ item.destination }}
 {%- endfor %}
 
 # This MUST be the ONLY call to pip install in inside the container.
-RUN pip3 install --upgrade pip setuptools wheel && \
-  rm -rf /root/.cache/pip && \
-  pip3 install {{ image.source }}
+RUN --mount=type=cache,target=/root/.cache/uv uv pip install --upgrade setuptools wheel && \
+  uv pip install {{ image.source }}
 {%- if image.upperbounds | default(false) -%}
 {{ " " }}-c ./{{ plugin_name }}/upperbounds_constraints.txt
 {%- endif -%}
@@ -22,8 +21,7 @@ RUN pip3 install --upgrade pip setuptools wheel && \
 {%- if image.ci_requirements | default(false) -%}
 {{ " " }}-r ./{{ plugin_name }}/ci_requirements.txt
 {%- endif -%}
-{{ " " }}-c ./{{ plugin_name }}/.ci/assets/ci_constraints.txt && \
-  rm -rf /root/.cache/pip
+{{ " " }}-c ./{{ plugin_name }}/.ci/assets/ci_constraints.txt
 
 {% if pulp_env is defined and pulp_env %}
 {% for key, value in pulp_env.items() %}
