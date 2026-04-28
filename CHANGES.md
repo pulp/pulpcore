@@ -8,6 +8,29 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.85.18 (2026-04-28) {: #3.85.18 }
+
+### REST API {: #3.85.18-rest-api }
+
+#### Bugfixes {: #3.85.18-rest-api-bugfix }
+
+- Replace use of the deprecated distutils. The module has been removed in Python 3.12 .
+  [#7571](https://github.com/pulp/pulpcore/issues/7571)
+
+### Plugin API {: #3.85.18-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.85.18-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.18-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.85.17 (2026-04-21) {: #3.85.17 }
 
 ### REST API {: #3.85.17-rest-api }
