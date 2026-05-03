@@ -42,6 +42,11 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: "Install uv"
+        uses: "astral-sh/setup-uv@v7"
+        with:
+          enable-cache: true
+
       - name: "Download plugin package"
         uses: "actions/download-artifact@v8"
         with:
