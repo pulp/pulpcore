@@ -26,6 +26,10 @@ echo "# Pulp config:"
 tail -v -n +1 .ci/ansible/settings/settings.*
 
 echo
+echo "# Pulp CLI config"
+tail -v -n +1 "../pulp-cli/tests/cli.toml"
+
+echo
 echo "# Containerfile:"
 tail -v -n +1 .ci/ansible/Containerfile
 
