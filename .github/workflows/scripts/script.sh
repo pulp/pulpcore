@@ -170,8 +170,13 @@ export PULP_FIXTURES_URL="http://pulp-fixtures:8080"
 # some pulp-cli tests use the api root envvar
 export PULP_API_ROOT="$(EDITOR=cat pulp config edit 2>/dev/null | awk -F'"' '/api_root/{print $2; exit}')"
 pushd ../pulp-cli
-pip install -r test_requirements.txt
-pytest -v tests -m "pulpcore or pulp_file or pulp_certguard"
+if [[ -f "test_requirements.txt" ]]
+then
+  pip install -r test_requirements.txt
+  pytest -v tests -m "pulpcore or pulp_file or pulp_certguard"
+else
+  PULP_CA_BUNDLE="/usr/local/share/ca-certificates/pulp_webserver.crt" make livetest
+fi
 popd
 
 if [ -f "$POST_SCRIPT" ]; then
