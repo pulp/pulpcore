@@ -31,7 +31,9 @@ def test_sync_http_through_http_proxy(
     Test syncing http through a http proxy.
     """
     remote_on_demand = file_remote_factory(
-        manifest_path=basic_manifest_path, policy="on_demand", proxy_url=http_proxy.proxy_url
+        manifest_path=basic_manifest_path,
+        policy="on_demand",
+        proxy_url=http_proxy.proxy_url,
     )
 
     _run_basic_sync_and_assert(file_bindings, monitor_task, remote_on_demand, file_repo)
@@ -50,7 +52,9 @@ def test_sync_https_through_http_proxy(
     Test syncing https through a http proxy.
     """
     remote_on_demand = file_remote_ssl_factory(
-        manifest_path=basic_manifest_path, policy="on_demand", proxy_url=http_proxy.proxy_url
+        manifest_path=basic_manifest_path,
+        policy="on_demand",
+        proxy_url=http_proxy.proxy_url,
     )
 
     _run_basic_sync_and_assert(file_bindings, monitor_task, remote_on_demand, file_repo)
@@ -99,10 +103,12 @@ def test_sync_https_through_http_proxy_with_auth_but_auth_not_configured(
         proxy_url=http_proxy_with_auth.proxy_url,
     )
 
-    try:
+    with pytest.raises(PulpTaskError) as excinfo:
         _run_basic_sync_and_assert(file_bindings, monitor_task, remote_on_demand, file_repo)
-    except PulpTaskError as exc:
-        assert "407, message='Proxy Authentication Required'" in exc.task.error["description"]
+
+    error_desc = excinfo.value.task.error.get("description", "")
+
+    assert "[PLP0010]" in error_desc
 
 
 @pytest.mark.parallel

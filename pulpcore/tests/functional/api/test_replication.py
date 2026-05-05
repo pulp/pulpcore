@@ -421,7 +421,8 @@ SQiVeWgI8fDCpQ/6KiI7F3el8nEc5w==
         monitor_task_group(response.task_group)
 
     task = pulpcore_bindings.TasksApi.read(e.value.task_group.tasks[0].pulp_href)
-    assert "SSLError" in task.error["description"]
+    assert "[PLP0026]" in task.error["description"]
+    assert "SSL" in task.error["description"]
 
     # Update Upstream Pulp with tls_validation=False
     pulpcore_bindings.UpstreamPulpsApi.partial_update(
