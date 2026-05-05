@@ -8,6 +8,29 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.110.1 (2026-05-05) {: #3.110.1 }
+
+### REST API {: #3.110.1-rest-api }
+
+#### Bugfixes {: #3.110.1-rest-api-bugfix }
+
+- Fixed `TypeError: 'str' object has no attribute 'tolower'` in `_ensure_bool` during incremental content exports. Changed `.tolower()` to `.lower()`.
+  [#7678](https://github.com/pulp/pulpcore/issues/7678)
+
+### Plugin API {: #3.110.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.110.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.110.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.110.0 (2026-04-28) {: #3.110.0 }
 
 ### REST API {: #3.110.0-rest-api }
