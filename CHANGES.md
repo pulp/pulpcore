@@ -8,6 +8,32 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.49.60 (2026-05-05) {: #3.49.60 }
+
+### REST API {: #3.49.60-rest-api }
+
+#### Bugfixes {: #3.49.60-rest-api-bugfix }
+
+- Set default ``--max-requests 10000`` and ``--max-requests-jitter 500`` for API workers
+  to prevent unbounded RSS growth from glibc heap fragmentation over long-lived worker processes.
+  [#7482](https://github.com/pulp/pulpcore/issues/7482)
+- Fixed `TypeError: 'str' object has no attribute 'tolower'` in `_ensure_bool` during incremental content exports. Changed `.tolower()` to `.lower()`.
+  [#7678](https://github.com/pulp/pulpcore/issues/7678)
+
+### Plugin API {: #3.49.60-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.60-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.60-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.49.59 (2026-04-28) {: #3.49.59 }
 
 ### REST API {: #3.49.59-rest-api }
