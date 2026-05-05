@@ -160,6 +160,27 @@ AUTHENTICATION_BACKENDS = [
     "pulpcore.backends.ObjectRolePermissionBackend",
 ]
 
+with suppress(ImportError):
+    # TODO Move this in a hook depending on SAML_CONFIG's existance or so.
+    import_module("djangosaml2")
+    INSTALLED_APPS.append("djangosaml2")
+    MIDDLEWARE.append("djangosaml2.middleware.SamlSessionMiddleware")
+    AUTHENTICATION_BACKENDS.append("djangosaml2.backends.Saml2Backend")
+    LOGIN_URL = "/saml2/login/"
+    SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+    SAML_CONFIG = {
+        "entityid": "http://localhost:5001/sp.xml",
+        "entity_category": [],
+        "service": {},
+        "key_file": "/etc/pki/tls/private/pulp_webserver.key",
+        "cert_file": "/etc/pki/tls/certs/pulp_webserver.crt",
+        "xmlsec_binary": "/usr/bin/xmlsec1",
+        "metadata": {
+            "local": [BASE_DIR / "remote_metadata.xml"],
+        },
+        "debug": 1,
+    }
+
 ROOT_URLCONF = "pulpcore.app.urls"
 
 TEMPLATES = [
