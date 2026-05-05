@@ -474,10 +474,38 @@ Defaults to `/var/lib/pulp/tmp/`.
 
 ### MAX\_CONCURRENT\_CONTENT
 
-The size of the batch of content processed in one go when syncing content from
-a remote.
+The maximum number of concurrent downloads during sync. Controls how many HTTP
+download tasks can run in parallel within the `ArtifactDownloader` pipeline stage.
 
-Defaults to 25.
+Defaults to 200.
+
+!!! warning "Deprecated"
+    This setting is deprecated and may be removed in a future release.
+    Use `SYNC_MAX_IN_FLIGHT_ITEMS` instead, which provides similar
+    functionality. If `MAX_CONCURRENT_CONTENT` is set by the user and
+    `SYNC_MAX_IN_FLIGHT_ITEMS` is not, its value will be used as
+    `SYNC_MAX_IN_FLIGHT_ITEMS` automatically.
+
+### SYNC\_MAX\_IN\_FLIGHT\_MB
+
+The maximum total size (in megabytes) of downloaded artifacts that are waiting to be
+saved. This limits the temporary disk space consumed by artifacts that have been
+downloaded by `ArtifactDownloader` but not yet persisted by `ArtifactSaver`.
+
+When set, small artifacts will download with high concurrency while large artifacts
+will automatically throttle to avoid exhausting disk space.
+
+Defaults to 5120 (5gb)
+
+### SYNC\_MAX\_IN\_FLIGHT\_ITEMS
+
+The maximum number of downloaded artifacts that are waiting to be saved. Like
+`SYNC_MAX_IN_FLIGHT_MB`, this limits the buffer between `ArtifactDownloader` and
+`ArtifactSaver`, but counts items rather than bytes.
+
+This is useful as a fallback when artifact sizes are not known ahead of time.
+
+Defaults to `None` (no limit).
 
 ## Redis Settings
 
