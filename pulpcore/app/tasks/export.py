@@ -46,9 +46,9 @@ def _ensure_bool(value):
     if isinstance(value, bool):
         return value
     if isinstance(value, str):
-        if value.tolower() in ["yes", "y", "true", "t", "on", "1"]:
+        if value.lower() in ["yes", "y", "true", "t", "on", "1"]:
             return True
-        if value.tolower() in ["no", "n", "false", "f", "off", "0"]:
+        if value.lower() in ["no", "n", "false", "f", "off", "0"]:
             return False
     if value == 1:
         return True
