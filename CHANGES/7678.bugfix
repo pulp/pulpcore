@@ -1,0 +1,1 @@
+Fixed `TypeError: 'str' object has no attribute 'tolower'` in `_ensure_bool` during incremental content exports. Changed `.tolower()` to `.lower()`.
