@@ -1,0 +1,1 @@
+Fixed `add-signing-service` management command failing with "There are N keys matching the key id" for PGP keys that have subkeys.
