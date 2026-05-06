@@ -1,7 +1,6 @@
 import asyncio
 import json
 import os
-import pathlib
 import shutil
 import socket
 import ssl
@@ -1072,43 +1071,61 @@ def dispatch_task_group(dispatch_task):
 
 # GPG related fixtures
 
+PULP_FIXTURES_SIGNING_KEYS_URL = (
+    "https://raw.githubusercontent.com/pulp/pulp-fixtures/master/common/signing_keys/"
+)
+KEY_V4_RSA2K_PUBLIC = PULP_FIXTURES_SIGNING_KEYS_URL + "pulp-testkey-v4-rsa2k.asc"
+KEY_V4_RSA2K_PRIVATE = PULP_FIXTURES_SIGNING_KEYS_URL + "pulp-testkey-v4-rsa2k.secret"
+KEY_V4_RSA4K_PUBLIC = PULP_FIXTURES_SIGNING_KEYS_URL + "pulp-testkey-v4-rsa4k.asc"
+KEY_V4_RSA4K_PRIVATE = PULP_FIXTURES_SIGNING_KEYS_URL + "pulp-testkey-v4-rsa4k.secret"
+KEY_V4_ED25519_PUBLIC = PULP_FIXTURES_SIGNING_KEYS_URL + "pulp-testkey-v4-ed25519.asc"
+KEY_V4_ED25519_PRIVATE = PULP_FIXTURES_SIGNING_KEYS_URL + "pulp-testkey-v4-ed25519.secret"
+KEY_V6_RSA4K_PUBLIC = PULP_FIXTURES_SIGNING_KEYS_URL + "pulp-testkey-v6-rsa4k.asc"
+KEY_V6_RSA4K_PRIVATE = PULP_FIXTURES_SIGNING_KEYS_URL + "pulp-testkey-v6-rsa4k.secret"
+KEY_V6_ED25519_PUBLIC = PULP_FIXTURES_SIGNING_KEYS_URL + "pulp-testkey-v6-ed25519.asc"
+KEY_V6_ED25519_PRIVATE = PULP_FIXTURES_SIGNING_KEYS_URL + "pulp-testkey-v6-ed25519.secret"
+KEY_V6_MLDSA65_ED25519_PUBLIC = (
+    PULP_FIXTURES_SIGNING_KEYS_URL + "pulp-testkey-v6-mldsa65-ed25519.asc"
+)
+KEY_V6_MLDSA65_ED25519_PRIVATE = (
+    PULP_FIXTURES_SIGNING_KEYS_URL + "pulp-testkey-v6-mldsa65-ed25519.secret"
+)
+KEY_V6_MLDSA87_ED448_PUBLIC = PULP_FIXTURES_SIGNING_KEYS_URL + "pulp-testkey-v6-mldsa87-ed448.asc"
+KEY_V6_MLDSA87_ED448_PRIVATE = (
+    PULP_FIXTURES_SIGNING_KEYS_URL + "pulp-testkey-v6-mldsa87-ed448.secret"
+)
 
-SIGNING_SCRIPT_STRING = r"""#!/usr/bin/env bash
+
+SIGNING_SCRIPT_STRING = """#!/usr/bin/env bash
 
 FILE_PATH=$1
 SIGNATURE_PATH="$1.asc"
 
-GPG_KEY_ID="pulp-fixture-signing-key"
+GPG_KEY_ID="{gpg_key_id}"
 
 # Create a detached signature
-gpg --quiet --batch --homedir HOMEDIRHERE --detach-sign --local-user "${GPG_KEY_ID}" \
-   --armor --output ${SIGNATURE_PATH} ${FILE_PATH}
+gpg --quiet --batch --homedir {gpg_home} --detach-sign --local-user "${{GPG_KEY_ID}}" \\
+   --armor --output ${{SIGNATURE_PATH}} ${{FILE_PATH}}
 
 # Check the exit status
 STATUS=$?
-if [[ ${STATUS} -eq 0 ]]; then
-   echo {\"file\": \"${FILE_PATH}\", \"signature\": \"${SIGNATURE_PATH}\"}
+if [[ ${{STATUS}} -eq 0 ]]; then
+   echo '{{"file": "'${{FILE_PATH}}'", "signature": "'${{SIGNATURE_PATH}}'"}}'
 else
-   exit ${STATUS}
+   exit ${{STATUS}}
 fi
 """
 
 
 @pytest.fixture(scope="session")
-def signing_script_path(signing_script_temp_dir, signing_gpg_homedir_path):
-    signing_script_file = signing_script_temp_dir / "sign-metadata.sh"
-    signing_script_file.write_text(
-        SIGNING_SCRIPT_STRING.replace("HOMEDIRHERE", str(signing_gpg_homedir_path))
-    )
-
-    signing_script_file.chmod(0o755)
-
-    return signing_script_file
+def signing_script_path(signing_script_temp_dir, signing_gpg_homedir_path, signing_gpg_metadata):
+    _gpg, fingerprint, _keyid = signing_gpg_metadata
+    return make_signing_script(signing_gpg_homedir_path, fingerprint, signing_script_temp_dir)
 
 
 @pytest.fixture(scope="session")
 def signing_script_temp_dir(tmp_path_factory):
-    return tmp_path_factory.mktemp("sigining_script_dir")
+    return tmp_path_factory.mktemp("signing_script_dir")
 
 
 @pytest.fixture(scope="session")
@@ -1149,30 +1166,7 @@ def sign_with_ascii_armored_detached_signing_service(signing_script_path, signin
 def signing_gpg_metadata(signing_gpg_homedir_path):
     """A fixture that returns a GPG instance and related metadata (i.e., fingerprint, keyid)."""
     PRIVATE_KEY_URL = "https://raw.githubusercontent.com/pulp/pulp-fixtures/master/common/GPG-PRIVATE-KEY-fixture-signing"  # noqa: E501
-
-    try:
-        import gnupg
-    except ImportError:
-        pytest.fail("python-gnupg is not installed, add to your functest_requirements.txt")
-    key_file = pathlib.Path(__file__).parent / "GPG-PRIVATE-KEY-fixture-signing"
-    if key_file.exists():
-        private_key_data = key_file.read_text()
-    else:
-        response = requests.get(PRIVATE_KEY_URL)
-        response.raise_for_status()
-        private_key_data = response.text
-        with suppress(FileNotFoundError, PermissionError):
-            key_file.write_text(private_key_data)
-
-    gpg = gnupg.GPG(gnupghome=signing_gpg_homedir_path)
-    gpg.import_keys(private_key_data)
-
-    key = gpg.list_keys()[0]
-    fingerprint = key["fingerprint"]
-    keyid = key["keyid"]
-
-    gpg.trust_keys(fingerprint, "TRUST_ULTIMATE")
-    return gpg, fingerprint, keyid
+    return import_signing_key(PRIVATE_KEY_URL, signing_gpg_homedir_path)
 
 
 @pytest.fixture(scope="session")
@@ -1194,42 +1188,14 @@ def _ascii_armored_detached_signing_service_name(
     signing_gpg_metadata,
     signing_gpg_homedir_path,
 ):
-    service_name = str(uuid.uuid4())
     _gpg, fingerprint, _keyid = signing_gpg_metadata
-
-    cmd = (
-        "pulpcore-manager",
-        "add-signing-service",
-        service_name,
-        str(signing_script_path),
-        fingerprint,
-        "--class",
-        "core:AsciiArmoredDetachedSigningService",
-        "--gnupghome",
-        str(signing_gpg_homedir_path),
+    service_name = create_signing_service(
+        signing_gpg_homedir_path, fingerprint, signing_script_path
     )
-    completed_process = subprocess.run(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-
-    assert completed_process.returncode == 0
 
     yield service_name
 
-    cmd = (
-        "pulpcore-manager",
-        "remove-signing-service",
-        service_name,
-        "--class",
-        "core:AsciiArmoredDetachedSigningService",
-    )
-    subprocess.run(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
+    remove_signing_service(service_name)
 
 
 @pytest.fixture(scope="session")
@@ -1239,6 +1205,83 @@ def ascii_armored_detached_signing_service(
     return pulpcore_bindings.SigningServicesApi.list(
         name=_ascii_armored_detached_signing_service_name
     ).results[0]
+
+
+def import_signing_key(key_url, gpg_home):
+    """Import a PGP key into a GPG home directory and trust it.
+
+    Returns ``(gpg, fingerprint, keyid)``.
+    """
+    try:
+        import gnupg
+    except ImportError:
+        pytest.skip("python-gnupg not installed")
+
+    gpg = gnupg.GPG(gnupghome=gpg_home)
+
+    response = requests.get(key_url)
+    response.raise_for_status()
+    result = gpg.import_keys(response.content)
+    assert result.count >= 1, f"Failed to import key from {key_url}"
+
+    key_info = gpg.list_keys()[0]
+    fingerprint = key_info["fingerprint"]
+    keyid = key_info["keyid"]
+    gpg.trust_keys(fingerprint, "TRUST_ULTIMATE")
+
+    return gpg, fingerprint, keyid
+
+
+def make_signing_script(gpg_home, fingerprint, script_dir=None):
+    """Create a detached-signature signing script.
+
+    Returns the script path.
+    """
+    if script_dir is None:
+        script_dir = gpg_home
+    script_path = script_dir / "sign.sh"
+    script_path.write_text(SIGNING_SCRIPT_STRING.format(gpg_home=gpg_home, gpg_key_id=fingerprint))
+    script_path.chmod(0o755)
+    return script_path
+
+
+def create_signing_service(
+    gpg_home, fingerprint, script_path, *, service_class="core:AsciiArmoredDetachedSigningService"
+):
+    """Register a signing service via pulpcore-manager.
+
+    Returns the service name.
+    """
+    service_name = str(uuid.uuid4())
+    cmd = (
+        "pulpcore-manager",
+        "add-signing-service",
+        service_name,
+        str(script_path),
+        fingerprint,
+        "--class",
+        service_class,
+        "--gnupghome",
+        str(gpg_home),
+    )
+    completed = subprocess.run(cmd, capture_output=True, text=True)
+    assert completed.returncode == 0, completed.stderr
+
+    return service_name
+
+
+def remove_signing_service(service_name, service_class="core:AsciiArmoredDetachedSigningService"):
+    """Remove a signing service created by ``create_signing_service``."""
+    subprocess.run(
+        (
+            "pulpcore-manager",
+            "remove-signing-service",
+            service_name,
+            "--class",
+            service_class,
+        ),
+        capture_output=True,
+    )
 
 
 # if content_origin == None, base_url will return the relative path and
