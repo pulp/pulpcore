@@ -8,6 +8,29 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.110.1 (2026-05-05) {: #3.110.1 }
+
+### REST API {: #3.110.1-rest-api }
+
+#### Bugfixes {: #3.110.1-rest-api-bugfix }
+
+- Fixed `TypeError: 'str' object has no attribute 'tolower'` in `_ensure_bool` during incremental content exports. Changed `.tolower()` to `.lower()`.
+  [#7678](https://github.com/pulp/pulpcore/issues/7678)
+
+### Plugin API {: #3.110.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.110.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.110.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.110.0 (2026-04-28) {: #3.110.0 }
 
 ### REST API {: #3.110.0-rest-api }
@@ -356,6 +379,37 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.106.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.105.6 (2026-05-05) {: #3.105.6 }
+
+### REST API {: #3.105.6-rest-api }
+
+#### Bugfixes {: #3.105.6-rest-api-bugfix }
+
+- Set default ``--max-requests 10000`` and ``--max-requests-jitter 500`` for API workers
+  to prevent unbounded RSS growth from glibc heap fragmentation over long-lived worker processes.
+  [#7482](https://github.com/pulp/pulpcore/issues/7482)
+- Added option to `pulpcore-content` and `pulpcore-api` to configure the gunicorn control socket path.
+  The default path could cause permission errors on certain deployments setups.
+
+  This feature was added in gunicorn>=25.1 and is ignored for lower version.
+  [#7574](https://github.com/pulp/pulpcore/issues/7574)
+- Fixed `TypeError: 'str' object has no attribute 'tolower'` in `_ensure_bool` during incremental content exports. Changed `.tolower()` to `.lower()`.
+  [#7678](https://github.com/pulp/pulpcore/issues/7678)
+
+### Plugin API {: #3.105.6-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.105.6-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.105.6-pulp-cert-guard }
 
 No significant changes.
 
@@ -1460,6 +1514,32 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.86.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.85.19 (2026-05-05) {: #3.85.19 }
+
+### REST API {: #3.85.19-rest-api }
+
+#### Bugfixes {: #3.85.19-rest-api-bugfix }
+
+- Set default ``--max-requests 10000`` and ``--max-requests-jitter 500`` for API workers
+  to prevent unbounded RSS growth from glibc heap fragmentation over long-lived worker processes.
+  [#7482](https://github.com/pulp/pulpcore/issues/7482)
+- Fixed `TypeError: 'str' object has no attribute 'tolower'` in `_ensure_bool` during incremental content exports. Changed `.tolower()` to `.lower()`.
+  [#7678](https://github.com/pulp/pulpcore/issues/7678)
+
+### Plugin API {: #3.85.19-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.85.19-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.19-pulp-cert-guard }
 
 No significant changes.
 
@@ -2652,6 +2732,32 @@ No significant changes.
   [#6244](https://github.com/pulp/pulpcore/issues/6244)
 
 ### Pulp Cert Guard {: #3.74.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.73.33 (2026-05-05) {: #3.73.33 }
+
+### REST API {: #3.73.33-rest-api }
+
+#### Bugfixes {: #3.73.33-rest-api-bugfix }
+
+- Set default ``--max-requests 10000`` and ``--max-requests-jitter 500`` for API workers
+  to prevent unbounded RSS growth from glibc heap fragmentation over long-lived worker processes.
+  [#7482](https://github.com/pulp/pulpcore/issues/7482)
+- Fixed `TypeError: 'str' object has no attribute 'tolower'` in `_ensure_bool` during incremental content exports. Changed `.tolower()` to `.lower()`.
+  [#7678](https://github.com/pulp/pulpcore/issues/7678)
+
+### Plugin API {: #3.73.33-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.73.33-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.33-pulp-cert-guard }
 
 No significant changes.
 
@@ -4094,6 +4200,32 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.64.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.63.37 (2026-05-05) {: #3.63.37 }
+
+### REST API {: #3.63.37-rest-api }
+
+#### Bugfixes {: #3.63.37-rest-api-bugfix }
+
+- Set default ``--max-requests 10000`` and ``--max-requests-jitter 500`` for API workers
+  to prevent unbounded RSS growth from glibc heap fragmentation over long-lived worker processes.
+  [#7482](https://github.com/pulp/pulpcore/issues/7482)
+- Fixed `TypeError: 'str' object has no attribute 'tolower'` in `_ensure_bool` during incremental content exports. Changed `.tolower()` to `.lower()`.
+  [#7678](https://github.com/pulp/pulpcore/issues/7678)
+
+### Plugin API {: #3.63.37-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.37-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.37-pulp-cert-guard }
 
 No significant changes.
 
@@ -5779,6 +5911,32 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard
+
+No significant changes.
+
+---
+
+## 3.49.60 (2026-05-05) {: #3.49.60 }
+
+### REST API {: #3.49.60-rest-api }
+
+#### Bugfixes {: #3.49.60-rest-api-bugfix }
+
+- Set default ``--max-requests 10000`` and ``--max-requests-jitter 500`` for API workers
+  to prevent unbounded RSS growth from glibc heap fragmentation over long-lived worker processes.
+  [#7482](https://github.com/pulp/pulpcore/issues/7482)
+- Fixed `TypeError: 'str' object has no attribute 'tolower'` in `_ensure_bool` during incremental content exports. Changed `.tolower()` to `.lower()`.
+  [#7678](https://github.com/pulp/pulpcore/issues/7678)
+
+### Plugin API {: #3.49.60-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.60-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.60-pulp-cert-guard }
 
 No significant changes.
 
