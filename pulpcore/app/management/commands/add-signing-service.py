@@ -82,10 +82,17 @@ class Command(BaseCommand):
         if result.returncode != 0:
             raise CommandError(result.stderr.strip())
 
-        fpr_lines = [line for line in result.stdout.splitlines() if line.startswith("fpr:")]
-        if len(fpr_lines) != 1:
-            raise CommandError(_("There are {} keys matching the key id.").format(len(fpr_lines)))
-        fingerprint = fpr_lines[0].split(":")[9]
+        lines = result.stdout.splitlines()
+
+        # Count actual keys (pub:/sec: lines), not fingerprint lines. GPG emits
+        # a separate fpr: line for the primary key and each subkey, so a single
+        # key with subkeys produces multiple fpr: lines.
+        key_lines = [l for l in lines if l.startswith(("pub:", "sec:"))]  # noqa: E741
+        if len(key_lines) != 1:
+            raise CommandError(_("There are {} keys matching the key id.").format(len(key_lines)))
+
+        # Use the primary key fingerprint (first fpr: line in GPG's output).
+        fingerprint = [l.split(":")[9] for l in lines if l.startswith("fpr:")][0]  # noqa: E741
 
         result = subprocess.run(
             gpg_cmd + ["--armor", "--export", key_id],
