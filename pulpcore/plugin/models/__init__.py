@@ -47,7 +47,7 @@ from pulpcore.app.models import (
 )
 
 
-from pulpcore.app.models.fields import EncryptedTextField
+from pulpcore.app.models.fields import EncryptedJSONField, EncryptedTextField
 from pulpcore.app.models.analytics import system_id
 
 __all__ = [
@@ -90,6 +90,7 @@ __all__ = [
     "TaskSchedule",
     "Upload",
     "UploadChunk",
+    "EncryptedJSONField",
     "EncryptedTextField",
     "system_id",
     "VulnerabilityReport",
