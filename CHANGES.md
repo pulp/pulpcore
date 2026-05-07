@@ -8,6 +8,28 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.110.2 (2026-05-07) {: #3.110.2 }
+
+### REST API {: #3.110.2-rest-api }
+
+#### Bugfixes {: #3.110.2-rest-api-bugfix }
+
+- Fixed `add-signing-service` management command failing with "There are N keys matching the key id" for PGP keys that have subkeys.
+
+### Plugin API {: #3.110.2-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.110.2-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.110.2-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.110.1 (2026-05-05) {: #3.110.1 }
 
 ### REST API {: #3.110.1-rest-api }
