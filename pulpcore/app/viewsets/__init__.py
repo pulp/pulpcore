@@ -7,6 +7,7 @@ from .base import (
     LabelsMixin,
     NamedModelViewSet,
     RolesMixin,
+    DATETIME_FILTER_OPTIONS,
     NAME_FILTER_OPTIONS,
     NULLABLE_NUMERIC_FILTER_OPTIONS,
 )
