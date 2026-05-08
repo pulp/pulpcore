@@ -8,6 +8,28 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.110.2 (2026-05-07) {: #3.110.2 }
+
+### REST API {: #3.110.2-rest-api }
+
+#### Bugfixes {: #3.110.2-rest-api-bugfix }
+
+- Fixed `add-signing-service` management command failing with "There are N keys matching the key id" for PGP keys that have subkeys.
+
+### Plugin API {: #3.110.2-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.110.2-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.110.2-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.110.1 (2026-05-05) {: #3.110.1 }
 
 ### REST API {: #3.110.1-rest-api }
@@ -1519,6 +1541,26 @@ No significant changes.
 
 ---
 
+## 3.85.20 (2026-05-07) {: #3.85.20 }
+
+### REST API {: #3.85.20-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.85.20-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.85.20-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.20-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.85.19 (2026-05-05) {: #3.85.19 }
 
 ### REST API {: #3.85.19-rest-api }
@@ -2732,6 +2774,26 @@ No significant changes.
   [#6244](https://github.com/pulp/pulpcore/issues/6244)
 
 ### Pulp Cert Guard {: #3.74.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.73.34 (2026-05-07) {: #3.73.34 }
+
+### REST API {: #3.73.34-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.73.34-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.73.34-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.34-pulp-cert-guard }
 
 No significant changes.
 
@@ -4200,6 +4262,26 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.64.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.63.38 (2026-05-07) {: #3.63.38 }
+
+### REST API {: #3.63.38-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.63.38-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.38-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.38-pulp-cert-guard }
 
 No significant changes.
 
@@ -5911,6 +5993,26 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard
+
+No significant changes.
+
+---
+
+## 3.49.61 (2026-05-07) {: #3.49.61 }
+
+### REST API {: #3.49.61-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.49.61-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.61-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.61-pulp-cert-guard }
 
 No significant changes.
 
