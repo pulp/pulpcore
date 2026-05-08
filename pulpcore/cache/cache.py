@@ -217,6 +217,7 @@ class SyncContentCache(Cache):
             entry["type"] = "FileResponse"
         elif isinstance(response, ApiResponse):
             entry["data"] = response.data
+            entry["content_type"] = response.content_type
             entry["type"] = "APIResponse"
         elif isinstance(response, HttpResponse):
             entry["content"] = response.content.decode("utf-8")
