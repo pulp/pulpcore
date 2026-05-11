@@ -18,6 +18,8 @@ from pathlib import Path
 from cryptography.fernet import Fernet
 from django.core.exceptions import ImproperlyConfigured
 from dynaconf import DjangoDynaconf, Dynaconf, Validator
+from dynaconf.base import Settings
+from dynaconf.utils.functional import empty
 
 from pulpcore import constants
 
@@ -606,8 +608,15 @@ def otel_middleware_hook(settings):
 
 del preload_settings
 
+class PulpSettings(Settings):
+    def _ready(self):
+        self._store = self._store.to_dict()
+
+
 settings = DjangoDynaconf(
     __name__,
+    _wrapper_class=PulpSettings,
+    DYNABOXIFY=False,
     ENVVAR_PREFIX_FOR_DYNACONF="PULP",
     ENV_SWITCHER_FOR_DYNACONF="PULP_ENV",
     ENVVAR_FOR_DYNACONF="PULP_SETTINGS",
@@ -664,3 +673,5 @@ settings.set("V3_API_ROOT", api_root + "api/v3/")  # Not user configurable
 settings.set("V3_DOMAIN_API_ROOT", api_root + "<slug:pulp_domain>/api/v3/")
 settings.set("V3_API_ROOT_NO_FRONT_SLASH", settings.V3_API_ROOT.lstrip("/"))
 settings.set("V3_DOMAIN_API_ROOT_NO_FRONT_SLASH", settings.V3_DOMAIN_API_ROOT.lstrip("/"))
+
+settings._wrapped._ready()
