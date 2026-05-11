@@ -108,7 +108,9 @@ def test_sync_https_through_http_proxy_with_auth_but_auth_not_configured(
 
     error_desc = excinfo.value.task.error.get("description", "")
 
-    assert "[PLP0010]" in error_desc
+    assert (
+        "Proxy Authentication Required" in error_desc or "Proxy authentication failed" in error_desc
+    )
 
 
 @pytest.mark.parallel
