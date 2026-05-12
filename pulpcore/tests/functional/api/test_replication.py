@@ -176,6 +176,102 @@ def test_replication_idempotence(
 
 
 @pytest.mark.parallel
+def test_replication_remote_settings_propagation(
+    domain_factory,
+    bindings_cfg,
+    pulpcore_bindings,
+    file_bindings,
+    monitor_task,
+    monitor_task_group,
+    pulp_settings,
+    gen_object_with_cleanup,
+    file_distribution_factory,
+    file_publication_factory,
+    file_repository_factory,
+    tmp_path,
+    add_domain_objects_to_cleanup,
+):
+    """Test that network config fields on UpstreamPulp propagate to remotes created by replication."""
+    source_domain = domain_factory()
+    add_domain_objects_to_cleanup(source_domain)
+
+    repository = file_repository_factory(pulp_domain=source_domain.name)
+    file_path = tmp_path / "file.txt"
+    file_path.write_text("DEADBEEF")
+    monitor_task(
+        file_bindings.ContentFilesApi.create(
+            file=str(file_path),
+            relative_path="file.txt",
+            repository=repository.pulp_href,
+            pulp_domain=source_domain.name,
+        ).task
+    )
+    publication = file_publication_factory(
+        pulp_domain=source_domain.name, repository=repository.pulp_href
+    )
+    file_distribution_factory(pulp_domain=source_domain.name, publication=publication.pulp_href)
+
+    replica_domain = domain_factory()
+    add_domain_objects_to_cleanup(replica_domain)
+
+    upstream_pulp_body = {
+        "name": str(uuid.uuid4()),
+        "base_url": bindings_cfg.host,
+        "api_root": pulp_settings.API_ROOT,
+        "domain": source_domain.name,
+        "username": bindings_cfg.username,
+        "password": bindings_cfg.password,
+        "total_timeout": 600.0,
+        "connect_timeout": 30.0,
+        "sock_connect_timeout": 15.0,
+        "sock_read_timeout": 45.0,
+        "download_concurrency": 5,
+        "max_retries": 7,
+    }
+    upstream_pulp = gen_object_with_cleanup(
+        pulpcore_bindings.UpstreamPulpsApi, upstream_pulp_body, pulp_domain=replica_domain.name
+    )
+
+    response = pulpcore_bindings.UpstreamPulpsApi.replicate(upstream_pulp.pulp_href)
+    monitor_task_group(response.task_group)
+
+    result = file_bindings.RemotesFileApi.list(pulp_domain=replica_domain.name)
+    assert result.count == 1
+    remote = result.results[0]
+    assert remote.total_timeout == 600.0
+    assert remote.connect_timeout == 30.0
+    assert remote.sock_connect_timeout == 15.0
+    assert remote.sock_read_timeout == 45.0
+    assert remote.download_concurrency == 5
+    assert remote.max_retries == 7
+
+    # Update all settings and re-replicate to verify propagation on update
+    pulpcore_bindings.UpstreamPulpsApi.partial_update(
+        upstream_pulp.pulp_href,
+        {
+            "total_timeout": 300.0,
+            "connect_timeout": 10.0,
+            "sock_connect_timeout": 5.0,
+            "sock_read_timeout": 20.0,
+            "download_concurrency": 3,
+            "max_retries": 2,
+        },
+    )
+    response = pulpcore_bindings.UpstreamPulpsApi.replicate(upstream_pulp.pulp_href)
+    monitor_task_group(response.task_group)
+
+    result = file_bindings.RemotesFileApi.list(pulp_domain=replica_domain.name)
+    assert result.count == 1
+    remote = result.results[0]
+    assert remote.total_timeout == 300.0
+    assert remote.connect_timeout == 10.0
+    assert remote.sock_connect_timeout == 5.0
+    assert remote.sock_read_timeout == 20.0
+    assert remote.download_concurrency == 3
+    assert remote.max_retries == 2
+
+
+@pytest.mark.parallel
 def test_replication_with_repo_based_distribution(
     domain_factory,
     bindings_cfg,

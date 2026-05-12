@@ -69,6 +69,60 @@ class UpstreamPulpSerializer(ModelSerializer, HiddenFieldsMixin):
         trim_whitespace=False,
         style={"input_type": "password"},
     )
+    download_concurrency = serializers.IntegerField(
+        help_text=(
+            "Total number of simultaneous connections. If not set then the default "
+            "value will be used."
+        ),
+        allow_null=True,
+        required=False,
+        min_value=1,
+    )
+    max_retries = serializers.IntegerField(
+        help_text=(
+            "Maximum number of retry attempts after a download failure. If not set then the "
+            "default value (3) will be used."
+        ),
+        required=False,
+        allow_null=True,
+    )
+    total_timeout = serializers.FloatField(
+        allow_null=True,
+        required=False,
+        help_text=(
+            "aiohttp.ClientTimeout.total (q.v.) for download-connections. The default is null, "
+            "which will cause the default from the aiohttp library to be used."
+        ),
+        min_value=0.0,
+    )
+    connect_timeout = serializers.FloatField(
+        allow_null=True,
+        required=False,
+        help_text=(
+            "aiohttp.ClientTimeout.connect (q.v.) for download-connections. The default is null, "
+            "which will cause the default from the aiohttp library to be used."
+        ),
+        min_value=0.0,
+    )
+    sock_connect_timeout = serializers.FloatField(
+        allow_null=True,
+        required=False,
+        help_text=(
+            "aiohttp.ClientTimeout.sock_connect (q.v.) for download-connections. The default is "
+            "null, which will cause the default from the aiohttp library to be used."
+        ),
+        min_value=0.0,
+    )
+    sock_read_timeout = serializers.FloatField(
+        allow_null=True,
+        required=False,
+        help_text=(
+            "aiohttp.ClientTimeout.sock_read (q.v.) for download-connections. The default is "
+            "null, which will cause the default from the aiohttp library to be used."
+        ),
+        min_value=0.0,
+    )
+
     pulp_last_updated = serializers.DateTimeField(
         help_text="Timestamp of the most recent update of the remote.", read_only=True
     )
@@ -118,6 +172,12 @@ class UpstreamPulpSerializer(ModelSerializer, HiddenFieldsMixin):
             "tls_validation",
             "username",
             "password",
+            "download_concurrency",
+            "max_retries",
+            "total_timeout",
+            "connect_timeout",
+            "sock_connect_timeout",
+            "sock_read_timeout",
             "pulp_last_updated",
             "hidden_fields",
             "q_select",
