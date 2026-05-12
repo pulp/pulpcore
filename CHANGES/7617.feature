@@ -1,0 +1,1 @@
+Added support for passing ``q_select`` as a parameter to the replicate action, allowing users to selectively sync a subset of upstream distributions without modifying the stored upstream-pulp configuration.

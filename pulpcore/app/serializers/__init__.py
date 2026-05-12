@@ -125,7 +125,7 @@ from .user import (
     UserRoleSerializer,
     UserSerializer,
 )
-from .replica import UpstreamPulpSerializer
+from .replica import UpstreamPulpReplicateSerializer, UpstreamPulpSerializer
 from .vulnerability_report import VulnerabilityReportSerializer
 from .openpgp import (
     OpenPGPDistributionSerializer,
