@@ -223,3 +223,38 @@ def test_content_upload_overwrite_false_allows_non_conflicting(
     )
     repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
     assert repo.latest_version_href.endswith("/versions/2/")
+
+
+@pytest.mark.parallel
+def test_modify_overwrite_false_allows_readding_same_content(
+    file_bindings,
+    file_repo,
+    file_content_unit_with_name_factory,
+    monitor_task,
+):
+    """Re-adding the same content unit with overwrite=False is a no-op, not a conflict.
+
+    A content unit already present in the repository version shares its repo_key_fields with
+    itself, but since the pk is identical there is no overwrite. The check should not raise.
+    """
+    content_a = file_content_unit_with_name_factory(str(uuid.uuid4()))
+
+    # Seed the repo with content_a
+    monitor_task(
+        file_bindings.RepositoriesFileApi.modify(
+            file_repo.pulp_href,
+            {"add_content_units": [content_a.pulp_href]},
+        ).task
+    )
+    repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
+    assert repo.latest_version_href.endswith("/versions/1/")
+
+    # Re-add the same content unit with overwrite=False — should not raise; no new version
+    monitor_task(
+        file_bindings.RepositoriesFileApi.modify(
+            file_repo.pulp_href,
+            {"add_content_units": [content_a.pulp_href], "overwrite": False},
+        ).task
+    )
+    repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
+    assert repo.latest_version_href.endswith("/versions/1/")

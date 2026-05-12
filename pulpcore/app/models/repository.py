@@ -270,11 +270,11 @@ class Repository(MasterModel):
                 type_obj.objects.filter(pk__in=add_content_pks).values("pk", *repo_key_fields)
             ):
                 find_dup_qs = Q()
-                incoming_by_key = {}
+                incoming_by_key = defaultdict(list)
                 for content_dict in batch:
                     pk = content_dict.pop("pk")
                     key = tuple(content_dict[f] for f in repo_key_fields)
-                    incoming_by_key[key] = pk
+                    incoming_by_key[key].append(pk)
                     find_dup_qs |= Q(**content_dict)
 
                 existing_by_key = {
@@ -283,10 +283,14 @@ class Repository(MasterModel):
                     .filter(find_dup_qs)
                     .values("pk", *repo_key_fields)
                 }
+                # A match on the same pk is the same content unit being re-added, not a
+                # conflict. add_content() already deduplicates this case.
                 conflict_map = {
-                    incoming_by_key[key]: existing_by_key[key]
-                    for key in incoming_by_key
+                    pk: existing_by_key[key]
+                    for key, pks in incoming_by_key.items()
                     if key in existing_by_key
+                    for pk in pks
+                    if pk != existing_by_key[key]
                 }
                 if conflict_map:
                     pulp_type = type_obj.get_pulp_type()
