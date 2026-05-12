@@ -10,6 +10,7 @@ from contextlib import contextmanager
 from functools import partial
 from gettext import gettext as _
 
+import aiohttp
 from asgiref.sync import async_to_sync, sync_to_async
 from django.conf import settings
 from django.db import connection
@@ -81,14 +82,14 @@ def _execute_task(task):
         except Exception as e:
             exc_type, exc, tb = sys.exc_info()
             task_exc = exc
-            if not isinstance(e, (PulpException, APIException)):
+            if not isinstance(e, (PulpException, APIException, aiohttp.ClientError)):
                 if settings.REDACT_UNSAFE_EXCEPTIONS:
                     # Replace exception with generic error
                     task_exc = InternalErrorException()
                     tb = None
                 else:
                     deprecation_logger.warning(
-                        "Exception ({exc_type}: {exc}) will be sanitized in pulpcore 3.115".format(
+                        "Exception ({exc_type}: {exc}) will be sanitized in pulpcore 3.130".format(
                             exc_type=exc_type.__name__, exc=exc
                         )
                     )
@@ -118,14 +119,14 @@ async def _aexecute_task(task):
         except Exception as e:
             exc_type, exc, tb = sys.exc_info()
             task_exc = exc
-            if not isinstance(e, (PulpException, APIException)):
+            if not isinstance(e, (PulpException, APIException, aiohttp.ClientError)):
                 if settings.REDACT_UNSAFE_EXCEPTIONS:
                     # Replace exception with generic error
                     task_exc = InternalErrorException()
                     tb = None
                 else:
                     deprecation_logger.warning(
-                        "Exception ({exc_type}: {exc}) will be sanitized in pulpcore 3.115".format(
+                        "Exception ({exc_type}: {exc}) will be sanitized in pulpcore 3.130".format(
                             exc_type=exc_type.__name__, exc=exc
                         )
                     )
