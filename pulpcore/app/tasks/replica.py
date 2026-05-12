@@ -61,11 +61,17 @@ def replicate_distributions(server_pk):
         domain=server.domain,
     )
 
-    tls_settings = {
+    remote_settings = {
         "ca_cert": server.ca_cert,
         "tls_validation": server.tls_validation,
         "client_cert": server.client_cert,
         "client_key": server.client_key,
+        "download_concurrency": server.download_concurrency,
+        "max_retries": server.max_retries,
+        "total_timeout": server.total_timeout,
+        "connect_timeout": server.connect_timeout,
+        "sock_connect_timeout": server.sock_connect_timeout,
+        "sock_read_timeout": server.sock_read_timeout,
     }
 
     try:
@@ -79,7 +85,7 @@ def replicate_distributions(server_pk):
                         config.label, specifier=replicator_class.required_version
                     )
                     if ctx.has_plugin(req):
-                        replicator = replicator_class(ctx, task_group, tls_settings, server)
+                        replicator = replicator_class(ctx, task_group, remote_settings, server)
                         supported_replicators.append(replicator)
 
         distro_repo_pairs = []

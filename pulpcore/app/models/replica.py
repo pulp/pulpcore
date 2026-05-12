@@ -5,6 +5,7 @@ Plugin Writer's Guide:
 https://pulpproject.org/pulpcore/docs/dev/learn/plugin-concepts/
 """
 
+from django.core.validators import MinValueValidator
 from django.db import models
 
 from pulpcore.app.util import get_domain_pk
@@ -41,6 +42,23 @@ class UpstreamPulp(BaseModel, AutoAddObjPermsMixin):
 
     username = EncryptedTextField(null=True)
     password = EncryptedTextField(null=True)
+
+    download_concurrency = models.PositiveIntegerField(
+        null=True, validators=[MinValueValidator(1, "Download concurrency must be at least 1")]
+    )
+    max_retries = models.PositiveIntegerField(null=True)
+    total_timeout = models.FloatField(
+        null=True, validators=[MinValueValidator(0.0, "Timeout must be >= 0")]
+    )
+    connect_timeout = models.FloatField(
+        null=True, validators=[MinValueValidator(0.0, "Timeout must be >= 0")]
+    )
+    sock_connect_timeout = models.FloatField(
+        null=True, validators=[MinValueValidator(0.0, "Timeout must be >= 0")]
+    )
+    sock_read_timeout = models.FloatField(
+        null=True, validators=[MinValueValidator(0.0, "Timeout must be >= 0")]
+    )
 
     q_select = models.TextField(null=True)
     policy = models.TextField(choices=POLICY_CHOICES, default=ALL)
