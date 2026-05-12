@@ -28,7 +28,7 @@ def user_agent():
     return f"pulpcore/{pulp_version} ({python}, {system}) (pulp-glue {pulp_glue_version})"
 
 
-def replicate_distributions(server_pk):
+def replicate_distributions(server_pk, q_select=None):
     server = UpstreamPulp.objects.get(pk=server_pk)
 
     # Write out temporary files related to SSL
@@ -88,10 +88,11 @@ def replicate_distributions(server_pk):
                         replicator = replicator_class(ctx, task_group, remote_settings, server)
                         supported_replicators.append(replicator)
 
+        effective_q_select = q_select if q_select is not None else server.q_select
         distro_repo_pairs = []
         for replicator in supported_replicators:
             distro_names = []
-            distros = replicator.upstream_distributions(q=server.q_select)
+            distros = replicator.upstream_distributions(q=effective_q_select)
             for distro in distros:
                 # Create remote
                 remote = replicator.create_or_update_remote(upstream_distribution=distro)
@@ -117,7 +118,13 @@ def replicate_distributions(server_pk):
                 distro_names.append(distro["name"])
                 distro_repo_pairs.append((distro["name"], str(repository.pk)))
 
-            replicator.remove_missing(distro_names)
+            # When a per-request q_select override is used, this is a selective sync
+            # of a subset of distributions.  Skipping remove_missing avoids deleting
+            # distributions that simply weren't included in the filter — but it also
+            # means that distributions removed from upstream won't be cleaned up until
+            # a full (non-overridden) replication runs.
+            if q_select is None:
+                replicator.remove_missing(distro_names)
     except GluePulpException as e:
         raise ExternalServiceError(service_name=server.base_url, details=str(e))
 

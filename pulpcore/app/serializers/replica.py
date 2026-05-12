@@ -184,3 +184,22 @@ class UpstreamPulpSerializer(ModelSerializer, HiddenFieldsMixin):
             "last_replication",
             "policy",
         )
+
+
+class UpstreamPulpReplicateSerializer(serializers.Serializer):
+    q_select = serializers.CharField(
+        help_text=_(
+            "Filter distributions on the upstream Pulp using complex filtering. "
+            "When specified, overrides the stored q_select for this replication run only. "
+            'E.g. pulp_label_select="foo" OR pulp_label_select="key=val"',
+        ),
+        allow_null=True,
+        allow_blank=True,
+        required=False,
+    )
+
+    def validate_q_select(self, value):
+        from pulpcore.app.viewsets import DistributionFilter
+
+        DistributionFilter().filters["q"].field.clean(value)
+        return value

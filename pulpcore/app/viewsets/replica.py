@@ -8,7 +8,11 @@ from rest_framework.decorators import action
 
 from pulpcore.app.models import TaskGroup, UpstreamPulp
 from pulpcore.app.response import TaskGroupOperationResponse
-from pulpcore.app.serializers import TaskGroupOperationResponseSerializer, UpstreamPulpSerializer
+from pulpcore.app.serializers import (
+    TaskGroupOperationResponseSerializer,
+    UpstreamPulpReplicateSerializer,
+    UpstreamPulpSerializer,
+)
 from pulpcore.app.tasks import replicate_distributions
 from pulpcore.app.viewsets import NamedModelViewSet, RolesMixin
 from pulpcore.app.viewsets.base import DATETIME_FILTER_OPTIONS, NAME_FILTER_OPTIONS
@@ -118,24 +122,31 @@ class UpstreamPulpViewSet(
         summary="Replicate",
         description="Trigger an asynchronous repository replication task group. This API is "
         "provided as a tech preview.",
-        request=None,
+        request=UpstreamPulpReplicateSerializer,
         responses={202: TaskGroupOperationResponseSerializer},
     )
-    @action(detail=True, methods=["post"])
+    @action(detail=True, methods=["post"], serializer_class=UpstreamPulpReplicateSerializer)
     def replicate(self, request, pk):
         """
         Triggers an asynchronous repository replication operation.
         """
+        serializer = UpstreamPulpReplicateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
         server = UpstreamPulp.objects.get(pk=pk)
         task_group = TaskGroup.objects.create(description=f"Replication of {server.name}")
 
         exclusive_resources = [f"pdrn:{request.pulp_domain.pulp_id}:servers"]
 
+        task_kwargs = {"server_pk": pk}
+        if q_select := serializer.validated_data.get("q_select"):
+            task_kwargs["q_select"] = q_select
+
         dispatch(
             replicate_distributions,
             exclusive_resources=exclusive_resources,
             shared_resources=[server],
-            kwargs={"server_pk": pk},
+            kwargs=task_kwargs,
             task_group=task_group,
         )
 
