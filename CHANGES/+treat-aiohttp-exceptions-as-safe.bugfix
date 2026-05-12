@@ -1,0 +1,1 @@
+Treat aiohttp.ClientError exceptions as safe in the task runner to preserve download error details when REDACT_UNSAFE_EXCEPTIONS is enabled.
