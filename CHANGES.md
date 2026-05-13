@@ -8,6 +8,28 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.63.39 (2026-05-13) {: #3.63.39 }
+
+### REST API {: #3.63.39-rest-api }
+
+#### Bugfixes {: #3.63.39-rest-api-bugfix }
+
+- Fixed cache forgetting the Content-Type header of ApiResponses
+
+### Plugin API {: #3.63.39-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.39-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.39-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.63.38 (2026-05-07) {: #3.63.38 }
 
 ### REST API {: #3.63.38-rest-api }
