@@ -11,7 +11,7 @@ from pulp_glue.common.exceptions import PulpException as GluePulpException
 
 from pulpcore.app.apps import PulpAppConfig, pulp_plugin_configs
 from pulpcore.app.models import Distribution, Repository, Task, TaskGroup, UpstreamPulp
-from pulpcore.app.replica import ReplicaContext
+from pulpcore.app.replica import ReplicaContext, distros_lock_uri
 from pulpcore.constants import TASK_STATES
 from pulpcore.exceptions import ExternalServiceError
 from pulpcore.tasking.tasks import dispatch
@@ -118,7 +118,7 @@ def replicate_distributions(server_pk):
     dispatch(
         finalize_replication,
         task_group=task_group,
-        exclusive_resources=[server],
+        exclusive_resources=[server, distros_lock_uri(server.pulp_domain_id)],
         args=[server.pk, distro_repo_pairs],
     )
 
