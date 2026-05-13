@@ -8,6 +8,30 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.110.3 (2026-05-13) {: #3.110.3 }
+
+### REST API {: #3.110.3-rest-api }
+
+#### Bugfixes {: #3.110.3-rest-api-bugfix }
+
+- Added a distributions lock to `finalize_replication` to prevent concurrent finalize tasks from different upstream servers from racing on the same distribution objects.
+  [#7614](https://github.com/pulp/pulpcore/issues/7614)
+- Fixed cache forgetting the Content-Type header of ApiResponses
+
+### Plugin API {: #3.110.3-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.110.3-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.110.3-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.110.2 (2026-05-07) {: #3.110.2 }
 
 ### REST API {: #3.110.2-rest-api }
