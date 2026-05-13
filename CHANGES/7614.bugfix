@@ -1,0 +1,1 @@
+Added a distributions lock to `finalize_replication` to prevent concurrent finalize tasks from different upstream servers from racing on the same distribution objects.
