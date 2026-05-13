@@ -8,6 +8,28 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.105.7 (2026-05-13) {: #3.105.7 }
+
+### REST API {: #3.105.7-rest-api }
+
+#### Bugfixes {: #3.105.7-rest-api-bugfix }
+
+- Fixed cache forgetting the Content-Type header of ApiResponses
+
+### Plugin API {: #3.105.7-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.105.7-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.105.7-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.105.6 (2026-05-05) {: #3.105.6 }
 
 ### REST API {: #3.105.6-rest-api }
