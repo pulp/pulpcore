@@ -17,6 +17,10 @@ from pulpcore.tasking.tasks import dispatch
 _logger = logging.getLogger(__name__)
 
 
+def distros_lock_uri(domain_id):
+    return f"pdrn:{domain_id}:distributions"
+
+
 class ReplicaContext(PulpContext):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -62,7 +66,7 @@ class Replicator:
         self.tls_settings = remote_settings  # Deprecated alias
         self.server = server
         self.domain = get_domain()
-        self.distros_uris = [f"pdrn:{self.domain.pulp_id}:distributions"]
+        self.distros_uris = [distros_lock_uri(self.domain.pulp_id)]
 
     @staticmethod
     def needs_update(fields_dict, model_instance):
