@@ -8,6 +8,54 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.111.0 (2026-05-13) {: #3.111.0 }
+
+### REST API {: #3.111.0-rest-api }
+
+#### Features {: #3.111.0-rest-api-feature }
+
+- Added an `overwrite` boolean parameter to the repository content modify and content upload
+  endpoints. When set to `false`, the task will fail if the content being added would overwrite
+  existing content based on `repo_key_fields`. Defaults to `true`.
+  [#7550](https://github.com/pulp/pulpcore/issues/7550)
+- Add a configurable ResourceBudget for preventing over-subscription of the disk "properly". Adds a backpressure mechanism + flushing mechanism in order to ensure that batches get fully processed even if minsize hasn't yet been reached. Allows previous performance-reducing mitigations to be removed.
+  [#7559](https://github.com/pulp/pulpcore/issues/7559)
+- Add more PulpExceptions. Treat DRF APIExceptions as safe in the task runner.
+- Added network configuration fields (`total_timeout`, `connect_timeout`, `sock_connect_timeout`,
+  `sock_read_timeout`, `download_concurrency`, `max_retries`) to the Upstream Pulp model, allowing
+  these settings to be propagated to remotes created during replication.
+
+#### Bugfixes {: #3.111.0-rest-api-bugfix }
+
+- Added a distributions lock to `finalize_replication` to prevent concurrent finalize tasks from different upstream servers from racing on the same distribution objects.
+  [#7614](https://github.com/pulp/pulpcore/issues/7614)
+- Fixed `TypeError: 'str' object has no attribute 'tolower'` in `_ensure_bool` during incremental content exports. Changed `.tolower()` to `.lower()`.
+  [#7678](https://github.com/pulp/pulpcore/issues/7678)
+- Fixed `add-signing-service` management command failing with "There are N keys matching the key id" for PGP keys that have subkeys.
+- Fixed cache forgetting the Content-Type header of ApiResponses
+- Treat aiohttp.ClientError exceptions as safe in the task runner to preserve download error details when REDACT_UNSAFE_EXCEPTIONS is enabled.
+
+### Plugin API {: #3.111.0-plugin-api }
+
+#### Features {: #3.111.0-plugin-api-feature }
+
+- Exposed `EncryptedJSONField` via the plugin API.
+  [#7690](https://github.com/pulp/pulpcore/issues/7690)
+- Exported `DATETIME_FILTER_OPTIONS` from `pulpcore.plugin.viewsets`.
+- Renamed the `Replicator` constructor parameter and instance attribute from `tls_settings` to
+  `remote_settings` to reflect the expanded set of remote configuration fields propagated during
+  replication. The old `tls_settings` attribute is still available as a deprecated alias.
+
+### Pulp File {: #3.111.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.111.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.110.2 (2026-05-07) {: #3.110.2 }
 
 ### REST API {: #3.110.2-rest-api }
