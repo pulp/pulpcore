@@ -1,1 +1,0 @@
-Fixed cache forgetting the Content-Type header of ApiResponses
