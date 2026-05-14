@@ -9,6 +9,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 
+from pulpcore.app.viewsets.base import NAME_FILTER_OPTIONS
 from pulpcore.plugin.actions import ModifyRepositoryActionMixin
 from pulpcore.plugin.models import (
     AlternateContentSource,
@@ -66,7 +67,10 @@ class FileContentFilter(ContentFilter):
 
     class Meta:
         model = FileContent
-        fields = ["relative_path", "sha256"]
+        fields = {
+            "relative_path": NAME_FILTER_OPTIONS,
+            "digest": ["exact"],
+        }
 
 
 class FileContentViewSet(SingleArtifactContentUploadViewSet):
