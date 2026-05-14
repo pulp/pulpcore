@@ -35,6 +35,36 @@ def test_crud_content_unit(file_bindings, random_artifact, gen_object_with_clean
 
 
 @pytest.mark.parallel
+def test_relative_path_filter_options(file_bindings, random_artifact, gen_object_with_cleanup):
+    """Test that relative_path supports contains, startswith, and regex filters."""
+    path = f"packages/python/{uuid.uuid4()}/my-package-1.0.tar.gz"
+    content_unit = gen_object_with_cleanup(
+        file_bindings.ContentFilesApi,
+        artifact=random_artifact.pulp_href,
+        relative_path=path,
+    )
+
+    # contains
+    response = file_bindings.ContentFilesApi.list(relative_path__contains="my-package")
+    assert response.count >= 1
+    assert any(c.pulp_href == content_unit.pulp_href for c in response.results)
+
+    # startswith
+    response = file_bindings.ContentFilesApi.list(relative_path__startswith="packages/python/")
+    assert response.count >= 1
+    assert any(c.pulp_href == content_unit.pulp_href for c in response.results)
+
+    # regex
+    response = file_bindings.ContentFilesApi.list(relative_path__regex=r".*\.tar\.gz$")
+    assert response.count >= 1
+    assert any(c.pulp_href == content_unit.pulp_href for c in response.results)
+
+    # negative case — no match
+    response = file_bindings.ContentFilesApi.list(relative_path__startswith="nonexistent-prefix/")
+    assert not any(c.pulp_href == content_unit.pulp_href for c in response.results)
+
+
+@pytest.mark.parallel
 def test_same_sha256_same_relative_path_no_repo(file_bindings, random_artifact, monitor_task):
     artifact_attrs = {"artifact": random_artifact.pulp_href, "relative_path": str(uuid.uuid4())}
 
