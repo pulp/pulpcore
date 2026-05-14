@@ -35,7 +35,6 @@ class NoArtifactContentSerializer(base.ModelSerializer):
     )
     overwrite = serializers.BooleanField(
         required=False,
-        default=True,
         write_only=True,
         help_text=_(
             "When set to true, existing content in the repository with the same unique key "
