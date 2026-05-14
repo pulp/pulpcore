@@ -8,6 +8,30 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.111.1 (2026-05-14) {: #3.111.1 }
+
+### REST API {: #3.111.1-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.111.1-plugin-api }
+
+#### Bugfixes {: #3.111.1-plugin-api-bugfix }
+
+- Removed the `default=True` from the `overwrite` field on `NoArtifactContentSerializer` so it no
+  longer leaks into `validated_data`. This fixes plugins that splat content serializer data
+  (`**serializer.validated_data`).
+
+### Pulp File {: #3.111.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.111.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.111.0 (2026-05-13) {: #3.111.0 }
 
 ### REST API {: #3.111.0-rest-api }
