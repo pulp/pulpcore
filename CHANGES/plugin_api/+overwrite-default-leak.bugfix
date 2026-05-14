@@ -1,0 +1,3 @@
+Removed the `default=True` from the `overwrite` field on `NoArtifactContentSerializer` so it no
+longer leaks into `validated_data`. This fixes plugins that splat content serializer data
+(`**serializer.validated_data`).
