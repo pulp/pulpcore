@@ -38,6 +38,10 @@ class DomainMiddleware:
 
     def process_view(self, request, view_func, view_args, view_kwargs):
         """Remove the domain name if present, called right before view_func is called."""
+        view_class = getattr(view_func, "view_class", None) or getattr(view_func, "cls", None)
+        if view_class and getattr(view_class, "skip_domain_middleware", False):
+            view_kwargs.pop("pulp_domain", None)
+            return None
         domain_name = view_kwargs.pop("pulp_domain", "default")
         try:
             domain = Domain.objects.get(name=domain_name)
