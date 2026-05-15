@@ -145,6 +145,8 @@ class LivezView(APIView):
     # allow anyone to access the liveness api
     authentication_classes = []
     permission_classes = []
+    # Skip domain DB lookup so this probe stays independent of the database
+    skip_domain_middleware = True
 
     @extend_schema(
         summary="Inspect liveness of Pulp's REST API.",
