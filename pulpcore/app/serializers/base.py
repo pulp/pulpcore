@@ -306,7 +306,11 @@ def validate_unknown_fields(initial_data, defined_fields):
     The `csrfmiddlewaretoken` field is silently ignored.
     """
     ignored_fields = {"csrfmiddlewaretoken"}
-    unknown_fields = set(initial_data) - set(defined_fields) - ignored_fields
+    unknown_fields = (
+        {key.split(".", maxsplit=1)[0] for key in initial_data}
+        - set(defined_fields)
+        - ignored_fields
+    )
     if unknown_fields:
         unknown_fields = {field: _("Unexpected field") for field in unknown_fields}
         raise serializers.ValidationError(unknown_fields)
@@ -783,6 +787,7 @@ class RemoteNetworkConfigSerializer(serializers.Serializer):
         Check that proxy credentials are only provided completely and if a proxy is configured.
         Adapted to work for both ModelSerializers (Remotes) and standard Serializers (Uploads).
         """
+        data = super().validate(data)
         # Handle cases where we don't have an instance (e.g. Uploads)
         instance = getattr(self, "instance", None)
         partial = getattr(self, "partial", False)
