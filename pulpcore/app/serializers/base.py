@@ -1,4 +1,5 @@
 import functools
+import json
 import re
 import traceback
 from collections import namedtuple
@@ -80,7 +81,7 @@ class HrefPrnFieldMixin:
         return super().to_internal_value(data)
 
 
-class _MatchingRegexViewName(object):
+class _MatchingRegexViewName:
     """This is a helper class to help defining object matching rules for master-detail.
 
     If you can be specific, please specify the `view_name`, but if you cannot, this allows
@@ -781,6 +782,17 @@ class RemoteNetworkConfigSerializer(serializers.Serializer):
                 raise serializers.ValidationError(
                     "Invalid {} specified, error '{}'".format(which_cert, e.args)
                 )
+
+    def to_internal_value(self, data):
+        if isinstance(data, str):
+            try:
+                # Nested Serializers in from-urlencoded bodies are stringified as json by default.
+                data = json.loads(data)
+            except json.DecodeError:
+                raise serializers.ValidationError(
+                    "Invalid json data for (nested) downloader config."
+                )
+        return super().to_internal_value(data)
 
     def validate(self, data):
         """
