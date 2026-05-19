@@ -613,6 +613,13 @@ def resource_blocker(pulpcore_bindings, dispatch_task):
             args=(duration,),
             exclusive_resources=exclusive_resources,
         )
+        # Wait for the blocking task to start running so it holds the resource lock
+        for _ in range(100):
+            task = pulpcore_bindings.TasksApi.read(task_href)
+            if task.state == "running":
+                break
+            time.sleep(0.1)
+        assert task.state == "running", f"Blocker task never started: {task.state}"
         yield
         # Trying to cancel a finished task will return a 409 code.
         # We can ignore if that's the case, because all we want here is to cut time down.
