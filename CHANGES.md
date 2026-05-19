@@ -8,6 +8,28 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.111.2 (2026-05-19) {: #3.111.2 }
+
+### REST API {: #3.111.2-rest-api }
+
+#### Bugfixes {: #3.111.2-rest-api-bugfix }
+
+- Fixed a bug where immediate tasks could be executed even if they were blocked by other tasks using the same resources.
+
+### Plugin API {: #3.111.2-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.111.2-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.111.2-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.111.1 (2026-05-14) {: #3.111.1 }
 
 ### REST API {: #3.111.1-rest-api }
