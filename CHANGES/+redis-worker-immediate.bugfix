@@ -1,0 +1,1 @@
+Fixed a bug where immediate tasks could be executed even if they were blocked by other tasks using the same resources.
