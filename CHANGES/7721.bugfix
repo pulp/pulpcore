@@ -1,1 +1,0 @@
-Decoupled the `/livez` liveness probe from the database so it returns 200 even when the database is unavailable.
