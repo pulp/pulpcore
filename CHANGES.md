@@ -8,6 +8,37 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.112.0 (2026-05-19) {: #3.112.0 }
+
+### REST API {: #3.112.0-rest-api }
+
+#### Bugfixes {: #3.112.0-rest-api-bugfix }
+
+- Decoupled the `/livez` liveness probe from the database so it returns 200 even when the database is unavailable.
+  [#7721](https://github.com/pulp/pulpcore/issues/7721)
+- Fixed a bug where immediate tasks could be executed even if they were blocked by other tasks using the same resources.
+
+### Plugin API {: #3.112.0-plugin-api }
+
+#### Bugfixes {: #3.112.0-plugin-api-bugfix }
+
+- Removed the `default=True` from the `overwrite` field on `NoArtifactContentSerializer` so it no
+  longer leaks into `validated_data`. This fixes plugins that splat content serializer data
+  (`**serializer.validated_data`).
+
+### Pulp File {: #3.112.0-pulp-file }
+
+#### Features {: #3.112.0-pulp-file-feature }
+
+- Added `NAME_FILTER_OPTIONS` to the `relative_path` field in `FileContentFilter`, enabling contains, startswith, regex, and other lookup expressions.
+  [#7719](https://github.com/pulp/pulpcore/issues/7719)
+
+### Pulp Cert Guard {: #3.112.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.111.1 (2026-05-14) {: #3.111.1 }
 
 ### REST API {: #3.111.1-rest-api }
