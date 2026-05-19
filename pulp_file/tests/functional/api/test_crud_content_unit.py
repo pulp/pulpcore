@@ -266,7 +266,11 @@ def test_create_file_from_url(
 ):
     # Test create w/ url
     remote = file_remote_factory(manifest_path=basic_manifest_path)
-    body = {"file_url": remote.url, "relative_path": "PULP_MANIFEST"}
+    body = {
+        "file_url": remote.url,
+        "relative_path": "PULP_MANIFEST",
+        "downloader_config": {"total_timeout": 5},
+    }
     response = file_bindings.ContentFilesApi.create(**body)
     task = monitor_task(response.task)
     assert len(task.created_resources) == 1
