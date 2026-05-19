@@ -1,0 +1,1 @@
+Allow nested downloader_config to be passed json stringified.
