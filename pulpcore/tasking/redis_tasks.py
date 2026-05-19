@@ -13,7 +13,7 @@ from asgiref.sync import sync_to_async
 
 from pulpcore.app.models import AppStatus, Task, TaskGroup
 from pulpcore.app.redis_connection import get_redis_connection
-from pulpcore.constants import TASK_FINAL_STATES, TASK_STATES
+from pulpcore.constants import TASK_FINAL_STATES, TASK_INCOMPLETE_STATES, TASK_STATES
 from pulpcore.tasking.redis_locks import (
     acquire_locks,
     async_safe_release_task_locks,
@@ -198,20 +198,33 @@ async def aexecute_task(task):
             _logger.debug("Task %s releasing all locks in finally block (async)", task.pk)
 
 
-def are_resources_available(task: Task, app_lock) -> bool:
+def are_resources_available(task: Task, colliding_resources, app_lock) -> bool:
     """
     Atomically try to acquire task lock and resource locks for immediate task.
 
     Resource conflicts are handled by Redis lock acquisition - if another task
     holds conflicting resource locks, acquire_locks() will fail atomically.
 
+    If any earlier task exists that uses a conflicting resource lock then return False.
+    Otherwise, try to acquire the locks and return True if successful.
+
     Args:
         task: The task to acquire locks for.
+        colliding_resources: The list of resources that can't be taken by other tasks.
         app_lock: The current AppStatus instance.
 
     Returns:
         bool: True if all locks were acquired, False otherwise.
     """
+    prior_tasks = Task.objects.filter(
+        state__in=TASK_INCOMPLETE_STATES, pulp_created__lt=task.pulp_created
+    )
+    colliding_resources_taken = prior_tasks.filter(
+        reserved_resources_record__overlap=colliding_resources
+    ).exists()
+    if colliding_resources_taken:
+        return False
+
     redis_conn = get_redis_connection()
 
     # Extract resources from task
@@ -249,20 +262,33 @@ def are_resources_available(task: Task, app_lock) -> bool:
         return False
 
 
-async def async_are_resources_available(task: Task, app_lock) -> bool:
+async def async_are_resources_available(task: Task, colliding_resources, app_lock) -> bool:
     """
     Atomically try to acquire task lock and resource locks for immediate task (async version).
 
     Resource conflicts are handled by Redis lock acquisition - if another task
     holds conflicting resource locks, acquire_locks() will fail atomically.
 
+    If any earlier task exists that uses a conflicting resource lock then return False.
+    Otherwise, try to acquire the locks and return True if successful.
+
     Args:
         task: The task to acquire locks for.
+        colliding_resources: The list of resources that can't be taken by other tasks.
         app_lock: The current AppStatus instance.
 
     Returns:
         bool: True if all locks were acquired, False otherwise.
     """
+    prior_tasks = Task.objects.filter(
+        state__in=TASK_INCOMPLETE_STATES, pulp_created__lt=task.pulp_created
+    )
+    colliding_resources_taken = await prior_tasks.filter(
+        reserved_resources_record__overlap=colliding_resources
+    ).aexists()
+    if colliding_resources_taken:
+        return False
+
     redis_conn = get_redis_connection()
 
     # Extract resources from task
@@ -344,7 +370,7 @@ def dispatch(
     assert deferred or immediate, "A task must be at least `deferred` or `immediate`."
     function_name = get_function_name(func)
     versions = get_version(versions, function_name)
-    _, resources = get_resources(exclusive_resources, shared_resources, immediate)
+    colliding_resources, resources = get_resources(exclusive_resources, shared_resources, immediate)
     app_lock = None if not execute_now else AppStatus.objects.current()  # Lazy evaluation...
     task_payload = get_task_payload(
         function_name, task_group, args, kwargs, resources, versions, immediate, deferred, app_lock
@@ -353,7 +379,7 @@ def dispatch(
     if execute_now:
         # Try to atomically acquire task lock and resource locks
         # are_resources_available() now acquires ALL locks atomically
-        if are_resources_available(task, app_lock):
+        if are_resources_available(task, colliding_resources, app_lock):
             # All locks acquired successfully
             # Proceed with execution
             current_app = app_lock
@@ -396,7 +422,7 @@ async def adispatch(
     assert deferred or immediate, "A task must be at least `deferred` or `immediate`."
     function_name = get_function_name(func)
     versions = get_version(versions, function_name)
-    _, resources = get_resources(exclusive_resources, shared_resources, immediate)
+    colliding_resources, resources = get_resources(exclusive_resources, shared_resources, immediate)
     app_lock = None if not execute_now else AppStatus.objects.current()  # Lazy evaluation...
     task_payload = get_task_payload(
         function_name, task_group, args, kwargs, resources, versions, immediate, deferred, app_lock
@@ -405,7 +431,7 @@ async def adispatch(
     if execute_now:
         # Try to atomically acquire task lock and resource locks
         # async_are_resources_available() now acquires ALL locks atomically
-        if await async_are_resources_available(task, app_lock):
+        if await async_are_resources_available(task, colliding_resources, app_lock):
             # All locks acquired successfully
             # Proceed with execution
             current_app = app_lock
