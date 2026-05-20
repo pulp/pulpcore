@@ -1,6 +1,6 @@
 # ruff: noqa: F401
 # isort: skip_file
-from pulpcore.filters import BaseFilterSet
+from pulpcore.filters import BaseFilterSet, StableOrderingFilter
 
 # Allow plugin viewsets to return 202s
 from pulpcore.app.response import OperationPostponedResponse, TaskGroupOperationResponse
@@ -54,6 +54,7 @@ from .content import (
 
 __all__ = [
     "BaseFilterSet",
+    "StableOrderingFilter",
     "OperationPostponedResponse",
     "TaskGroupOperationResponse",
     "AlternateContentSourceViewSet",
