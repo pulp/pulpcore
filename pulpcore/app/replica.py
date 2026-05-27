@@ -187,13 +187,6 @@ class Replicator:
         }
 
     def create_or_update_distribution(self, repository, upstream_distribution):
-        """Create or update a local distribution to match the upstream distribution.
-
-        Returns the old name of the distribution if it was found by base_path instead of
-        by name (i.e. a rename occurred upstream). The caller must add this old name to
-        the distro_names list so that remove_missing does not race with the rename.
-        Returns None otherwise.
-        """
         distribution_data = self.distribution_extra_fields(repository, upstream_distribution)
         distribution_data["pulp_labels"] = self.labels(upstream_distribution)
         try:
@@ -201,7 +194,7 @@ class Replicator:
                 name=upstream_distribution["name"], pulp_domain=self.domain
             )
             if not self._is_managed(distro):
-                return None
+                return
             needs_update = self.needs_update(distribution_data, distro)
             if needs_update:
                 dispatch(
@@ -215,13 +208,15 @@ class Replicator:
                         "partial": True,
                     },
                 )
-            return None
+            return
         except self.distribution_model_cls.DoesNotExist:
             pass
 
         # Not found by name — check if a managed distribution with the same base_path
-        # already exists (e.g. the distribution was renamed upstream). If so, update it
-        # in-place including the name, preserving content continuity at that base_path.
+        # already exists (e.g. the distribution was renamed upstream). If so, rename it
+        # synchronously and then dispatch an update for the remaining fields (labels, etc.).
+        # The synchronous rename ensures remove_missing sees the new name in the DB and
+        # won't try to delete the distribution we're reusing.
         base_path = distribution_data.get("base_path")
         if base_path:
             try:
@@ -229,20 +224,26 @@ class Replicator:
                     base_path=base_path, pulp_domain=self.domain
                 )
                 if self._is_managed(distro):
-                    old_name = distro.name
-                    distribution_data["name"] = upstream_distribution["name"]
-                    dispatch(
-                        ageneral_update,
-                        task_group=self.task_group,
-                        shared_resources=[repository, self.server],
-                        exclusive_resources=self.distros_uris,
-                        args=(distro.pk, self.app_label, self.distribution_serializer_name),
-                        kwargs={
-                            "data": distribution_data,
-                            "partial": True,
-                        },
-                    )
-                    return old_name
+                    distro.name = upstream_distribution["name"]
+                    distro.save(update_fields=["name"])
+                    needs_update = self.needs_update(distribution_data, distro)
+                    if needs_update:
+                        dispatch(
+                            ageneral_update,
+                            task_group=self.task_group,
+                            shared_resources=[repository, self.server],
+                            exclusive_resources=self.distros_uris,
+                            args=(
+                                distro.pk,
+                                self.app_label,
+                                self.distribution_serializer_name,
+                            ),
+                            kwargs={
+                                "data": distribution_data,
+                                "partial": True,
+                            },
+                        )
+                    return
             except self.distribution_model_cls.DoesNotExist:
                 pass
 
@@ -256,7 +257,6 @@ class Replicator:
             args=(self.app_label, self.distribution_serializer_name),
             kwargs={"data": create_data},
         )
-        return None
 
     def sync_params(self, repository, remote):
         """This method returns a dict that will be passed as kwargs to the sync task."""
