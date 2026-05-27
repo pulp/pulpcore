@@ -847,9 +847,10 @@ def test_replication_base_path_conflict(
     tmp_path,
     add_domain_objects_to_cleanup,
 ):
-    """Test that replication succeeds when a stale distribution in the replica domain has a
-    base_path that conflicts with an upstream distribution. The stale distribution should be
-    removed before the new one is created."""
+    """Test that replication succeeds when a distribution in the replica domain has a
+    base_path that conflicts with an upstream distribution. The existing distribution
+    should be reused (updated in-place) rather than deleted and recreated, preserving
+    content continuity at that base_path."""
 
     source_domain = domain_factory()
     add_domain_objects_to_cleanup(source_domain)
@@ -878,6 +879,7 @@ def test_replication_base_path_conflict(
     )
 
     # Create the replica domain and a "blocker" distribution with the same base_path
+    # but a different name — simulating a rename or a locally-created distribution
     replica_domain = domain_factory()
     add_domain_objects_to_cleanup(replica_domain)
     blocker_distro = file_distribution_factory(
@@ -887,8 +889,8 @@ def test_replication_base_path_conflict(
     assert blocker_distro.base_path == conflicting_base_path
     assert blocker_distro.name != upstream_distro.name
 
-    # Create UpstreamPulp and run replication — should succeed because remove_missing
-    # deletes the blocker before the upstream distribution is created
+    # Create UpstreamPulp and run replication — should succeed because the existing
+    # distribution is found by base_path and updated in-place (renamed)
     upstream_pulp = gen_object_with_cleanup(
         pulpcore_bindings.UpstreamPulpsApi,
         {
@@ -908,10 +910,11 @@ def test_replication_base_path_conflict(
     for task in task_group.tasks:
         assert task.state == "completed"
 
-    # Verify the blocker was removed and the upstream distribution was created
+    # Verify the distribution was reused — same pulp_href, renamed to match upstream
     result = file_bindings.DistributionsFileApi.list(pulp_domain=replica_domain.name)
     assert result.count == 1
     replica_distro = result.results[0]
+    assert replica_distro.pulp_href == blocker_distro.pulp_href
     assert replica_distro.name == upstream_distro.name
     assert replica_distro.base_path == conflicting_base_path
     assert replica_distro.repository_version is not None
