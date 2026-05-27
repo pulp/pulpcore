@@ -1,0 +1,1 @@
+Enabled filesystem export of content synced with a streamed policy from a file:// remote, by reading the files from their local path instead of failing because no Artifact was downloaded.
