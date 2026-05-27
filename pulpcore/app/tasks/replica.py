@@ -117,8 +117,15 @@ def replicate_distributions(server_pk, q_select=None):
                 distro_repo_pairs.append((distro["name"], str(repository.pk)))
                 pending_distributions.append((repository, distro))
 
-            # Clean up stale distributions BEFORE creating new ones so that
-            # base_path conflicts from old distributions are resolved first.
+            # Get or create distributions BEFORE remove_missing. If a
+            # distribution was found by base_path rather than by name (upstream
+            # rename), add the old name to distro_names so that remove_missing
+            # does not delete the distribution we just dispatched a rename for.
+            for repository, distro in pending_distributions:
+                old_name = replicator.create_or_update_distribution(repository, distro)
+                if old_name:
+                    distro_names.append(old_name)
+
             # When a per-request q_select override is used, this is a selective sync
             # of a subset of distributions.  Skipping remove_missing avoids deleting
             # distributions that simply weren't included in the filter — but it also
@@ -126,10 +133,6 @@ def replicate_distributions(server_pk, q_select=None):
             # a full (non-overridden) replication runs.
             if q_select is None:
                 replicator.remove_missing(distro_names)
-
-            # Get or create distributions
-            for repository, distro in pending_distributions:
-                replicator.create_or_update_distribution(repository, distro)
     except GluePulpException as e:
         raise ExternalServiceError(service_name=server.base_url, details=str(e))
 
