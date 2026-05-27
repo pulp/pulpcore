@@ -38,8 +38,6 @@ class StatusView(APIView):
     Returns status information about the application
     """
 
-    # allow anyone to access the status api
-    authentication_classes = []
     permission_classes = []
 
     @extend_schema(
@@ -98,6 +96,9 @@ class StatusView(APIView):
             "content_settings": content_settings,
             "domain_enabled": settings.DOMAIN_ENABLED,
         }
+
+        if not request.user or not request.user.is_authenticated:
+            data.pop("versions")
 
         context = {"request": request}
         serializer = StatusSerializer(data, context=context)
