@@ -141,6 +141,51 @@ def test_create_exporter_export(create_exporter, create_exporter_export, publica
 
 
 @pytest.mark.parallel
+def test_export_streamed_file_url_content(
+    file_bindings,
+    file_repository_factory,
+    write_3_iso_file_fixture_data_factory,
+    file_fixtures_root,
+    gen_object_with_cleanup,
+    monitor_task,
+    create_exporter,
+    create_exporter_export,
+):
+    """Export a publication whose content was streamed from a file:// remote."""
+    # Freshly generated (random) content so its artifacts cannot already be in
+    # storage from another immediate sync -- otherwise QueryExistingArtifacts
+    # would attach them by digest and mask the bug.
+    manifest = write_3_iso_file_fixture_data_factory(str(uuid.uuid4()))
+    file_url = (file_fixtures_root / manifest.lstrip("/")).as_uri()
+
+    repo = file_repository_factory(autopublish=True)
+    remote = gen_object_with_cleanup(
+        file_bindings.RemotesFileApi,
+        {"name": str(uuid.uuid4()), "url": file_url, "policy": "streamed"},
+    )
+    repository_sync_data = RepositorySyncURL(remote=remote.pulp_href)
+    sync_response = file_bindings.RepositoriesFileApi.sync(repo.pulp_href, repository_sync_data)
+    monitor_task(sync_response.task)
+    repo = file_bindings.RepositoriesFileApi.read(repo.pulp_href)
+
+    # The precondition the export must handle: the 3 files are present, but none
+    # has a downloaded artifact. Asserting this keeps the test honest -- if the
+    # content were ever downloaded the export would succeed even unpatched.
+    content = file_bindings.ContentFilesApi.list(repository_version=repo.latest_version_href)
+    assert content.count == 3
+    assert all(unit.artifact is None for unit in content.results)
+
+    publication = file_bindings.PublicationsFileApi.list(repository=repo.pulp_href).results[0]
+
+    # Without the fix this raises: the export task fails with
+    # UnexportableArtifactException ("Cannot export artifacts that haven't been
+    # downloaded"). With the fix the file:// bytes are read from disk.
+    exporter, _ = create_exporter({"method": "write"})
+    export = create_exporter_export(exporter, publication)
+    assert export is not None
+
+
+@pytest.mark.parallel
 def test_list_exporter_exports(
     pulpcore_bindings,
     create_exporter,

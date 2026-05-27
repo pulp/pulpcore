@@ -2,10 +2,12 @@ import json
 import logging
 import os
 import os.path
+import shutil
 import tarfile
 from gettext import gettext as _
 from glob import glob
 from pathlib import Path
+from urllib.parse import unquote, urlparse
 
 from django.conf import settings
 
@@ -27,7 +29,7 @@ from pulpcore.app.models import (
     RepositoryVersion,
     Task,
 )
-from pulpcore.app.models.content import ContentArtifact
+from pulpcore.app.models.content import ContentArtifact, RemoteArtifact
 from pulpcore.app.serializers import PulpExportSerializer
 from pulpcore.app.util import Crc32Hasher, HashingFileWriter, compute_file_hash
 from pulpcore.constants import FS_EXPORT_METHODS
@@ -65,8 +67,91 @@ def _validate_fs_export(content_artifacts):
     Raises:
         RuntimeError: If Artifacts are not downloaded or when trying to link non-fs files
     """
-    if content_artifacts.filter(artifact=None).exists():
+    missing_ca_qs = content_artifacts.filter(artifact=None)
+    if not missing_ca_qs.exists():
+        return
+
+    # Allow streamed content whose remote URL is a local file:// path (e.g. an rsync'd
+    # local mirror). Those artifacts can be exported directly even though they were
+    # never downloaded into Pulp storage.
+    missing_pks = set(missing_ca_qs.values_list("pk", flat=True))
+
+    # Reject if any missing artifact has a non-file:// remote (truly needs downloading).
+    if (
+        RemoteArtifact.objects.filter(content_artifact__pk__in=missing_pks)
+        .exclude(url__startswith="file://")
+        .exists()
+    ):
         raise UnexportableArtifactException()
+
+    # Reject if any missing artifact has no remote at all (nothing to fall back to).
+    ca_pks_with_remote = set(
+        RemoteArtifact.objects.filter(content_artifact__pk__in=missing_pks).values_list(
+            "content_artifact_id", flat=True
+        )
+    )
+    if missing_pks - ca_pks_with_remote:
+        raise UnexportableArtifactException()
+
+
+def _local_path_from_file_url(url):
+    """Convert a file:// URL to an absolute local filesystem path."""
+    parsed = urlparse(url)
+    return os.path.abspath(os.path.join(parsed.netloc, unquote(parsed.path)))
+
+
+def _file_url_local_paths(content_artifacts):
+    """Map ContentArtifact pk -> local path for missing artifacts backed by file:// remotes.
+
+    Returns an empty dict when there is no such content. Lets streamed content whose
+    bytes live on the local filesystem be exported without a downloaded Artifact.
+    """
+    missing_ca_pks = set(content_artifacts.filter(artifact=None).values_list("pk", flat=True))
+    if not missing_ca_pks:
+        return {}
+
+    ca_pk_to_local_path = {}
+    for ra in RemoteArtifact.objects.filter(
+        content_artifact__pk__in=missing_ca_pks,
+        url__startswith="file://",
+    ).values("content_artifact_id", "url"):
+        ca_pk_to_local_path[ra["content_artifact_id"]] = _local_path_from_file_url(ra["url"])
+    return ca_pk_to_local_path
+
+
+def _export_local_to_file_system(
+    path, relative_paths_to_local_paths, method=FS_EXPORT_METHODS.WRITE
+):
+    """
+    Export artifacts backed by file:// remotes directly from their local path.
+
+    Used for streamed content that has no downloaded Artifact but whose bytes are
+    available locally. The base export directory must already exist (created by
+    _export_to_file_system).
+
+    Args:
+        path (str): The already-created export root directory.
+        relative_paths_to_local_paths: A dict with {relative_path: local_fs_path} mapping.
+        method: FS_EXPORT_METHODS constant (WRITE, SYMLINK, or HARDLINK).
+    """
+    for relative_path, src_path in relative_paths_to_local_paths.items():
+        dest = os.path.join(path, relative_path)
+        os.makedirs(os.path.split(dest)[0], exist_ok=True)
+
+        if method == FS_EXPORT_METHODS.SYMLINK:
+            os.path.lexists(dest) and os.unlink(dest)
+            os.symlink(src_path, dest)
+        elif method == FS_EXPORT_METHODS.HARDLINK:
+            os.path.lexists(dest) and os.unlink(dest)
+            try:
+                os.link(src_path, dest)
+            except OSError:
+                log.info(_("Hard link cannot be created, file will be copied."))
+                shutil.copy2(src_path, dest)
+        elif method == FS_EXPORT_METHODS.WRITE:
+            shutil.copy2(src_path, dest)
+        else:
+            raise RuntimeError(_("Unsupported export method '{}'.").format(method))
 
 
 def _export_to_file_system(path, relative_paths_to_artifacts, method=FS_EXPORT_METHODS.WRITE):
@@ -151,13 +236,19 @@ def _export_publication_to_file_system(
             )
         )
 
+    # Map ContentArtifact pk -> local path for any streamed file:// content, so it can
+    # be exported directly even though it has no downloaded Artifact.
+    ca_pk_to_local_path = _file_url_local_paths(content_artifacts)
+
     relative_path_to_artifacts = {}
+    relative_path_to_local_paths = {}
     if publication.pass_through:
-        relative_path_to_artifacts = {
-            ca.relative_path: ca.artifact
-            for ca in content_artifacts.select_related("artifact").iterator()
-            if (start_repo_version is None) or (ca.pk in difference_content_artifacts)
-        }
+        for ca in content_artifacts.select_related("artifact").iterator():
+            if (start_repo_version is None) or (ca.pk in difference_content_artifacts):
+                if ca.artifact:
+                    relative_path_to_artifacts[ca.relative_path] = ca.artifact
+                elif ca.pk in ca_pk_to_local_path:
+                    relative_path_to_local_paths[ca.relative_path] = ca_pk_to_local_path[ca.pk]
 
     publication_metadata_paths = set(
         publication.published_metadata.values_list("relative_path", flat=True)
@@ -165,15 +256,22 @@ def _export_publication_to_file_system(
     for pa in publication.published_artifact.select_related(
         "content_artifact", "content_artifact__artifact"
     ).iterator():
-        # Artifact isn't guaranteed to be present
-        if pa.content_artifact.artifact and (
+        if (
             start_repo_version is None
             or pa.relative_path in publication_metadata_paths
             or pa.content_artifact.pk in difference_content_artifacts
         ):
-            relative_path_to_artifacts[pa.relative_path] = pa.content_artifact.artifact
+            # Artifact isn't guaranteed to be present
+            if pa.content_artifact.artifact:
+                relative_path_to_artifacts[pa.relative_path] = pa.content_artifact.artifact
+            elif pa.content_artifact.pk in ca_pk_to_local_path:
+                relative_path_to_local_paths[pa.relative_path] = ca_pk_to_local_path[
+                    pa.content_artifact.pk
+                ]
 
     _export_to_file_system(path, relative_path_to_artifacts, method)
+    if relative_path_to_local_paths:
+        _export_local_to_file_system(path, relative_path_to_local_paths, method)
 
 
 def _export_location_is_clean(path):
@@ -286,12 +384,22 @@ def fs_repo_version_export(exporter_pk, repo_version_pk, start_repo_version_pk=N
             )
         )
 
+    # Map ContentArtifact pk -> local path for any streamed file:// content, so it can
+    # be exported directly even though it has no downloaded Artifact.
+    ca_pk_to_local_path = _file_url_local_paths(content_artifacts)
+
     relative_path_to_artifacts = {}
+    relative_path_to_local_paths = {}
     for ca in content_artifacts.select_related("artifact").iterator():
         if start_repo_version is None or ca.pk in difference_content_artifacts:
-            relative_path_to_artifacts[ca.relative_path] = ca.artifact
+            if ca.artifact:
+                relative_path_to_artifacts[ca.relative_path] = ca.artifact
+            elif ca.pk in ca_pk_to_local_path:
+                relative_path_to_local_paths[ca.relative_path] = ca_pk_to_local_path[ca.pk]
 
     _export_to_file_system(exporter.path, relative_path_to_artifacts, exporter.method)
+    if relative_path_to_local_paths:
+        _export_local_to_file_system(exporter.path, relative_path_to_local_paths, exporter.method)
 
 
 def _get_versions_to_export(the_exporter, the_export):
