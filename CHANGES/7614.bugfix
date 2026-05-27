@@ -1,0 +1,3 @@
+Replication now removes stale distributions before creating new ones, preventing
+base_path uniqueness conflicts that caused entire replications to fail. Improved
+error reporting in finalize_replication to include details about which subtasks failed.

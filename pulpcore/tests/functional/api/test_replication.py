@@ -831,6 +831,92 @@ def test_replicate_rbac(
     )
 
 
+@pytest.mark.parallel
+def test_replication_base_path_conflict(
+    domain_factory,
+    bindings_cfg,
+    pulpcore_bindings,
+    file_bindings,
+    monitor_task,
+    monitor_task_group,
+    pulp_settings,
+    gen_object_with_cleanup,
+    file_distribution_factory,
+    file_publication_factory,
+    file_repository_factory,
+    tmp_path,
+    add_domain_objects_to_cleanup,
+):
+    """Test that replication succeeds when a stale distribution in the replica domain has a
+    base_path that conflicts with an upstream distribution. The stale distribution should be
+    removed before the new one is created."""
+
+    source_domain = domain_factory()
+    add_domain_objects_to_cleanup(source_domain)
+
+    # Create content in the upstream domain
+    repository = file_repository_factory(pulp_domain=source_domain.name)
+    file_path = tmp_path / "file.txt"
+    file_path.write_text("DEADBEEF")
+    monitor_task(
+        file_bindings.ContentFilesApi.create(
+            file=str(file_path),
+            relative_path="file.txt",
+            repository=repository.pulp_href,
+            pulp_domain=source_domain.name,
+        ).task
+    )
+    publication = file_publication_factory(
+        pulp_domain=source_domain.name, repository=repository.pulp_href
+    )
+    # Create upstream distribution with a known base_path
+    conflicting_base_path = str(uuid.uuid4())
+    upstream_distro = file_distribution_factory(
+        pulp_domain=source_domain.name,
+        publication=publication.pulp_href,
+        base_path=conflicting_base_path,
+    )
+
+    # Create the replica domain and a "blocker" distribution with the same base_path
+    replica_domain = domain_factory()
+    add_domain_objects_to_cleanup(replica_domain)
+    blocker_distro = file_distribution_factory(
+        pulp_domain=replica_domain.name,
+        base_path=conflicting_base_path,
+    )
+    assert blocker_distro.base_path == conflicting_base_path
+    assert blocker_distro.name != upstream_distro.name
+
+    # Create UpstreamPulp and run replication — should succeed because remove_missing
+    # deletes the blocker before the upstream distribution is created
+    upstream_pulp = gen_object_with_cleanup(
+        pulpcore_bindings.UpstreamPulpsApi,
+        {
+            "name": str(uuid.uuid4()),
+            "base_url": bindings_cfg.host,
+            "api_root": pulp_settings.API_ROOT,
+            "domain": source_domain.name,
+            "username": bindings_cfg.username,
+            "password": bindings_cfg.password,
+        },
+        pulp_domain=replica_domain.name,
+    )
+    response = pulpcore_bindings.UpstreamPulpsApi.replicate(
+        upstream_pulp.pulp_href, pulpcore_bindings.module.UpstreamPulpReplicate()
+    )
+    task_group = monitor_task_group(response.task_group)
+    for task in task_group.tasks:
+        assert task.state == "completed"
+
+    # Verify the blocker was removed and the upstream distribution was created
+    result = file_bindings.DistributionsFileApi.list(pulp_domain=replica_domain.name)
+    assert result.count == 1
+    replica_distro = result.results[0]
+    assert replica_distro.name == upstream_distro.name
+    assert replica_distro.base_path == conflicting_base_path
+    assert replica_distro.repository_version is not None
+
+
 @pytest.fixture
 def populate_upstream(
     domain_factory,
