@@ -189,6 +189,38 @@ A sync will still be triggered if:
 - The Upstream Pulp configuration was modified after the last replication.
 - The upstream distribution's content has changed since the last replication.
 
+## Failure Behavior and Content Safety
+
+Replication is designed so that existing distributions continue serving content even when errors
+occur.
+
+### Atomic content updates
+
+Distributions are not updated to point to new repository versions until **all** sync subtasks have
+completed successfully. If any subtask fails, no distributions are updated — the local instance
+continues serving the content from the previous successful replication. A subsequent successful
+replication will apply all pending updates atomically.
+
+### Safe failure states
+
+A failed replication leaves the system in a consistent state:
+
+- **Existing distributions** continue serving the content they had before the failed replication
+  started. Their repository version references are never partially updated.
+- **New distributions** (for upstream distributions that did not previously exist locally) may be
+  created but will not serve any content until a subsequent successful replication sets their
+  repository version.
+- **Remotes and repositories** are created or updated independently of the distribution content
+  update, so they may reflect the latest upstream state even after a failed replication. This is
+  harmless — the next replication will pick up where it left off.
+
+### Upstream renames
+
+When a distribution is renamed upstream but keeps the same `base_path`, replication reuses the
+existing local distribution rather than deleting and recreating it. This preserves content
+continuity — the distribution continues serving content at its `base_path` throughout the
+replication process, even while the name is updated to match the upstream.
+
 ## Roles and Permissions
 
 Replication uses Pulp's RBAC system. The following built-in roles are available for Upstream Pulp
