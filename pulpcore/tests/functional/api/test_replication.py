@@ -920,6 +920,141 @@ def test_replication_base_path_conflict(
     assert replica_distro.repository_version is not None
 
 
+@pytest.mark.parallel
+def test_replication_partial_failure_recovery(
+    domain_factory,
+    bindings_cfg,
+    pulpcore_bindings,
+    file_bindings,
+    monitor_task,
+    monitor_task_group,
+    pulp_settings,
+    gen_object_with_cleanup,
+    file_distribution_factory,
+    file_publication_factory,
+    file_repository_factory,
+    tmp_path,
+    add_domain_objects_to_cleanup,
+):
+    """Test that after a partially failed replication (some syncs succeed, some fail),
+    a subsequent successful replication correctly updates all distributions to their
+    latest repository versions — including versions created by the failed run's
+    successful syncs."""
+
+    source_domain = domain_factory()
+    add_domain_objects_to_cleanup(source_domain)
+
+    # Distribution A: has valid content, will sync successfully
+    repo_a = file_repository_factory(pulp_domain=source_domain.name)
+    file_path_a = tmp_path / "file_a.txt"
+    file_path_a.write_text("content_a")
+    monitor_task(
+        file_bindings.ContentFilesApi.create(
+            file=str(file_path_a),
+            relative_path="file_a.txt",
+            repository=repo_a.pulp_href,
+            pulp_domain=source_domain.name,
+        ).task
+    )
+    pub_a = file_publication_factory(pulp_domain=source_domain.name, repository=repo_a.pulp_href)
+    distro_a = file_distribution_factory(
+        pulp_domain=source_domain.name, publication=pub_a.pulp_href
+    )
+
+    # Distribution B: points to a repository with no content or publication.
+    # The distribution has a base_url but serves no PULP_MANIFEST, so the
+    # file sync task will fail trying to download it.
+    repo_b = file_repository_factory(pulp_domain=source_domain.name)
+    distro_b = file_distribution_factory(
+        pulp_domain=source_domain.name, repository=repo_b.pulp_href
+    )
+
+    # Set up replica
+    replica_domain = domain_factory()
+    add_domain_objects_to_cleanup(replica_domain)
+    upstream_pulp = gen_object_with_cleanup(
+        pulpcore_bindings.UpstreamPulpsApi,
+        {
+            "name": str(uuid.uuid4()),
+            "base_url": bindings_cfg.host,
+            "api_root": pulp_settings.API_ROOT,
+            "domain": source_domain.name,
+            "username": bindings_cfg.username,
+            "password": bindings_cfg.password,
+        },
+        pulp_domain=replica_domain.name,
+    )
+
+    # First replication — should fail because sync for B fails (no content to serve)
+    response = pulpcore_bindings.UpstreamPulpsApi.replicate(
+        upstream_pulp.pulp_href, pulpcore_bindings.module.UpstreamPulpReplicate()
+    )
+    with pytest.raises(PulpTaskGroupError):
+        monitor_task_group(response.task_group)
+
+    # last_replication should NOT be updated after a failed run
+    upstream_pulp = pulpcore_bindings.UpstreamPulpsApi.read(upstream_pulp.pulp_href)
+    assert upstream_pulp.last_replication is None
+
+    # Verify that repo A's sync succeeded on the replica — it has a version with content
+    replica_repo_a = file_bindings.RepositoriesFileApi.list(
+        name=distro_a.name, pulp_domain=replica_domain.name
+    ).results[0]
+    version_from_failed_run = replica_repo_a.latest_version_href
+    assert version_from_failed_run is not None
+    version_detail = file_bindings.RepositoriesFileVersionsApi.read(version_from_failed_run)
+    assert version_detail.content_summary.present["file.file"]["count"] == 1
+
+    # But distribution A was NOT updated — finalize never ran
+    replica_distro_a = file_bindings.DistributionsFileApi.list(
+        name=distro_a.name, pulp_domain=replica_domain.name
+    ).results[0]
+    assert replica_distro_a.repository_version is None
+
+    # Fix upstream B: add content and a publication so the sync will succeed
+    file_path_b = tmp_path / "file_b.txt"
+    file_path_b.write_text("content_b")
+    monitor_task(
+        file_bindings.ContentFilesApi.create(
+            file=str(file_path_b),
+            relative_path="file_b.txt",
+            repository=repo_b.pulp_href,
+            pulp_domain=source_domain.name,
+        ).task
+    )
+    pub_b = file_publication_factory(pulp_domain=source_domain.name, repository=repo_b.pulp_href)
+    monitor_task(
+        file_bindings.DistributionsFileApi.partial_update(
+            distro_b.pulp_href, {"publication": pub_b.pulp_href}
+        ).task
+    )
+
+    # Second replication — should now succeed
+    response = pulpcore_bindings.UpstreamPulpsApi.replicate(
+        upstream_pulp.pulp_href, pulpcore_bindings.module.UpstreamPulpReplicate()
+    )
+    task_group = monitor_task_group(response.task_group)
+    for task in task_group.tasks:
+        assert task.state == "completed"
+
+    # Verify BOTH distributions now have repository_versions with correct content
+    for distro_name in (distro_a.name, distro_b.name):
+        replica_distro = file_bindings.DistributionsFileApi.list(
+            name=distro_name, pulp_domain=replica_domain.name
+        ).results[0]
+        assert replica_distro.repository_version is not None
+        version = file_bindings.RepositoriesFileVersionsApi.read(replica_distro.repository_version)
+        assert version.content_summary.present["file.file"]["count"] == 1
+
+    # Verify that repo A's latest version is still the one created during the failed run.
+    # The second run's sync found no content changes and didn't create a new version,
+    # so finalize picked up the version from the first (failed) run's successful sync.
+    replica_repo_a = file_bindings.RepositoriesFileApi.list(
+        name=distro_a.name, pulp_domain=replica_domain.name
+    ).results[0]
+    assert replica_repo_a.latest_version_href == version_from_failed_run
+
+
 @pytest.fixture
 def populate_upstream(
     domain_factory,
