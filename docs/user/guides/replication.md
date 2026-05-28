@@ -113,6 +113,41 @@ To clear the filter and replicate all distributions again:
 pulp upstream-pulp update --upstream-pulp "my-upstream" --q-select ""
 ```
 
+### Per-Request Filtering
+
+You can also pass `q_select` directly to the replicate action as a one-time override without
+modifying the stored Upstream Pulp configuration. This is useful when you need to prioritize syncing
+a subset of distributions in time-sensitive situations.
+
+```bash
+# Sync only distributions labeled 'critical' for this run
+pulp upstream-pulp replicate \
+    --upstream-pulp "my-upstream" \
+    --q-select "pulp_label_select='critical'"
+```
+
+When a per-request `q_select` is provided:
+
+- It overrides the stored `q_select` for that replication run only. The stored configuration is not
+  changed.
+- Cleanup of missing distributions is **skipped**. Because the filter selects only a subset,
+  distributions not included in the filter are left untouched rather than being treated as removed.
+  This means distributions that have actually been deleted upstream will not be cleaned up until a
+  full (non-overridden) replication runs.
+
+You can run multiple selective replications to incrementally build up local state, then run a full
+replication to reconcile everything:
+
+```bash
+# Selectively sync high-priority repos first
+pulp upstream-pulp replicate \
+    --upstream-pulp "my-upstream" \
+    --q-select "pulp_label_select='priority=high'"
+
+# Then sync everything and clean up stale distributions
+pulp upstream-pulp replicate --upstream-pulp "my-upstream"
+```
+
 ## Replication Policies
 
 The `policy` field controls how replication handles local objects, particularly when upstream
