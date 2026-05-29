@@ -159,6 +159,16 @@ def test_label_select(file_repository_factory, file_bindings):
     assert len(results) == 1
 
     results = file_bindings.RepositoriesFileApi.list(
+        pulp_label_select=f"{key1}=production|staging"
+    ).results
+    assert len(results) == 2
+
+    results = file_bindings.RepositoriesFileApi.list(
+        pulp_label_select=f"{key1}=production|staging,{key2}=true"
+    ).results
+    assert len(results) == 1
+
+    results = file_bindings.RepositoriesFileApi.list(
         pulp_label_select=f"{key1}=production,{key2}!=false"
     ).results
     assert len(results) == 1

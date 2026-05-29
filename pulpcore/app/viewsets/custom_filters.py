@@ -283,7 +283,13 @@ class LabelFilter(Filter):
     """Filter to get resources that match a label filter string."""
 
     def __init__(self, *args, **kwargs):
-        kwargs.setdefault("help_text", _("Filter labels by search string"))
+        kwargs.setdefault(
+            "help_text",
+            _(
+                "Filter labels by search string. Separate terms with ',' for AND and "
+                "'|' for OR alternatives within a term."
+            ),
+        )
         if "label_field_name" in kwargs:
             self.label_field_name = kwargs.pop("label_field_name")
         else:
@@ -312,30 +318,51 @@ class LabelFilter(Filter):
             return qs
 
         for term in value.split(","):
-            match = re.match(rf"(!?{LABEL_KEY_CHARS}+)(=|!=|~)?(.*)?", term)
-            if not match:
-                raise DRFValidationError(_("Invalid search term: '{}'.").format(term))
-            key, op, val = match.groups()
-
-            if key.startswith("!") and op:
-                raise DRFValidationError(_("Cannot use an operator with '{}'.").format(key))
-
-            if op == "=":
-                qs = qs.filter(**{f"{field_name}__contains": {key: val}})
-            elif op == "!=":
-                qs = qs.filter(**{f"{field_name}__has_key": key}).exclude(
-                    **{f"{field_name}__contains": {key: val}}
-                )
-            elif op == "~":
-                qs = qs.filter(**{f"{field_name}__{key}__icontains": val})
-            else:
-                # 'foo', '!foo'
-                if key.startswith("!"):
-                    qs = qs.exclude(**{f"{field_name}__has_key": key[1:]})
-                else:
-                    qs = qs.filter(**{f"{field_name}__has_key": key})
+            qs = qs.filter(self._term_to_q(field_name, term))
 
         return qs
+
+    def _term_to_q(self, field_name, term):
+        """Convert a comma-separated label term into a query expression."""
+
+        expression = Q()
+        key = op = None
+        for part in term.split("|"):
+            parsed_key, parsed_op, val = self._parse_term_part(part, term)
+            if parsed_op is None and op:
+                # Allow the compact form "key=value1|value2" by treating
+                # operator-free alternatives as additional values.
+                parsed_key, parsed_op, val = key, op, parsed_key
+
+            key, op = parsed_key, parsed_op
+            expression |= self._part_to_q(field_name, parsed_key, parsed_op, val)
+        return expression
+
+    def _parse_term_part(self, part, term):
+        match = re.fullmatch(rf"(!?{LABEL_KEY_CHARS}+)(=|!=|~)?(.*)?", part)
+        if not match:
+            raise DRFValidationError(_("Invalid search term: '{}'.").format(term))
+
+        key, op, val = match.groups()
+        if key.startswith("!") and op:
+            raise DRFValidationError(_("Cannot use an operator with '{}'.").format(key))
+        return key, op, val
+
+    def _part_to_q(self, field_name, key, op, val):
+        if op == "=":
+            return Q(**{f"{field_name}__contains": {key: val}})
+        elif op == "!=":
+            return Q(**{f"{field_name}__has_key": key}) & ~Q(
+                **{f"{field_name}__contains": {key: val}}
+            )
+        elif op == "~":
+            return Q(**{f"{field_name}__{key}__icontains": val})
+        else:
+            # 'foo', '!foo'
+            if key.startswith("!"):
+                return ~Q(**{f"{field_name}__has_key": key[1:]})
+            else:
+                return Q(**{f"{field_name}__has_key": key})
 
 
 class WithContentFilter(Filter):
