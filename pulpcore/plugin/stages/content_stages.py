@@ -30,7 +30,37 @@ class QueryExistingContents(Stage):
 
     This stage drains all available items from `self._in_q` and batches everything into one large
     call to the db for efficiency.
+
+    When `repo_version` is provided, content from that version is cached in memory on first
+    access (per content type) so that repeat syncs can resolve most items without per-batch
+    database queries.
+
+    Plugins with expensive fields that are not needed during sync can pass
+    `deferred_fields` - a mapping of content model class to a list of field names
+    to exclude from queries via Django's `defer()`.
     """
+
+    def __init__(self, repo_version=None, deferred_fields=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._repo_version = repo_version
+        self._deferred_fields = deferred_fields or {}
+        self._content_cache = {}
+
+    def _ensure_type_cache(self, model_type):
+        """
+        Populate the cache for model_type from repo_version on first access.
+
+        Args:
+            model_type: The content model class to cache.
+        """
+        if model_type not in self._content_cache and self._repo_version is not None:
+            deferred = self._deferred_fields.get(model_type, ())
+            cache = {}
+            for content in self._repo_version.get_content(
+                model_type.objects.defer(*deferred)
+            ).iterator():
+                cache[content.natural_key()] = content
+            self._content_cache[model_type] = cache
 
     async def run(self):
         """
@@ -42,25 +72,46 @@ class QueryExistingContents(Stage):
         async for batch in self.batches():
             content_q_by_type = defaultdict(lambda: Q(pk__in=[]))
             d_content_by_nat_key = defaultdict(list)
+            cache_hits_by_type = defaultdict(set)
+
             for d_content in batch:
                 if d_content.content._state.adding:
                     model_type = type(d_content.content)
-                    unit_q = d_content.content.q()
-                    content_q_by_type[model_type] = content_q_by_type[model_type] | unit_q
-                    d_content_by_nat_key[d_content.content.natural_key()].append(d_content)
+                    nat_key = d_content.content.natural_key()
+                    await sync_to_async(self._ensure_type_cache)(model_type)
+                    cached = self._content_cache.get(model_type, {}).get(nat_key)
+                    if cached is not None:
+                        d_content.content = cached
+                        cache_hits_by_type[model_type].add(cached.pk)
+                    else:
+                        unit_q = d_content.content.q()
+                        content_q_by_type[model_type] = content_q_by_type[model_type] | unit_q
+                        d_content_by_nat_key[nat_key].append(d_content)
 
+            db_results_by_type = defaultdict(list)
             for model_type, content_q in content_q_by_type.items():
-                try:
-                    await sync_to_async(model_type.objects.filter(content_q).touch)()
-                except AttributeError:
-                    raise TypeError(
-                        "Plugins which declare custom ORM managers on their content classes "
-                        "should have those managers inherit from "
-                        "pulpcore.plugin.models.ContentManager."
-                    )
+                deferred = self._deferred_fields.get(model_type, ())
                 async for result in sync_to_async_iterable(
-                    model_type.objects.filter(content_q).iterator()
+                    model_type.objects.filter(content_q).defer(*deferred).iterator()
                 ):
+                    db_results_by_type[model_type].append(result)
+
+            all_types = set(cache_hits_by_type.keys()) | set(db_results_by_type.keys())
+            for model_type in all_types:
+                pks = cache_hits_by_type.get(model_type, set())
+                pks |= {r.pk for r in db_results_by_type.get(model_type, [])}
+                if pks:
+                    try:
+                        await sync_to_async(model_type.objects.filter(pk__in=pks).touch)()
+                    except AttributeError:
+                        raise TypeError(
+                            "Plugins which declare custom ORM managers on their content classes "
+                            "should have those managers inherit from "
+                            "pulpcore.plugin.models.ContentManager."
+                        )
+
+            for model_type, results in db_results_by_type.items():
+                for result in results:
                     for d_content in d_content_by_nat_key[result.natural_key()]:
                         d_content.content = result
 
