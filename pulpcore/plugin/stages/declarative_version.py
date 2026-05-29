@@ -21,7 +21,7 @@ from pulpcore.plugin.util import get_domain_pk
 
 
 class DeclarativeVersion:
-    def __init__(self, first_stage, repository, mirror=False, acs=False):
+    def __init__(self, first_stage, repository, mirror=False, acs=False, deferred_fields=None):
         """
         A pipeline that creates a new [pulpcore.plugin.models.RepositoryVersion][] from a
         stream of [pulpcore.plugin.stages.DeclarativeContent][] objects.
@@ -107,12 +107,16 @@ class DeclarativeVersion:
                 'False' is the default.
             acs (bool): When set to 'True' a new stage is added to look for
                 Alternate Content Sources.
+            deferred_fields (dict): A mapping of content model class to a list of
+                field names to exclude from queries via Django's `defer()`.
+                Passed through to [pulpcore.plugin.stages.QueryExistingContents][].
 
         """
         self.first_stage = first_stage
         self.repository = repository
         self.mirror = mirror
         self.acs = acs
+        self.deferred_fields = deferred_fields
 
     def pipeline_stages(self, new_version):
         """
@@ -142,7 +146,9 @@ class DeclarativeVersion:
             [
                 ArtifactDownloader(resource_budget=resource_budget),
                 ArtifactSaver(resource_budget=resource_budget),
-                QueryExistingContents(),
+                QueryExistingContents(
+                    repo_version=new_version, deferred_fields=self.deferred_fields
+                ),
                 ContentSaver(),
                 RemoteArtifactSaver(),
                 ResolveContentFutures(),
