@@ -117,6 +117,12 @@ Multiple terms can be combined with `,`:
 - `environment,reviewed=false` - returns resources with an environment label and where reviewed is
   false
 
+Multiple alternatives in a single term can be combined with `|`:
+
+- `build_id=123|456` - returns resources where build_id is 123 or 456
+- `environment=production|staging,reviewed=true` - returns resources where environment is
+  production or staging and reviewed is true
+
 To filter using the CLI use `--label-select`:
 
 ```bash
