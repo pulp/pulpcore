@@ -1,0 +1,1 @@
+Fixed `adjust_roles` to use `update_or_create` instead of `get_or_create` when populating locked roles, so that a pre-existing role with `locked=False` is updated rather than causing a duplicate key error.
