@@ -396,11 +396,9 @@ def adjust_roles(apps, role_prefix, desired_roles, verbosity=1):
                 _("Locked role definition for {name} is incompatible.").format(name=name)
             )
         permissions = [_get_permission(perm) for perm in permissions]
-        role, created = Role.objects.get_or_create(
-            name=name, locked=True, defaults={"name": name, "locked": True}
+        role, created = Role.objects.update_or_create(
+            name=name, defaults={"name": name, "locked": True, "description": description}
         )
-        role.description = description
-        role.save()
         role.permissions.set(permissions)
 
 
