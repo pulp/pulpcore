@@ -46,17 +46,7 @@ touch bindings_requirements.txt
 pushd ../pulp-openapi-generator
   # Use app_label to generate api.json and package to produce the proper package name.
 
-  # Workaround: Domains are not supported by the published bindings.
-  # Sadly: Different pulpcore-versions aren't either...
-  # * In the 'pulp' scenario we use the published/prebuilt bindings, so we can test it.
-  # * In other scenarios we generate new bindings from server spec, so we have a more
-  #   reliable client.
-  if [ "$TEST" = "pulp" ]
-  then
-    BUILT_CLIENTS=" core file certguard "
-  else
-    BUILT_CLIENTS=""
-  fi
+  BUILT_CLIENTS=""
 
   for ITEM in $(jq -r '.versions[] | tojson' <<<"${REPORTED_STATUS}")
   do
