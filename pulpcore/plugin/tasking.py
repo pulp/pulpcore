@@ -12,10 +12,12 @@ from pulpcore.app.tasks import (
 )
 from pulpcore.app.tasks.repository import aadd_and_remove, add_and_remove
 from pulpcore.app.tasks.vulnerability_report import check_content
-from pulpcore.tasking.tasks import adispatch, dispatch
+from pulpcore.tasking.tasks import adispatch, cancel_task, cancel_task_group, dispatch
 
 __all__ = [
     "ageneral_update",
+    "cancel_task",
+    "cancel_task_group",
     "check_content",
     "dispatch",
     "adispatch",
