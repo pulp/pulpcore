@@ -23,6 +23,7 @@ from .base import (
     HttpResponseError,
     SslConnectionError,
     RemoteConnectionError,
+    FeatureNotImplementedError,
 )
 from .validation import (
     ContentOverwriteError,
