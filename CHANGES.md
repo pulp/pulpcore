@@ -8,6 +8,29 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.63.40 (2026-06-03) {: #3.63.40 }
+
+### REST API {: #3.63.40-rest-api }
+
+#### Bugfixes {: #3.63.40-rest-api-bugfix }
+
+- Optimized `QueryExistingArtifacts` by reducing database queries.
+  [#7558](https://github.com/pulp/pulpcore/issues/7558)
+
+### Plugin API {: #3.63.40-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.40-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.40-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.63.39 (2026-05-13) {: #3.63.39 }
 
 ### REST API {: #3.63.39-rest-api }
