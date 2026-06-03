@@ -1,1 +1,0 @@
-Optimized `QueryExistingArtifacts` by reducing database queries.
