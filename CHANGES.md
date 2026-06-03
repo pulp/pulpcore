@@ -8,6 +8,33 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.112.1 (2026-06-03) {: #3.112.1 }
+
+### REST API {: #3.112.1-rest-api }
+
+#### Bugfixes {: #3.112.1-rest-api-bugfix }
+
+- Optimized `QueryExistingArtifacts` by reducing database queries.
+  [#7558](https://github.com/pulp/pulpcore/issues/7558)
+- Allow nested downloader_config to be passed json stringified.
+  [#7677](https://github.com/pulp/pulpcore/issues/7677)
+
+### Plugin API {: #3.112.1-plugin-api }
+
+#### Features {: #3.112.1-plugin-api-feature }
+
+- Exposed ``StableOrderingFilter`` in the plugin API so pulp plugins can import it from ``pulpcore.plugin``.
+
+### Pulp File {: #3.112.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.112.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.112.0 (2026-05-19) {: #3.112.0 }
 
 ### REST API {: #3.112.0-rest-api }
