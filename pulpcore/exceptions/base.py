@@ -430,3 +430,18 @@ class RemoteConnectionError(PulpException):
         return f"[{self.error_code}] " + _("Connection failed for {url}: {details}").format(
             url=self.url, details=self.details
         )
+
+
+class FeatureNotImplementedError(PulpException):
+    """
+    Raised when a requested feature is not yet implemented.
+    """
+
+    error_code = "PLP0028"
+
+    def __init__(self, message):
+        super().__init__()
+        self.message = message
+
+    def __str__(self):
+        return f"[{self.error_code}] {self.message}"
