@@ -8,6 +8,46 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.113.0 (2026-06-03) {: #3.113.0 }
+
+### REST API {: #3.113.0-rest-api }
+
+#### Features {: #3.113.0-rest-api-feature }
+
+- Added support for passing ``q_select`` as a parameter to the replicate action, allowing users to selectively sync a subset of upstream distributions without modifying the stored upstream-pulp configuration.
+  [#7617](https://github.com/pulp/pulpcore/issues/7617)
+
+#### Bugfixes {: #3.113.0-rest-api-bugfix }
+
+- Optimized `QueryExistingArtifacts` by reducing database queries.
+  [#7558](https://github.com/pulp/pulpcore/issues/7558)
+- Replication now reuses existing distributions matched by base_path when a name
+  lookup misses (e.g. upstream rename), preventing base_path uniqueness conflicts
+  and preserving content continuity. Stale distributions are also cleaned up
+  before new distributions are created as an additional safeguard. Improved error
+  reporting in finalize_replication to include details about which subtasks failed.
+  [#7614](https://github.com/pulp/pulpcore/issues/7614)
+- Allow nested downloader_config to be passed json stringified.
+  [#7677](https://github.com/pulp/pulpcore/issues/7677)
+- Fixed `adjust_roles` to use `update_or_create` instead of `get_or_create` when populating locked roles, so that a pre-existing role with `locked=False` is updated rather than causing a duplicate key error.
+
+### Plugin API {: #3.113.0-plugin-api }
+
+#### Features {: #3.113.0-plugin-api-feature }
+
+- Exposed ``StableOrderingFilter`` in the plugin API so pulp plugins can import it from ``pulpcore.plugin``.
+- Exposed ``cancel_task`` and ``cancel_task_group`` from ``pulpcore.plugin.tasking`` so plugins can import them.
+
+### Pulp File {: #3.113.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.113.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.112.0 (2026-05-19) {: #3.112.0 }
 
 ### REST API {: #3.112.0-rest-api }

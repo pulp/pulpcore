@@ -1,5 +1,0 @@
-Replication now reuses existing distributions matched by base_path when a name
-lookup misses (e.g. upstream rename), preventing base_path uniqueness conflicts
-and preserving content continuity. Stale distributions are also cleaned up
-before new distributions are created as an additional safeguard. Improved error
-reporting in finalize_replication to include details about which subtasks failed.
