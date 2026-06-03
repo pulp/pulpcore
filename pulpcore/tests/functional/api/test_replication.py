@@ -1011,7 +1011,9 @@ def test_replication_partial_failure_recovery(
     ).results[0]
     assert replica_distro_a.repository_version is None
 
-    # Fix upstream B: add content and a publication so the sync will succeed
+    # Fix upstream B: add content and create a publication. The distribution already
+    # points to repository=repo_b, so it will automatically serve the latest
+    # publication from the latest version — no distribution update needed.
     file_path_b = tmp_path / "file_b.txt"
     file_path_b.write_text("content_b")
     monitor_task(
@@ -1022,12 +1024,7 @@ def test_replication_partial_failure_recovery(
             pulp_domain=source_domain.name,
         ).task
     )
-    pub_b = file_publication_factory(pulp_domain=source_domain.name, repository=repo_b.pulp_href)
-    monitor_task(
-        file_bindings.DistributionsFileApi.partial_update(
-            distro_b.pulp_href, {"publication": pub_b.pulp_href}
-        ).task
-    )
+    file_publication_factory(pulp_domain=source_domain.name, repository=repo_b.pulp_href)
 
     # Second replication — should now succeed
     response = pulpcore_bindings.UpstreamPulpsApi.replicate(
