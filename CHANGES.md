@@ -8,6 +8,31 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.85.22 (2026-06-03) {: #3.85.22 }
+
+### REST API {: #3.85.22-rest-api }
+
+#### Bugfixes {: #3.85.22-rest-api-bugfix }
+
+- Optimized `QueryExistingArtifacts` by reducing database queries.
+  [#7558](https://github.com/pulp/pulpcore/issues/7558)
+
+### Plugin API {: #3.85.22-plugin-api }
+
+#### Features {: #3.85.22-plugin-api-feature }
+
+- Exposed ``StableOrderingFilter`` in the plugin API so pulp plugins can import it from ``pulpcore.plugin``.
+
+### Pulp File {: #3.85.22-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.22-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.85.21 (2026-05-13) {: #3.85.21 }
 
 ### REST API {: #3.85.21-rest-api }
