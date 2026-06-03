@@ -99,17 +99,15 @@ class QueryExistingArtifacts(Stage):
                     "pulp_domain": self.domain,
                 }
                 existing_artifacts_qs = Artifact.objects.filter(**query_params)
-                existing_artifacts = sync_to_async_iterable(existing_artifacts_qs)
                 await sync_to_async(existing_artifacts_qs.touch)()
+                existing_by_digest = {}
+                async for result in sync_to_async_iterable(existing_artifacts_qs):
+                    existing_by_digest[getattr(result, digest_type)] = result
                 for d_content in batch:
                     for d_artifact in d_content.d_artifacts:
                         artifact_digest = getattr(d_artifact.artifact, digest_type)
-                        if artifact_digest:
-                            async for result in existing_artifacts:
-                                result_digest = getattr(result, digest_type)
-                                if result_digest == artifact_digest:
-                                    d_artifact.artifact = result
-                                    break
+                        if artifact_digest and artifact_digest in existing_by_digest:
+                            d_artifact.artifact = existing_by_digest[artifact_digest]
             for d_content in batch:
                 await self.put(d_content)
 
