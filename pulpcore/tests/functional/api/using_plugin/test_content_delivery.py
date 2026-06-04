@@ -154,7 +154,7 @@ def test_remote_content_changed_with_on_demand(
     # THEN
     assert not output_file.exists()
     assert result.returncode == 18
-    assert b"* Closing connection 0" in result.stderr
+    assert b"closing connection" in result.stderr.lower()
     assert b"curl: (18) transfer closed with outstanding read data remaining" in result.stderr
 
     # WHEN (second request)
