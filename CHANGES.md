@@ -8,6 +8,73 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.113.0 (2026-06-03) {: #3.113.0 }
+
+### REST API {: #3.113.0-rest-api }
+
+#### Features {: #3.113.0-rest-api-feature }
+
+- Added support for passing ``q_select`` as a parameter to the replicate action, allowing users to selectively sync a subset of upstream distributions without modifying the stored upstream-pulp configuration.
+  [#7617](https://github.com/pulp/pulpcore/issues/7617)
+
+#### Bugfixes {: #3.113.0-rest-api-bugfix }
+
+- Optimized `QueryExistingArtifacts` by reducing database queries.
+  [#7558](https://github.com/pulp/pulpcore/issues/7558)
+- Replication now reuses existing distributions matched by base_path when a name
+  lookup misses (e.g. upstream rename), preventing base_path uniqueness conflicts
+  and preserving content continuity. Stale distributions are also cleaned up
+  before new distributions are created as an additional safeguard. Improved error
+  reporting in finalize_replication to include details about which subtasks failed.
+  [#7614](https://github.com/pulp/pulpcore/issues/7614)
+- Allow nested downloader_config to be passed json stringified.
+  [#7677](https://github.com/pulp/pulpcore/issues/7677)
+- Fixed `adjust_roles` to use `update_or_create` instead of `get_or_create` when populating locked roles, so that a pre-existing role with `locked=False` is updated rather than causing a duplicate key error.
+
+### Plugin API {: #3.113.0-plugin-api }
+
+#### Features {: #3.113.0-plugin-api-feature }
+
+- Exposed ``StableOrderingFilter`` in the plugin API so pulp plugins can import it from ``pulpcore.plugin``.
+- Exposed ``cancel_task`` and ``cancel_task_group`` from ``pulpcore.plugin.tasking`` so plugins can import them.
+
+### Pulp File {: #3.113.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.113.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.112.1 (2026-06-03) {: #3.112.1 }
+
+### REST API {: #3.112.1-rest-api }
+
+#### Bugfixes {: #3.112.1-rest-api-bugfix }
+
+- Optimized `QueryExistingArtifacts` by reducing database queries.
+  [#7558](https://github.com/pulp/pulpcore/issues/7558)
+- Allow nested downloader_config to be passed json stringified.
+  [#7677](https://github.com/pulp/pulpcore/issues/7677)
+
+### Plugin API {: #3.112.1-plugin-api }
+
+#### Features {: #3.112.1-plugin-api-feature }
+
+- Exposed ``StableOrderingFilter`` in the plugin API so pulp plugins can import it from ``pulpcore.plugin``.
+
+### Pulp File {: #3.112.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.112.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.112.0 (2026-05-19) {: #3.112.0 }
 
 ### REST API {: #3.112.0-rest-api }
@@ -550,6 +617,33 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.106.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.105.8 (2026-06-03) {: #3.105.8 }
+
+### REST API {: #3.105.8-rest-api }
+
+#### Bugfixes {: #3.105.8-rest-api-bugfix }
+
+- Optimized `QueryExistingArtifacts` by reducing database queries.
+  [#7558](https://github.com/pulp/pulpcore/issues/7558)
+- Allow nested downloader_config to be passed json stringified.
+  [#7677](https://github.com/pulp/pulpcore/issues/7677)
+
+### Plugin API {: #3.105.8-plugin-api }
+
+#### Features {: #3.105.8-plugin-api-feature }
+
+- Exposed ``StableOrderingFilter`` in the plugin API so pulp plugins can import it from ``pulpcore.plugin``.
+
+### Pulp File {: #3.105.8-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.105.8-pulp-cert-guard }
 
 No significant changes.
 
@@ -1707,6 +1801,31 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.86.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.85.22 (2026-06-03) {: #3.85.22 }
+
+### REST API {: #3.85.22-rest-api }
+
+#### Bugfixes {: #3.85.22-rest-api-bugfix }
+
+- Optimized `QueryExistingArtifacts` by reducing database queries.
+  [#7558](https://github.com/pulp/pulpcore/issues/7558)
+
+### Plugin API {: #3.85.22-plugin-api }
+
+#### Features {: #3.85.22-plugin-api-feature }
+
+- Exposed ``StableOrderingFilter`` in the plugin API so pulp plugins can import it from ``pulpcore.plugin``.
+
+### Pulp File {: #3.85.22-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.22-pulp-cert-guard }
 
 No significant changes.
 
@@ -2967,6 +3086,31 @@ No significant changes.
   [#6244](https://github.com/pulp/pulpcore/issues/6244)
 
 ### Pulp Cert Guard {: #3.74.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.73.36 (2026-06-03) {: #3.73.36 }
+
+### REST API {: #3.73.36-rest-api }
+
+#### Bugfixes {: #3.73.36-rest-api-bugfix }
+
+- Optimized `QueryExistingArtifacts` by reducing database queries.
+  [#7558](https://github.com/pulp/pulpcore/issues/7558)
+
+### Plugin API {: #3.73.36-plugin-api }
+
+#### Features {: #3.73.36-plugin-api-feature }
+
+- Exposed ``StableOrderingFilter`` in the plugin API so pulp plugins can import it from ``pulpcore.plugin``.
+
+### Pulp File {: #3.73.36-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.36-pulp-cert-guard }
 
 No significant changes.
 
@@ -4477,6 +4621,29 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.64.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.63.40 (2026-06-03) {: #3.63.40 }
+
+### REST API {: #3.63.40-rest-api }
+
+#### Bugfixes {: #3.63.40-rest-api-bugfix }
+
+- Optimized `QueryExistingArtifacts` by reducing database queries.
+  [#7558](https://github.com/pulp/pulpcore/issues/7558)
+
+### Plugin API {: #3.63.40-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.40-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.40-pulp-cert-guard }
 
 No significant changes.
 
@@ -6230,6 +6397,29 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard
+
+No significant changes.
+
+---
+
+## 3.49.62 (2026-06-03) {: #3.49.62 }
+
+### REST API {: #3.49.62-rest-api }
+
+#### Bugfixes {: #3.49.62-rest-api-bugfix }
+
+- Optimized `QueryExistingArtifacts` by reducing database queries.
+  [#7558](https://github.com/pulp/pulpcore/issues/7558)
+
+### Plugin API {: #3.49.62-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.62-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.62-pulp-cert-guard }
 
 No significant changes.
 
