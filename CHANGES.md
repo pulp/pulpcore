@@ -16,6 +16,7 @@
 
 - Added support for passing ``q_select`` as a parameter to the replicate action, allowing users to selectively sync a subset of upstream distributions without modifying the stored upstream-pulp configuration.
   [#7617](https://github.com/pulp/pulpcore/issues/7617)
+- Added the `FeatureNotImplementedError` exception to indicate that a requested feature is not yet implemented.
 
 #### Bugfixes {: #3.113.0-rest-api-bugfix }
 
