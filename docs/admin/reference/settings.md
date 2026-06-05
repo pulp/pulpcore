@@ -340,7 +340,8 @@ Defaults to 5.
 
 ### REDACT\_UNSAFE\_EXCEPTIONS
 
-When enabled, task errors that are not `PulpException` subclasses are sanitized to prevent sensitive data leakage, such as credentials, tokens, or signed URLs.
+When enabled, task errors that are not instances of `PulpException`, Django REST Framework's `APIException`, or
+aiohttp's `ClientError` are sanitized to prevent sensitive data leakage, such as credentials, tokens, or signed URLs.
 These exceptions appear as a generic error message in the task output, while full details remain logged for administrators.
 When disabled, all exception details are shown in task error messages with a deprecation warning.
 
