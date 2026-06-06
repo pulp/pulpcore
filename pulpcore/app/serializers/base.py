@@ -788,7 +788,7 @@ class RemoteNetworkConfigSerializer(serializers.Serializer):
             try:
                 # Nested Serializers in from-urlencoded bodies are stringified as json by default.
                 data = json.loads(data)
-            except json.DecodeError:
+            except json.JSONDecodeError:
                 raise serializers.ValidationError(
                     "Invalid json data for (nested) downloader config."
                 )
