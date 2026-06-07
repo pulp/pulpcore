@@ -161,7 +161,9 @@ class HttpDownloader(BaseDownloader):
             self._close_session_on_finalize = False
         else:
             timeout = aiohttp.ClientTimeout(total=None, sock_connect=600, sock_read=600)
-            conn = aiohttp.TCPConnector()
+            # ThreadedResolver uses getaddrinfo() which honors /etc/hosts and nsswitch.conf;
+            # the default AsyncResolver (c-ares) bypasses the system resolver entirely.
+            conn = aiohttp.TCPConnector(resolver=aiohttp.resolver.ThreadedResolver())
             self.session = aiohttp.ClientSession(
                 connector=conn, timeout=timeout, headers=headers, requote_redirect_url=False
             )

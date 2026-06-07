@@ -144,7 +144,13 @@ class DownloaderFactory:
         # I don't see why...
         # https://github.com/aio-libs/aiohttp/pull/3372
         return aiohttp.ClientSession(
-            connector=aiohttp.TCPConnector(loop=asyncio.get_event_loop(), **tcp_conn_opts),
+            # ThreadedResolver uses getaddrinfo() which honors /etc/hosts and nsswitch.conf;
+            # the default AsyncResolver (c-ares) bypasses the system resolver entirely.
+            connector=aiohttp.TCPConnector(
+                loop=asyncio.get_event_loop(),
+                resolver=aiohttp.resolver.ThreadedResolver(loop=asyncio.get_event_loop()),
+                **tcp_conn_opts,
+            ),
             timeout=timeout,
             headers=headers,
             requote_redirect_url=False,
