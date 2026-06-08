@@ -544,20 +544,28 @@ class Repository(MasterModel):
         #
         # [0] https://docs.djangoproject.com/en/4.2/ref/models/querysets/#delete
         with transaction.atomic():
-            repo_versions = RepositoryVersion.objects.filter(repository=self)
             repo_contents = RepositoryContent.objects.filter(repository=self)
-            publications = Publication.objects.filter(
-                repository_version__in=repo_versions.values_list("pk", flat=True)
-            )
-            published_artifacts = PublishedArtifact.objects.filter(
-                publication__in=publications.values_list("pk", flat=True)
+
+            # Materialize publication PKs to avoid nested IN subqueries that
+            # produce poor execution plans in PostgreSQL.
+            publication_pks = list(
+                Publication.objects.filter(
+                    repository_version__repository=self,
+                ).values_list("pk", flat=True)
             )
 
             # PublishedArtifact and RepositoryContent are the two most numerous object types
             # PublishedMetadata would be trickier to delete because it's a Content subclass
             # that is ignored by orphan cleanup, so to delete those in this way would require
             # manual intervention
-            published_artifacts._raw_delete(published_artifacts.db)
+            # Delete published artifacts in batches to limit per-statement WAL size.
+            batch_size = 500
+            for start in range(0, len(publication_pks), batch_size):
+                batch = publication_pks[start : start + batch_size]
+                PublishedArtifact.objects.filter(publication_id__in=batch)._raw_delete(
+                    PublishedArtifact.objects.db
+                )
+
             repo_contents._raw_delete(repo_contents.db)
 
             # Anything not deleted manually above will be caught up in Django cascade. Deleting
@@ -1362,6 +1370,22 @@ class RepositoryVersion(BaseModel):
                 base_paths = self.distribution_set.values_list("base_path", flat=True)
                 if base_paths:
                     Cache().delete(base_key=cache_key(base_paths))
+
+            from .publication import Publication, PublishedArtifact  # circular import avoidance
+
+            # Pre-delete PublishedArtifacts outside the select_for_update block to avoid
+            # holding RepositoryContent row locks during the slow bulk delete.
+            publication_pks = list(
+                Publication.objects.filter(
+                    repository_version=self,
+                ).values_list("pk", flat=True)
+            )
+            batch_size = 500
+            for start in range(0, len(publication_pks), batch_size):
+                batch = publication_pks[start : start + batch_size]
+                PublishedArtifact.objects.filter(publication_id__in=batch)._raw_delete(
+                    PublishedArtifact.objects.db
+                )
 
             # Handle the manipulation of the repository version content and its final deletion in
             # the same transaction.
