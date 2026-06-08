@@ -1,0 +1,1 @@
+Fixed delete timeouts when removing repositories or repository versions with large numbers of PublishedArtifacts by batching bulk deletes and avoiding nested subqueries that produce poor PostgreSQL execution plans.
