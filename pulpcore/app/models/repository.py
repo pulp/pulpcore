@@ -942,7 +942,7 @@ class RepositoryVersion(BaseModel):
     complete = models.BooleanField(db_index=True, default=False)
     base_version = models.ForeignKey("RepositoryVersion", null=True, on_delete=models.SET_NULL)
     info = models.JSONField(default=dict)
-    content_ids = ArrayField(models.UUIDField(), default=None, null=True)
+    content_ids = ArrayField(models.UUIDField(), default=list)
 
     class Meta:
         default_related_name = "versions"
@@ -961,14 +961,6 @@ class RepositoryVersion(BaseModel):
             repository_id=self.repository_id, version_added__number__lte=self.number
         ).exclude(version_removed__number__lte=self.number)
 
-    def _get_content_ids(self):
-        """
-        Returns the content ids for a repository version
-        """
-        if self.content_ids is not None:
-            return self.content_ids
-        return self._content_relationships().values_list("content_id", flat=True)
-
     @hook(BEFORE_CREATE)
     def set_content_ids(self):
         """
@@ -979,12 +971,7 @@ class RepositoryVersion(BaseModel):
         except self.DoesNotExist:
             pass
         else:
-            if previous.content_ids is not None:
-                self.content_ids = previous.content_ids
-        if self.content_ids is None:
-            self.content_ids = list(
-                self._content_relationships().values_list("content_id", flat=True)
-            )
+            self.content_ids = previous.content_ids
 
     def get_content(self, content_qs=None):
         """
@@ -1009,8 +996,8 @@ class RepositoryVersion(BaseModel):
         if content_qs is None:
             content_qs = Content.objects
 
-        content_ids = self._get_content_ids()
-        if isinstance(content_ids, list) and len(content_ids) >= 65535:
+        content_ids = self.content_ids
+        if len(content_ids) >= 65535:
             # Workaround for PostgreSQL's limit on the number of parameters in a query
             content_ids = (
                 RepositoryVersion.objects.filter(pk=self.pk)
@@ -1131,8 +1118,8 @@ class RepositoryVersion(BaseModel):
         if not base_version:
             return Content.objects.filter(version_memberships__version_added=self)
 
-        return Content.objects.filter(pk__in=self._get_content_ids()).exclude(
-            pk__in=base_version._get_content_ids()
+        return Content.objects.filter(pk__in=self.content_ids).exclude(
+            pk__in=base_version.content_ids
         )
 
     def removed(self, base_version=None):
@@ -1146,8 +1133,8 @@ class RepositoryVersion(BaseModel):
         if not base_version:
             return Content.objects.filter(version_memberships__version_removed=self)
 
-        return Content.objects.filter(pk__in=base_version._get_content_ids()).exclude(
-            pk__in=self._get_content_ids()
+        return Content.objects.filter(pk__in=base_version.content_ids).exclude(
+            pk__in=self.content_ids
         )
 
     def contains(self, content):
@@ -1157,9 +1144,7 @@ class RepositoryVersion(BaseModel):
         Returns:
             bool: True if the repository version contains the content, False otherwise
         """
-        if self.content_ids is not None:
-            return content.pk in self.content_ids
-        return self.content.filter(pk=content.pk).exists()
+        return content.pk in self.content_ids
 
     def add_content(self, content):
         """
@@ -1184,7 +1169,7 @@ class RepositoryVersion(BaseModel):
         )
 
         repo_content = []
-        to_add = set(content.values_list("pk", flat=True)) - set(self._get_content_ids())
+        to_add = set(content.values_list("pk", flat=True)) - set(self.content_ids)
         with transaction.atomic():
             if to_add:
                 self.content_ids += list(to_add)
@@ -1234,7 +1219,7 @@ class RepositoryVersion(BaseModel):
             .exclude(pulp_domain_id=get_domain_pk())
             .exists()
         )
-        content_ids = set(self._get_content_ids())
+        content_ids = set(self.content_ids)
         to_remove = set(content.values_list("pk", flat=True))
         with transaction.atomic():
             if to_remove:
