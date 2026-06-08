@@ -5,9 +5,8 @@ from pulpcore.app.response import OperationPostponedResponse
 from pulpcore.app.serializers import (
     AsyncOperationResponseSerializer,
     DataRepair7272Serializer,
-    DataRepair7465Serializer,
 )
-from pulpcore.app.tasks.datarepair import repair_7272, repair_7465
+from pulpcore.app.tasks.datarepair import repair_7272
 from pulpcore.tasking.tasks import dispatch
 
 
@@ -35,30 +34,5 @@ class DataRepair7272View(APIView):
 
         exclusive_resources = [f"pdrn:{request.pulp_domain.pulp_id}:datarepair-7272"]
         task = dispatch(repair_7272, exclusive_resources=exclusive_resources, args=[dry_run])
-
-        return OperationPostponedResponse(task, request)
-
-
-class DataRepair7465View(APIView):
-    @extend_schema(
-        description=(
-            "Trigger an asynchronous task that adds missing repository version content_ids "
-            "cache to all repository versions (Issue #7465)."
-        ),
-        summary="Add Repository Version Content IDs (Issue #7465)",
-        request=DataRepair7465Serializer,
-        responses={202: AsyncOperationResponseSerializer},
-    )
-    def post(self, request):
-        """
-        Add missing repository version content_ids cache to all repository versions (Issue #7465).
-        """
-        serializer = DataRepair7465Serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        dry_run = serializer.validated_data["dry_run"]
-
-        exclusive_resources = [f"pdrn:{request.pulp_domain.pulp_id}:datarepair-7465"]
-        task = dispatch(repair_7465, exclusive_resources=exclusive_resources, args=[dry_run])
 
         return OperationPostponedResponse(task, request)
