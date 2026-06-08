@@ -49,7 +49,6 @@ STATUS = {
         "database_connection",
         "online_workers",
         "storage",
-        "versions",
     ],
 }
 
@@ -65,14 +64,18 @@ def test_get_authenticated(pulpcore_bindings, pulp_settings):
 
 
 @pytest.mark.parallel
-def test_get_unauthenticated(pulpcore_bindings, anonymous_user, pulp_settings):
+def test_get_unauthenticated(pulpcore_bindings, anonymous_user):
     """GET the status path with no credentials.
 
-    Verify the response with :meth:`verify_get_response`.
+    Verify that version information is not disclosed to unauthenticated users.
     """
     with anonymous_user:
         response = pulpcore_bindings.StatusApi.status_read()
-    verify_get_response(response.to_dict(), STATUS, pulp_settings)
+    status = response.to_dict()
+    validate(status, STATUS)
+    assert "versions" not in status or status["versions"] is None
+    assert status["database_connection"]["connected"]
+    assert status["online_workers"] != []
 
 
 @pytest.mark.parallel

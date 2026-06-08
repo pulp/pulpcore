@@ -96,7 +96,9 @@ class StatusSerializer(serializers.Serializer):
     Serializer for the status information of the app
     """
 
-    versions = VersionSerializer(help_text=_("Version information of Pulp components"), many=True)
+    versions = VersionSerializer(
+        help_text=_("Version information of Pulp components"), many=True, required=False
+    )
 
     online_workers = AppStatusSerializer(
         help_text=_(
