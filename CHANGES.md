@@ -8,6 +8,36 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.114.0 (2026-06-09) {: #3.114.0 }
+
+### REST API {: #3.114.0-rest-api }
+
+#### Features {: #3.114.0-rest-api-feature }
+
+- Improved sync performance by caching content during re-syncs.
+
+#### Bugfixes {: #3.114.0-rest-api-bugfix }
+
+- Enabled filesystem export of content synced with a streamed policy from a file:// remote, by reading the files from their local path instead of failing because no Artifact was downloaded.
+  [#7746](https://github.com/pulp/pulpcore/issues/7746)
+- Respect the system /etc/hosts and nsswitch.conf configurations for sync configurations. We drop the `aiodns` resolver backend for `aiohttp` and use the default resolver.
+
+### Plugin API {: #3.114.0-plugin-api }
+
+#### Features {: #3.114.0-plugin-api-feature }
+
+- `DeclarativeVersion` now accepts `deferred_fields` to exclude fields not needed during sync, reducing memory usage and producing lighter queries.
+
+### Pulp File {: #3.114.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.114.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.113.0 (2026-06-03) {: #3.113.0 }
 
 ### REST API {: #3.113.0-rest-api }
