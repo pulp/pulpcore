@@ -8,6 +8,28 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.105.9 (2026-06-09) {: #3.105.9 }
+
+### REST API {: #3.105.9-rest-api }
+
+#### Bugfixes {: #3.105.9-rest-api-bugfix }
+
+- Fixed `adjust_roles` to use `update_or_create` instead of `get_or_create` when populating locked roles, so that a pre-existing role with `locked=False` is updated rather than causing a duplicate key error.
+
+### Plugin API {: #3.105.9-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.105.9-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.105.9-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.105.8 (2026-06-03) {: #3.105.8 }
 
 ### REST API {: #3.105.8-rest-api }
