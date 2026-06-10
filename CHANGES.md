@@ -8,6 +8,36 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.114.0 (2026-06-09) {: #3.114.0 }
+
+### REST API {: #3.114.0-rest-api }
+
+#### Features {: #3.114.0-rest-api-feature }
+
+- Improved sync performance by caching content during re-syncs.
+
+#### Bugfixes {: #3.114.0-rest-api-bugfix }
+
+- Enabled filesystem export of content synced with a streamed policy from a file:// remote, by reading the files from their local path instead of failing because no Artifact was downloaded.
+  [#7746](https://github.com/pulp/pulpcore/issues/7746)
+- Respect the system /etc/hosts and nsswitch.conf configurations for sync configurations. We drop the `aiodns` resolver backend for `aiohttp` and use the default resolver.
+
+### Plugin API {: #3.114.0-plugin-api }
+
+#### Features {: #3.114.0-plugin-api-feature }
+
+- `DeclarativeVersion` now accepts `deferred_fields` to exclude fields not needed during sync, reducing memory usage and producing lighter queries.
+
+### Pulp File {: #3.114.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.114.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.113.0 (2026-06-03) {: #3.113.0 }
 
 ### REST API {: #3.113.0-rest-api }
@@ -618,6 +648,28 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.106.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.105.9 (2026-06-09) {: #3.105.9 }
+
+### REST API {: #3.105.9-rest-api }
+
+#### Bugfixes {: #3.105.9-rest-api-bugfix }
+
+- Fixed `adjust_roles` to use `update_or_create` instead of `get_or_create` when populating locked roles, so that a pre-existing role with `locked=False` is updated rather than causing a duplicate key error.
+
+### Plugin API {: #3.105.9-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.105.9-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.105.9-pulp-cert-guard }
 
 No significant changes.
 
@@ -1802,6 +1854,28 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.86.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.85.23 (2026-06-09) {: #3.85.23 }
+
+### REST API {: #3.85.23-rest-api }
+
+#### Bugfixes {: #3.85.23-rest-api-bugfix }
+
+- Fixed `adjust_roles` to use `update_or_create` instead of `get_or_create` when populating locked roles, so that a pre-existing role with `locked=False` is updated rather than causing a duplicate key error.
+
+### Plugin API {: #3.85.23-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.85.23-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.23-pulp-cert-guard }
 
 No significant changes.
 
@@ -3087,6 +3161,28 @@ No significant changes.
   [#6244](https://github.com/pulp/pulpcore/issues/6244)
 
 ### Pulp Cert Guard {: #3.74.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.73.37 (2026-06-09) {: #3.73.37 }
+
+### REST API {: #3.73.37-rest-api }
+
+#### Bugfixes {: #3.73.37-rest-api-bugfix }
+
+- Fixed `adjust_roles` to use `update_or_create` instead of `get_or_create` when populating locked roles, so that a pre-existing role with `locked=False` is updated rather than causing a duplicate key error.
+
+### Plugin API {: #3.73.37-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.73.37-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.37-pulp-cert-guard }
 
 No significant changes.
 
@@ -6398,6 +6494,28 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard
+
+No significant changes.
+
+---
+
+## 3.49.63 (2026-06-09) {: #3.49.63 }
+
+### REST API {: #3.49.63-rest-api }
+
+#### Bugfixes {: #3.49.63-rest-api-bugfix }
+
+- Fixed `adjust_roles` to use `update_or_create` instead of `get_or_create` when populating locked roles, so that a pre-existing role with `locked=False` is updated rather than causing a duplicate key error.
+
+### Plugin API {: #3.49.63-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.63-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.63-pulp-cert-guard }
 
 No significant changes.
 
