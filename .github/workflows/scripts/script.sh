@@ -17,6 +17,7 @@ source .github/workflows/scripts/utils.sh
 
 export POST_SCRIPT=$PWD/.github/workflows/scripts/post_script.sh
 export FUNC_TEST_SCRIPT=$PWD/.github/workflows/scripts/func_test_script.sh
+export OPENAPI_PYTHON_IMAGE="docker.io/openapitools/openapi-generator-cli:v7.14.0"
 
 # Needed for starting the service
 # Gets set in .github/settings.yml, but doesn't seem to inherited by
@@ -53,7 +54,7 @@ pushd ../pulp-openapi-generator
   #   reliable client.
   if [ "$TEST" = "pulp" ]
   then
-    BUILT_CLIENTS=" core file certguard "
+    BUILT_CLIENTS=""
   else
     BUILT_CLIENTS=""
   fi
