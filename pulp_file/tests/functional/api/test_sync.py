@@ -6,7 +6,7 @@ from urllib.parse import urljoin
 
 import pytest
 
-from pulpcore.client.pulp_file import RepositorySyncURL
+from pulpcore.client.pulp_file import FileRepositorySyncURL
 from pulpcore.tests.functional.utils import PulpTaskError
 
 
@@ -29,7 +29,7 @@ def test_sync_file_protocol_handler(
     remote = gen_object_with_cleanup(file_bindings.RemotesFileApi, remote_kwargs)
     files = set(os.listdir(tmp_path / "file"))
 
-    body = RepositorySyncURL(remote=remote.pulp_href)
+    body = FileRepositorySyncURL(remote=remote.pulp_href)
     monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task)
 
     # test that all the files are still present
@@ -54,7 +54,7 @@ def test_mirrored_sync(
     """Assert that syncing the repository w/ mirror=True creates a publication."""
     remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="on_demand")
 
-    repository_sync_data = RepositorySyncURL(remote=remote.pulp_href, mirror=True)
+    repository_sync_data = FileRepositorySyncURL(remote=remote.pulp_href, mirror=True)
     sync_response = file_bindings.RepositoriesFileApi.sync(
         file_repo.pulp_href, repository_sync_data
     )
@@ -76,7 +76,7 @@ def test_invalid_url(file_bindings, file_repo, gen_object_with_cleanup, monitor_
     }
     remote = gen_object_with_cleanup(file_bindings.RemotesFileApi, remote_kwargs)
 
-    body = RepositorySyncURL(remote=remote.pulp_href)
+    body = FileRepositorySyncURL(remote=remote.pulp_href)
     with pytest.raises(PulpTaskError):
         monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task)
 
@@ -87,7 +87,7 @@ def test_invalid_file(
 ):
     """Sync a repository using an invalid file repository."""
     remote = file_remote_factory(manifest_path=invalid_manifest_path, policy="immediate")
-    body = RepositorySyncURL(remote=remote.pulp_href)
+    body = FileRepositorySyncURL(remote=remote.pulp_href)
     with pytest.raises(PulpTaskError):
         monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task)
 
@@ -103,7 +103,7 @@ def test_duplicate_file_sync(
     remote = file_remote_factory(manifest_path=duplicate_filename_paths[0], policy="on_demand")
     remote2 = file_remote_factory(manifest_path=duplicate_filename_paths[1], policy="on_demand")
 
-    body = RepositorySyncURL(remote=remote.pulp_href)
+    body = FileRepositorySyncURL(remote=remote.pulp_href)
     monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task)
     file_repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
 
@@ -112,7 +112,7 @@ def test_duplicate_file_sync(
     assert version.content_summary.added["file.file"]["count"] == 3
     assert file_repo.latest_version_href.endswith("/1/")
 
-    body = RepositorySyncURL(remote=remote2.pulp_href)
+    body = FileRepositorySyncURL(remote=remote2.pulp_href)
     monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task)
     file_repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
 
@@ -133,7 +133,7 @@ def test_filepath_includes_commas(
     """Sync a repository using a manifest file with a file whose relative_path includes commas"""
     remote = file_remote_factory(manifest_path=manifest_path_with_commas, policy="on_demand")
 
-    body = RepositorySyncURL(remote=remote.pulp_href)
+    body = FileRepositorySyncURL(remote=remote.pulp_href)
     monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task)
     file_repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
 

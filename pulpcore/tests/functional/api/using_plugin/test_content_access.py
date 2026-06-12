@@ -5,7 +5,7 @@ import uuid
 import pytest
 
 from pulpcore.client.pulp_file import (
-    RepositorySyncURL,
+    FileRepositorySyncURL,
 )
 from pulpcore.tests.functional.utils import (
     download_file,
@@ -32,7 +32,7 @@ def test_file_remote_on_demand(
     }
     remote = gen_object_with_cleanup(file_bindings.RemotesFileApi, kwargs)
     # Sync from the remote
-    body = RepositorySyncURL(remote=remote.pulp_href)
+    body = FileRepositorySyncURL(remote=remote.pulp_href)
     monitor_task(
         file_bindings.RepositoriesFileApi.sync(file_repo_with_auto_publish.pulp_href, body).task
     )

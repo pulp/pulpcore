@@ -3,7 +3,7 @@ import uuid
 import pytest
 
 from pulpcore.client.pulp_file import (
-    RepositorySyncURL,
+    FileRepositorySyncURL,
 )
 from pulpcore.client.pulp_file.exceptions import BadRequestException
 
@@ -88,7 +88,7 @@ IwtfRg==
 
 
 def _run_basic_sync_and_assert(file_bindings, remote, file_repo, monitor_task):
-    body = RepositorySyncURL(remote=remote.pulp_href)
+    body = FileRepositorySyncURL(remote=remote.pulp_href)
     monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task)
 
     # Check content is present, but no artifacts are there

@@ -6,7 +6,7 @@ from uuid import uuid4
 
 import pytest
 
-from pulpcore.client.pulp_file import RepositorySyncURL
+from pulpcore.client.pulp_file import FileRepositorySyncURL
 
 
 @pytest.mark.parallel
@@ -23,7 +23,7 @@ def test_repository_content_filters(
     repo = file_repository_factory()
     repo_manifest_path = write_3_iso_file_fixture_data_factory(str(uuid4()))
     remote = file_remote_factory(manifest_path=repo_manifest_path, policy="on_demand")
-    body = RepositorySyncURL(remote=remote.pulp_href)
+    body = FileRepositorySyncURL(remote=remote.pulp_href)
     task_response = file_bindings.RepositoriesFileApi.sync(repo.pulp_href, body).task
     version_href = monitor_task(task_response).created_resources[0]
     content = file_bindings.ContentFilesApi.list(repository_version_added=version_href).results[0]

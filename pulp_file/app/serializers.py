@@ -16,6 +16,7 @@ from pulpcore.plugin.serializers import (
     PublicationSerializer,
     RemoteSerializer,
     RepositorySerializer,
+    RepositorySyncURLSerializer,
     SingleArtifactContentUploadSerializer,
 )
 from pulpcore.plugin.util import get_domain_pk
@@ -139,9 +140,26 @@ class FileRepositorySerializer(RepositorySerializer):
         allow_null=True,
     )
 
+    last_sync_details = serializers.JSONField(
+        help_text=_("Details about the last sync of this repository."),
+        read_only=True,
+    )
+
     class Meta:
-        fields = RepositorySerializer.Meta.fields + ("autopublish", "manifest")
+        fields = RepositorySerializer.Meta.fields + ("autopublish", "manifest", "last_sync_details")
         model = FileRepository
+
+
+class FileRepositorySyncURLSerializer(RepositorySyncURLSerializer):
+    """
+    Serializer for File Repository Sync URL.
+    """
+
+    optimize = serializers.BooleanField(
+        help_text=_("Whether or not to optimize sync."),
+        required=False,
+        default=True,
+    )
 
 
 class FileRemoteSerializer(RemoteSerializer):

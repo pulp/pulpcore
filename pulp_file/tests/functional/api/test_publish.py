@@ -8,7 +8,7 @@ from aiohttp import BasicAuth
 
 from pulpcore.client.pulp_file import (
     FileFilePublication,
-    RepositorySyncURL,
+    FileRepositorySyncURL,
 )
 from pulpcore.client.pulp_file.exceptions import ApiException
 from pulpcore.tests.functional.utils import download_file
@@ -29,7 +29,7 @@ def test_crd_publications(
 
     # Sync from the remote
     initial_repo_version = file_repo.latest_version_href
-    body = RepositorySyncURL(remote=remote.pulp_href)
+    body = FileRepositorySyncURL(remote=remote.pulp_href)
     monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task)
     first_repo_version_href = file_bindings.RepositoriesFileApi.read(
         file_repo.pulp_href

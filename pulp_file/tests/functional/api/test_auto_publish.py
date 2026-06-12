@@ -3,7 +3,7 @@
 import pytest
 
 from pulpcore.client.pulp_file import (
-    RepositorySyncURL,
+    FileRepositorySyncURL,
 )
 from pulpcore.tests.functional.utils import get_files_in_manifest
 
@@ -48,7 +48,7 @@ def test_auto_publish_and_distribution(
     expected_files = get_files_in_manifest(remote.url)
 
     # Sync from the remote
-    body = RepositorySyncURL(remote=remote.pulp_href)
+    body = FileRepositorySyncURL(remote=remote.pulp_href)
     monitor_task(file_bindings.RepositoriesFileApi.sync(repo.pulp_href, body).task)
     repo = file_bindings.RepositoriesFileApi.read(repo.pulp_href)
 
@@ -73,7 +73,7 @@ def test_auto_publish_and_distribution(
     assert files_in_first_publication == expected_files
 
     # Assert that mirror=True is not allowed when autopublish=True
-    body = RepositorySyncURL(remote=remote.pulp_href, mirror=True)
+    body = FileRepositorySyncURL(remote=remote.pulp_href, mirror=True)
     with pytest.raises(file_bindings.ApiException) as exc:
         file_bindings.RepositoriesFileApi.sync(repo.pulp_href, body)
     assert exc.value.status == 400

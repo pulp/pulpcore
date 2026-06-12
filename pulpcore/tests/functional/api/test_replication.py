@@ -306,7 +306,7 @@ def test_replication_with_repo_based_distribution(
         pulp_domain=source_domain.name, manifest_path=basic_manifest_path, policy="immediate"
     )
     repo = file_repository_factory(pulp_domain=source_domain.name)
-    sync_data = file_bindings.module.RepositorySyncURL(remote=remote.pulp_href, mirror=True)
+    sync_data = file_bindings.module.FileRepositorySyncURL(remote=remote.pulp_href, mirror=True)
     monitor_task(file_bindings.RepositoriesFileApi.sync(repo.pulp_href, sync_data).task)
     _ = file_distribution_factory(pulp_domain=source_domain.name, repository=repo.pulp_href)
 
@@ -589,7 +589,7 @@ def test_replication_optimization(
     )
     upstream_repository = file_repository_factory(pulp_domain=source_domain.name)
 
-    repository_sync_data = file_bindings.module.RepositorySyncURL(
+    repository_sync_data = file_bindings.module.FileRepositorySyncURL(
         remote=upstream_remote.pulp_href, mirror=True
     )
     response = file_bindings.RepositoriesFileApi.sync(

@@ -17,7 +17,7 @@ def repository_with_corrupted_artifacts(
 ):
     # STEP 1: sync content from a remote source
     remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="immediate")
-    sync_data = file_bindings.RepositorySyncURL(remote=remote.pulp_href)
+    sync_data = file_bindings.FileRepositorySyncURL(remote=remote.pulp_href)
     monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, sync_data).task)
     repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
 

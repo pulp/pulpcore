@@ -10,7 +10,7 @@ import pytest
 from aiohttp.client_exceptions import ClientResponseError
 from bs4 import BeautifulSoup
 
-from pulpcore.client.pulp_file import FileFilePublication, RepositorySyncURL
+from pulpcore.client.pulp_file import FileFilePublication, FileRepositorySyncURL
 from pulpcore.tests.functional.utils import download_file, get_files_in_manifest
 
 OBJECT_STORAGES = (
@@ -67,7 +67,7 @@ def test_download_policy(
     expected_files = get_files_in_manifest(remote.url)
 
     # Sync from the remote and assert that a new repository version is created
-    body = RepositorySyncURL(remote=remote.pulp_href)
+    body = FileRepositorySyncURL(remote=remote.pulp_href)
     monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task)
     file_repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
     assert file_repo.latest_version_href.endswith("/versions/1/")

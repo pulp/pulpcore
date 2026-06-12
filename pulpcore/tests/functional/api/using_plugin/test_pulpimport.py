@@ -13,7 +13,7 @@ from pathlib import Path
 import pytest
 
 from pulpcore.app import settings
-from pulpcore.client.pulp_file import RepositorySyncURL
+from pulpcore.client.pulp_file import FileRepositorySyncURL
 from pulpcore.client.pulpcore.exceptions import ApiException
 
 NUM_REPOS = 2
@@ -44,7 +44,7 @@ def import_export_repositories(
         export_repo = file_repository_factory()
 
         remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="immediate")
-        repository_sync_data = RepositorySyncURL(remote=remote.pulp_href)
+        repository_sync_data = FileRepositorySyncURL(remote=remote.pulp_href)
         sync_response = file_bindings.RepositoriesFileApi.sync(
             export_repo.pulp_href, repository_sync_data
         )
@@ -256,7 +256,7 @@ def test_import_auto_repo_creation(
     export_repo = file_repository_factory()
 
     remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="immediate")
-    repository_sync_data = RepositorySyncURL(remote=remote.pulp_href)
+    repository_sync_data = FileRepositorySyncURL(remote=remote.pulp_href)
     sync_response = file_bindings.RepositoriesFileApi.sync(
         export_repo.pulp_href, repository_sync_data
     )
