@@ -17,4 +17,5 @@ include test_requirements.txt
 exclude releasing.md
 exclude AGENTS.md
 exclude CLAUDE.md
+exclude Makefile
 recursive-exclude pulpcore/tasking/task_trigger_demonstration *

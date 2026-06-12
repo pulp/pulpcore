@@ -54,7 +54,7 @@ dependencies = [
   "protobuf>=4.21.1,<7.0",
   "pulp-glue>=0.30.0,<0.40",
   "pygtrie>=2.5,<=2.5.0",
-  "psycopg[binary]>=3.1.8,<3.4",  # SemVer, not explicitely stated, but mentioned on multiple changes.
+  "psycopg[binary]>=3.3.4,<3.4",  # SemVer, not explicitely stated, but mentioned on multiple changes.
   "pyparsing>=3.1.0,<3.4",    # Looks like only bugfixes in z-Stream.
   "pysequoia>=0.1.33,<0.2",
   "PyYAML>=5.1.1,<6.1",  # Looks like only bugfixes in z-Stream.
