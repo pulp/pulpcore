@@ -34,7 +34,10 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        user = User.objects.get_or_create(username="admin", is_superuser=True, is_staff=True)[0]
+        user, _ = User.objects.update_or_create(
+            username="admin",
+            defaults={"is_superuser": True, "is_staff": True},
+        )
         if options["random"]:
             alphabet = string.ascii_letters + string.digits
             password = "".join(secrets.choice(alphabet) for i in range(20))
