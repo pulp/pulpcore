@@ -435,9 +435,9 @@ def pulp_labels_validator(value):
                     " spaces, hyphens, and dots are allowed."
                 ).format(k)
             )
-        if v is not None and re.search(r"[,()]", v):
+        if v is not None and re.search(r"[()]", v):
             raise serializers.ValidationError(
-                _("Key '{}' contains value with comma or parenthesis.").format(k)
+                _("Key '{}' contains value with parenthesis.").format(k)
             )
 
     return value
