@@ -311,11 +311,13 @@ class LabelFilter(Filter):
             # user didn't supply a value
             return qs
 
-        for term in value.split(","):
+        for term in re.split(r"(?<!\\),", value):
             match = re.match(rf"(!?{LABEL_KEY_CHARS}+)(=|!=|~)?(.*)?", term)
             if not match:
                 raise DRFValidationError(_("Invalid search term: '{}'.").format(term))
             key, op, val = match.groups()
+            if val is not None:
+                val = val.replace("\\,", ",")
 
             if key.startswith("!") and op:
                 raise DRFValidationError(_("Cannot use an operator with '{}'.").format(key))

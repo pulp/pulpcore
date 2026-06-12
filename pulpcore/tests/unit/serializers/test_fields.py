@@ -20,6 +20,8 @@ from pulpcore.app.serializers.fields import (
         pytest.param({"my key": "value"}, id="spaced-key"),
         pytest.param({"my-dotted.key": "value"}, id="dotted-dash-key"),
         pytest.param({"spaced key-with.mixed_chars": "value"}, id="all-key"),
+        pytest.param({"key": "val,ue"}, id="comma-value"),
+        pytest.param({"key": "a,b,c"}, id="multiple-commas-value"),
     ],
 )
 def test_pulp_labels_validator_valid(labels):
@@ -31,7 +33,6 @@ def test_pulp_labels_validator_valid(labels):
 @pytest.mark.parametrize(
     "labels",
     [
-        pytest.param({"key": "val,ue"}, id="comma-value"),
         pytest.param({"key": "val(ue"}, id="open-parenthesis-value"),
         pytest.param({"key": "val)ue"}, id="close-parenthesis-value"),
         pytest.param({"bad!key": "value"}, id="exclamation-key"),

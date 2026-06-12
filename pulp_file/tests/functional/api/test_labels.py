@@ -118,8 +118,56 @@ def test_invalid_labels(file_repository_factory):
     assert e_info.value.status == 400
 
     with pytest.raises(ApiException) as e_info:
-        file_repository_factory(name=str(uuid4()), pulp_labels={"arda": "eru,illuvata"})
+        file_repository_factory(name=str(uuid4()), pulp_labels={"arda": "eru(illuvata)"})
     assert e_info.value.status == 400
+
+
+@pytest.mark.parallel
+def test_labels_with_commas(file_repository_factory, file_bindings, monitor_task):
+    """Test that label values can contain commas."""
+    labels = {"signed_by": "release4,release2"}
+    file_repo = file_repository_factory(name=str(uuid4()), pulp_labels=labels)
+    assert file_repo.pulp_labels == labels
+
+    labels["signed_by"] = "a,b,c"
+    monitor_task(
+        file_bindings.RepositoriesFileApi.partial_update(
+            file_repo.pulp_href, {"pulp_labels": labels}
+        ).task
+    )
+    file_repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
+    assert file_repo.pulp_labels == labels
+
+
+@pytest.mark.parallel
+def test_label_select_with_commas(file_repository_factory, file_bindings):
+    """Test filtering labels whose values contain commas using backslash-escaped commas."""
+    key = str(uuid4()).replace("-", "")
+
+    file_repository_factory(name=str(uuid4()), pulp_labels={key: "release4,release2"})
+    file_repository_factory(name=str(uuid4()), pulp_labels={key: "release4"})
+
+    # Escaped comma in value matches the label with a comma
+    results = file_bindings.RepositoriesFileApi.list(
+        pulp_label_select=f"{key}=release4\\,release2"
+    ).results
+    assert len(results) == 1
+    assert results[0].pulp_labels[key] == "release4,release2"
+
+    # Unescaped comma is still treated as a filter term separator
+    results = file_bindings.RepositoriesFileApi.list(pulp_label_select=f"{key}=release4").results
+    assert len(results) == 1
+    assert results[0].pulp_labels[key] == "release4"
+
+    # Escaped comma value combined with a second filter term
+    key2 = str(uuid4()).replace("-", "")
+    file_repository_factory(name=str(uuid4()), pulp_labels={key: "release4,release2", key2: "true"})
+    results = file_bindings.RepositoriesFileApi.list(
+        pulp_label_select=f"{key}=release4\\,release2,{key2}=true"
+    ).results
+    assert len(results) == 1
+    assert results[0].pulp_labels[key] == "release4,release2"
+    assert results[0].pulp_labels[key2] == "true"
 
 
 # Label Filtering
