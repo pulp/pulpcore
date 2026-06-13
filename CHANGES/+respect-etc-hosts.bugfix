@@ -1,1 +1,0 @@
-Respect the system /etc/hosts and nsswitch.conf configurations for sync configurations. We drop the `aiodns` resolver backend for `aiohttp` and use the default resolver.

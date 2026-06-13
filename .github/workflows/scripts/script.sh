@@ -17,6 +17,7 @@ source .github/workflows/scripts/utils.sh
 
 export POST_SCRIPT=$PWD/.github/workflows/scripts/post_script.sh
 export FUNC_TEST_SCRIPT=$PWD/.github/workflows/scripts/func_test_script.sh
+# export OPENAPI_PYTHON_IMAGE="docker.io/openapitools/openapi-generator-cli:v7.14.0"
 
 # Needed for starting the service
 # Gets set in .github/settings.yml, but doesn't seem to inherited by
@@ -175,7 +176,7 @@ then
   pip install -r test_requirements.txt
   pytest -v tests -m "pulpcore or pulp_file or pulp_certguard"
 else
-  PULP_CA_BUNDLE="/usr/local/share/ca-certificates/pulp_webserver.crt" make livetest
+  PULP_CA_BUNDLE="/usr/local/share/ca-certificates/pulp_webserver.crt" make livetest PYTEST_MARK="live and (pulpcore or pulp_file or pulp_certguard)"
 fi
 popd
 
