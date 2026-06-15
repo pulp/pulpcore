@@ -1,7 +1,9 @@
+import asyncio
 import random
 import uuid
 
 import pytest
+from aiohttp import BasicAuth, ClientSession
 
 # Warning: Do not use HEX digits here!
 NAMES = (
@@ -94,12 +96,28 @@ class TestFilter:
         redi_results = pulpcore_bindings.ContentguardsContentRedirectApi.list(**{filter: []})
         assert redi_results.count == 0
 
-        # Test that filter fails when not a valid type
-        with pytest.raises(pulpcore_bindings.ApiException) as exc:
-            pulpcore_bindings.ContentguardsApi.list(**{filter: ["hello"]})
+        # Test that pulp_href filter fails when not a valid type
+        if filter == "pulp_href__in":
+            with pytest.raises(pulpcore_bindings.ApiException) as exc:
+                pulpcore_bindings.ContentguardsApi.list(**{filter: ["hello"]})
 
-        assert exc.value.status == 400
-        assert exception_message in exc.value.body
+            assert exc.value.status == 400
+            assert exception_message in exc.value.body
+
+    @pytest.mark.parallel
+    def test_pulp_id_filter_invalid_value(self, bindings_cfg, pulp_api_v3_url):
+        """Test that the server rejects invalid UUID for pulp_id__in."""
+
+        async def _do_request():
+            auth = BasicAuth(login=bindings_cfg.username, password=bindings_cfg.password)
+            url = f"{pulp_api_v3_url}contentguards/"
+            async with ClientSession(auth=auth) as session:
+                async with session.get(f"{url}?pulp_id__in=hello") as resp:
+                    return resp.status, await resp.text()
+
+        status, body = asyncio.run(_do_request())
+        assert status == 400
+        assert "Enter a valid UUID" in body
 
     @pytest.mark.parallel
     def test_pulp_type_filter(
