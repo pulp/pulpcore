@@ -89,6 +89,7 @@ class ReservedResourcesInFilter(BaseInFilter, ReservedResourcesFilter):
     """
 
 
+@extend_schema_field(OpenApiTypes.STR)
 class CreatedResourcesFilter(Filter):
     """
     Filter used to get tasks by created resources.
