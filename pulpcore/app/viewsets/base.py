@@ -27,6 +27,7 @@ from pulpcore.app.serializers import (
     SetLabelSerializer,
     UnsetLabelSerializer,
 )
+from pulpcore.app.settings import ENABLE_V4_API
 from pulpcore.app.util import get_viewset_for_model, resolve_prn
 from pulpcore.openapi import InheritSerializer, PulpAutoSchema
 from pulpcore.tasking.tasks import dispatch
@@ -202,6 +203,8 @@ class NamedModelViewSet(viewsets.GenericViewSet):
                     if hasattr(model, "pulp_domain"):
                         kwargs["pulp_domain__name"] = value
                 elif key == "api_root":
+                    continue
+                elif key == "version":  # Skip API-version for finding model-instance
                     continue
                 else:
                     kwargs[key] = value
@@ -421,7 +424,7 @@ class AsyncReservedObjectMixin:
     By default, lock the object instance we are working on.
     """
 
-    def async_reserved_resources(self, instance):
+    def async_reserved_resources(self, instance, **kwargs):
         """
         Return the resources to reserve for the task created by the Async...Mixins.
 
@@ -466,11 +469,13 @@ class AsyncCreateMixin:
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         app_label = self.queryset.model._meta.app_label
+        task_kwargs = {"data": request.data}
+        task_kwargs.update(kwargs)
         task = dispatch(
             tasks.base.general_create,
             exclusive_resources=self.async_reserved_resources(None),
             args=(app_label, serializer.__class__.__name__),
-            kwargs={"data": request.data},
+            kwargs=task_kwargs,
         )
         return OperationPostponedResponse(task, request)
 
@@ -496,11 +501,17 @@ class AsyncUpdateMixin(AsyncReservedObjectMixin):
             return Response(serializer.data)
         else:
             app_label = instance._meta.app_label
+            task_kwargs = {
+                "data": request.data,
+                "partial": partial,
+            }
+            if ENABLE_V4_API:
+                task_kwargs.update(kwargs)
             task = dispatch(
                 tasks.base.ageneral_update,
                 exclusive_resources=self.async_reserved_resources(instance),
                 args=(pk, app_label, serializer.__class__.__name__),
-                kwargs={"data": request.data, "partial": partial},
+                kwargs=task_kwargs,
                 immediate=self.ALLOW_NON_BLOCKING_UPDATE,
             )
             return OperationPostponedResponse(task, request)
@@ -553,7 +564,7 @@ class RolesMixin:
         },
     )
     @action(detail=True, methods=["get"])
-    def list_roles(self, request, pk):
+    def list_roles(self, request, pk, **kwargs):
         obj = self.get_object()
         obj_type = ContentType.objects.get_for_model(obj)
         user_qs = UserRole.objects.filter(
@@ -588,7 +599,7 @@ class RolesMixin:
         responses={201: NestedRoleSerializer},
     )
     @action(detail=True, methods=["post"], serializer_class=NestedRoleSerializer)
-    def add_role(self, request, pk):
+    def add_role(self, request, pk, **kwargs):
         obj = self.get_object()
         serializer = NestedRoleSerializer(
             data=request.data, context={"request": request, "content_object": obj, "assign": True}
@@ -625,7 +636,7 @@ class RolesMixin:
         responses={201: NestedRoleSerializer},
     )
     @action(detail=True, methods=["post"], serializer_class=NestedRoleSerializer)
-    def remove_role(self, request, pk):
+    def remove_role(self, request, pk, **kwargs):
         obj = self.get_object()
         serializer = NestedRoleSerializer(
             data=request.data, context={"request": request, "content_object": obj, "assign": False}
@@ -646,7 +657,7 @@ class RolesMixin:
         },
     )
     @action(detail=True, methods=["get"])
-    def my_permissions(self, request, pk=None):
+    def my_permissions(self, request, pk=None, **kwargs):
         obj = self.get_object()
         app_label = obj._meta.app_label
         permissions = [
@@ -661,7 +672,7 @@ class LabelsMixin:
         description="Set a single pulp_label on the object to a specific value or null.",
     )
     @action(detail=True, methods=["post"], serializer_class=SetLabelSerializer)
-    def set_label(self, request, pk=None):
+    def set_label(self, request, pk=None, **kwargs):
         obj = self.get_object()
         serializer = SetLabelSerializer(
             data=request.data, context={"request": request, "content_object": obj}
@@ -680,7 +691,7 @@ class LabelsMixin:
         description="Unset a single pulp_label on the object.",
     )
     @action(detail=True, methods=["post"], serializer_class=UnsetLabelSerializer)
-    def unset_label(self, request, pk=None):
+    def unset_label(self, request, pk=None, **kwargs):
         obj = self.get_object()
         serializer = UnsetLabelSerializer(
             data=request.data, context={"request": request, "content_object": obj}

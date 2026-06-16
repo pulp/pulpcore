@@ -178,8 +178,8 @@ TEMPLATES = [
     },
 ]
 
+ENABLE_V4_API = True
 WSGI_APPLICATION = "pulpcore.app.wsgi.application"
-
 REST_FRAMEWORK = {
     "URL_FIELD_NAME": "pulp_href",
     "DEFAULT_FILTER_BACKENDS": ("pulpcore.filters.PulpFilterBackend",),
@@ -604,6 +604,14 @@ def otel_middleware_hook(settings):
     return data
 
 
+def enable_v4_hook(settings):
+    data = {"dynaconf_merge": True}
+    if settings.ENABLE_V4_API:
+        data["REST_FRAMEWORK.ALLOWED_VERSIONS"] = ["v3", "v4"]
+        data["REST_FRAMEWORK.DEFAULT_VERSION"] = "v3"
+    return data
+
+
 del preload_settings
 
 settings = DjangoDynaconf(
@@ -628,7 +636,10 @@ settings = DjangoDynaconf(
         otel_metrics_dispatch_interval_validator,
         distributed_publication_retention_period_validator,
     ],
-    post_hooks=(otel_middleware_hook,),
+    post_hooks=(
+        otel_middleware_hook,
+        enable_v4_hook,
+    ),
 )
 
 _logger = getLogger(__name__)
@@ -653,13 +664,13 @@ FORBIDDEN_CHECKSUMS = set(constants.ALL_KNOWN_CONTENT_CHECKSUMS).difference(
     ALLOWED_CONTENT_CHECKSUMS
 )
 
+# protocol://host:port/{API_ROOT}{domain}/api/{version}/
+# All of the below are DEPRECATED, and should be replaced by calling
+# pulpcore.plugin.find_url.find_api_root() (q.v.)
 if settings.API_ROOT_REWRITE_HEADER:
     api_root = "/<path:api_root>/"
 else:
     api_root = settings.API_ROOT
-# protocol://host:port/{API_ROOT}{domain}/api/{version}/
-# All of the below are DEPRECATED, and should be replaced by calling
-# pulpcore.plugin.find_url.find_api_root() (q.v.)
 settings.set("V3_API_ROOT", api_root + "api/v3/")  # Not user configurable
 settings.set("V3_DOMAIN_API_ROOT", api_root + "<slug:pulp_domain>/api/v3/")
 settings.set("V3_API_ROOT_NO_FRONT_SLASH", settings.V3_API_ROOT.lstrip("/"))

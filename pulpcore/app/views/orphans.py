@@ -15,7 +15,7 @@ class OrphansView(APIView):
         summary="Delete orphans",
         responses={202: AsyncOperationResponseSerializer},
     )
-    def delete(self, request, format=None):
+    def delete(self, request, format=None, **kwargs):
         """
         Cleans up all the Content and Artifact orphans in the system
         """

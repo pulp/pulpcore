@@ -16,6 +16,7 @@ from pulpcore.app.serializers import (
     TaskGroupStatusCountField,
     fields,
 )
+from pulpcore.app.settings import REST_FRAMEWORK
 from pulpcore.app.util import get_prn, reverse
 from pulpcore.constants import TASK_STATES
 
@@ -118,6 +119,11 @@ class TaskSerializer(ModelSerializer):
         help_text=_("The result of this task."),
     )
 
+    version = serializers.CharField(
+        help_text=_("The API-version that was invoked when creating the task."),
+        default=REST_FRAMEWORK.get("DEFAULT_VERSION", "v3"),
+    )
+
     def get_worker(self, obj) -> t.Optional[OpenApiTypes.URI]:
         return None
 
@@ -149,6 +155,7 @@ class TaskSerializer(ModelSerializer):
             "created_resource_prns",
             "reserved_resources_record",
             "result",
+            "version",
         )
 
 
@@ -156,6 +163,7 @@ class MinimalTaskSerializer(TaskSerializer):
     class Meta:
         model = models.Task
         fields = ModelSerializer.Meta.fields + (
+            "version",
             "name",
             "state",
             "unblocked_at",

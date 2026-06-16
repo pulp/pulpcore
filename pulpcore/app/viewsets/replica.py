@@ -126,7 +126,7 @@ class UpstreamPulpViewSet(
         responses={202: TaskGroupOperationResponseSerializer},
     )
     @action(detail=True, methods=["post"], serializer_class=UpstreamPulpReplicateSerializer)
-    def replicate(self, request, pk):
+    def replicate(self, request, pk, **kwargs):
         """
         Triggers an asynchronous repository replication operation.
         """
@@ -137,11 +137,10 @@ class UpstreamPulpViewSet(
         task_group = TaskGroup.objects.create(description=f"Replication of {server.name}")
 
         exclusive_resources = [f"pdrn:{request.pulp_domain.pulp_id}:servers"]
-
-        task_kwargs = {"server_pk": pk}
+        task_kwargs = kwargs = {"server_pk": pk}
         if q_select := serializer.validated_data.get("q_select"):
             task_kwargs["q_select"] = q_select
-
+        task_kwargs.update(kwargs)
         dispatch(
             replicate_distributions,
             exclusive_resources=exclusive_resources,
