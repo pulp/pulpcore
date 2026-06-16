@@ -38,11 +38,11 @@ def find_api_root(version="v3", set_domain=True, domain=None, lstrip=False, rewr
     # Some current path-building wants to ignore DOMAIN - make that possible
     if set_domain and settings.DOMAIN_ENABLED:
         if domain:
-            path = f"{api_root}{domain}/api/{version}/"
+            path = rf"{api_root}{domain}/api/{version}/"
         else:
-            path = f"{api_root}{DOMAIN_SLUG}/api/{version}/"
+            path = rf"{api_root}{DOMAIN_SLUG}/api/{version}/"
     else:
-        path = f"{api_root}api/{version}/"
+        path = rf"{api_root}api/{version}/"
     if lstrip:
         return api_root.lstrip("/"), path.lstrip("/")
     else:

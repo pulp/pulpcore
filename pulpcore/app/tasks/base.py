@@ -83,7 +83,7 @@ def general_update(instance_id, app_label, serializer_name, *args, **kwargs):
     serializer.save()
 
 
-def general_delete(instance_id, app_label, serializer_name):
+def general_delete(instance_id, app_label, serializer_name, **kwargs):
     """
     Delete a model
 
@@ -105,7 +105,7 @@ def general_delete(instance_id, app_label, serializer_name):
     instance.delete()
 
 
-def general_multi_delete(instance_ids):
+def general_multi_delete(instance_ids, **kwargs):
     """
     Delete a list of model instances in a transaction
 
@@ -145,7 +145,7 @@ async def ageneral_update(instance_id, app_label, serializer_name, *args, **kwar
     return await sync_to_async(lambda: serializer.data)()
 
 
-async def ageneral_delete(instance_id, app_label, serializer_name):
+async def ageneral_delete(instance_id, app_label, serializer_name, **kwargs):
     """
     Async version of [pulpcore.app.tasks.base.general_delete][].
     """

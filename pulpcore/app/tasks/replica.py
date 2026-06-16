@@ -28,7 +28,7 @@ def user_agent():
     return f"pulpcore/{pulp_version} ({python}, {system}) (pulp-glue {pulp_glue_version})"
 
 
-def replicate_distributions(server_pk, q_select=None):
+def replicate_distributions(server_pk, q_select=None, **kwargs):
     server = UpstreamPulp.objects.get(pk=server_pk)
 
     # Write out temporary files related to SSL
@@ -142,7 +142,7 @@ def replicate_distributions(server_pk, q_select=None):
     )
 
 
-def finalize_replication(server_pk, distro_repo_pairs):
+def finalize_replication(server_pk, distro_repo_pairs, **kwargs):
     task = Task.current()
     task_group = TaskGroup.current()
     server = UpstreamPulp.objects.get(pk=server_pk)

@@ -159,7 +159,6 @@ class DomainViewSet(
             raise ValidationError(_("Default domain can not be migrated."))
         serializer = DomainBackendMigratorSerializer(data=data)
         serializer.is_valid(raise_exception=True)
-
         task = dispatch(
             migrate_backend,
             args=(data,),

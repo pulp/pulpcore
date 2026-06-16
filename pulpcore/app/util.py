@@ -22,7 +22,7 @@ from rest_framework.serializers import ValidationError
 
 from pulpcore.app import models
 from pulpcore.app.apps import pulp_plugin_configs
-from pulpcore.app.contexts import _current_domain, _current_user_func
+from pulpcore.app.contexts import _current_domain, _current_user_func, current_pulp_api_version
 from pulpcore.app.loggers import deprecation_logger
 from pulpcore.exceptions.validation import InvalidSignatureError
 
@@ -43,6 +43,8 @@ def reverse(viewname, args=None, kwargs=None, request=None, relative_url=True, *
     returned url is always relative.
     """
     kwargs = kwargs or {}
+    if settings.ENABLE_V4_API:
+        kwargs["version"] = current_pulp_api_version.get()
     if settings.DOMAIN_ENABLED:
         kwargs.setdefault("pulp_domain", get_domain().name)
     if settings.API_ROOT_REWRITE_HEADER:

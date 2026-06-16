@@ -1,6 +1,7 @@
 import typing as t
 from gettext import gettext as _
 
+from django.conf import settings
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema_serializer
 from rest_framework import serializers
@@ -118,6 +119,11 @@ class TaskSerializer(ModelSerializer):
         help_text=_("The result of this task."),
     )
 
+    pulp_api_version = serializers.CharField(
+        help_text=_("The API-version that was invoked when creating the task."),
+        default=settings.REST_FRAMEWORK.get("DEFAULT_VERSION", "v3"),
+    )
+
     def get_worker(self, obj) -> t.Optional[OpenApiTypes.URI]:
         return None
 
@@ -149,6 +155,7 @@ class TaskSerializer(ModelSerializer):
             "created_resource_prns",
             "reserved_resources_record",
             "result",
+            "pulp_api_version",
         )
 
 
@@ -156,6 +163,7 @@ class MinimalTaskSerializer(TaskSerializer):
     class Meta:
         model = models.Task
         fields = ModelSerializer.Meta.fields + (
+            "pulp_api_version",
             "name",
             "state",
             "unblocked_at",

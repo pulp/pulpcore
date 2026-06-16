@@ -18,7 +18,7 @@ from pulp_file.manifest import Entry, Manifest
 log = logging.getLogger(__name__)
 
 
-def publish(manifest, repository_version_pk, checkpoint=False):
+def publish(manifest, repository_version_pk, checkpoint=False, **kwargs):
     """
     Create a Publication based on a RepositoryVersion.
 
