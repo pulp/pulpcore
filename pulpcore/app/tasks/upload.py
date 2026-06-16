@@ -8,7 +8,7 @@ from pulpcore.app.serializers import ArtifactSerializer
 log = getLogger(__name__)
 
 
-def commit(upload_id, sha256):
+def commit(upload_id, sha256, **kwargs):
     """
     Commit the upload and turn it into an artifact.
 

@@ -18,7 +18,7 @@ class ReclaimSpaceViewSet(ViewSet):
         description="Trigger an asynchronous space reclaim operation.",
         responses={202: AsyncOperationResponseSerializer},
     )
-    def reclaim(self, request):
+    def reclaim(self, request, **kwargs):
         """
         Triggers an asynchronous space reclaim operation.
         """
@@ -40,14 +40,15 @@ class ReclaimSpaceViewSet(ViewSet):
         else:
             exclusive_resources = [f"pdrn:{request.pulp_domain.pulp_id}:reclaim_space"]
 
+        task_kwargs = {
+            "repo_pks": reclaim_repo_pks,
+            "keeplist_rv_pks": keeplist_rv_pks,
+        }
         task = dispatch(
             reclaim_space,
             exclusive_resources=exclusive_resources,
             shared_resources=repos,
-            kwargs={
-                "repo_pks": reclaim_repo_pks,
-                "keeplist_rv_pks": keeplist_rv_pks,
-            },
+            kwargs=task_kwargs,
         )
 
         return OperationPostponedResponse(task, request)

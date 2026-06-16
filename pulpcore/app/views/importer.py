@@ -85,7 +85,7 @@ class PulpImporterImportCheckView(APIView):
         request=PulpImportCheckSerializer,
         responses={200: PulpImportCheckResponseSerializer},
     )
-    def post(self, request, format=None):
+    def post(self, request, format=None, **kwargs):
         """
         Evaluates validity of proposed PulpImport parameters 'toc', 'path', and 'repo_mapping'.
 

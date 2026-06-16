@@ -291,7 +291,7 @@ def _export_location_is_clean(path):
     return True
 
 
-def fs_publication_export(exporter_pk, publication_pk, start_repo_version_pk=None):
+def fs_publication_export(exporter_pk, publication_pk, start_repo_version_pk=None, **kwargs):
     """
     Export a publication to the file system using an exporter.
 
@@ -335,7 +335,7 @@ def fs_publication_export(exporter_pk, publication_pk, start_repo_version_pk=Non
     )
 
 
-def fs_repo_version_export(exporter_pk, repo_version_pk, start_repo_version_pk=None):
+def fs_repo_version_export(exporter_pk, repo_version_pk, start_repo_version_pk=None, **kwargs):
     """
     Export a repository version to the file system using an exporter.
 
@@ -474,7 +474,7 @@ def _incremental_requested(the_export):
     return (starting_versions_provided or last_exists) and not full
 
 
-def pulp_export(exporter_pk, params):
+def pulp_export(exporter_pk, params, **kwargs):
     """
     Create a PulpExport to export pulp_exporter.repositories.
 

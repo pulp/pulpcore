@@ -38,7 +38,7 @@ class AlternateContentSourceViewSet(
     filterset_fields = {"name": NAME_FILTER_OPTIONS}
 
     @action(detail=True, methods=["post"])
-    def refresh(self, request, pk=None):
+    def refresh(self, request, pk=None, **kwargs):
         raise NotImplementedError(_("Method not implemented by plugin writer!"))
 
     @extend_schema(
