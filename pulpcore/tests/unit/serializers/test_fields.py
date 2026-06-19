@@ -2,7 +2,7 @@ import pytest
 from rest_framework import serializers
 
 from pulpcore.app.serializers import fields
-from pulpcore.app.serializers.fields import pulp_labels_validator
+from pulpcore.app.serializers.fields import pulp_labels_validator, relative_path_validator
 
 
 @pytest.mark.parametrize(
@@ -85,3 +85,16 @@ def test_custom_json_dict_field_raises(field_and_data, binary_arg):
     error_msg = "Invalid type"
     with pytest.raises(serializers.ValidationError, match=error_msg):
         custom_field.to_internal_value(data)
+
+
+@pytest.mark.parametrize(
+    ("path",),
+    [
+        pytest.param("/absolute/path", id="absolute"),
+        pytest.param("../sneaky/path", id="path_traversal"),
+        pytest.param("suspicious/../../sneaky/path", id="hidden_path_traversal"),
+    ],
+)
+def test_relative_path_validator_rejects(path):
+    with pytest.raises(serializers.ValidationError):
+        relative_path_validator(path)
