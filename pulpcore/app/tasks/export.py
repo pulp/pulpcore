@@ -29,7 +29,7 @@ from pulpcore.app.models import (
     Task,
 )
 from pulpcore.app.models.content import ContentArtifact
-from pulpcore.app.serializers import PulpExportSerializer
+from pulpcore.app.serializers import PulpExportSerializer, relative_path_validator
 from pulpcore.app.util import Crc32Hasher, compute_file_hash
 from pulpcore.constants import FS_EXPORT_METHODS
 
@@ -98,6 +98,7 @@ def _export_to_file_system(path, relative_paths_to_artifacts, method=FS_EXPORT_M
         method = FS_EXPORT_METHODS.WRITE
 
     for relative_path, artifact in relative_paths_to_artifacts.items():
+        relative_path_validator(relative_path)
         dest = os.path.join(path, relative_path)
         os.makedirs(os.path.split(dest)[0], exist_ok=True)
 
