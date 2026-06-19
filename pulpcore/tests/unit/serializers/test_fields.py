@@ -5,6 +5,7 @@ from pulpcore.app.serializers import fields
 from pulpcore.app.serializers.fields import (
     PgpKeyFingerprintField,
     pulp_labels_validator,
+    relative_path_validator,
 )
 
 
@@ -208,3 +209,16 @@ def test_pgp_key_fingerprint_field_custom_max_length():
 def test_pgp_key_fingerprint_field_normalize(value, expected):
     """PgpKeyFingerprintField.normalize should uppercase hex after the colon."""
     assert PgpKeyFingerprintField.normalize(value) == expected
+
+
+@pytest.mark.parametrize(
+    ("path",),
+    [
+        pytest.param("/absolute/path", id="absolute"),
+        pytest.param("../sneaky/path", id="path_traversal"),
+        pytest.param("suspicious/../../sneaky/path", id="hidden_path_traversal"),
+    ],
+)
+def test_relative_path_validator_rejects(path):
+    with pytest.raises(serializers.ValidationError):
+        relative_path_validator(path)
