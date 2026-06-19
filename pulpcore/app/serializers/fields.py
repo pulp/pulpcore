@@ -21,6 +21,10 @@ def relative_path_validator(relative_path):
         raise serializers.ValidationError(
             _("Relative path can't start with '/'. {0}").format(relative_path)
         )
+    if os.path.normpath(relative_path).startswith("../"):
+        raise serializers.ValidationError(
+            _("Relative path must not reach beyond the base path. {0}").format(relative_path)
+        )
 
 
 # Prefer JSONDictField and JSONListField over JSONField:
