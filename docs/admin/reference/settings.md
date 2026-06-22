@@ -282,6 +282,8 @@ See [Database Encryption] for more details.
 When a distribution switches to a newer publication, the previously served (superseded) publication continues to be available for this many seconds.
 This grace period prevents 404 errors for clients that began downloading from the old publication before the switch occurred.
 
+The grace period applies to every file in the publication, including repository metadata (such as `repomd.xml` or `primary.xml.gz`), not just package or content artifacts.
+
 Set to `0` to disable the grace period and serve only the latest publication immediately.
 
 Defaults to `259200` seconds (3 days).
