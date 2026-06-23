@@ -25,6 +25,7 @@ from pulpcore.app.util import (
     get_prn,
     get_view_name_for_model,
     reverse,
+    safe_in,
 )
 from pulpcore.cache import Cache
 from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS, PROTECTED_REPO_VERSION_MESSAGE
@@ -988,7 +989,7 @@ class RepositoryVersion(BaseModel):
         Args:
             content_qs (django.db.models.QuerySet): The queryset for Content that will be
                 restricted further to the content present in this repository version. If not given,
-                ``Content.objects.all()`` is used (to return over all content types present in the
+                `Content.objects.all()` is used (to return over all content types present in the
                 repository version).
 
         Returns:
@@ -1004,15 +1005,7 @@ class RepositoryVersion(BaseModel):
         if content_qs is None:
             content_qs = Content.objects
 
-        content_ids = self.content_ids
-        if len(content_ids) >= 65535:
-            # Workaround for PostgreSQL's limit on the number of parameters in a query
-            content_ids = (
-                RepositoryVersion.objects.filter(pk=self.pk)
-                .annotate(cids=Func(F("content_ids"), function="unnest"))
-                .values_list("cids", flat=True)
-            )
-        return content_qs.filter(pk__in=content_ids)
+        return content_qs.filter(safe_in("pk", self.content_ids))
 
     @property
     def content(self):
@@ -1056,14 +1049,14 @@ class RepositoryVersion(BaseModel):
         Args:
             content_qs (django.db.models.QuerySet) The queryset for Content that will be
                 restricted further to the content present in this repository version. If not given,
-                ``Content.objects.all()`` is used (to iterate over all content present in the
+                `Content.objects.all()` is used (to iterate over all content present in the
                 repository version). A plugin may want to use a specific subclass of
-                [pulpcore.plugin.models.Content][] or use e.g. ``filter()`` to select
+                [pulpcore.plugin.models.Content][] or use e.g. `filter()` to select
                 a subset of the repository version's content.
-            order_by_params (tuple of str): The parameters for the ``order_by`` clause
-                for the content. The Default is ``("pk",)``. This needs to
+            order_by_params (tuple of str): The parameters for the `order_by` clause
+                for the content. The Default is `("pk",)`. This needs to
                 specify a stable order. For example, if you want to iterate by
-                decreasing creation time stamps use ``("-pulp_created", "pk")`` to
+                decreasing creation time stamps use `("-pulp_created", "pk")` to
                 ensure that content records are still sorted by primary key even
                 if their creation timestamp happens to be equal.
             batch_size (int): The maximum batch size.
@@ -1072,8 +1065,8 @@ class RepositoryVersion(BaseModel):
             [django.db.models.QuerySet][]: A QuerySet representing a slice of the content.
 
         Example:
-            The following code could be used to loop over all ``FileContent`` in
-            ``repository_version``. It prefetches the related
+            The following code could be used to loop over all `FileContent` in
+            `repository_version`. It prefetches the related
             [pulpcore.plugin.models.ContentArtifact][] instances for every batch::
 
                 repository_version = ...
@@ -1126,8 +1119,8 @@ class RepositoryVersion(BaseModel):
         if not base_version:
             return Content.objects.filter(version_memberships__version_added=self)
 
-        return Content.objects.filter(pk__in=self.content_ids).exclude(
-            pk__in=base_version.content_ids
+        return Content.objects.filter(safe_in("pk", self.content_ids)).exclude(
+            safe_in("pk", base_version.content_ids)
         )
 
     def removed(self, base_version=None):
@@ -1141,8 +1134,8 @@ class RepositoryVersion(BaseModel):
         if not base_version:
             return Content.objects.filter(version_memberships__version_removed=self)
 
-        return Content.objects.filter(pk__in=base_version.content_ids).exclude(
-            pk__in=self.content_ids
+        return Content.objects.filter(safe_in("pk", base_version.content_ids)).exclude(
+            safe_in("pk", self.content_ids)
         )
 
     def contains(self, content):

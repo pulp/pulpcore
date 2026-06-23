@@ -16,7 +16,7 @@ from uuid import UUID
 from django.apps import apps
 from django.conf import settings
 from django.db import connection
-from django.db.models import Model, UUIDField
+from django.db.models import Field, Lookup, Model, Q, UUIDField
 from rest_framework.reverse import reverse as drf_reverse
 from rest_framework.serializers import ValidationError
 
@@ -25,6 +25,47 @@ from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app.contexts import _current_domain, _current_user_func
 from pulpcore.app.loggers import deprecation_logger
 from pulpcore.exceptions.validation import InvalidSignatureError
+
+POSTGRES_MAX_QUERY_PARAMS = 65535
+
+
+class AnyArray(Lookup):
+    """PostgreSQL `= ANY(%s)` lookup that passes a list as a single array parameter.
+
+    psycopg3 adapts the Python list into a PostgreSQL array, so the entire list
+    counts as **one** bind parameter regardless of size.  This avoids the
+    protocol-level 65535-parameter limit that `IN ($1, $2, …)` hits.
+    """
+
+    lookup_name = "any_array"
+
+    def get_prep_lookup(self):
+        return [self.lhs.output_field.get_prep_value(v) for v in self.rhs]
+
+    def as_sql(self, compiler, connection):
+        lhs, lhs_params = self.process_lhs(compiler, connection)
+        return f"{lhs} = ANY(%s)", lhs_params + [list(self.rhs)]
+
+
+Field.register_lookup(AnyArray)
+
+
+def safe_in(field_name, values):
+    """Build a `Q` object for `field__in` that is safe for arbitrarily large lists.
+
+    * If *values* is already a queryset (or other non-collection type), the
+      normal `__in` lookup is used — Django turns it into a subquery.
+    * If the collection has fewer than 65 535 items, `__in` is used as-is.
+    * Otherwise `__any_array` is used so the whole list travels as a single
+      PostgreSQL array parameter.
+    """
+    if not isinstance(values, (list, set, tuple, frozenset)):
+        return Q(**{f"{field_name}__in": values})
+    values = list(values)
+    if len(values) < POSTGRES_MAX_QUERY_PARAMS:
+        return Q(**{f"{field_name}__in": values})
+    return Q(**{f"{field_name}__any_array": values})
+
 
 # a little cache so viewset_for_model doesn't have to iterate over every app every time
 _model_viewset_cache = {}

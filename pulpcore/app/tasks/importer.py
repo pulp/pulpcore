@@ -39,6 +39,7 @@ from pulpcore.app.util import (
     compute_file_hash,
     get_domain,
     get_domain_pk,
+    safe_in,
 )
 from pulpcore.constants import TASK_STATES
 from pulpcore.exceptions.plugin import MissingPlugin
@@ -410,14 +411,14 @@ def import_repository_version(
             for repo_name, content_ids in mapping.items():
                 repo_name = _get_destination_repo_name(importer, repo_name)
                 dest_repo = Repository.objects.get(name=repo_name)
-                content = Content.objects.filter(upstream_id__in=content_ids)
+                content = Content.objects.filter(safe_in("upstream_id", content_ids))
                 content_count += len(content_ids)
                 with dest_repo.new_version() as new_version:
                     new_version.set_content(content)
         else:
             # just map all the content to our destination repo
             dest_repo = Repository.objects.get(pk=dest_repo_pk)
-            content = Content.objects.filter(pk__in=resulting_content_ids)
+            content = Content.objects.filter(safe_in("pk", resulting_content_ids))
             content_count += len(resulting_content_ids)
             with dest_repo.new_version() as new_version:
                 new_version.set_content(content)

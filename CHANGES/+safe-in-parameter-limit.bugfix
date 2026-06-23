@@ -1,0 +1,1 @@
+Avoid exceeding PostgreSQL's 65,535 query parameter limit when filtering by large lists of IDs. This fixes `OperationalError` crashes during large import and copy operations involving more than 65,535 content units.

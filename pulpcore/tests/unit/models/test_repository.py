@@ -798,6 +798,9 @@ def test_postgresql_parameter_limit(db, repository):
     PostgreSQL limits queries to 65535 parameters. This test verifies that content, added(),
     and removed() all handle >65535 items correctly.
 
+    The safe_in() utility (used internally) avoids this limit by using ``= ANY(%s)``
+    (a single array parameter) for large value lists.
+
     Queries MUST be evaluated via .iterator() because psycopg3 uses client-side binding for
     regular queries (inlining params into the SQL string, bypassing the limit) but server-side
     binding for server-side cursors (.iterator()), which enforces the 65,535 parameter cap.

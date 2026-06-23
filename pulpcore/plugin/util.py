@@ -27,6 +27,7 @@ from pulpcore.app.util import (
     raise_for_unknown_content_units,
     resolve_prn,
     reverse,
+    safe_in,
     set_current_user,
     set_domain,
 )
@@ -59,5 +60,6 @@ __all__ = [
     "reverse",
     "set_current_user",
     "resolve_prn",
+    "safe_in",
     "cache_key",
 ]
