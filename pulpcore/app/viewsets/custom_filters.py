@@ -371,7 +371,7 @@ class WithContentFilter(Filter):
         for url in value:
             content_units[extract_pk(url)] = url
 
-        content_units_pks = set(content_units.keys())
+        content_units_pks = list(content_units.keys())
         existing_content_units = Content.objects.filter(pk__in=content_units_pks)
         raise_for_unknown_content_units(existing_content_units, content_units)
 
