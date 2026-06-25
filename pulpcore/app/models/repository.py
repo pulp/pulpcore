@@ -893,26 +893,19 @@ class RepositoryVersionQuerySet(models.QuerySet):
         Filters repository versions that contain the provided content units.
 
         Args:
-            content (django.db.models.QuerySet): query of content
+            content (django.db.models.QuerySet or list): Content queryset or list of PKs
 
         Returns:
             django.db.models.QuerySet: Repository versions which contains content.
         """
-        # TODO: Evaluate if this can be optimized with content_ids field
-        query = models.Q(pk__in=[])
-        repo_content = RepositoryContent.objects.filter(content__pk__in=content)
+        if isinstance(content, models.QuerySet):
+            content_pks = content.values_list("pk", flat=True)
+        elif not content:
+            return self.none()
+        else:
+            content_pks = content
 
-        for rc in repo_content.iterator():
-            filter = models.Q(
-                repository__pk=rc.repository.pk,
-                number__gte=rc.version_added.number,
-            )
-            if rc.version_removed:
-                filter &= models.Q(number__lt=rc.version_removed.number)
-
-            query |= filter
-
-        return self.filter(query)
+        return self.filter(content_ids__overlap=content_pks)
 
 
 class RepositoryVersion(BaseModel):
