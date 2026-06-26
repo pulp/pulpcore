@@ -70,6 +70,10 @@ fi
 cmd_prefix bash -c "echo '%wheel        ALL=(ALL)       NOPASSWD: ALL' > /etc/sudoers.d/nopasswd"
 cmd_prefix bash -c "usermod -a -G wheel pulp"
 
+# Workaround: Valkey on CS10 needs runtime directories that systemd-tmpfiles would create.
+# Remove once the CI image is rebuilt with these directories baked in.
+cmd_prefix bash -c "install -d -m 0755 -o valkey -g valkey /run/valkey && install -d -m 0750 -o valkey -g valkey /var/log/valkey && s6-rc -u change redis" || true
+
 # In some scenarios we want to simulate a failed redis cache.
 if [[ " s3 " =~ " ${TEST} " ]]; then
   cmd_prefix bash -c "s6-rc -d change redis"
