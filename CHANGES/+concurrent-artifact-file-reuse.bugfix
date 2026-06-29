@@ -1,0 +1,1 @@
+Fixed a race condition when creating content with `file_url` or `upload` that could result in a duplicate artifact error.
