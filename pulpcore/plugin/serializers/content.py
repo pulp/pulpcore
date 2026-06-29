@@ -2,7 +2,7 @@ from gettext import gettext as _
 from tempfile import NamedTemporaryFile
 from urllib.parse import urlparse
 
-from django.db import DatabaseError
+from django.db import DatabaseError, IntegrityError
 from rest_framework.serializers import (
     CharField,
     FileField,
@@ -13,7 +13,6 @@ from rest_framework.serializers import (
 from pulpcore.app.files import PulpTemporaryUploadedFile
 from pulpcore.app.models import Artifact, PulpTemporaryFile, Remote, Upload, UploadChunk
 from pulpcore.app.serializers import (
-    ArtifactSerializer,
     NoArtifactContentSerializer,
     RelatedField,
     SingleArtifactContentSerializer,
@@ -218,10 +217,13 @@ class SingleArtifactContentUploadSerializer(
                 )
                 artifact.touch()
             except (Artifact.DoesNotExist, DatabaseError):
-                artifact_data = {"file": file}
-                serializer = ArtifactSerializer(data=artifact_data)
-                serializer.is_valid(raise_exception=True)
-                artifact = serializer.save()
+                artifact = Artifact.init_and_validate(file)
+                try:
+                    artifact.save()
+                except IntegrityError:
+                    artifact = Artifact.objects.get(
+                        sha256=artifact.sha256, pulp_domain=get_domain_pk()
+                    )
             data["artifact"] = artifact
         return data
 
