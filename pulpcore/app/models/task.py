@@ -439,15 +439,17 @@ class CreatedResource(GenericRelationModel):
 
 
 class TaskSchedule(BaseModel):
-    name = models.TextField(unique=True, null=False)
+    name = models.TextField(null=False)
     next_dispatch = models.DateTimeField(default=timezone.now, null=True)
     dispatch_interval = models.DurationField(null=True)
     task_name = models.TextField()
     task_args = EncryptedJSONField(default=list)
     task_kwargs = EncryptedJSONField(default=dict)
     last_task = models.ForeignKey(Task, null=True, on_delete=models.SET_NULL)
+    pulp_domain = models.ForeignKey("Domain", default=get_domain_pk, on_delete=models.CASCADE)
 
     class Meta:
+        unique_together = ("name", "pulp_domain")
         permissions = [
             ("manage_roles_taskschedule", "Can manage role assignments on task schedules"),
         ]

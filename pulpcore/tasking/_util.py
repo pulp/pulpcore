@@ -17,6 +17,7 @@ from django.utils import timezone
 from django_guid import set_guid
 from django_guid.utils import generate_guid
 
+from pulpcore.app.contexts import with_domain
 from pulpcore.app.models import Artifact, Content, ProfileArtifact, Task, TaskSchedule
 from pulpcore.app.util import (
     configure_analytics,
@@ -298,7 +299,7 @@ def dispatch_scheduled_tasks():
                     # Do not schedule in the past
                     task_schedule.next_dispatch += task_schedule.dispatch_interval
             set_guid(generate_guid())
-            with transaction.atomic():
+            with with_domain(task_schedule.pulp_domain), transaction.atomic():
                 task_schedule.last_task = dispatch(
                     task_schedule.task_name,
                     args=task_schedule.task_args,
@@ -307,8 +308,11 @@ def dispatch_scheduled_tasks():
                 task_schedule.save(update_fields=["next_dispatch", "last_task"])
 
             _logger.info(
-                "Dispatched scheduled task {task_name} as task id {task_id}".format(
-                    task_name=task_schedule.task_name, task_id=task_schedule.last_task.pk
+                "Dispatched scheduled task {task_name} as task id {task_id}"
+                " in domain {domain}".format(
+                    task_name=task_schedule.task_name,
+                    task_id=task_schedule.last_task.pk,
+                    domain=task_schedule.pulp_domain.name,
                 )
             )
         except Exception as e:
