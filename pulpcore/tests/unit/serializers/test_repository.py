@@ -1,5 +1,6 @@
 from types import SimpleNamespace
 from unittest.mock import Mock
+from uuid import uuid4
 
 import pytest
 from rest_framework import serializers
@@ -10,6 +11,7 @@ from pulpcore.app.serializers import (
     PublicationSerializer,
     RemoteSerializer,
     RepositorySyncURLSerializer,
+    RepositoryVersionSerializer,
     ValidateFieldsMixin,
 )
 
@@ -265,3 +267,36 @@ def test_create_remote_with_invalid_parameter():
     serializer = RemoteSerializer(data=data)
     with pytest.raises(serializers.ValidationError, match="Unexpected field"):
         serializer.validate(data)
+
+
+def _content_ids_serializer(query_params=None):
+    """Build a RepositoryVersionSerializer with an optional fake request in its context."""
+    context = {}
+    if query_params is not None:
+        context["request"] = SimpleNamespace(query_params=query_params)
+    return RepositoryVersionSerializer(context=context)
+
+
+def test_get_content_ids_omitted_without_request():
+    """content_ids is null when there is no request in the serializer context."""
+    obj = SimpleNamespace(content_ids=[uuid4()])
+    serializer = _content_ids_serializer()
+    assert serializer.get_content_ids(obj) is None
+
+
+@pytest.mark.parametrize("value", [None, "", "false", "0", "no", "False"])
+def test_get_content_ids_omitted_when_not_requested(value):
+    """content_ids is null unless the request explicitly opts in via the query parameter."""
+    query_params = {} if value is None else {"content_ids": value}
+    obj = SimpleNamespace(content_ids=[uuid4()])
+    serializer = _content_ids_serializer(query_params=query_params)
+    assert serializer.get_content_ids(obj) is None
+
+
+@pytest.mark.parametrize("value", ["true", "True", "TRUE", "1", "yes"])
+def test_get_content_ids_returned_when_requested(value):
+    """content_ids returns the version's UUIDs when the request opts in."""
+    content_ids = [uuid4(), uuid4()]
+    obj = SimpleNamespace(content_ids=content_ids)
+    serializer = _content_ids_serializer(query_params={"content_ids": value})
+    assert serializer.get_content_ids(obj) == content_ids

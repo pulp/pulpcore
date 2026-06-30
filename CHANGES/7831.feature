@@ -1,0 +1,1 @@
+Added an opt-in ``content_ids`` field to the repository version detail, returning the list of content unit UUIDs in the version when the request includes the ``content_ids=true`` query parameter. This lets clients diff content sets between versions directly instead of issuing expensive content filter queries.
