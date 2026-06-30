@@ -124,3 +124,54 @@ def test_task_schedule(task_schedule, pulpcore_bindings):
     else:
         assert ts.dispatch_interval is not None
         assert ts.next_dispatch is not None
+
+
+@pytest.mark.parallel
+def test_task_schedule_domain(domain_factory, pulpcore_bindings):
+    """Test that a scheduled task dispatches in the TaskSchedule's domain, not the default."""
+    domain = domain_factory()
+    domain_name = domain.name
+    name = str(uuid.uuid4())
+    task_name = "pulpcore.app.tasks.test.dummy_task"
+
+    schedule_commands = (
+        "from django.utils.timezone import now;"
+        "from datetime import timedelta;"
+        "from pulpcore.app.models import TaskSchedule, Domain;"
+        f"domain = Domain.objects.get(name='{domain_name}');"
+        "TaskSchedule("
+        f"   name='{name}', task_name='{task_name}',"
+        "    next_dispatch=now() + timedelta(seconds=5),"
+        "    pulp_domain=domain"
+        ").save();"
+    )
+    process = subprocess.run(["pulpcore-manager", "shell", "-c", schedule_commands])
+    assert process.returncode == 0
+
+    try:
+        task_schedules = None
+        for i in range(20):
+            sleep(1)
+            task_schedules = pulpcore_bindings.TaskSchedulesApi.list(
+                name=name, pulp_domain=domain_name
+            )
+            assert task_schedules.count == 1
+            if task_schedules.results[0].last_task is not None:
+                break
+
+        assert task_schedules is not None and task_schedules.results[0].last_task is not None
+        assert f"/{domain_name}/" in task_schedules.results[0].pulp_href
+        tasks = pulpcore_bindings.TasksApi.list(name=task_name, pulp_domain=domain_name)
+        assert tasks.count == 1
+        assert tasks.results[0].state == "completed"
+        assert f"/{domain_name}/" in tasks.results[0].pulp_href
+    finally:
+        subprocess.run(
+            [
+                "pulpcore-manager",
+                "shell",
+                "-c",
+                f"from pulpcore.app.models import TaskSchedule;"
+                f"TaskSchedule.objects.filter(name='{name}').delete();",
+            ]
+        )
