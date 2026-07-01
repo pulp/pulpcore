@@ -291,9 +291,25 @@ class RepositoryVersionSerializer(ModelSerializer, NestedHyperlinkedModelSeriali
     vuln_report = serializers.SerializerMethodField(
         read_only=True,
     )
+    content_ids = serializers.SerializerMethodField(
+        help_text=_(
+            "The list of content unit UUIDs in this version. Only returned when the request "
+            "includes the 'content_ids=true' query parameter; otherwise null."
+        ),
+        read_only=True,
+    )
 
     def get_vuln_report(self, object):
         return f"{reverse('vuln_report-list')}?repo_versions={get_prn(object)}"
+
+    def get_content_ids(self, object):
+        request = self.context.get("request")
+        if request is None:
+            return None
+        value = request.query_params.get("content_ids")
+        if value is None or value.lower() not in ("true", "1", "yes"):
+            return None
+        return object.content_ids
 
     class Meta:
         model = models.RepositoryVersion
@@ -304,6 +320,7 @@ class RepositoryVersionSerializer(ModelSerializer, NestedHyperlinkedModelSeriali
             "base_version",
             "content_summary",
             "vuln_report",
+            "content_ids",
         )
 
 
