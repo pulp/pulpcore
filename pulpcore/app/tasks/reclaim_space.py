@@ -16,7 +16,7 @@ from pulpcore.app.util import get_domain
 log = getLogger(__name__)
 
 
-def reclaim_space(repo_pks, keeplist_rv_pks=None, force=False):
+def reclaim_space(repo_pks, keeplist_rv_pks=None, force=False, **kwargs):
     """
     This task frees-up disk space by removing Artifact files from the filesystem for Content
     exclusive to the list of provided repos.

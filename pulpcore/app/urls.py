@@ -1,7 +1,7 @@
 """pulp URL Configuration"""
 
 from django.conf import settings
-from django.urls import include, path
+from django.urls import include, path, re_path
 from django.views.decorators.cache import cache_page
 from drf_spectacular.utils import extend_schema
 from drf_spectacular.views import (
@@ -14,6 +14,7 @@ from rest_framework.routers import APIRootView
 from rest_framework_nested import routers
 
 from pulpcore.app.apps import pulp_plugin_configs
+from pulpcore.app.settings import ENABLE_V4_API, REST_FRAMEWORK
 from pulpcore.app.views import (
     DataRepair7272View,
     LivezView,
@@ -30,11 +31,81 @@ from pulpcore.app.viewsets import (
 )
 from pulpcore.plugin.find_url import find_api_root
 
-_, PATH_DOMAIN_REWRITE_NOFRONT = find_api_root(lstrip=True, set_domain=True, rewrite_header=True)
-_, PATH_NODOMAIN_NOREWRITE_NOFRONT = find_api_root(
-    lstrip=True, set_domain=False, rewrite_header=False
-)
-_, PATH_NODOMAIN_REWRITE_NOFRONT = find_api_root(lstrip=True, set_domain=False, rewrite_header=True)
+HUNDRED_DAYS = 100 * 24 * 60 * 60
+
+
+def _setup_vars(vers=REST_FRAMEWORK.get("DEFAULT_VERSION", "v3")):
+    _, PATH_DOMAIN_REWRITE_NOFRONT = find_api_root(
+        lstrip=True, set_domain=True, rewrite_header=True, version=vers
+    )
+    _, PATH_NODOMAIN_NOREWRITE_NOFRONT = find_api_root(
+        lstrip=True, set_domain=False, rewrite_header=False, version=vers
+    )
+    _, PATH_NODOMAIN_REWRITE_NOFRONT = find_api_root(
+        lstrip=True, set_domain=False, rewrite_header=True, version=vers
+    )
+    return {
+        "PATH_DOMAIN_REWRITE_NOFRONT": PATH_DOMAIN_REWRITE_NOFRONT,
+        "PATH_NODOMAIN_NOREWRITE_NOFRONT": PATH_NODOMAIN_NOREWRITE_NOFRONT,
+        "PATH_NODOMAIN_REWRITE_NOFRONT": PATH_NODOMAIN_REWRITE_NOFRONT,
+    }
+
+
+if ENABLE_V4_API:
+    VERSIONS = [r"<str:version>"]
+else:
+    VERSIONS = [r"v3"]
+
+PATH_VARS = {}
+for v in VERSIONS:
+    PATH_VARS[v] = _setup_vars(vers=v)
+
+
+def _docs_and_status(version):
+    return [
+        re_path(r"^livez/", LivezView.as_view()),
+        re_path(r"^status/$", StatusView.as_view()),
+        re_path(
+            r"^docs/api.json$",
+            cache_page(HUNDRED_DAYS)(
+                SpectacularJSONAPIView.as_view(authentication_classes=[], permission_classes=[])
+            ),
+            name="schema",
+        ),
+        re_path(
+            r"^docs/api.yaml$",
+            cache_page(HUNDRED_DAYS)(
+                SpectacularYAMLAPIView.as_view(authentication_classes=[], permission_classes=[])
+            ),
+            name="schema-yaml",
+        ),
+        re_path(
+            r"^docs/$",
+            cache_page(HUNDRED_DAYS)(
+                SpectacularRedocView.as_view(
+                    authentication_classes=[],
+                    permission_classes=[],
+                    url=f"/{PATH_VARS[version]['PATH_NODOMAIN_NOREWRITE_NOFRONT']}docs/api.json?include_html=1&pk_path=1",
+                )
+            ),
+            name="schema-redoc",
+        ),
+        re_path(
+            r"^swagger/$",
+            cache_page(HUNDRED_DAYS)(
+                SpectacularSwaggerView.as_view(
+                    authentication_classes=[],
+                    permission_classes=[],
+                    url=f"/{PATH_VARS[version]['PATH_NODOMAIN_NOREWRITE_NOFRONT']}docs/api.json?include_html=1&pk_path=1",
+                )
+            ),
+            name="schema-swagger",
+        ),
+    ]
+
+
+for v in VERSIONS:
+    PATH_VARS[v]["docs_and_status"] = _docs_and_status(v)
 
 
 class ViewSetNode:
@@ -152,103 +223,67 @@ for viewset in sorted_by_depth:
     vs_tree.add_decendent(ViewSetNode(viewset))
 
 special_views = [
-    path("login/", LoginViewSet.as_view()),
-    path("repair/", RepairView.as_view()),
-    path("datarepair/7272/", DataRepair7272View.as_view()),
-    path(
-        "orphans/cleanup/",
+    re_path(r"^login/$", LoginViewSet.as_view()),
+    re_path(r"^repair/$", RepairView.as_view()),
+    re_path(r"^datarepair/7272/$", DataRepair7272View.as_view()),
+    re_path(
+        r"^orphans/cleanup/$",
         OrphansCleanupViewset.as_view(actions={"post": "cleanup"}),
     ),
-    path("orphans/", OrphansView.as_view()),
-    path(
-        "repository_versions/",
+    re_path(r"^orphans/$", OrphansView.as_view()),
+    re_path(
+        r"^repository_versions/$",
         ListRepositoryVersionViewSet.as_view(actions={"get": "list"}),
     ),
-    path(
-        "repositories/reclaim_space/",
+    re_path(
+        r"^repositories/reclaim_space/$",
         ReclaimSpaceViewSet.as_view(actions={"post": "reclaim"}),
     ),
-    path(
-        "importers/core/pulp/import-check/",
+    re_path(
+        r"^importers/core/pulp/import-check/$",
         PulpImporterImportCheckView.as_view(),
     ),
 ]
 
-hundred_days = 100 * 24 * 60 * 60
-
-docs_and_status = [
-    path("livez/", LivezView.as_view()),
-    path("status/", StatusView.as_view()),
-    path(
-        "docs/api.json",
-        cache_page(hundred_days)(
-            SpectacularJSONAPIView.as_view(authentication_classes=[], permission_classes=[])
-        ),
-        name="schema",
-    ),
-    path(
-        "docs/api.yaml",
-        cache_page(hundred_days)(
-            SpectacularYAMLAPIView.as_view(authentication_classes=[], permission_classes=[])
-        ),
-        name="schema-yaml",
-    ),
-    path(
-        "docs/",
-        cache_page(hundred_days)(
-            SpectacularRedocView.as_view(
-                authentication_classes=[],
-                permission_classes=[],
-                url=f"/{PATH_NODOMAIN_NOREWRITE_NOFRONT}docs/api.json?include_html=1&pk_path=1",
-            )
-        ),
-        name="schema-redoc",
-    ),
-    path(
-        "swagger/",
-        cache_page(hundred_days)(
-            SpectacularSwaggerView.as_view(
-                authentication_classes=[],
-                permission_classes=[],
-                url=f"/{PATH_NODOMAIN_NOREWRITE_NOFRONT}docs/api.json?include_html=1&pk_path=1",
-            )
-        ),
-        name="schema-swagger",
-    ),
-]
-
-urlpatterns = [
-    path(PATH_DOMAIN_REWRITE_NOFRONT, include(special_views)),
-    path("auth/", include("rest_framework.urls")),
-    # docs/status aren't "inside" a domain
-    path(PATH_NODOMAIN_REWRITE_NOFRONT, include(docs_and_status)),
-]
-
-if settings.DOMAIN_ENABLED:
-    # Ensure Docs and Status endpoints are available within domains, but are not shown in API schema
-    docs_and_status_no_schema = []
-    for p in docs_and_status:
-
-        @extend_schema(exclude=True)
-        class NoSchema(p.callback.cls):
-            pass
-
-        view = NoSchema.as_view(**p.callback.initkwargs)
-        name = p.name + "-domains" if p.name else None
-        docs_and_status_no_schema.append(path(str(p.pattern), view, name=name))
-    urlpatterns.insert(-1, path(PATH_DOMAIN_REWRITE_NOFRONT, include(docs_and_status_no_schema)))
-
+urlpatterns = [path("auth/", include("rest_framework.urls"))]
 if "social_django" in settings.INSTALLED_APPS:
     urlpatterns.append(
         path("", include("social_django.urls", namespace=settings.SOCIAL_AUTH_URL_NAMESPACE))
     )
+for v in VERSIONS:
+    tmp_list = [
+        path(PATH_VARS[v]["PATH_DOMAIN_REWRITE_NOFRONT"], include(special_views)),
+        # docs/status aren't "inside" a domain
+        path(
+            PATH_VARS[v]["PATH_NODOMAIN_REWRITE_NOFRONT"], include(PATH_VARS[v]["docs_and_status"])
+        ),
+    ]
+    urlpatterns.extend(tmp_list)
+    if settings.DOMAIN_ENABLED:
+        # Ensure Docs and Status endpoints are available within domains, but are not shown in API schema
+        docs_and_status_no_schema = []
+        for p in PATH_VARS[v]["docs_and_status"]:
 
-#: The Pulp Platform v3 API router, which can be used to manually register ViewSets with the API.
-root_router = PulpDefaultRouter()
+            @extend_schema(exclude=True)
+            class NoSchema(p.callback.cls):
+                pass
 
-all_routers = [root_router] + vs_tree.register_with(root_router)
-for router in all_routers:
-    urlpatterns.append(path(PATH_DOMAIN_REWRITE_NOFRONT, include(router.urls)))
+            view = NoSchema.as_view(**p.callback.initkwargs)
+            name = p.name + "-domains" if p.name else None
+            pattern = rf"^{str(p.pattern)}$"
+            docs_and_status_no_schema.append(re_path(pattern, view, name=name))
+        urlpatterns.insert(
+            -1,
+            path(PATH_VARS[v]["PATH_DOMAIN_REWRITE_NOFRONT"], include(docs_and_status_no_schema)),
+        )
+
+for v in VERSIONS:
+    # The Pulp Platform API router, which can be used to manually register ViewSets with the API.
+    root_router = PulpDefaultRouter()
+
+    all_routers = [root_router] + vs_tree.register_with(root_router)
+    for router in all_routers:
+        urlpatterns.append(path(PATH_VARS[v]["PATH_DOMAIN_REWRITE_NOFRONT"], include(router.urls)))
 
 # If plugins define a urls.py, include them into the root namespace.
 for plugin_pattern in plugin_patterns:

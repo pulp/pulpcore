@@ -110,7 +110,7 @@ class PulpExportViewSet(ExportViewSet):
         description="Trigger an asynchronous task to export a set of repositories",
         responses={202: AsyncOperationResponseSerializer},
     )
-    def create(self, request, exporter_pk):
+    def create(self, request, exporter_pk, **kwargs):
         """
         Generates a Task to export the set of repositories assigned to a specific PulpExporter.
         """
@@ -121,13 +121,14 @@ class PulpExportViewSet(ExportViewSet):
         # Validate Export
         serializer = PulpExportSerializer(data=request.data, context={"exporter": exporter})
         serializer.is_valid(raise_exception=True)
-
+        task_kwargs = {"exporter_pk": str(exporter.pk), "params": request.data}
+        task_kwargs.update(kwargs)
         # Invoke the export
         task = dispatch(
             pulp_export,
             exclusive_resources=[exporter],
             shared_resources=exporter.repositories.all(),
-            kwargs={"exporter_pk": str(exporter.pk), "params": request.data},
+            kwargs=task_kwargs,
         )
 
         return OperationPostponedResponse(task, request)
@@ -147,7 +148,7 @@ class FilesystemExportViewSet(ExportViewSet):
         description="Trigger an asynchronous task to export files to the filesystem",
         responses={202: AsyncOperationResponseSerializer},
     )
-    def create(self, request, exporter_pk):
+    def create(self, request, exporter_pk, **kwargs):
         """
         Generates a Task to export files to the filesystem.
         """
@@ -167,26 +168,29 @@ class FilesystemExportViewSet(ExportViewSet):
 
         if request.data.get("publication"):
             publication = self.get_resource(request.data["publication"], Publication)
+            task_kwargs = {
+                "exporter_pk": exporter.pk,
+                "publication_pk": publication.pk,
+                "start_repo_version_pk": start_repository_version_pk,
+            }
+            task_kwargs.update(kwargs)
             task = dispatch(
                 fs_publication_export,
                 exclusive_resources=[exporter],
-                kwargs={
-                    "exporter_pk": exporter.pk,
-                    "publication_pk": publication.pk,
-                    "start_repo_version_pk": start_repository_version_pk,
-                },
+                kwargs=task_kwargs,
             )
         else:
             repo_version = self.get_resource(request.data["repository_version"], RepositoryVersion)
-
+            task_kwargs = {
+                "exporter_pk": str(exporter.pk),
+                "repo_version_pk": repo_version.pk,
+                "start_repo_version_pk": start_repository_version_pk,
+            }
+            task_kwargs.update(kwargs)
             task = dispatch(
                 fs_repo_version_export,
                 exclusive_resources=[exporter],
-                kwargs={
-                    "exporter_pk": str(exporter.pk),
-                    "repo_version_pk": repo_version.pk,
-                    "start_repo_version_pk": start_repository_version_pk,
-                },
+                kwargs=task_kwargs,
             )
 
         return OperationPostponedResponse(task, request)

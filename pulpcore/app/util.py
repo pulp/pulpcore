@@ -22,8 +22,9 @@ from rest_framework.serializers import ValidationError
 
 from pulpcore.app import models
 from pulpcore.app.apps import pulp_plugin_configs
-from pulpcore.app.contexts import _current_domain, _current_user_func
+from pulpcore.app.contexts import _current_domain, _current_pulp_version, _current_user_func
 from pulpcore.app.loggers import deprecation_logger
+from pulpcore.app.settings import ENABLE_V4_API, REST_FRAMEWORK
 from pulpcore.exceptions.validation import InvalidSignatureError
 
 # a little cache so viewset_for_model doesn't have to iterate over every app every time
@@ -43,6 +44,16 @@ def reverse(viewname, args=None, kwargs=None, request=None, relative_url=True, *
     returned url is always relative.
     """
     kwargs = kwargs or {}
+    if ENABLE_V4_API:
+        if request:
+            # Might be None if a plugin hasn't updated to using <version> yet
+            kwargs["version"] = (
+                request.version if request.version else REST_FRAMEWORK.get("DEFAULT_VERSION", "v3")
+            )
+        else:
+            # If we have a curr-vers in a task-context this works. Otherwise, we're just
+            # going to get the current default-version here.
+            kwargs["version"] = _current_pulp_version.get()
     if settings.DOMAIN_ENABLED:
         kwargs.setdefault("pulp_domain", get_domain().name)
     if settings.API_ROOT_REWRITE_HEADER:

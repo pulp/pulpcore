@@ -136,3 +136,12 @@ class StatusSerializer(serializers.Serializer):
     content_settings = ContentSettingsSerializer(help_text=_("Content-app settings"))
 
     domain_enabled = serializers.BooleanField(help_text=_("Is Domains enabled"))
+
+
+class V4StatusSerializer(StatusSerializer):
+    api_version = serializers.CharField(
+        help_text=_("API-Version called to generate this status"), default="not-set"
+    )
+    supported_api_versions = serializers.ListField(
+        help_text=_("API-Versions currently enabled in this Pulp instance")
+    )

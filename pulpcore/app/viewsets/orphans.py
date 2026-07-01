@@ -15,7 +15,7 @@ class OrphansCleanupViewset(ViewSet):
         description="Trigger an asynchronous orphan cleanup operation.",
         responses={202: AsyncOperationResponseSerializer},
     )
-    def cleanup(self, request):
+    def cleanup(self, request, **kwargs):
         """
         Triggers an asynchronous orphan cleanup operation.
         """

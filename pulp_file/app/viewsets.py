@@ -135,7 +135,7 @@ class FileContentViewSet(SingleArtifactContentUploadViewSet):
         summary="Upload a File synchronously.",
     )
     @action(detail=False, methods=["post"], serializer_class=FileContentUploadSerializer)
-    def upload(self, request):
+    def upload(self, request, **kwargs):
         """Create a File."""
         serializer = self.get_serializer(data=request.data)
         with transaction.atomic():
@@ -258,7 +258,7 @@ class FileRepositoryViewSet(RepositoryViewSet, ModifyRepositoryActionMixin, Role
         responses={202: AsyncOperationResponseSerializer},
     )
     @action(detail=True, methods=["post"], serializer_class=FileRepositorySyncURLSerializer)
-    def sync(self, request, pk):
+    def sync(self, request, pk, **kwargs):
         """
         Synchronizes a repository.
 
@@ -276,16 +276,20 @@ class FileRepositoryViewSet(RepositoryViewSet, ModifyRepositoryActionMixin, Role
         optimize = serializer.validated_data.get("optimize", True)  # noqa
         if mirror and repository.autopublish:
             raise ValidationError("Cannot use mirror mode with autopublished repository.")
+
+        task_kwargs = {
+            "remote_pk": str(remote.pk),
+            "repository_pk": str(repository.pk),
+            "mirror": mirror,
+            "optimize": optimize,
+        }
+        task_kwargs.update(kwargs)
+
         result = dispatch(
             tasks.synchronize,
             shared_resources=[remote],
             exclusive_resources=[repository],
-            kwargs={
-                "remote_pk": str(remote.pk),
-                "repository_pk": str(repository.pk),
-                "mirror": mirror,
-                "optimize": optimize,
-            },
+            kwargs=task_kwargs,
         )
         return OperationPostponedResponse(result, request)
 
@@ -559,7 +563,7 @@ class FilePublicationViewSet(PublicationViewSet, RolesMixin):
         description="Trigger an asynchronous task to publish file content.",
         responses={202: AsyncOperationResponseSerializer},
     )
-    def create(self, request):
+    def create(self, request, **kwargs):
         """
         Publishes a repository.
 
@@ -572,13 +576,15 @@ class FilePublicationViewSet(PublicationViewSet, RolesMixin):
         manifest = serializer.validated_data.get("manifest")
         checkpoint = serializer.validated_data.get("checkpoint")
 
-        kwargs = {"repository_version_pk": str(repository_version.pk), "manifest": manifest}
+        task_kwargs = {"repository_version_pk": str(repository_version.pk), "manifest": manifest}
+        task_kwargs.update(kwargs)
+
         if checkpoint:
-            kwargs["checkpoint"] = True
+            task_kwargs["checkpoint"] = True
         result = dispatch(
             tasks.publish,
             shared_resources=[repository_version.repository],
-            kwargs=kwargs,
+            kwargs=task_kwargs,
         )
         return OperationPostponedResponse(result, request)
 
@@ -770,7 +776,7 @@ class FileAlternateContentSourceViewSet(AlternateContentSourceViewSet, RolesMixi
         responses={202: TaskGroupOperationResponseSerializer},
     )
     @action(methods=["post"], detail=True)
-    def refresh(self, request, pk):
+    def refresh(self, request, pk, **kwargs):
         """
         Refresh ACS metadata.
         """
@@ -794,18 +800,19 @@ class FileAlternateContentSourceViewSet(AlternateContentSourceViewSet, RolesMixi
             acs_url = (
                 os.path.join(acs.remote.url, acs_path.path) if acs_path.path else acs.remote.url
             )
-
+            task_kwargs = {
+                "remote_pk": str(acs.remote.pk),
+                "repository_pk": str(acs_path.repository.pk),
+                "mirror": False,
+                "url": acs_url,
+            }
+            task_kwargs.update(kwargs)
             # Dispatching ACS path to own task and assign it to common TaskGroup
             dispatch(
                 tasks.synchronize,
                 shared_resources=[acs.remote, acs],
                 task_group=task_group,
-                kwargs={
-                    "remote_pk": str(acs.remote.pk),
-                    "repository_pk": str(acs_path.repository.pk),
-                    "mirror": False,
-                    "url": acs_url,
-                },
+                kwargs=task_kwargs,
             )
 
         return TaskGroupOperationResponse(task_group, request)

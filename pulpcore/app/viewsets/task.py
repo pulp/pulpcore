@@ -222,7 +222,7 @@ class TaskViewSet(
         operation_id="tasks_cancel",
         responses={200: TaskSerializer, 409: TaskSerializer},
     )
-    def partial_update(self, request, pk=None, partial=True):
+    def partial_update(self, request, pk=None, partial=True, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -238,7 +238,7 @@ class TaskViewSet(
         serializer = self.serializer_class(task, context={"request": request})
         return Response(serializer.data, status=http_status)
 
-    def destroy(self, request, pk=None):
+    def destroy(self, request, pk=None, **kwargs):
         task = self.get_object()
         if task.state in TASK_INCOMPLETE_STATES:
             return Response(status=status.HTTP_409_CONFLICT)
@@ -260,17 +260,19 @@ class TaskViewSet(
         responses={202: AsyncOperationResponseSerializer},
     )
     @action(detail=False, methods=["post"])
-    def purge(self, request):
+    def purge(self, request, **kwargs):
         """
         Purge task-records for tasks in 'final' states.
         """
         serializer = PurgeSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         current_user = get_current_user()
+        task_kwargs = {"user_pk": None if current_user is None else current_user.pk}
+        task_kwargs.update(kwargs)
         task = dispatch(
             purge,
             args=[serializer.data["finished_before"], list(serializer.data["states"])],
-            kwargs={"user_pk": None if current_user is None else current_user.pk},
+            kwargs=task_kwargs,
         )
         return OperationPostponedResponse(task, request)
 
@@ -282,7 +284,7 @@ class TaskViewSet(
         ),
     )
     @action(detail=True)
-    def profile_artifacts(self, request, pk):
+    def profile_artifacts(self, request, pk, **kwargs):
         """
         Return pre-signed URLs used for downloading raw profile artifacts.
         """
@@ -333,7 +335,7 @@ class TaskGroupViewSet(mixins.RetrieveModelMixin, mixins.ListModelMixin, NamedMo
         request=TaskCancelSerializer,
         responses={200: TaskGroupSerializer, 409: TaskGroupSerializer},
     )
-    def partial_update(self, request, pk=None, partial=True):
+    def partial_update(self, request, pk=None, partial=True, **kwargs):
         TaskCancelSerializer(data=request.data, context={"request": request}).is_valid(
             raise_exception=True
         )

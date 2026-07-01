@@ -13,7 +13,8 @@ from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app.models.content import Artifact
 from pulpcore.app.models.status import AppStatus
 from pulpcore.app.redis_connection import get_redis_connection
-from pulpcore.app.serializers.status import StatusSerializer
+from pulpcore.app.serializers.status import StatusSerializer, V4StatusSerializer
+from pulpcore.app.settings import ENABLE_V4_API, REST_FRAMEWORK
 from pulpcore.app.util import get_domain
 
 _logger = logging.getLogger(__name__)
@@ -47,7 +48,7 @@ class StatusView(APIView):
         operation_id="status_read",
         responses={200: StatusSerializer},
     )
-    def get(self, request):
+    def get(self, request, **kwargs):
         """
         Returns status and app information about Pulp.
 
@@ -100,7 +101,18 @@ class StatusView(APIView):
         }
 
         context = {"request": request}
-        serializer = StatusSerializer(data, context=context)
+
+        # If V4 is enabled, we'll set up to use the "old" serializer for v3
+        # and the new one with api_version for anything else
+        if ENABLE_V4_API:
+            if request.version == "v3":
+                serializer = StatusSerializer(data, context=context)
+            else:
+                data["api_version"] = request.version
+                data["supported_api_versions"] = REST_FRAMEWORK["ALLOWED_VERSIONS"]
+                serializer = V4StatusSerializer(data, context=context)
+        else:
+            serializer = StatusSerializer(data, context=context)
         return Response(serializer.data)
 
     @staticmethod
@@ -153,7 +165,7 @@ class LivezView(APIView):
         operation_id="livez_read",
         responses={200: None},
     )
-    def get(self, request):
+    def get(self, request, **kwargs):
         """
         Returns 200 OK when API is alive.
         """

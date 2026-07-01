@@ -23,6 +23,7 @@ from pulpcore.app.models import (
 from pulpcore.app.models.fields import EncryptedJSONField
 from pulpcore.app.models.status import AppStatus
 from pulpcore.app.role_util import get_users_with_perms
+from pulpcore.app.settings import REST_FRAMEWORK
 from pulpcore.app.util import get_domain_pk
 from pulpcore.constants import TASK_CHOICES, TASK_INCOMPLETE_STATES, TASK_STATES
 from pulpcore.exceptions import exception_to_dict
@@ -142,6 +143,8 @@ class Task(BaseModel, AutoAddObjPermsMixin):
     deferred = models.BooleanField(default=True, null=True)
 
     result = models.JSONField(default=None, null=True, encoder=DjangoJSONEncoder)
+
+    version = models.TextField(default=REST_FRAMEWORK.get("DEFAULT_VERSION", "v3"))
 
     @property
     def user(self):
