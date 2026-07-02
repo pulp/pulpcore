@@ -160,11 +160,12 @@ def test_task_schedule_domain(domain_factory, pulpcore_bindings):
                 break
 
         assert task_schedules is not None and task_schedules.results[0].last_task is not None
-        assert f"/{domain_name}/" in task_schedules.results[0].pulp_href
-        tasks = pulpcore_bindings.TasksApi.list(name=task_name, pulp_domain=domain_name)
-        assert tasks.count == 1
-        assert tasks.results[0].state == "completed"
-        assert f"/{domain_name}/" in tasks.results[0].pulp_href
+        ts = task_schedules.results[0]
+        assert f"/{domain_name}/" in ts.pulp_href
+        assert f"/{domain_name}/" in ts.last_task
+        task = pulpcore_bindings.TasksApi.read(ts.last_task)
+        assert task.state == "completed"
+        assert f"/{domain_name}/" in task.pulp_href
     finally:
         subprocess.run(
             [
