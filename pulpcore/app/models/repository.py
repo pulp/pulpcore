@@ -1028,13 +1028,24 @@ class RepositoryVersion(BaseModel):
         if content_qs is None:
             content_qs = Content.objects
 
-        # Try to not even attempt to evaluate the content_ids on the python side.
-        content_ids_subquery = (
+        return content_qs.filter(pk__in=self.content_ids_subquery())
+
+    def content_ids_subquery(self):
+        """
+        Return this version's ``content_ids`` as a database-side ``unnest`` subquery.
+
+        Using a subquery keeps the content unit UUIDs inside PostgreSQL instead of loading the
+        whole array into Python and passing each UUID as a bound query parameter. This avoids the
+        per-query parameter limit and the memory/serialization cost for large repository versions.
+
+        Returns:
+            django.db.models.QuerySet: A values queryset yielding the content unit UUIDs.
+        """
+        return (
             RepositoryVersion.objects.filter(pk=self.pk)
             .annotate(cids=Func(F("content_ids"), function="unnest"))
             .values_list("cids", flat=True)
         )
-        return content_qs.filter(pk__in=content_ids_subquery)
 
     @property
     def content(self):
@@ -1148,7 +1159,9 @@ class RepositoryVersion(BaseModel):
         if not base_version:
             return Content.objects.filter(version_memberships__version_added=self)
 
-        return Content.objects.filter(pk__in=self.content).exclude(pk__in=base_version.content)
+        return Content.objects.filter(pk__in=self.content_ids_subquery()).exclude(
+            pk__in=base_version.content_ids_subquery()
+        )
 
     def removed(self, base_version=None):
         """
@@ -1161,7 +1174,9 @@ class RepositoryVersion(BaseModel):
         if not base_version:
             return Content.objects.filter(version_memberships__version_removed=self)
 
-        return Content.objects.filter(pk__in=base_version.content).exclude(pk__in=self.content)
+        return Content.objects.filter(pk__in=base_version.content_ids_subquery()).exclude(
+            pk__in=self.content_ids_subquery()
+        )
 
     def contains(self, content):
         """
