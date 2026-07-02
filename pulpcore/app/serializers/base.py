@@ -63,6 +63,16 @@ def _reverse(reverse, request, obj):
 class HrefFieldMixin:
     """A mixin to configure related fields to generate relative hrefs."""
 
+    def use_pk_only_optimization(self):
+        """Disable DRF's PK-only optimization when domains are enabled.
+
+        DRF's optimization passes a PKOnlyObject (no pulp_domain) to get_url,
+        causing _reverse to fall back to the default domain.
+        """
+        if settings.DOMAIN_ENABLED:
+            return False
+        return super().use_pk_only_optimization()
+
     def get_url(self, obj, view_name, request, *args, **kwargs):
         # Removes the request from the arguments to display relative hrefs.
         self.reverse = _reverse(self.reverse, request, obj)
