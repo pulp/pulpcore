@@ -275,7 +275,11 @@ def _clean_app_status(sender, apps, verbosity, **kwargs):
         AppStatus.objects.filter(last_heartbeat__lt=TransactionNow() - F("ttl")).delete()
 
 
-def _populate_access_policies(sender, apps, verbosity, **kwargs):
+def _populate_access_policies(sender, apps=None, verbosity=0, **kwargs):
+    from django.apps import apps as django_apps
+
+    if apps is None:
+        apps = django_apps
     from pulpcore.app.util import get_view_urlpattern
     from pulpcore.app.viewsets import LoginViewSet
 
@@ -319,7 +323,11 @@ def _populate_access_policies(sender, apps, verbosity, **kwargs):
                             )
 
 
-def _populate_system_id(sender, apps, verbosity, **kwargs):
+def _populate_system_id(sender, apps=None, verbosity=0, **kwargs):
+    from django.apps import apps as django_apps
+
+    if apps is None:
+        apps = django_apps
     SystemID = apps.get_model("core", "SystemID")
     if not SystemID.objects.exists():
         SystemID().save()
@@ -328,8 +336,10 @@ def _populate_system_id(sender, apps, verbosity, **kwargs):
 def _ensure_default_domain(sender, **kwargs):
     table_names = connection.introspection.table_names()
     if "core_domain" in table_names:
+        import pulpcore.app.util
         from pulpcore.app.util import get_default_domain
 
+        pulpcore.app.util.default_domain = None
         default = get_default_domain()  # Cache the default domain
         # Match the Pulp settings
         if (
@@ -343,7 +353,11 @@ def _ensure_default_domain(sender, **kwargs):
             default.save(skip_hooks=True)
 
 
-def _populate_roles(sender, apps, verbosity, **kwargs):
+def _populate_roles(sender, apps=None, verbosity=0, **kwargs):
+    from django.apps import apps as django_apps
+
+    if apps is None:
+        apps = django_apps
     role_prefix = f"{sender.label}."
     # collect all plugin defined roles
     desired_roles = {}
@@ -402,7 +416,11 @@ def adjust_roles(apps, role_prefix, desired_roles, verbosity=1):
         role.permissions.set(permissions)
 
 
-def _populate_artifact_serving_distribution(sender, apps, verbosity, **kwargs):
+def _populate_artifact_serving_distribution(sender, apps=None, verbosity=0, **kwargs):
+    from django.apps import apps as django_apps
+
+    if apps is None:
+        apps = django_apps
     if (
         settings.STORAGES["default"]["BACKEND"] == "pulpcore.app.models.storage.FileSystem"
         or not settings.REDIRECT_TO_OBJECT_STORAGE

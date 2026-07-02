@@ -575,15 +575,20 @@ async def test_app_status_fixture_is_reusable(app_status, repeat):
 
 
 @pytest.mark.asyncio
-@pytest.mark.django_db
+@pytest.mark.django_db(transaction=True)
 async def test_async_pull_through_add(ca1, monkeypatch, app_status):
     set_guid(uuid.uuid4())  # required for creating a task, no easily mockable
     monkeypatch.setattr(
         "pulpcore.tasking.tasks.async_are_resources_available", AsyncMock(return_value=True)
     )
     monkeypatch.setattr("pulpcore.tasking.tasks.wakeup_worker", Mock())
+    monkeypatch.setattr(
+        "pulpcore.tasking.redis_tasks.async_are_resources_available",
+        AsyncMock(return_value=True),
+    )
 
     repo = await Repository.objects.acreate(name=str(uuid.uuid4()))
+    monkeypatch.setattr(Repository, "CONTENT_TYPES", [Content])
     try:
         task = await repo.async_pull_through_add_content(ca1)
         assert task.state == TASK_STATES.COMPLETED
