@@ -644,6 +644,7 @@ settings = DjangoDynaconf(
         distributed_publication_retention_period_validator,
     ],
     post_hooks=(otel_middleware_hook, saml2_settings_hook),
+    dynaboxify=False,
 )
 
 _logger = getLogger(__name__)
