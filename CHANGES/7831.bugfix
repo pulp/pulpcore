@@ -1,0 +1,3 @@
+Optimized the ``q`` complex filter to compose ``NOT``/``AND``/``OR`` operands using ``pk__in``
+subqueries instead of the ``EXCEPT``/``INTERSECT``/``UNION`` set operations, avoiding full-table
+scans and disk-spilling sorts on large content sets.

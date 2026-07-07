@@ -215,7 +215,7 @@ class ExpressionFilterField(forms.CharField):
             self.complexity = self.expr.complexity + 1
 
         def evaluate(self, qs):
-            return qs.difference(self.expr.evaluate(qs))
+            return qs.exclude(pk__in=self.expr.evaluate(qs).values("pk"))
 
     class _AndAction:
         def __init__(self, tokens):
@@ -223,11 +223,10 @@ class ExpressionFilterField(forms.CharField):
             self.complexity = sum((expr.complexity for expr in self.exprs)) + 1
 
         def evaluate(self, qs):
-            return (
-                self.exprs[0]
-                .evaluate(qs)
-                .intersection(*[expr.evaluate(qs) for expr in self.exprs[1:]])
-            )
+            result = qs
+            for expr in self.exprs:
+                result = result.filter(pk__in=expr.evaluate(qs).values("pk"))
+            return result
 
     class _OrAction:
         def __init__(self, tokens):
@@ -235,7 +234,10 @@ class ExpressionFilterField(forms.CharField):
             self.complexity = sum((expr.complexity for expr in self.exprs)) + 1
 
         def evaluate(self, qs):
-            return self.exprs[0].evaluate(qs).union(*[expr.evaluate(qs) for expr in self.exprs[1:]])
+            query = models.Q()
+            for expr in self.exprs:
+                query |= models.Q(pk__in=expr.evaluate(qs).values("pk"))
+            return qs.filter(query)
 
     def __init__(self, *args, **kwargs):
         self.filterset = kwargs.pop("filter").parent
