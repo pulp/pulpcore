@@ -1,0 +1,1 @@
+Deactivated dynaconf boxify. This can affect plugins that access nested settings via dot instead of subscribing.
