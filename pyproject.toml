@@ -76,7 +76,7 @@ saml2 = ["djangosaml2>=1.12.0,<1.13"]
 kafka = [
   # Pinned because project warns "things might (and will) break with every update"
   "cloudevents==1.11.0",
-  "confluent-kafka>=2.4.0,<2.15.0",
+  "confluent-kafka>=2.4.0,<2.16.0",
 ]
 diagnostics = ["pyinstrument~=5.0", "memray~=1.17"]
 uvloop = ["uvloop>=0.20,<0.22"]
