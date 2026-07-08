@@ -15,6 +15,13 @@ class DefaultAccessPolicy(AccessPolicy):
     An AccessPolicy that takes default statements from the view(set).
     """
 
+    def get_user_group_values(self, user):
+        """Let a stateless principal supply its groups via ``group_names`` instead of the ORM."""
+        group_names = getattr(user, "group_names", None)
+        if group_names is not None:
+            return list(group_names)
+        return super().get_user_group_values(user)
+
     @classmethod
     def get_access_policy(cls, view):
         """

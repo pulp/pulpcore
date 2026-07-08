@@ -1,4 +1,4 @@
-"""Access to the ``OIDC_AUTH`` setting and per-provider JWKS clients."""
+"""Access to the ``WORKLOAD_IDENTITY`` setting and per-provider JWKS clients."""
 
 import functools
 
@@ -7,7 +7,7 @@ from jwt import PyJWKClient
 
 
 def config():
-    return getattr(settings, "OIDC_AUTH", {}) or {}
+    return getattr(settings, "WORKLOAD_IDENTITY", {}) or {}
 
 
 def strategy():
