@@ -206,7 +206,27 @@ class ExpressionFilterField(forms.CharField):
             self.value = form.cleaned_data[key]
             self.complexity = 1
 
+        def as_q(self):
+            # A leaf reduces to a plain WHERE condition (Q) only when it is a standard
+            # django-filter Filter: no custom .filter() override, no method, no .distinct().
+            # Anything else (href/prn resolvers, repository_version, method filters, ...) is
+            # opaque and must be applied via its own queryset transform in evaluate().
+            f = self.filter
+            if (
+                type(f).filter is not filters.Filter.filter
+                or getattr(f, "method", None) is not None
+                or getattr(f, "distinct", False)
+            ):
+                return None
+            if self.value in EMPTY_VALUES:
+                return models.Q()
+            q = models.Q(**{f"{f.field_name}__{f.lookup_expr}": self.value})
+            return ~q if f.exclude else q
+
         def evaluate(self, qs):
+            q = self.as_q()
+            if q is not None:
+                return qs.filter(q)
             return self.filter.filter(qs, self.value)
 
     class _NotAction:
@@ -214,7 +234,15 @@ class ExpressionFilterField(forms.CharField):
             self.expr = tokens[0][0]
             self.complexity = self.expr.complexity + 1
 
+        def as_q(self):
+            child = self.expr.as_q()
+            return None if child is None else ~child
+
         def evaluate(self, qs):
+            q = self.as_q()
+            if q is not None:
+                return qs.filter(q)
+            # Opaque operand: anti-join via a NOT IN subquery.
             return qs.exclude(pk__in=self.expr.evaluate(qs).values("pk"))
 
     class _AndAction:
@@ -222,10 +250,30 @@ class ExpressionFilterField(forms.CharField):
             self.exprs = tokens[0]
             self.complexity = sum((expr.complexity for expr in self.exprs)) + 1
 
+        def as_q(self):
+            children = [expr.as_q() for expr in self.exprs]
+            if any(child is None for child in children):
+                return None
+            query = models.Q()
+            for child in children:
+                query &= child
+            return query
+
         def evaluate(self, qs):
+            # Fold every Q-reducible operand into a single flat WHERE, and apply only the
+            # genuinely opaque operands as pk__in semi-join subqueries.
             result = qs
+            combined = models.Q()
+            has_q = False
             for expr in self.exprs:
-                result = result.filter(pk__in=expr.evaluate(qs).values("pk"))
+                child = expr.as_q()
+                if child is not None:
+                    combined &= child
+                    has_q = True
+                else:
+                    result = result.filter(pk__in=expr.evaluate(qs).values("pk"))
+            if has_q:
+                result = result.filter(combined)
             return result
 
     class _OrAction:
@@ -233,10 +281,25 @@ class ExpressionFilterField(forms.CharField):
             self.exprs = tokens[0]
             self.complexity = sum((expr.complexity for expr in self.exprs)) + 1
 
+        def as_q(self):
+            children = [expr.as_q() for expr in self.exprs]
+            if any(child is None for child in children):
+                return None
+            query = children[0]
+            for child in children[1:]:
+                query |= child
+            return query
+
         def evaluate(self, qs):
+            # Reducible operands stay as flat OR'd conditions; opaque operands contribute a
+            # pk__in subquery. Both are combined in a single WHERE clause.
             query = models.Q()
             for expr in self.exprs:
-                query |= models.Q(pk__in=expr.evaluate(qs).values("pk"))
+                child = expr.as_q()
+                if child is not None:
+                    query |= child
+                else:
+                    query |= models.Q(pk__in=expr.evaluate(qs).values("pk"))
             return qs.filter(query)
 
     def __init__(self, *args, **kwargs):
