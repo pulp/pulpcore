@@ -1,12 +1,7 @@
-"""DRF authentication that validates third-party OIDC tokens.
+"""DRF authentication that validates a third-party OIDC token against its provider's JWKS.
 
-This authenticator accepts an OIDC token issued by a configured third-party
-provider (for example a GitHub Actions workflow token), verifies it against the
-provider's JWKS, maps its claims to grants and returns a stateless
-``OIDCPrincipal``. No database user is involved.
-
-The token may arrive either as a ``Bearer`` token or inside a ``Basic`` header
-(the way ``docker login`` passes a token, where the password field carries it).
+The token arrives as a ``Bearer`` token or as the password in a ``Basic`` header (``docker login``).
+On success its claims map to grants and a stateless ``WorkloadIdentityPrincipal`` is returned.
 """
 
 import base64
@@ -17,16 +12,16 @@ import jwt
 from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 
-from pulpcore.app.oidc import config, rules
-from pulpcore.app.oidc.principal import OIDCPrincipal
+from pulpcore.app.workload_identity import config, rules
+from pulpcore.app.workload_identity.principal import WorkloadIdentityPrincipal
 
-_logger = logging.getLogger("pulpcore.oidc")
+_logger = logging.getLogger("pulpcore.workload_identity")
 
 
-class OIDCAuthentication(BaseAuthentication):
+class WorkloadIdentityAuthentication(BaseAuthentication):
     """Authenticate requests bearing a third-party OIDC token.
 
-    On success this returns a stateless ``OIDCPrincipal`` whose permissions are
+    On success this returns a stateless ``WorkloadIdentityPrincipal`` whose permissions are
     derived entirely from the grants earned by the token's claims. When the
     request carries no token, or a token that is not meant for us, the
     authenticator returns ``None`` so that other authenticators may run.
@@ -49,19 +44,16 @@ class OIDCAuthentication(BaseAuthentication):
                 return None
             if ":" not in decoded:
                 return None
-            # docker login passes the token as the password; the username is ignored.
             _, _, password = decoded.partition(":")
             return password
         return None
 
     def authenticate(self, request):
-        """Validate an OIDC token and return ``(OIDCPrincipal, claims)``, or ``None`` if not ours."""
+        """Validate an OIDC token and return ``(WorkloadIdentityPrincipal, claims)``, or ``None`` if not ours."""
         token = self._get_token(request)
         if not token:
             return None
 
-        # Peek at the issuer without verifying the signature. If this is not a
-        # JWT at all, it is not meant for us.
         try:
             unverified = jwt.decode(token, options={"verify_signature": False})
         except jwt.PyJWTError:
@@ -72,7 +64,6 @@ class OIDCAuthentication(BaseAuthentication):
         if provider is None:
             return None
 
-        # Verify the token for real against the provider's JWKS.
         try:
             signing_key = config.jwks_client(provider).get_signing_key_from_jwt(token)
             claims = jwt.decode(
@@ -96,9 +87,7 @@ class OIDCAuthentication(BaseAuthentication):
             )
             raise AuthenticationFailed("No matching OIDC rule.")
 
-        # The username is intentionally empty: the container registry token
-        # subject must be empty for a principal with no database user.
-        return (OIDCPrincipal(grants, username=""), claims)
+        return (WorkloadIdentityPrincipal(grants, username=""), claims)
 
     def authenticate_header(self, request):
         """Return the ``WWW-Authenticate`` value so failures are 401, not 403."""

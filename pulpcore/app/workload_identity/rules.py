@@ -5,7 +5,7 @@ Nothing here touches the database. A grant is ``{"role": <name>, "scope": {...}}
 
 import fnmatch
 
-from pulpcore.app.oidc.config import strategy
+from pulpcore.app.workload_identity.config import strategy
 
 
 def _matches(match_spec, claims):

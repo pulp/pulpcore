@@ -316,11 +316,8 @@ AUTHENTICATION_JSON_HEADER = ""
 AUTHENTICATION_JSON_HEADER_JQ_FILTER = ""
 AUTHENTICATION_JSON_HEADER_OPENAPI_SECURITY_SCHEME = {}
 
-# OIDC authentication for CI clients. Empty by default (feature off). See
-# pulpcore.app.oidc.config for the schema. Enable by adding
-# "pulpcore.app.oidc.authentication.OIDCAuthentication" to
-# REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"] and populating this setting.
-OIDC_AUTH = {}
+# Workload identity authentication for CI clients. Off while empty.
+WORKLOAD_IDENTITY = {}
 
 ALLOWED_IMPORT_PATHS = []
 

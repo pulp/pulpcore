@@ -6,9 +6,7 @@ A grant is ``{"role": <role name>, "scope": {...}}``. Scope is one of:
 * ``{"type": "domain", "domain": "<name>"}``
 * ``{"type": "object", "name": "<name>"}`` (or ``"prn"``)
 
-This module is used both by the principal (single-object ``has_perm`` and the model-level
-permission set) and by ``get_objects_for_user`` (list filtering). Roles are read from the
-database to resolve their permissions; the grant assignment itself is never stored.
+Roles are read from the database to resolve their permissions; the grant assignment is never stored.
 """
 
 from django.db.models import Q
@@ -48,11 +46,19 @@ def _scope_matches(scope, obj):
         domain = getattr(obj, "pulp_domain", None)
         return domain is not None and domain.name == scope.get("domain")
     if stype == "object":
-        checks = (("prn", "prn"), ("name", "name"))
-        provided = [key for key, _ in checks if key in scope]
-        if not provided:
+        if "prn" not in scope and "name" not in scope:
             return False
-        return all(str(getattr(obj, attr, None)) == str(scope[key]) for key, attr in checks if key in scope)
+        if "prn" in scope:
+            from pulpcore.app.util import get_prn
+
+            try:
+                if get_prn(obj) != scope["prn"]:
+                    return False
+            except Exception:
+                return False
+        if "name" in scope and str(getattr(obj, "name", None)) != str(scope["name"]):
+            return False
+        return True
     return False
 
 
@@ -67,15 +73,26 @@ def has_grant_perm(grants, permission, obj=None):
     return False
 
 
-def permissions_for(grants):
-    """The set of ``app_label.codename`` the grants confer, for model-level ``get_all_permissions``."""
+def permissions_for(grants, obj=None):
+    """The set of ``app_label.codename`` the grants confer, scoped to ``obj`` when given."""
     from pulpcore.app.models.role import Role
 
     names = {g.get("role") for g in grants if g.get("role")}
-    perms = set()
+    if not names:
+        return set()
+    role_perms = {}
     for role in Role.objects.filter(name__in=names).prefetch_related("permissions__content_type"):
-        for perm in role.permissions.all():
-            perms.add(f"{perm.content_type.app_label}.{perm.codename}")
+        role_perms[role.name] = {
+            f"{perm.content_type.app_label}.{perm.codename}" for perm in role.permissions.all()
+        }
+    perms = set()
+    for grant in grants:
+        conferred = role_perms.get(grant.get("role"))
+        if not conferred:
+            continue
+        if obj is not None and not _scope_matches(grant.get("scope", {}), obj):
+            continue
+        perms |= conferred
     return perms
 
 
@@ -98,7 +115,12 @@ def grants_queryset(grants, permission, queryset):
             clause = Q(pulp_domain__name=scope.get("domain"))
         elif stype == "object":
             if "prn" in scope:
-                clause = Q(prn=scope["prn"])
+                from pulpcore.app.util import extract_pk
+
+                try:
+                    clause = Q(pk=extract_pk(scope["prn"], only_prn=True))
+                except Exception:
+                    clause = None
             elif "name" in scope:
                 clause = Q(name=scope["name"])
         if clause is not None:

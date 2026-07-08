@@ -1,24 +1,14 @@
-"""A stateless principal used as ``request.user`` for OIDC-authenticated clients.
+"""A stateless ``request.user`` for workload-identity clients.
 
-``OIDCPrincipal`` deliberately does not subclass Django's user model or
-``PermissionsMixin``. It implements its own permission-checking methods so that
-Django never dispatches permission checks for it to ``AUTHENTICATION_BACKENDS``.
-Authorization is derived entirely from the list of grants carried on the object.
+It does not subclass the user model, and answers permission checks from its own grants so Django
+never dispatches them to ``AUTHENTICATION_BACKENDS``.
 """
 
-from pulpcore.app.oidc.authz import has_grant_perm, permissions_for
+from pulpcore.app.workload_identity.authz import has_grant_perm, permissions_for
 
 
-class OIDCPrincipal:
-    """A user-like object backed by OIDC grants rather than a database row.
-
-    This object is safe to assign to ``request.user``. It exposes the attributes
-    the request path reads and answers permission checks from its ``grants``.
-
-    Attributes:
-        grants (list): The list of grant dicts backing this principal.
-        username (str): The principal's username (may be empty).
-    """
+class WorkloadIdentityPrincipal:
+    """A user-like object backed by grants rather than a database row, safe as ``request.user``."""
 
     is_authenticated = True
     is_active = True
@@ -27,14 +17,9 @@ class OIDCPrincipal:
     is_staff = False
     pk = None
     id = None
+    group_names = ()
 
     def __init__(self, grants, username=""):
-        """Initialize the principal.
-
-        Args:
-            grants (list): A list of grant dicts (see ``authz`` for the shape).
-            username (str): The principal's username. Defaults to an empty string.
-        """
         self.grants = grants
         self.username = username
 
@@ -59,8 +44,11 @@ class OIDCPrincipal:
         return any(perm.startswith(prefix) for perm in self.get_all_permissions())
 
     def get_all_permissions(self, obj=None):
-        """The set of ``app_label.codename`` permissions the grants confer."""
-        return permissions_for(self.grants)
+        """``app_label.codename`` at the model level, bare codenames for an object (Pulp's convention)."""
+        perms = permissions_for(self.grants, obj)
+        if obj is None:
+            return perms
+        return {perm.split(".", 1)[1] for perm in perms}
 
     def get_group_permissions(self, obj=None):
         """The permissions from groups; always empty for a principal."""

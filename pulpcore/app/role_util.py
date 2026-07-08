@@ -173,11 +173,10 @@ def get_objects_for_user(
     accept_domain_perms=True,
     accept_global_perms=True,
 ):
-    from pulpcore.app.oidc.principal import OIDCPrincipal
+    from pulpcore.app.workload_identity.principal import WorkloadIdentityPrincipal
 
-    if isinstance(user, OIDCPrincipal):
-        # Stateless OIDC principal: scope from its per-request grants, not the role tables.
-        from pulpcore.app.oidc.authz import grants_queryset
+    if isinstance(user, WorkloadIdentityPrincipal):
+        from pulpcore.app.workload_identity.authz import grants_queryset
 
         grants = user.grants
         if isinstance(perms, str):
