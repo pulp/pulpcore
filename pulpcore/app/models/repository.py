@@ -1111,10 +1111,6 @@ class RepositoryVersion(BaseModel):
         content_ids = set(self._get_content_ids())
         to_remove = set(content.values_list("pk", flat=True))
         with transaction.atomic():
-            if to_remove:
-                self.content_ids = list(content_ids - to_remove)
-                self.save()
-
             # Normalize representation if content has already been added in this version.
             # Undo addition by deleting the RepositoryContent.
             RepositoryContent.objects.filter(
@@ -1128,6 +1124,10 @@ class RepositoryVersion(BaseModel):
                 repository=self.repository, content_id__in=content, version_removed=None
             )
             q_set.update(version_removed=self)
+
+            if to_remove:
+                self.content_ids = list(content_ids - to_remove)
+                self.save()
 
     def set_content(self, content):
         """
