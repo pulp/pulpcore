@@ -1,7 +1,8 @@
 """DRF authentication that validates a third-party OIDC token against its provider's JWKS.
 
-The token arrives as a ``Bearer`` token or as the password in a ``Basic`` header (``docker login``).
-On success its claims map to grants and a stateless ``WorkloadIdentityPrincipal`` is returned.
+The token arrives as a ``Bearer`` token, or as the password of a ``Basic`` header whose username
+is the reserved workload-identity name. On success its claims map to grants and a stateless
+``WorkloadIdentityPrincipal`` is returned.
 """
 
 import base64
@@ -28,7 +29,12 @@ class WorkloadIdentityAuthentication(BaseAuthentication):
     """
 
     def _get_token(self, request):
-        """Return the token from the Authorization header (Bearer, or Basic password), or None."""
+        """Return the token from the Authorization header, or None.
+
+        Accepts a ``Bearer`` token, or a token carried as the password of a ``Basic`` header whose
+        username is the reserved workload-identity name. Any other ``Basic`` header is left for the
+        regular authenticators.
+        """
         header = request.META.get("HTTP_AUTHORIZATION", "")
         parts = header.split()
         if len(parts) != 2:
@@ -42,9 +48,9 @@ class WorkloadIdentityAuthentication(BaseAuthentication):
                 decoded = base64.b64decode(value).decode("utf-8")
             except (binascii.Error, ValueError, UnicodeDecodeError):
                 return None
-            if ":" not in decoded:
+            username, sep, password = decoded.partition(":")
+            if not sep or username != config.basic_username():
                 return None
-            _, _, password = decoded.partition(":")
             return password
         return None
 

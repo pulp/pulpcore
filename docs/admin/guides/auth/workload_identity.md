@@ -17,8 +17,7 @@ and you want its permissions scoped to specific repositories without long-lived 
 
 ## How it works
 
-On each request the token is read from the `Authorization` header,
-either as a `Bearer` token or as the password of a `Basic` header (the way `docker login` sends a token).
+On each request the token is read from the `Authorization: Bearer` header.
 The `iss` claim selects a configured provider,
 the signature is verified against the provider's JWKS,
 and `iss`, `aud` and `exp` are checked.
@@ -28,7 +27,6 @@ A token that matches no rule is rejected with a 401.
 ## Enabling
 
 Add the authentication class to `DEFAULT_AUTHENTICATION_CLASSES`,
-before `BasicAuthentication` so the `docker login` path reaches it,
 then populate `WORKLOAD_IDENTITY`:
 
 ```python title="settings.py"

@@ -55,5 +55,5 @@ class WorkloadIdentityPrincipal:
         return set()
 
     def __str__(self):
-        """The username, or ``"oidc-principal"`` when it is empty."""
-        return self.username or "oidc-principal"
+        """The username, or ``"workload-identity"`` when it is empty."""
+        return self.username or "workload-identity"
