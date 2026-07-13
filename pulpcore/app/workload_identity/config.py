@@ -18,6 +18,11 @@ def providers():
     return config().get("providers", {}) or {}
 
 
+def basic_username():
+    """The reserved username that flags a token carried in the ``Basic`` password field."""
+    return config().get("basic_auth_username", "workload-identity")
+
+
 def provider_for_issuer(issuer):
     """Return the provider entry whose ``issuer`` matches, or ``None``."""
     for entry in providers().values():

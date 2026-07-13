@@ -123,3 +123,33 @@ def check_artifact_checksums(app_configs, **kwargs):
         )
 
     return messages
+
+
+@register(deploy=True)
+def workload_identity_reserved_username(app_configs, **kwargs):
+    from pulpcore.app.workload_identity import config
+
+    messages = []
+    if not config.config():
+        return messages
+
+    username = config.basic_username()
+    try:
+        from django.contrib.auth import get_user_model
+
+        collides = get_user_model().objects.filter(username=username).exists()
+    except Exception:
+        return messages
+
+    if collides:
+        messages.append(
+            CheckWarning(
+                f"The WORKLOAD_IDENTITY basic_auth_username '{username}' is also a database user. "
+                "A token presented with this username over Basic auth is validated as a workload "
+                "identity token, not as that user's password. Set basic_auth_username to a name "
+                "that is not a real user to avoid ambiguity.",
+                id="pulpcore.W006",
+            )
+        )
+
+    return messages
