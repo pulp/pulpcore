@@ -136,6 +136,8 @@ def test_principal_is_authenticated_and_has_perm(repo_viewer_role, repo_a):
 
 
 def test_get_objects_for_user_scopes_by_grants(repo_viewer_role, repo_a, repo_b):
-    principal = WorkloadIdentityPrincipal([{"role": "repo_viewer", "scope": {"type": "object", "name": "repo-a"}}])
+    principal = WorkloadIdentityPrincipal(
+        [{"role": "repo_viewer", "scope": {"type": "object", "name": "repo-a"}}]
+    )
     qs = get_objects_for_user(principal, "core.view_repository", Repository.objects.all())
     assert set(qs.values_list("name", flat=True)) == {"repo-a"}
