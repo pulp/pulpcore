@@ -16,10 +16,11 @@ class DefaultAccessPolicy(AccessPolicy):
     """
 
     def get_user_group_values(self, user):
-        """Let a stateless principal supply its groups via ``group_names`` instead of the ORM."""
-        group_names = getattr(user, "group_names", None)
-        if group_names is not None:
-            return list(group_names)
+        """Let a stateless principal supply its groups directly instead of via the ORM."""
+        from pulpcore.app.workload_identity.principal import WorkloadIdentityPrincipal
+
+        if isinstance(user, WorkloadIdentityPrincipal):
+            return list(user.group_names)
         return super().get_user_group_values(user)
 
     @classmethod
