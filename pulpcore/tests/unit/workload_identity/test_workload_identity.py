@@ -5,11 +5,9 @@ from django.test import override_settings
 from pulpcore.app.models import Repository
 from pulpcore.app.models.role import Role
 from pulpcore.app.role_util import get_objects_for_user
-
 from pulpcore.app.workload_identity.authz import grants_queryset, has_grant_perm, permissions_for
 from pulpcore.app.workload_identity.principal import WorkloadIdentityPrincipal
 from pulpcore.app.workload_identity.rules import grants_for
-
 
 PROVIDER = {
     "issuer": "https://issuer",
