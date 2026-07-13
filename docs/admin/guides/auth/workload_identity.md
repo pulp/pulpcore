@@ -53,6 +53,13 @@ A workload identity request is not a database user,
 so it is not automatically granted a role on the tasks it creates.
 Grant a role carrying `core.view_task` when the CI needs to read its own tasks.
 
+## Domains
+
+When `DOMAIN_ENABLED` is on, scope an object grant to a single tenant:
+use a `prn`, or add a `domain` to a `name` scope.
+A bare `name` matches that name in every domain, which breaks the isolation between domains.
+Pulp raises a startup check warning when a name scope is left unqualified while domains are enabled.
+
 ## Configuration reference
 
 Every option of the `WORKLOAD_IDENTITY` setting, annotated:
@@ -94,10 +101,13 @@ WORKLOAD_IDENTITY = {
                             "role": "file.filerepository_owner",
 
                             # Required. Where the role applies. One of:
-                            #   {"type": "global"}                       everywhere
-                            #   {"type": "domain", "domain": "<name>"}   objects in a domain
-                            #   {"type": "object", "name": "<name>"}     one object by name
-                            #   {"type": "object", "prn": "<prn>"}       one object by PRN
+                            #   {"type": "global"}                                    everywhere
+                            #   {"type": "domain", "domain": "<name>"}                every object in a domain
+                            #   {"type": "object", "name": "<name>"}                  one object by name
+                            #   {"type": "object", "name": "<name>", "domain": "<d>"} one object by name in a domain
+                            #   {"type": "object", "prn": "<prn>"}                    one object by PRN (domain-safe)
+                            # With DOMAIN_ENABLED, qualify a name scope with a domain (or use prn):
+                            # a bare name otherwise matches that name in every domain.
                             "scope": {"type": "object", "name": "prod"},
                         },
                     ],

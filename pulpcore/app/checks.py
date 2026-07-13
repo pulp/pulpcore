@@ -153,3 +153,63 @@ def workload_identity_reserved_username(app_configs, **kwargs):
         )
 
     return messages
+
+
+@register(deploy=True)
+def workload_identity_domain_scopes(app_configs, **kwargs):
+    from pulpcore.app.workload_identity import config
+
+    messages = []
+    if settings.DOMAIN_ENABLED or not config.config():
+        return messages
+
+    uses_domain = any(
+        grant.get("scope", {}).get("type") == "domain" or "domain" in grant.get("scope", {})
+        for provider in config.providers().values()
+        for rule in provider.get("rules", [])
+        for grant in rule.get("grants", [])
+    )
+    if uses_domain:
+        messages.append(
+            CheckWarning(
+                "WORKLOAD_IDENTITY has grant scopes that reference a domain, but DOMAIN_ENABLED is "
+                "False. Domain scoping has no effect while domains are disabled.",
+                id="pulpcore.W007",
+            )
+        )
+
+    return messages
+
+
+@register(deploy=True)
+def workload_identity_unqualified_name_scopes(app_configs, **kwargs):
+    from pulpcore.app.workload_identity import config
+
+    messages = []
+    if not settings.DOMAIN_ENABLED or not config.config():
+        return messages
+
+    risky = False
+    for provider in config.providers().values():
+        for rule in provider.get("rules", []):
+            for grant in rule.get("grants", []):
+                scope = grant.get("scope", {})
+                if (
+                    scope.get("type") == "object"
+                    and "name" in scope
+                    and "domain" not in scope
+                    and "prn" not in scope
+                ):
+                    risky = True
+
+    if risky:
+        messages.append(
+            CheckWarning(
+                "WORKLOAD_IDENTITY has object scopes matched by name only while DOMAIN_ENABLED is "
+                "True. A bare name matches that object in every domain, breaking domain isolation. "
+                "Add a 'domain' to the scope or use a 'prn'.",
+                id="pulpcore.W008",
+            )
+        )
+
+    return messages
