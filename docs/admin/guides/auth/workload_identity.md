@@ -1,29 +1,35 @@
 # Workload Identity Authentication
 
-A CI job can authenticate to Pulp with a short-lived OIDC token from a third-party provider (for
-example GitHub Actions) instead of a stored username and password. The token is verified against the
-provider's public keys, its claims are matched against a set of rules, and the request is granted
-roles for that request only. No user is created and nothing is written to the role tables.
+A CI job can authenticate to Pulp with a short-lived OIDC token from a third-party provider (for example GitHub Actions),
+instead of a stored username and password.
+The token is verified against the provider's public keys,
+its claims are matched against a set of rules,
+and the request is granted roles for that request only.
+No user is created and nothing is written to the role tables.
 
-This suits supply-chain workflows where a pipeline pushes content and you want its permissions scoped
-to specific repositories without long-lived secrets.
+This suits supply-chain workflows where a pipeline pushes content
+and you want its permissions scoped to specific repositories without long-lived secrets.
 
 !!! note
-    The token is an OIDC token, but this is unrelated to the user-facing SSO login covered in
-    [Using external service](external.md). It identifies a workload, not a person.
+    The token is an OIDC token,
+    but this is unrelated to the user-facing SSO login covered in [Using external service](external.md).
+    It identifies a workload, not a person.
 
 ## How it works
 
-On each request the token is read from the `Authorization` header, either as a `Bearer` token or as
-the password of a `Basic` header (the way `docker login` sends a token). The `iss` claim selects a
-configured provider, the signature is verified against the provider's JWKS, and `iss`, `aud` and
-`exp` are checked. The remaining claims are matched against the provider's rules to compute the roles
-and scopes for the request. A token that matches no rule is rejected with a 401.
+On each request the token is read from the `Authorization` header,
+either as a `Bearer` token or as the password of a `Basic` header (the way `docker login` sends a token).
+The `iss` claim selects a configured provider,
+the signature is verified against the provider's JWKS,
+and `iss`, `aud` and `exp` are checked.
+The remaining claims are matched against the provider's rules to compute the roles and scopes for the request.
+A token that matches no rule is rejected with a 401.
 
 ## Enabling
 
-Add the authentication class to `DEFAULT_AUTHENTICATION_CLASSES`, before `BasicAuthentication` so the
-`docker login` path reaches it, then populate `WORKLOAD_IDENTITY`:
+Add the authentication class to `DEFAULT_AUTHENTICATION_CLASSES`,
+before `BasicAuthentication` so the `docker login` path reaches it,
+then populate `WORKLOAD_IDENTITY`:
 
 ```python title="settings.py"
 REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"] = [
@@ -33,17 +39,20 @@ REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"] = [
 ]
 ```
 
-No change to `AUTHENTICATION_BACKENDS` is needed. The feature stays off while `WORKLOAD_IDENTITY` is
-empty, so adding the class alone changes nothing.
+No change to `AUTHENTICATION_BACKENDS` is needed.
+The feature stays off while `WORKLOAD_IDENTITY` is empty,
+so adding the class alone changes nothing.
 
-With the example below, a push from the `main` branch of `my-org/app` is granted the
-`file.filerepository_owner` role on the repository named `prod`, and nothing else. See the
-configuration reference at the end for every option.
+With the example below,
+a push from the `main` branch of `my-org/app` is granted the `file.filerepository_owner` role on the repository named `prod`,
+and nothing else.
+See the configuration reference at the end for every option.
 
 ## Roles for asynchronous tasks
 
-Operations that dispatch a task, such as a sync, return a task the client polls. A workload identity
-request is not a database user, so it is not automatically granted a role on the tasks it creates.
+Operations that dispatch a task, such as a sync, return a task the client polls.
+A workload identity request is not a database user,
+so it is not automatically granted a role on the tasks it creates.
 Grant a role carrying `core.view_task` when the CI needs to read its own tasks.
 
 ## Configuration reference
