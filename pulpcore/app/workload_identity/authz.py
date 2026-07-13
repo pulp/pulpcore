@@ -56,6 +56,10 @@ def _scope_matches(scope, obj):
                 return False
         if "name" in scope and str(getattr(obj, "name", None)) != str(scope["name"]):
             return False
+        if "domain" in scope:
+            domain = getattr(obj, "pulp_domain", None)
+            if domain is None or domain.name != scope["domain"]:
+                return False
         return True
     return False
 
@@ -121,6 +125,8 @@ def grants_queryset(grants, permission, queryset):
                     clause = None
             elif "name" in scope:
                 clause = Q(name=scope["name"])
+                if has_domain and "domain" in scope:
+                    clause &= Q(pulp_domain__name=scope["domain"])
         if clause is not None:
             predicate = clause if predicate is None else (predicate | clause)
 
