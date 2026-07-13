@@ -26,9 +26,7 @@ def _role_has_perm(role_name, app_label, codename):
         role = Role.objects.get(name=role_name)
     except Role.DoesNotExist:
         return False
-    return role.permissions.filter(
-        content_type__app_label=app_label, codename=codename
-    ).exists()
+    return role.permissions.filter(content_type__app_label=app_label, codename=codename).exists()
 
 
 def _scope_matches(scope, obj):
