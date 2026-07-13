@@ -25,10 +25,10 @@ class WorkloadIdentityPrincipal:
 
     @property
     def groups(self):
-        """An empty ``Group`` queryset so ``user.groups.all()`` never crashes."""
+        """The ``Group`` objects named by ``group_names`` (empty by default)."""
         from pulpcore.app.models import Group
 
-        return Group.objects.none()
+        return Group.objects.filter(name__in=self.group_names)
 
     def has_perm(self, perm, obj=None):
         """Whether the grants confer ``perm`` (optionally scoped to ``obj``)."""
