@@ -6,7 +6,7 @@ from typing import Optional
 
 from django.conf import settings
 
-_bootstrap_servers = settings.get("KAFKA_BOOTSTRAP_SERVERS")
+_bootstrap_servers = getattr(settings, "KAFKA_BOOTSTRAP_SERVERS")
 
 
 if _bootstrap_servers is None:
