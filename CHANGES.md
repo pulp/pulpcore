@@ -8,6 +8,32 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.85.24 (2026-07-14) {: #3.85.24 }
+
+### REST API {: #3.85.24-rest-api }
+
+#### Bugfixes {: #3.85.24-rest-api-bugfix }
+
+- Fixed `RelatedField` rendering wrong domain in hrefs when `DOMAIN_ENABLED=True`.
+  [#7835](https://github.com/pulp/pulpcore/issues/7835)
+- Fixed `RepositoryVersion.remove_content` failing when the queryset is derived from `self.content` and the repository version contains >= 65,535 content items. The lazy queryset was re-evaluated after `content_ids` was already updated, causing `RepositoryContent` entries to be left orphaned.
+  [#7851](https://github.com/pulp/pulpcore/issues/7851)
+- Fixed a race condition when creating content with `file_url` or `upload` that could result in a duplicate artifact error.
+
+### Plugin API {: #3.85.24-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.85.24-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.24-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.85.23 (2026-06-09) {: #3.85.23 }
 
 ### REST API {: #3.85.23-rest-api }

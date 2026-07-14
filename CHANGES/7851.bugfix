@@ -1,1 +1,0 @@
-Fixed `RepositoryVersion.remove_content` failing when the queryset is derived from `self.content` and the repository version contains >= 65,535 content items. The lazy queryset was re-evaluated after `content_ids` was already updated, causing `RepositoryContent` entries to be left orphaned.
