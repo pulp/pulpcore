@@ -5,6 +5,7 @@ from binascii import Error as Base64DecodeError
 from gettext import gettext as _
 
 import jq
+from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.backends import RemoteUserBackend
 from rest_framework.authentication import (
@@ -15,8 +16,6 @@ from rest_framework.authentication import (
     BasicAuthentication as OrigBasicAuthentication,
 )
 from rest_framework.exceptions import AuthenticationFailed
-
-from pulpcore.app import settings
 
 _logger = logging.getLogger(__name__)
 

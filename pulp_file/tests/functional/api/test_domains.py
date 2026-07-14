@@ -2,8 +2,8 @@ import json
 import uuid
 
 import pytest
+from django.conf import settings
 
-from pulpcore.app import settings
 from pulpcore.tests.functional.utils import download_file, generate_iso
 
 pytestmark = pytest.mark.skipif(not settings.DOMAIN_ENABLED, reason="Domains not enabled.")
