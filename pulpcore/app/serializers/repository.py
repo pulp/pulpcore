@@ -3,10 +3,11 @@ from gettext import gettext as _
 from urllib.parse import urlparse
 
 from cryptography.x509 import load_pem_x509_certificate
+from django.conf import settings
 from rest_framework import fields, serializers
 from rest_framework_nested.serializers import NestedHyperlinkedModelSerializer
 
-from pulpcore.app import models, settings
+from pulpcore.app import models
 from pulpcore.app.serializers import (
     DetailIdentityField,
     DetailRelatedField,

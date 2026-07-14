@@ -8,8 +8,8 @@ the case.
 import uuid
 
 import pytest
+from django.conf import settings
 
-from pulpcore.app import settings
 from pulpcore.client.pulp_file import RepositorySyncURL
 from pulpcore.client.pulpcore.exceptions import ApiException
 
