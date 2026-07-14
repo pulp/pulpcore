@@ -9,6 +9,14 @@ TASK_SCHEDULING_LOCK = 42
 TASK_UNBLOCKING_LOCK = 84
 TASK_METRICS_LOCK = 74
 WORKER_CLEANUP_LOCK = 11
+#: Held (on the `default` alias) for the duration of a `migrate-all` run so two orchestration
+#: runs (e.g. two pods restarting at once) can't race each other across DATABASES aliases.
+MIGRATION_ORCHESTRATOR_LOCK = 137
+#: Held (on the `default` alias) for the duration of a `move-domain` run so two moves (of the
+#: same or different domains) can't race each other -- `move-domain` is a rare, admin-run,
+#: inherently-serial operation, so a single fleet-wide lock (rather than one keyed per domain)
+#: keeps the locking logic as simple as `migrate-all`'s at negligible cost.
+DOMAIN_MOVE_LOCK = 138
 
 # Reasons to send along a task worker wakeup call.
 TASK_WAKEUP_UNBLOCK = "unblock"

@@ -123,6 +123,27 @@ pulp_scenario_env: {}
 VARSYAML
 fi
 
+# Domain-aware multi-database routing (architecture/domain-db-offloading-design.md) needs a
+# second, independently-addressable Postgres instance to exercise the "data_1" satellite alias in
+# pulpcore.tests.unit -- this adds a standalone Postgres service container reachable from the
+# "pulp" service over the shared "pulp_ci_bridge" docker network. The "data_1" connection settings
+# themselves are passed straight to the pytest invocation in script.sh (mirroring how
+# PULP_DATABASES__default__USER=postgres is already passed inline there), so this scenario needs
+# no change to the "pulp" service's own baked-in environment.
+if [ "$TEST" = "multi_db" ]; then
+  cat >> .ci/ansible/vars/main.yaml << VARSYAML
+  - name: "postgres-satellite"
+    image: "docker.io/library/postgres:16"
+    env:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
+      POSTGRES_DB: "pulp"
+multi_db_test: true
+pulp_scenario_settings: null
+pulp_scenario_env: {}
+VARSYAML
+fi
+
 cat >> .ci/ansible/vars/main.yaml << VARSYAML
 ...
 VARSYAML

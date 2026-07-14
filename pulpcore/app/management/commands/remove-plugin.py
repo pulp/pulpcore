@@ -5,7 +5,7 @@ from django.apps import apps
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.management import BaseCommand, CommandError, call_command
-from django.db import IntegrityError, connection
+from django.db import IntegrityError, connections
 from django.db.migrations.exceptions import IrreversibleError
 from django.db.models.signals import post_migrate
 
@@ -84,24 +84,40 @@ class Command(BaseCommand):
 
     def _remove_plugin_data(self, app_label):
         """
-        Remove all plugin data.
+        Remove all plugin data, on every configured database alias.
 
         Removal happens via ORM to be sure that all relations are cleaned properly as well,
         e.g. Master-Detail, FKs to various content plugins in pulp-2to3-migration.
 
         In some cases, the order in which models are removed matters, e.g. FK is a part of
         uniqueness constraint. Try to remove such problematic models later.
-        """
 
+        management-command-audit.md finding (new, not previously in the Known Issues Registry):
+        a plugin's data-plane rows exist on every alias (identical schema everywhere, KI-16), and
+        any domain hosted on a satellite has its own copy of that plugin's rows there too. The
+        original single-connection version of this method only ever deleted `default`'s rows,
+        permanently orphaning the plugin's tables/rows on every satellite. Looping every alias
+        here is unconditional, matching `rotate-db-key.py`'s KI-22 fix -- this is an infrequent,
+        explicitly operator-invoked, destructive command where correctness matters far more than
+        the overhead of looping.
+        """
+        for alias in settings.DATABASES:
+            self._remove_plugin_data_from_alias(app_label, alias)
+        # Control-plane only (ContentType, AccessPolicy, Role -- see CONTROL_PLANE_LABELS):
+        # authoritative on `default` alone, so this runs exactly once, not once per alias.
+        self._remove_indirect_plugin_data(app_label)
+
+    def _remove_plugin_data_from_alias(self, app_label, alias):
+        self.stdout.write(_("Removing {} plugin data from alias '{}'...").format(app_label, alias))
         models_to_delete = set(apps.all_models[app_label].values())
         prev_model_count = len(models_to_delete) + 1
         while models_to_delete and len(models_to_delete) < prev_model_count:
             # while there is something to delete and something is being deleted on each iteration
             removed_models = set()
             for model in models_to_delete:
-                self.stdout.write(_("Removing model: {}").format(model))
+                self.stdout.write(_("Removing model: {} (alias '{}')").format(model, alias))
                 try:
-                    model.objects.filter().delete()
+                    model.objects.using(alias).filter().delete()
                 except IntegrityError:
                     continue
                 else:
@@ -114,23 +130,24 @@ class Command(BaseCommand):
             # Never-happen case
             raise CommandError(
                 (
-                    "Data for the following models can't be removed: {}. Please contact plugin "
-                    "maintainers."
-                ).format(list(models_to_delete))
+                    "Data for the following models can't be removed on alias '{}': {}. Please "
+                    "contact plugin maintainers."
+                ).format(alias, list(models_to_delete))
             )
 
-        self._remove_indirect_plugin_data(app_label)
-
-    def _drop_plugin_tables(self, app_label):
+    def _drop_plugin_tables(self, app_label, alias):
         """
-        Drop plugin table with raw SQL.
+        Drop plugin table with raw SQL, on the given database alias.
         """
-        with connection.cursor() as cursor:
+        with connections[alias].cursor() as cursor:
             cursor.execute(DROP_PLUGIN_TABLES_QUERY.format(app_label=app_label))
 
     def _unapply_migrations(self, app_label):
         """
-        Unapply migrations so the plugin can be installed/run django migrations again if needed.
+        Unapply migrations so the plugin can be installed/run django migrations again if needed,
+        on every configured database alias (same rationale as `_remove_plugin_data` -- the
+        plugin's schema exists on every alias, KI-16, so it must be unmigrated everywhere, not
+        just on `default`).
 
         Make sure no post migration signals are connected/run (it's enough to disable only
         `populate_access_policy` and `populate_roles` for the requested plugin, so after
@@ -148,13 +165,20 @@ class Command(BaseCommand):
             if app_config.label == "core":
                 post_migrate.disconnect(sender=app_config, dispatch_uid="delete_anon_identifier")
 
-        try:
-            call_command("migrate", app_label=app_label, migration_name="zero")
-        except (IrreversibleError, Exception):
-            # a plugin has irreversible migrations or some other problem, drop the tables and fake
-            # that migrations are unapplied.
-            self._drop_plugin_tables(app_label)
-            call_command("migrate", app_label=app_label, migration_name="zero", fake=True)
+        for alias in settings.DATABASES:
+            try:
+                call_command("migrate", app_label=app_label, migration_name="zero", database=alias)
+            except (IrreversibleError, Exception):
+                # a plugin has irreversible migrations or some other problem, drop the tables and
+                # fake that migrations are unapplied.
+                self._drop_plugin_tables(app_label, alias)
+                call_command(
+                    "migrate",
+                    app_label=app_label,
+                    migration_name="zero",
+                    fake=True,
+                    database=alias,
+                )
 
     def handle(self, *args, **options):
         plugin_name = options["plugin_name"]

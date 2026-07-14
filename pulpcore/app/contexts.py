@@ -12,6 +12,13 @@ x_task_diagnostics_var = ContextVar("x_profile_task")
 current_pulp_api_version = ContextVar(
     "current_pulp_api_version", default=settings.REST_FRAMEWORK.get("DEFAULT_VERSION", "v3")
 )
+#: Set for the duration of a `migrate` management command run to the alias being migrated (see
+#: `pulpcore.app.management.commands.migrate` and `PulpDomainRouter._resolve_db`). Historical
+#: ("frozen state") models used inside `RunPython` migrations pre-date the domain router and were
+#: never written with an explicit `.using(...)`, so without this the router would silently pin
+#: every control-plane query (and every unrouted data-plane query) to `"default"` regardless of
+#: which `--database` a given `migrate` invocation actually targets.
+_current_migration_alias = ContextVar("current_migration_alias", default=None)
 
 
 @contextmanager
@@ -43,6 +50,15 @@ def with_domain(domain):
         yield
     finally:
         _current_domain.reset(token)
+
+
+@contextmanager
+def with_migration_alias(alias):
+    token = _current_migration_alias.set(alias)
+    try:
+        yield
+    finally:
+        _current_migration_alias.reset(token)
 
 
 @contextmanager
