@@ -4,6 +4,8 @@ from collections import namedtuple
 from gettext import gettext as _
 
 from django.conf import settings
+from django.db import connections, utils as db_utils
+from django.db.migrations.executor import MigrationExecutor
 from django.db.models import Sum
 from drf_spectacular.utils import extend_schema
 from rest_framework.response import Response
@@ -77,6 +79,7 @@ class StatusView(APIView):
             redis_status = {"connected": False}
 
         db_status = {"connected": self._get_db_conn_status()}
+        databases = self._get_databases_status()
 
         online_workers = AppStatus.objects.online().filter(app_type="worker")
         online_api_apps = AppStatus.objects.online().filter(app_type="api")
@@ -93,6 +96,7 @@ class StatusView(APIView):
             "online_api_apps": online_api_apps,
             "online_content_apps": online_content_apps,
             "database_connection": db_status,
+            "databases": databases,
             "redis_connection": redis_status,
             "storage": _disk_usage(),
             "content_settings": content_settings,
@@ -118,6 +122,47 @@ class StatusView(APIView):
             return False
         else:
             return True
+
+    @staticmethod
+    def _get_databases_status():
+        """
+        Per-alias connectivity + migration-completeness report, one entry per configured
+        `settings.DATABASES` alias (phase1-status-endpoint; see the design doc's "Updated
+        `/status/` endpoint" section for the exact shape). For a single-database deployment
+        this is a one-element list equivalent to `database_connection` above; it becomes
+        actionable once satellite aliases exist, e.g. for an operator/monitoring check that
+        wants to know *which* alias is unreachable or mid-migration rather than just "the
+        database" in aggregate.
+
+        `migrations_complete` is `None` (not `False`) when connectivity itself fails, since
+        migration completeness can't be determined without a connection -- mirrors the JSON
+        shape in the design doc, and avoids conflating "definitely has pending migrations"
+        with "unknown, because we can't even connect".
+        """
+        results = []
+        for alias in settings.DATABASES:
+            connected = False
+            migrations_complete = None
+            try:
+                connections[alias].ensure_connection()
+                connected = True
+                executor = MigrationExecutor(connections[alias])
+                targets = executor.loader.graph.leaf_nodes()
+                migrations_complete = not executor.migration_plan(targets)
+            except db_utils.OperationalError:
+                _logger.exception(
+                    _("Cannot connect to database alias '%(alias)s' during status check."),
+                    {"alias": alias},
+                )
+            except Exception:
+                _logger.exception(
+                    _("Failed to determine migration status for database alias '%(alias)s'."),
+                    {"alias": alias},
+                )
+            results.append(
+                {"alias": alias, "connected": connected, "migrations_complete": migrations_complete}
+            )
+        return results
 
     @staticmethod
     def _get_redis_conn_status():

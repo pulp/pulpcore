@@ -1,7 +1,9 @@
+from django.conf import settings
 from django.contrib.postgres.fields import HStoreField
+from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.db import models
-from django_lifecycle import BEFORE_DELETE, BEFORE_UPDATE, hook
+from django_lifecycle import BEFORE_CREATE, BEFORE_DELETE, BEFORE_UPDATE, hook
 
 from pulpcore.app.models import AutoAddObjPermsMixin, BaseModel
 from pulpcore.exceptions import DomainProtectedError
@@ -32,6 +34,16 @@ class Domain(BaseModel, AutoAddObjPermsMixin):
         storage_settings (EncryptedJSONField): Settings needed to configure storage backend
         redirect_to_object_storage (models.BooleanField): Redirect to object storage in content app
         hide_guarded_distributions (models.BooleanField): Hide guarded distributions in content app
+        database_alias (models.SlugField): The `settings.DATABASES` alias where this domain's
+            data-plane objects (repositories, content, artifacts, etc.) reside. Defaults to
+            "default" so existing single-database deployments are unaffected. This field is
+            internal/operational only -- it is never exposed through the public API (see
+            `DomainSerializer`) and is only ever changed by admin-run `pulpcore-manager`
+            tooling (`move-domain`), never by end users.
+        moving (models.BooleanField): Whether this domain is currently in the middle of being
+            moved between database aliases by the `move-domain` command. While `True`, write
+            operations for this domain are rejected and no new tasks are dispatched for it.
+            Internal/operational only, same visibility rules as `database_alias`.
     """
 
     name = models.SlugField(null=False, unique=True)
@@ -43,6 +55,18 @@ class Domain(BaseModel, AutoAddObjPermsMixin):
     # Pulp settings that are appropriate to be set on a "per domain" level
     redirect_to_object_storage = models.BooleanField(default=True)
     hide_guarded_distributions = models.BooleanField(default=False)
+    # Internal/operational-only fields for domain-aware database routing. Never exposed via the
+    # public API (intentionally excluded from DomainSerializer.Meta.fields) and only ever written
+    # by admin-run `pulpcore-manager` CLI tooling (`move-domain`, `sync-domains`), never by
+    # end users or any REST endpoint.
+    database_alias = models.SlugField(
+        default="default",
+        help_text="DATABASES alias where this domain's data-plane objects reside.",
+    )
+    moving = models.BooleanField(
+        default=False,
+        help_text="True while this domain's data is being moved between database aliases.",
+    )
 
     def get_storage(self):
         """Returns this domain's instantiated storage class."""
@@ -65,13 +89,34 @@ class Domain(BaseModel, AutoAddObjPermsMixin):
     def prevent_default_deletion(self):
         raise models.ProtectedError("Default domain can not be updated/deleted.", [self])
 
+    @hook(BEFORE_CREATE)
+    @hook(BEFORE_UPDATE, when="database_alias", has_changed=True)
+    def _validate_database_alias(self):
+        """Ensure `database_alias` always refers to a real, configured DATABASES alias."""
+        if self.database_alias not in settings.DATABASES:
+            raise ValidationError(
+                {
+                    "database_alias": (
+                        f"'{self.database_alias}' is not a configured DATABASES alias."
+                    )
+                }
+            )
+
     @hook(BEFORE_DELETE, when="name", is_not="default")
     def _cleanup_orphans_pre_delete(self):
-        protected_content_set = self.content_set.exclude(version_memberships__isnull=True)
+        # This domain's data-plane objects may live on a satellite alias (KI-04): the reverse
+        # FK managers below must be explicitly routed there, since the router's instance-hint
+        # check only recognizes models with a `pulp_domain` attribute, which `self` (the Domain
+        # itself) does not have.
+        protected_content_set = self.content_set.using(self.database_alias).exclude(
+            version_memberships__isnull=True
+        )
         if protected_content_set.exists():
             raise DomainProtectedError()
-        self.content_set.filter(version_memberships__isnull=True).delete()
-        for artifact in self.artifact_set.all().iterator():
+        self.content_set.using(self.database_alias).filter(
+            version_memberships__isnull=True
+        ).delete()
+        for artifact in self.artifact_set.using(self.database_alias).all().iterator():
             # Delete on by one to properly cleanup the storage.
             artifact.delete()
 

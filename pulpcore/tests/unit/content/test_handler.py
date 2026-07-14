@@ -8,7 +8,8 @@ from aiohttp.web_exceptions import HTTPMovedPermanently
 from django.db import IntegrityError
 from django_guid import clear_guid, set_guid
 
-from pulpcore.app.models import AppStatus
+from pulpcore.app.contexts import with_domain
+from pulpcore.app.models import AppStatus, Domain
 from pulpcore.constants import TASK_STATES
 from pulpcore.content.handler import CheckpointListings, Handler, PathNotResolved
 from pulpcore.plugin.models import (
@@ -22,6 +23,7 @@ from pulpcore.plugin.models import (
     Repository,
     RepositoryVersion,
 )
+from pulpcore.tests.unit.test_multi_database_routing import SATELLITE_ALIAS, requires_multi_db
 
 
 @pytest.fixture
@@ -316,6 +318,61 @@ def test_pull_through_save_single_artifact_content(
         url=f"{remote123.url}/c123", remote=remote123, content_artifact=ca
     ).first()
     assert ra is not None
+
+
+@requires_multi_db
+@pytest.mark.django_db(databases=["default", SATELLITE_ALIAS])
+def test_pull_through_save_single_artifact_content_multi_db(
+    request123, download_result_mock, monkeypatch, tmp_path
+):
+    """KI-27 regression: the real pull-through save path (`Handler._save_artifact`) must not
+    crash with `RecursionError` under a multi-DB configuration, and the objects it creates must
+    end up on the domain's actual database alias, not silently on `default`.
+
+    Builds the `RemoteArtifact` the exact same way `content/handler.py`'s pull-through code does
+    (`ContentArtifact(relative_path=...)` -- unsaved, no `pulp_domain` set yet -- followed by
+    `RemoteArtifact(remote=..., url=..., content_artifact=...)`, mirroring lines ~909/~1073 of
+    `content/handler.py`), while a satellite-routed `Domain` is the active ContextVar -- this is
+    exactly `test_pull_through_save_single_artifact_content` (which passes even pre-fix on a
+    single-DB deployment, since the router is never registered/invoked there at all) re-run with
+    `PulpDomainRouter` actually active, which is what turns the latent bug into a crash.
+    """
+    domain = Domain.objects.create(
+        name="ki27-pull-through-domain",
+        storage_class="pulpcore.app.models.storage.FileSystem",
+        storage_settings={"location": str(tmp_path)},
+        database_alias=SATELLITE_ALIAS,
+    )
+    try:
+        with with_domain(domain):
+            remote = Remote.objects.create(name="123", url="https://123")
+            handler = Handler()
+            remote.get_remote_artifact_content_type = Mock(return_value=Content)
+            content_init_mock = Mock(return_value=Content())
+            monkeypatch.setattr(Content, "init_from_artifact_and_relative_path", content_init_mock)
+            ca = ContentArtifact(relative_path="c123")
+            ra = RemoteArtifact(url=f"{remote.url}/c123", remote=remote, content_artifact=ca)
+
+            content_artifacts = handler._save_artifact(download_result_mock, ra, request=request123)
+            artifact = content_artifacts[ra.content_artifact.relative_path].artifact
+
+            assert Artifact.objects.using(SATELLITE_ALIAS).filter(pk=artifact.pk).exists()
+            assert not Artifact.objects.using("default").filter(pk=artifact.pk).exists()
+            saved_ra = (
+                RemoteArtifact.objects.using(SATELLITE_ALIAS)
+                .filter(url=f"{remote.url}/c123", remote=remote)
+                .first()
+            )
+            assert saved_ra is not None
+            assert saved_ra.pulp_domain_id == domain.pk
+    finally:
+        for alias in {SATELLITE_ALIAS, "default"}:
+            RemoteArtifact.objects.using(alias).filter(pulp_domain=domain).delete()
+            ContentArtifact.objects.using(alias).filter(content__pulp_domain=domain).delete()
+            Content.objects.using(alias).filter(pulp_domain=domain).delete()
+            Artifact.objects.using(alias).filter(pulp_domain=domain).delete()
+            Remote.objects.using(alias).filter(pulp_domain=domain).delete()
+        domain.delete()
 
 
 def test_pull_through_save_multi_artifact_content(

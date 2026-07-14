@@ -132,9 +132,16 @@ def get_objects_for_user_roles(
         ):
             return qs
 
-    user_role_pks = user.object_roles.filter(
-        domain__isnull=True, role__permissions=permission
-    ).values_list("object_id", flat=True)
+    # KI-01: UserRole/GroupRole are control-plane models (always on `default`), while `qs` may
+    # be routed to a satellite alias once domains can move. A lazy queryset here would compile
+    # to a cross-database subquery, which PostgreSQL cannot execute. `CrossDBQuerySetMixin`
+    # (Layer 2) already guards this at the `qs.filter()` call below, but materialize explicitly
+    # here too, belt-and-suspenders, since this value is also reused directly in `final_q`.
+    user_role_pks = list(
+        user.object_roles.filter(domain__isnull=True, role__permissions=permission).values_list(
+            "object_id", flat=True
+        )
+    )
     final_q = Q(pk_str__in=user_role_pks)
     if accept_domain_perms and hasattr(qs.model, "pulp_domain"):
         domains = list(
@@ -155,9 +162,12 @@ def get_objects_for_user_roles(
         )
 
     if use_groups:
-        group_role_pks = GroupRole.objects.filter(
-            group__in=user.groups.all(), role__permissions=permission, domain__isnull=True
-        ).values_list("object_id", flat=True)
+        # KI-01: same cross-DB-subquery concern as `user_role_pks` above.
+        group_role_pks = list(
+            GroupRole.objects.filter(
+                group__in=user.groups.all(), role__permissions=permission, domain__isnull=True
+            ).values_list("object_id", flat=True)
+        )
         final_q |= Q(pk_str__in=group_role_pks)
 
     return qs.annotate(pk_str=Cast("pk", output_field=CharField())).filter(final_q)
@@ -575,3 +585,44 @@ def get_groups_with_perms(
                 for_concrete_model=for_concrete_model,
             )
         return qs.distinct()
+
+
+def cleanup_roles_for_deleted_object(instance):
+    """
+    Explicitly delete `UserRole`/`GroupRole` rows for a deleted object (Layer 4, KI-05).
+
+    `BaseModel.user_roles`/`group_roles` are `GenericRelation`s, so Django's cascade-delete
+    `Collector` treats them like an `on_delete=CASCADE` FK and deletes matching `UserRole`/
+    `GroupRole` rows *using the same database alias as the object being deleted*
+    (`Collector(using=alias)`). That's correct for control-plane objects (already on
+    `default`, same alias as `UserRole`/`GroupRole`), but for a data-plane object routed to a
+    satellite, the cascade instead runs `UserRole.objects.using(<satellite>)...delete()` --
+    `.using()` always overrides the router, so this silently deletes zero rows against the
+    (schema-identical but empty-of-this-data) satellite copy of the `core_userrole` table,
+    while the *actual* `UserRole`/`GroupRole` rows on `default` are never touched. This function
+    is the explicit fix: always target `default` directly by `(content_type, object_id)`.
+    """
+    content_type = ContentType.objects.get_for_model(instance, for_concrete_model=False)
+    object_id = str(instance.pk)
+    UserRole.objects.using("default").filter(
+        content_type=content_type, object_id=object_id
+    ).delete()
+    GroupRole.objects.using("default").filter(
+        content_type=content_type, object_id=object_id
+    ).delete()
+
+
+def on_any_model_post_delete(sender, instance, **kwargs):
+    """
+    `post_delete` receiver for `cleanup_roles_for_deleted_object` (KI-05).
+
+    Connected (in `apps.py`, without a `sender` filter, since `BaseModel` is abstract and every
+    concrete model -- core and plugin -- inherits the `user_roles`/`group_roles`
+    `GenericRelation`s) only when `len(settings.DATABASES) > 1`: for single-database
+    deployments Django's own cascade delete already handles this correctly, so the receiver
+    isn't connected at all rather than paying a per-delete dispatch cost for a no-op.
+    """
+    from pulpcore.app.models import BaseModel
+
+    if isinstance(instance, BaseModel):
+        cleanup_roles_for_deleted_object(instance)
