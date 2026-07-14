@@ -1,1 +1,0 @@
-Fixed `RelatedField` rendering wrong domain in hrefs when `DOMAIN_ENABLED=True`.
