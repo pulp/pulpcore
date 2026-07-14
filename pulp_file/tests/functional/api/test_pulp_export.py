@@ -3,8 +3,8 @@ import uuid
 from pathlib import Path
 
 import pytest
+from django.conf import settings
 
-from pulpcore.app import settings
 from pulpcore.client.pulpcore.exceptions import ApiException, BadRequestException
 from pulpcore.constants import TASK_STATES
 
