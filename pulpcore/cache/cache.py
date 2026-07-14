@@ -5,6 +5,7 @@ from functools import wraps
 
 from aiohttp.web import FileResponse, HTTPSuccessful, Request, Response
 from aiohttp.web_exceptions import HTTPFound
+from django.conf import settings
 from django.http import FileResponse as ApiFileResponse
 from django.http import HttpResponse, HttpResponseRedirect
 from redis import ConnectionError
@@ -16,7 +17,6 @@ from pulpcore.app.redis_connection import (
     get_async_redis_connection,
     get_redis_connection,
 )
-from pulpcore.app.settings import settings
 from pulpcore.metrics import artifacts_size_counter
 from pulpcore.responses import ArtifactResponse
 

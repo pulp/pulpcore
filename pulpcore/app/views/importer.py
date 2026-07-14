@@ -2,11 +2,11 @@ import json
 import os
 from gettext import gettext as _
 
+from django.conf import settings
 from drf_spectacular.utils import extend_schema
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from pulpcore.app import settings
 from pulpcore.app.serializers import PulpImportCheckResponseSerializer, PulpImportCheckSerializer
 
 
