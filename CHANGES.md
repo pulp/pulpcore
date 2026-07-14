@@ -8,6 +8,30 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.49.64 (2026-07-14) {: #3.49.64 }
+
+### REST API {: #3.49.64-rest-api }
+
+#### Bugfixes {: #3.49.64-rest-api-bugfix }
+
+- Fixed `RelatedField` rendering wrong domain in hrefs when `DOMAIN_ENABLED=True`.
+  [#7835](https://github.com/pulp/pulpcore/issues/7835)
+- Fixed a race condition when creating content with `file_url` or `upload` that could result in a duplicate artifact error.
+
+### Plugin API {: #3.49.64-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.64-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.64-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.49.63 (2026-06-09) {: #3.49.63 }
 
 ### REST API {: #3.49.63-rest-api }
