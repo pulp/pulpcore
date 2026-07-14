@@ -1,7 +1,6 @@
+from django.conf import settings
 from redis import Redis
 from redis.asyncio import Redis as aRedis
-
-from pulpcore.app.settings import settings
 
 _conn = None
 _a_conn = None
