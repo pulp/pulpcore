@@ -61,11 +61,13 @@ class DomainResolvedGenericRelation:
     that `bulk_create()` -- which never calls `save()` -- still populates it correctly; see
     `pulpcore.app.viewsets.base.NamedModelViewSet.add_role` for a real `bulk_create()` call
     site. The `content_object` property below then resolves the target via
-    `.using(content_object_domain.database_alias)` when that field is set, raising loudly on
-    failure instead of silently swallowing it, and falls back to resolving on this row's own
-    alias whenever there's no recorded cross-plane domain (no target at all -- e.g. a
-    model-level `UserRole`/`GroupRole` grant -- or a control-plane target, which lives on the
-    same alias as this row anyway).
+    `.using(content_object_domain.database_alias)` when that field is set, and falls back to
+    resolving on this row's own alias whenever there's no recorded cross-plane domain (no
+    target at all -- e.g. a model-level `UserRole`/`GroupRole` grant -- or a control-plane
+    target, which lives on the same alias as this row anyway). Either way, a target that can't
+    be resolved (deleted, or -- for the cross-plane case -- possibly stale Domain replication)
+    logs and returns `None`, exactly like Django's own `GenericForeignKey.__get__` and like
+    every existing call site already expects; it does not raise.
 
     Fix for #2: the setter below never delegates to Django's `GenericForeignKey.__set__` (would
     reintroduce the bug) -- it sets `content_type`/`object_id` directly, always resolving
@@ -111,7 +113,18 @@ class DomainResolvedGenericRelation:
             try:
                 resolved = model_class.objects.using(alias).get(pk=self.object_id)
             except model_class.DoesNotExist:
-                _logger.error(
+                # Mirror Django's own GenericForeignKey.__get__ semantics (and the "no
+                # cross-plane domain recorded" branch below): a missing target is far more
+                # commonly a legitimately deleted object (e.g. a Task's created_resources
+                # pointing at a since-destroyed Repository/Export) than stale Domain
+                # replication, and every existing call site (RelatedResourceField,
+                # CreatedResourcePrnField, delete_incomplete_resources, etc.) already treats
+                # `content_object is None` as "gone, render/skip gracefully". Raising here
+                # instead turned that everyday case into an unhandled 500
+                # (see pulp task list rendering a Task whose created Export was deleted).
+                # Still log so a genuinely-stale satellite is discoverable via
+                # 'pulpcore-manager sync-domains', just without crashing the caller.
+                _logger.warning(
                     "content_object for %s (pk=%s) not found on alias '%s' "
                     "(content_type_id=%s, object_id=%s). The referenced object may have been "
                     "deleted, or Domain replication for this row's domain may be stale -- run "
@@ -122,7 +135,7 @@ class DomainResolvedGenericRelation:
                     self.content_type_id,
                     self.object_id,
                 )
-                raise
+                resolved = None
         else:
             # No cross-plane domain recorded: the target is itself control-plane, so it lives on
             # this (control-plane) row's own alias -- resolve there, mirroring normal Django GFK

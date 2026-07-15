@@ -10,18 +10,21 @@ handful of in-flight cross-plane rows still point at the old alias. This is an a
 and reporting (optionally purging) the resulting orphans here rather than by trying to eliminate
 them.
 
-This reuses the KI-18 `content_object` resolver (`DomainResolvedGenericRelation`, see
-`pulpcore.app.models.generic`) as the *only* detection mechanism: every model in scope already
-raises loudly (logs + re-raises `DoesNotExist`) when a cross-plane `content_object` can't be
-resolved on its recorded alias, so this sweep doesn't need any separate orphan-detection logic --
-it just needs to iterate the candidate rows and call `.content_object` on each.
+This does its own existence check per candidate row (`_target_exists()` below) rather than
+resolving through `DomainResolvedGenericRelation.content_object` (`pulpcore.app.models.generic`):
+that property must return `None` -- not raise -- for an unresolvable target, since every ordinary
+caller (`RelatedResourceField`, `CreatedResourcePrnField`, etc.) treats "target is gone" as a
+routine, gracefully-rendered case (e.g. a `Task.created_resources` entry for a since-deleted
+`Repository`), not a systemic failure worth surfacing as a 500. This sweep's job is exactly the
+opposite -- it needs to *notice* rows whose recorded cross-plane target can't be resolved on the
+alias it should live on -- so it queries for existence directly instead of piggy-backing on that
+lenient, widely-depended-on property.
 """
 
 from datetime import timedelta
 from logging import getLogger
 
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 
 from pulpcore.app.models import CreatedResource, ExportedResource
@@ -46,6 +49,20 @@ def _candidate_rows(model, cutoff):
         content_object_domain_id__isnull=False,
         pulp_last_updated__lt=cutoff,
     )
+
+
+def _target_exists(row):
+    """
+    Resolve whether `row`'s recorded cross-plane target actually exists on its recorded alias.
+
+    Mirrors `DomainResolvedGenericRelation.content_object`'s own resolution (content_type's
+    model class, `content_object_domain`'s alias, `object_id`) but as a direct `.exists()`
+    check rather than a `.get()` -- this sweep needs a boolean, not the object itself, and must
+    not depend on that property's (deliberately lenient) exception behavior.
+    """
+    model_class = row.content_type.model_class()
+    alias = row.content_object_domain.database_alias
+    return model_class.objects.using(alias).filter(pk=row.object_id).exists()
 
 
 def reconcile_cross_plane_references(
@@ -90,18 +107,21 @@ def reconcile_cross_plane_references(
         qs = _candidate_rows(model, cutoff)
         for row in qs.iterator():
             report["checked"] += 1
-            try:
-                row.content_object
-            except ObjectDoesNotExist:
-                # The resolver (DomainResolvedGenericRelation.content_object) already logged the
-                # specifics (model/pk/alias/content_type); we just tally here.
-                report["orphaned"] += 1
-                alias = (
-                    row.content_object_domain.database_alias
-                    if row.content_object_domain_id
-                    else None
-                )
+            if not _target_exists(row):
+                alias = row.content_object_domain.database_alias
                 age = timezone.now() - row.pulp_last_updated
+                log.error(
+                    "content_object for %s (pk=%s) not found on alias '%s' "
+                    "(content_type_id=%s, object_id=%s). The referenced object may have been "
+                    "deleted, or Domain replication for this row's domain may be stale -- run "
+                    "'pulpcore-manager sync-domains' to check.",
+                    model._meta.label,
+                    row.pk,
+                    alias,
+                    row.content_type_id,
+                    row.object_id,
+                )
+                report["orphaned"] += 1
                 report["orphans"].append(
                     {
                         "model": model._meta.label,
