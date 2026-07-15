@@ -28,7 +28,7 @@ Before a pull request can be merged, the tests must pass and it must be reviewed
 
 If the change you made requires a corresponding adjustment in e.g. `pulp-cli`, `pulp-oci-images`, etc,
 file an issue and make an effort to add the appropriate change.
-In doubt, ask on the original issue, PR.
+If in doubt, ask on the original issue or PR.
 
 ## To Cherry-Pick or Not
 
