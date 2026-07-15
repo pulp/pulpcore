@@ -13,7 +13,7 @@ from django.conf import settings
 
 from pulpcore.client.pulpcore import ApiException
 from pulpcore.constants import IMMEDIATE_TIMEOUT
-from pulpcore.tests.functional.utils import PulpTaskError, download_file
+from pulpcore.tests.functional.utils import SLEEP_TIME, PulpTaskError, download_file
 
 
 @pytest.fixture(scope="module")
@@ -476,10 +476,34 @@ def test_finalizer_task_runs_after_all_siblings(dispatch_task_group, monitor_tas
 @pytest.mark.parallel
 def test_cancel_task_group(pulpcore_bindings, dispatch_task_group, gen_user):
     """Test that task groups can be canceled."""
+    # `dummy_group_task` keeps dispatching new child tasks for several seconds after the group
+    # is created, and a `running` child (blocked in a plain, uninterruptible `time.sleep()`) can
+    # take a bit to actually finish transitioning once canceled. `cancel_task_group` only cancels
+    # the tasks that exist *at the moment it runs* and reports 409 if, right after that sweep,
+    # any task is still `running`/`waiting` (see `TaskGroupViewSet.partial_update` and
+    # `pulpcore.tasking.tasks.cancel_task_group`) -- so a task dispatched (or still running) in
+    # that narrow window can make an otherwise-successful cancel call race and 409. Retrying is
+    # safe (canceling an already-canceling/canceled task is a no-op) and lets a legitimately
+    # permitted cancel eventually succeed without weakening what this test actually verifies
+    # (that task groups -- and their RBAC-gated cancellation -- work).
+    cancel_retry_timeout = 60
+
+    def _cancel_task_group_retrying():
+        deadline = time.monotonic() + cancel_retry_timeout
+        while True:
+            try:
+                return pulpcore_bindings.TaskGroupsApi.task_groups_cancel(
+                    tgroup_href, {"state": "canceled"}
+                )
+            except ApiException as e:
+                if e.status != 409 or time.monotonic() >= deadline:
+                    raise
+                time.sleep(SLEEP_TIME)
+
     kwargs = {"inbetween": 1, "intervals": [10, 10, 10, 10, 10]}
     tgroup_href = dispatch_task_group("pulpcore.app.tasks.test.dummy_group_task", kwargs=kwargs)
 
-    tgroup = pulpcore_bindings.TaskGroupsApi.task_groups_cancel(tgroup_href, {"state": "canceled"})
+    tgroup = _cancel_task_group_retrying()
     for task in tgroup.tasks:
         assert task.state in ["canceled", "canceling"]
 
@@ -497,7 +521,7 @@ def test_cancel_task_group(pulpcore_bindings, dispatch_task_group, gen_user):
             assert "You do not have permission" in e.value.message
 
     with gen_user(model_roles=["core.task_owner"]):
-        pulpcore_bindings.TaskGroupsApi.task_groups_cancel(tgroup_href, {"state": "canceled"})
+        _cancel_task_group_retrying()
 
 
 LT_TIMEOUT = IMMEDIATE_TIMEOUT / 2
