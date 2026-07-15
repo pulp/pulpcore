@@ -4,7 +4,8 @@ from collections import namedtuple
 from gettext import gettext as _
 
 from django.conf import settings
-from django.db import connections, utils as db_utils
+from django.db import connections
+from django.db import utils as db_utils
 from django.db.migrations.executor import MigrationExecutor
 from django.db.models import Sum
 from drf_spectacular.utils import extend_schema

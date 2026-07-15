@@ -20,6 +20,7 @@ from pulpcore.app.models import (
     Domain,
     DomainMove,
 )
+
 from pulp_file.app.models import FileContent, FileRepository
 
 from .test_multi_database_routing import SATELLITE_ALIAS, requires_multi_db
