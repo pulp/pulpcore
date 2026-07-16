@@ -908,6 +908,37 @@ class RepositoryVersionQuerySet(models.QuerySet):
         return self.filter(content_ids__overlap=content_pks)
 
 
+class RepositoryVersionManager(models.Manager):
+    # `RepositoryVersionQuerySet.as_manager()` does not allow us to redefine `get_queryset`.
+    # Sadly, we have to replicate the filtering amenities too.
+    #
+    def get_queryset(self):
+        # Prevent the content_ids to be automatically hydrated.
+        return RepositoryVersionQuerySet(self.model, using=self._db).defer("content_ids")
+
+    def complete(self):
+        return self.get_queryset().filter(complete=True)
+
+    def with_content(self, content):
+        """
+        Filters repository versions that contain the provided content units.
+
+        Args:
+            content (django.db.models.QuerySet or list): Content queryset or list of PKs
+
+        Returns:
+            django.db.models.QuerySet: Repository versions which contains content.
+        """
+        if isinstance(content, models.QuerySet):
+            content_pks = content.values_list("pk", flat=True)
+        elif not content:
+            return self.none()
+        else:
+            content_pks = content
+
+        return self.get_queryset().filter(content_ids__overlap=content_pks)
+
+
 class RepositoryVersion(BaseModel):
     """
     A version of a repository's content set.
@@ -936,7 +967,7 @@ class RepositoryVersion(BaseModel):
         base_version (models.ForeignKey): The repository version this was created from.
     """
 
-    objects = RepositoryVersionQuerySet.as_manager()
+    objects = RepositoryVersionManager()
 
     repository = models.ForeignKey(Repository, on_delete=models.CASCADE)
     number = models.PositiveIntegerField(db_index=True)
@@ -997,15 +1028,13 @@ class RepositoryVersion(BaseModel):
         if content_qs is None:
             content_qs = Content.objects
 
-        content_ids = self.content_ids
-        if len(content_ids) >= 65535:
-            # Workaround for PostgreSQL's limit on the number of parameters in a query
-            content_ids = (
-                RepositoryVersion.objects.filter(pk=self.pk)
-                .annotate(cids=Func(F("content_ids"), function="unnest"))
-                .values_list("cids", flat=True)
-            )
-        return content_qs.filter(pk__in=content_ids)
+        # Try to not even attempt to evaluate the content_ids on the python side.
+        content_ids_subquery = (
+            RepositoryVersion.objects.filter(pk=self.pk)
+            .annotate(cids=Func(F("content_ids"), function="unnest"))
+            .values_list("cids", flat=True)
+        )
+        return content_qs.filter(pk__in=content_ids_subquery)
 
     @property
     def content(self):
@@ -1119,9 +1148,7 @@ class RepositoryVersion(BaseModel):
         if not base_version:
             return Content.objects.filter(version_memberships__version_added=self)
 
-        return Content.objects.filter(pk__in=self.content_ids).exclude(
-            pk__in=base_version.content_ids
-        )
+        return Content.objects.filter(pk__in=self.content).exclude(pk__in=base_version.content)
 
     def removed(self, base_version=None):
         """
@@ -1134,9 +1161,7 @@ class RepositoryVersion(BaseModel):
         if not base_version:
             return Content.objects.filter(version_memberships__version_removed=self)
 
-        return Content.objects.filter(pk__in=base_version.content_ids).exclude(
-            pk__in=self.content_ids
-        )
+        return Content.objects.filter(pk__in=base_version.content).exclude(pk__in=self.content)
 
     def contains(self, content):
         """
@@ -1145,7 +1170,7 @@ class RepositoryVersion(BaseModel):
         Returns:
             bool: True if the repository version contains the content, False otherwise
         """
-        return content.pk in self.content_ids
+        return content.pk in self.content
 
     def add_content(self, content):
         """
