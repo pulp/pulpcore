@@ -9,6 +9,7 @@ import logging
 
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 
 from pulpcore.app.models.base import BaseModel
@@ -19,6 +20,61 @@ _logger = logging.getLogger(__name__)
 #: Sentinel distinguishing "no in-memory value cached yet" from a legitimately cached `None`
 #: (a model-level `UserRole`/`GroupRole` grant has no target at all).
 _UNSET = object()
+
+#: Max hops when walking FKs to find a `pulp_domain` (see `_resolve_domain_id`). Two hops covers
+#: every known transitive case (`RepositoryVersion`/`RepositoryContent` -> `repository`,
+#: `ContentArtifact` -> `content`/`artifact`, `PublishedArtifact` -> `publication`) with room to
+#: spare, while still bounding the walk for models this can't resolve.
+_DOMAIN_WALK_MAX_DEPTH = 2
+
+
+def _resolve_domain_id(value, _depth=0, _seen=None):
+    """
+    Best-effort resolution of the `Domain` pk a `content_object` target belongs to.
+
+    Most data-plane models (`Repository`, `Content`, `Remote`, `Publication`, `Distribution`,
+    ...) carry their own `pulp_domain` FK and `getattr(value, "pulp_domain_id", None)` alone
+    would suffice. But several models that are common `content_object` targets -- notably
+    `RepositoryVersion`, `RepositoryContent`, `ContentArtifact`, `PublishedArtifact` -- have no
+    such field of their own; they only reach a domain transitively through a parent FK
+    (`.repository`, `.content`, `.publication`). Found empirically: a `CreatedResource` for a
+    satellite-hosted `RepositoryVersion` (the single most common created-resource shape --
+    every sync/publish creates one) silently got `content_object_domain_id=None`, which made
+    `content_object`'s getter fall back to resolving on *this row's own* (control-plane,
+    `default`) alias instead of the target's real satellite alias -- i.e. exactly the KI-18
+    landmine the denormalized field exists to prevent, just reached via a different route than
+    the one KI-18 originally documented.
+
+    Walks concrete forward FK/O2O fields (bounded depth, cycle-guarded) looking for any related
+    object that itself resolves to a domain id. Not on any hot/read path -- only called from the
+    `content_object` setter, which already isn't -- so the extra FK traversal (each hop is at
+    most one query) is an acceptable one-time cost at write time.
+    """
+    domain_id = getattr(value, "pulp_domain_id", None)
+    if domain_id is not None:
+        return domain_id
+    if _depth >= _DOMAIN_WALK_MAX_DEPTH:
+        return None
+    if _seen is None:
+        _seen = set()
+    if value.pk is not None:
+        key = (type(value), value.pk)
+        if key in _seen:
+            return None
+        _seen.add(key)
+    for field in value._meta.get_fields():
+        if not (field.many_to_one or field.one_to_one) or not getattr(field, "concrete", False):
+            continue
+        try:
+            related = getattr(value, field.name)
+        except ObjectDoesNotExist:
+            continue
+        if related is None or not hasattr(related, "_meta"):
+            continue
+        resolved = _resolve_domain_id(related, _depth + 1, _seen)
+        if resolved is not None:
+            return resolved
+    return None
 
 
 class DomainResolvedGenericRelation:
@@ -56,8 +112,8 @@ class DomainResolvedGenericRelation:
 
     Locked fix for #1 (see `architecture/domain-db-offloading-design.md`, KI-18): denormalize a
     nullable `content_object_domain` FK onto the model, auto-populated by the `content_object`
-    setter below from `content_object.pulp_domain_id` whenever a target is set -- no call site
-    needs to set it explicitly, and it's set eagerly (not deferred to `save()`) specifically so
+    setter below via `_resolve_domain_id()` whenever a target is set -- no call site needs to
+    set it explicitly, and it's set eagerly (not deferred to `save()`) specifically so
     that `bulk_create()` -- which never calls `save()` -- still populates it correctly; see
     `pulpcore.app.viewsets.base.NamedModelViewSet.add_role` for a real `bulk_create()` call
     site. The `content_object` property below then resolves the target via
@@ -166,7 +222,7 @@ class DomainResolvedGenericRelation:
             value, for_concrete_model=gfk.for_concrete_model
         )
         self.object_id = value.pk
-        self.content_object_domain_id = getattr(value, "pulp_domain_id", None)
+        self.content_object_domain_id = _resolve_domain_id(value)
 
 
 class GenericRelationModel(DomainResolvedGenericRelation, BaseModel):
