@@ -32,17 +32,25 @@ If in doubt, ask on the original issue or PR.
 
 ## To Cherry-Pick or Not
 
-Usually, a bugfix for a bug found in a released version of Pulp should be backported.
-If backporting to a specific branch, all supported branches inbetween must receive the backport too.
+Sometimes, a bugfix for a bug found in a released version of Pulp should be backported.
+This can be because it is requested by downstream products, or because we decide the severity warrants for that.
+We only release patch releases on a small set of _supported branches_ we define in the `template_config.yml`.
+If backporting to one of these branches, all supported branches in between must receive the backport too.
 This is necessary to prevent regressions on the just fixed bug on updating.
 
 !!! warning
     Database migrations cannot be backported.
 
 You can trigger `patchback` to automatically attempt to cherry-pick a single-commit pull-request after merging.
+
+!!! warning
+    `patchback` only operates correctly on merged pull requests with exactly one commit.
+    This should be the case for a usual bugfix PR. If not, manually backporting is needed.
+
 This is accomplished by applying the corresponding label, e.g. `backport-3.18`.
 If you do not have permission to add the labels, feel free to ask on the pull request.
 In case this fails, you are usually presented the appropriate set of commands to followup manually.
+Please make sure that the changelog entry for your bugfix is backported along.
 
 !!! note
     These backport labels are generated automatically to always reflect the currently supported branches.
