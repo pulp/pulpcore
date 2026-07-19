@@ -161,7 +161,6 @@ replace = "version = \"{new_version}\""
 [[tool.bumpversion.files]]
 filename = "./setup.py"
 
-
 [tool.ruff]
 # This section is managed by the plugin template. Do not edit manually.
 line-length = 100
@@ -183,6 +182,7 @@ extend-select = [
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
 # This section is managed by the plugin template. Do not edit manually.
 "distutils".msg = "The 'distutils' module has been deprecated since Python 3.9."
+"pulpcore.app.settings".msg = "Always import 'settings' from 'django.conf' instead."
 
 [tool.ruff.lint.isort]
 # This section is managed by the plugin template. Do not edit manually.
