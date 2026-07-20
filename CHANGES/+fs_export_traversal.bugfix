@@ -1,1 +1,0 @@
-Improved validation of relative paths to prevent a path traversal attack in filesystem exports. (CVE-2026-12701)
