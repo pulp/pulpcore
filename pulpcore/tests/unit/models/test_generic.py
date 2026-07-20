@@ -75,9 +75,8 @@ def test_content_object_domain_id_set_for_repository_version(task):
     """
     with with_task_context(task):
         repository = FileRepository.objects.create(name=str(uuid4()))
-    version = RepositoryVersion.objects.create(repository=repository, number=1)
-
-    created_resource = CreatedResource.objects.create(content_object=version)
+        version = RepositoryVersion.objects.create(repository=repository, number=1)
+        created_resource = CreatedResource.objects.create(content_object=version)
     assert created_resource.content_object_domain_id == repository.pulp_domain_id
 
     created_resource = CreatedResource.objects.get(pk=created_resource.pk)
