@@ -32,7 +32,7 @@ dependencies = [
   "click>=8.1.0,<8.5",  # Uses milestone.feature.fix https://palletsprojects.com/versions .
   "cryptography>=44.0.3,<50.0",  # SemVer compatible https://cryptography.io/en/latest/api-stability/#versioning .
   "Django>=5.2.0,<5.3",  # LTS version, we aim at supporting one or two at a time.
-  "django-filter>=24.3,<=25.2",  # Uses CalVer, not released often https://github.com/carltongibson/django-filter
+  "django-filter>=24.3,<=26.1",  # Uses CalVer, not released often https://github.com/carltongibson/django-filter
   "django-guid>=3.4.0,<3.7",  # Looks like only bugfixes in z-Stream.
   "django-import-export>=2.9,<5.0",
   "django-lifecycle>=1.0,<=1.3.0",
