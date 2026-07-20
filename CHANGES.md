@@ -8,6 +8,28 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.63.43 (2026-07-20) {: #3.63.43 }
+
+### REST API {: #3.63.43-rest-api }
+
+#### Bugfixes {: #3.63.43-rest-api-bugfix }
+
+- Improved validation of relative paths to prevent a path traversal attack in filesystem exports. (CVE-2026-12701)
+
+### Plugin API {: #3.63.43-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.43-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.43-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.63.42 (2026-07-16) {: #3.63.42 }
 
 ### REST API {: #3.63.42-rest-api }
