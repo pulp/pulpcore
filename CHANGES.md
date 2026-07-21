@@ -8,6 +8,28 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.114.2 (2026-07-20) {: #3.114.2 }
+
+### REST API {: #3.114.2-rest-api }
+
+#### Bugfixes {: #3.114.2-rest-api-bugfix }
+
+- Improved validation of relative paths to prevent a path traversal attack in filesystem exports. (CVE-2026-12701)
+
+### Plugin API {: #3.114.2-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.114.2-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.114.2-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.114.1 (2026-07-14) {: #3.114.1 }
 
 ### REST API {: #3.114.1-rest-api }
@@ -675,6 +697,28 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.106.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.105.12 (2026-07-20) {: #3.105.12 }
+
+### REST API {: #3.105.12-rest-api }
+
+#### Bugfixes {: #3.105.12-rest-api-bugfix }
+
+- Improved validation of relative paths to prevent a path traversal attack in filesystem exports. (CVE-2026-12701)
+
+### Plugin API {: #3.105.12-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.105.12-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.105.12-pulp-cert-guard }
 
 No significant changes.
 
@@ -1929,6 +1973,28 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.86.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.85.26 (2026-07-20) {: #3.85.26 }
+
+### REST API {: #3.85.26-rest-api }
+
+#### Bugfixes {: #3.85.26-rest-api-bugfix }
+
+- Improved validation of relative paths to prevent a path traversal attack in filesystem exports. (CVE-2026-12701)
+
+### Plugin API {: #3.85.26-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.85.26-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.26-pulp-cert-guard }
 
 No significant changes.
 
@@ -3282,6 +3348,28 @@ No significant changes.
   [#6244](https://github.com/pulp/pulpcore/issues/6244)
 
 ### Pulp Cert Guard {: #3.74.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.73.40 (2026-07-20) {: #3.73.40 }
+
+### REST API {: #3.73.40-rest-api }
+
+#### Bugfixes {: #3.73.40-rest-api-bugfix }
+
+- Improved validation of relative paths to prevent a path traversal attack in filesystem exports. (CVE-2026-12701)
+
+### Plugin API {: #3.73.40-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.73.40-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.40-pulp-cert-guard }
 
 No significant changes.
 
@@ -4883,6 +4971,28 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.64.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.63.43 (2026-07-20) {: #3.63.43 }
+
+### REST API {: #3.63.43-rest-api }
+
+#### Bugfixes {: #3.63.43-rest-api-bugfix }
+
+- Improved validation of relative paths to prevent a path traversal attack in filesystem exports. (CVE-2026-12701)
+
+### Plugin API {: #3.63.43-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.43-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.43-pulp-cert-guard }
 
 No significant changes.
 
@@ -6703,6 +6813,28 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard
+
+No significant changes.
+
+---
+
+## 3.49.66 (2026-07-20) {: #3.49.66 }
+
+### REST API {: #3.49.66-rest-api }
+
+#### Bugfixes {: #3.49.66-rest-api-bugfix }
+
+- Improved validation of relative paths to prevent a path traversal attack in filesystem exports. (CVE-2026-12701)
+
+### Plugin API {: #3.49.66-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.66-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.66-pulp-cert-guard }
 
 No significant changes.
 
