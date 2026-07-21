@@ -11,13 +11,13 @@ For the full list of settings and their values, see
 import sys
 from contextlib import suppress
 from importlib import import_module
-from logging import getLogger
 from pathlib import Path
 
 from cryptography.fernet import Fernet
 from django.conf import global_settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.files.storage import storages
+from dynaconf import DjangoDynaconf, Dynaconf, Validator
 
 from pulpcore import constants
 
@@ -34,6 +34,24 @@ if sys.version_info < (3, 10):
     from importlib_metadata import entry_points
 else:
     from importlib.metadata import entry_points
+
+# Load settings first pass before applying all the defaults to get a grip on ENABLED_PLUGINS.
+enabled_plugins_validator = Validator(
+    "ENABLED_PLUGINS",
+    is_type_of=list,
+    len_min=1,
+    when=Validator("ENABLED_PLUGINS", must_exist=True),
+)
+
+preload_settings = Dynaconf(
+    ENVVAR_PREFIX_FOR_DYNACONF="PULP",
+    ENV_SWITCHER_FOR_DYNACONF="PULP_ENV",
+    ENVVAR_FOR_DYNACONF="PULP_SETTINGS",
+    load_dotenv=False,
+    validators=[
+        enabled_plugins_validator,
+    ],
+)
 
 # Build paths inside the project like this: BASE_DIR / ...
 BASE_DIR = Path(__file__).absolute().parent
@@ -128,6 +146,15 @@ for app in OPTIONAL_APPS:
     with suppress(ImportError):
         import_module(app)
         INSTALLED_APPS.append(app)
+
+# Select enabled plugins and prepare to load their settings.
+enabled_plugins = preload_settings.get("ENABLED_PLUGINS", None)
+plugin_settings = []
+for entry_point in entry_points(group="pulpcore.plugin"):
+    if enabled_plugins is None or entry_point.name in enabled_plugins:
+        plugin_app = entry_point.load()
+        plugin_settings.append(f"{entry_point.module}.app.settings")
+        INSTALLED_APPS += [plugin_app]
 
 MIDDLEWARE = [
     "django_guid.middleware.guid_middleware",
@@ -383,16 +410,8 @@ OTEL_ENABLED = False
 
 # HERE STARTS DYNACONF EXTENSION LOAD (Keep at the very bottom of settings.py)
 # Read more at https://www.dynaconf.com/django/
-from dynaconf import DjangoDynaconf, Dynaconf, Validator  # noqa
 
 # Validators
-
-enabled_plugins_validator = Validator(
-    "ENABLED_PLUGINS",
-    is_type_of=list,
-    len_min=1,
-    when=Validator("ENABLED_PLUGINS", must_exist=True),
-)
 
 storage_keys = ("STORAGES.default.BACKEND", "DEFAULT_FILE_STORAGE")
 storage_validator = (
@@ -490,38 +509,75 @@ def otel_middleware_hook(settings):
     return data
 
 
+def api_root_hook(settings):
+    # protocol://host:port/{API_ROOT}{domain}/api/{version}/
+    # All of the below are DEPRECATED, and should be replaced by calling
+    # pulpcore.plugin.find_url.find_api_root() (q.v.)
+    if settings.API_ROOT_REWRITE_HEADER:
+        api_root = "/<path:api_root>/"
+    else:
+        api_root = settings.API_ROOT
+    return {
+        "V3_API_ROOT": api_root + "api/v3/",
+        "V3_DOMAIN_API_ROOT": api_root + "<slug:pulp_domain>/api/v3/",
+        "V3_API_ROOT_NO_FRONT_SLASH": (api_root + "api/v3/").lstrip("/"),
+        "V3_DOMAIN_API_ROOT_NO_FRONT_SLASH": (api_root + "<slug:pulp_domain>/api/v3/").lstrip("/"),
+    }
+
+
+def forbidden_checksums_hook(settings):
+    return {
+        "FORBIDDEN_CHECKSUMS": sorted(
+            set(constants.ALL_KNOWN_CONTENT_CHECKSUMS).difference(
+                settings.ALLOWED_CONTENT_CHECKSUMS
+            )
+        ),
+    }
+
+
+def validate_db_encryption_key_hook(settings):
+    if Path(sys.argv[0]).name in ["pytest", "sphinx-build"] or (
+        len(sys.argv) >= 2 and sys.argv[1] in ["collectstatic", "openapi"]
+    ):
+        return {}
+    try:
+        with open(settings.DB_ENCRYPTION_KEY, "rb") as key_file:
+            Fernet(key_file.read())
+    except Exception as ex:
+        raise ImproperlyConfigured(
+            "Could not load DB_ENCRYPTION_KEY file '{file}': {err}".format(
+                file=settings.DB_ENCRYPTION_KEY, err=ex
+            )
+        )
+    return {}
+
+
+del preload_settings
+
 settings = DjangoDynaconf(
     __name__,
     ENVVAR_PREFIX_FOR_DYNACONF="PULP",
     ENV_SWITCHER_FOR_DYNACONF="PULP_ENV",
     ENVVAR_FOR_DYNACONF="PULP_SETTINGS",
+    # Ensure the plugin defaults are loaded before user configs.
+    PRELOAD_FOR_DYNACONF=plugin_settings,
     load_dotenv=False,
     validators=[
         api_root_validator,
         cache_validator,
-        enabled_plugins_validator,
         sha256_validator,
         storage_validator,
         unknown_algs_validator,
         json_header_auth_validator,
         authentication_json_header_openapi_security_scheme_validator,
     ],
-    post_hooks=(otel_middleware_hook,),
+    post_hooks=(
+        otel_middleware_hook,
+        api_root_hook,
+        forbidden_checksums_hook,
+        validate_db_encryption_key_hook,
+    ),
 )
-
-# Select enabled plugins and load their settings.
-enabled_plugins = settings.get("ENABLED_PLUGINS", None)
-plugin_settings = []
-for entry_point in entry_points(group="pulpcore.plugin"):
-    if enabled_plugins and entry_point.name not in enabled_plugins:
-        continue
-    if (plugin_app := entry_point.load()) not in settings.INSTALLED_APPS:
-        plugin_settings.append(f"{entry_point.module}.app.settings")
-        settings.INSTALLED_APPS += [plugin_app]
-# Ensure the plugin defaults are loaded before user configs
-settings.PRELOAD_FOR_DYNACONF = plugin_settings
-settings.reload()
-INSTALLED_APPS = settings.INSTALLED_APPS
 
 # begin compatibility layer for DEFAULT_FILE_STORAGE
 # Remove on pulpcore=3.85 or pulpcore=4.0
@@ -531,33 +587,4 @@ storages._backends = settings.STORAGES.copy()
 storages.backends
 # end compatibility layer
 
-_logger = getLogger(__name__)
-
-
-if not (
-    Path(sys.argv[0]).name in ["pytest", "sphinx-build"]
-    or (len(sys.argv) >= 2 and sys.argv[1] in ["collectstatic", "openapi"])
-):
-    try:
-        with open(DB_ENCRYPTION_KEY, "rb") as key_file:
-            Fernet(key_file.read())
-    except Exception as ex:
-        raise ImproperlyConfigured(
-            ("Could not load DB_ENCRYPTION_KEY file '{file}': {err}").format(
-                file=DB_ENCRYPTION_KEY, err=ex
-            )
-        )
-
-
-FORBIDDEN_CHECKSUMS = set(constants.ALL_KNOWN_CONTENT_CHECKSUMS).difference(
-    ALLOWED_CONTENT_CHECKSUMS
-)
-
-if settings.API_ROOT_REWRITE_HEADER:
-    api_root = "/<path:api_root>/"
-else:
-    api_root = settings.API_ROOT
-settings.set("V3_API_ROOT", api_root + "api/v3/")  # Not user configurable
-settings.set("V3_DOMAIN_API_ROOT", api_root + "<slug:pulp_domain>/api/v3/")
-settings.set("V3_API_ROOT_NO_FRONT_SLASH", settings.V3_API_ROOT.lstrip("/"))
-settings.set("V3_DOMAIN_API_ROOT_NO_FRONT_SLASH", settings.V3_DOMAIN_API_ROOT.lstrip("/"))
+# HERE ENDS DYNACONF EXTENSION LOAD (No more code below this line)
