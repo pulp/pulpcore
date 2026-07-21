@@ -7,13 +7,16 @@ _a_conn = None
 
 
 def _redis_is_needed():
-    return settings.get("CACHE_ENABLED") or settings.get("WORKER_TYPE") == "redis"
+    return (
+        getattr(settings, "CACHE_ENABLED", None)
+        or getattr(settings, "WORKER_TYPE", None) == "redis"
+    )
 
 
 def _get_connection_from_class(redis_class):
     if not _redis_is_needed():
         return None
-    redis_url = settings.get("REDIS_URL")
+    redis_url = getattr(settings, "REDIS_URL", None)
     if redis_url is not None:
         return redis_class.from_url(redis_url)
     else:
