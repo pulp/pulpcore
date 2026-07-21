@@ -549,7 +549,7 @@ def pulp_import(importer_pk, path, toc, create_repositories, **kwargs):
         #
         # By default (setting is not-set), import will continue to use 100% of the available
         # workers.
-        import_workers_percent = int(settings.get("IMPORT_WORKERS_PERCENT", 100))
+        import_workers_percent = int(getattr(settings, "IMPORT_WORKERS_PERCENT", 100))
         total_workers = AppStatus.objects.online().filter(app_type="worker").count()
         import_workers = max(1, int(total_workers * (import_workers_percent / 100.0)))
 

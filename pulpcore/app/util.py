@@ -487,7 +487,7 @@ def configure_analytics():
     dispatch_interval = timedelta(days=1)
     name = "Post Anonymous Analytics Periodically"
     analytics = settings.ANALYTICS
-    if settings.get("TELEMETRY") is not None:
+    if getattr(settings, "TELEMETRY", None) is not None:
         deprecation_logger.warning("TELEMETRY setting is deprecated. Use ANALYTICS.")
         analytics = settings.TELEMETRY
     if analytics:
