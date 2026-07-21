@@ -10,7 +10,7 @@ from multiprocessing import Process
 from tempfile import TemporaryDirectory
 
 from django.conf import settings
-from django.db import DatabaseError, IntegrityError, connection, transaction
+from django.db import DatabaseError, IntegrityError, connection, connections, transaction
 from django.db.models import Case, Count, F, Max, Value, When
 from django.utils import timezone
 from packaging.version import parse as parse_version
@@ -328,6 +328,46 @@ class PulpcoreWorker:
             return False
         return True
 
+    def is_domain_available(self, task):
+        """
+        phase1-graceful-degradation / KI-12 (task-dispatch half): don't let this worker attempt
+        to run `task` while its domain's data-plane alias is unreachable or mid-move -- doing so
+        would just fail the task with a confusing `OperationalError` partway through, when the
+        correct behavior is for it to stay `waiting` and be retried later (by this worker or
+        another) once the alias is healthy/the move completes. Mirrors `is_compatible()`'s
+        "don't run it now, but don't fail it either" shape and is combined with it the same way
+        in `handle_unblocked_tasks`.
+
+        Caveat shared with `is_compatible()`: a task skipped here is added to
+        `self.ignored_task_ids` by the caller, and `cleanup_ignored_tasks()` only re-considers
+        ignored tasks once they leave `TASK_INCOMPLETE_STATES` -- so *this* worker process won't
+        retry a domain-unavailable task again until it restarts (a version-incompatible task has
+        the identical limitation today). Other worker processes, and this one after a restart,
+        are unaffected. Acceptable for v1: satellite outages are expected to be handled
+        operationally (see the runbook), not by busy-polling every waiting task every cycle.
+        """
+        domain = task.pulp_domain  # Hidden db roundtrip, same as is_compatible() above
+        if domain.moving:
+            _logger.info(
+                _("Domain '%s' is being moved between databases; deferring task %s."),
+                domain.name,
+                task.pk,
+            )
+            return False
+        alias = domain.database_alias
+        if alias != "default":
+            try:
+                connections[alias].ensure_connection()
+            except DatabaseError:
+                _logger.warning(
+                    _("Database alias '%s' for domain '%s' is unavailable; deferring task %s."),
+                    alias,
+                    domain.name,
+                    task.pk,
+                )
+                return False
+        return True
+
     def unblock_tasks(self):
         """Iterate over waiting tasks and mark them unblocked accordingly.
 
@@ -605,7 +645,11 @@ class PulpcoreWorker:
                 elif task.state == TASK_STATES.RUNNING:
                     # A running task without a lock must be abandoned.
                     self.cancel_abandoned_task(task, TASK_STATES.FAILED, "Worker has gone missing.")
-                elif task.state == TASK_STATES.WAITING and self.is_compatible(task):
+                elif (
+                    task.state == TASK_STATES.WAITING
+                    and self.is_compatible(task)
+                    and self.is_domain_available(task)
+                ):
                     if task.immediate:
                         self.supervise_immediate_task(task)
                     else:

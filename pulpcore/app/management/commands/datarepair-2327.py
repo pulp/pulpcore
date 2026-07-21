@@ -3,11 +3,12 @@ from gettext import gettext as _
 import cryptography
 from django.conf import settings
 from django.core.management import BaseCommand
-from django.db import connection
+from django.db import connections
 from django.db.models import Q
 from django.utils.encoding import force_bytes, force_str
 
 from pulpcore.app.models import Remote
+from pulpcore.app.util import for_each_domain
 
 
 class Command(BaseCommand):
@@ -45,64 +46,75 @@ class Command(BaseCommand):
             | Q(client_key__isnull=False)
         )
 
-        number_unencrypted = 0
-        number_multi_encrypted = 0
+        counts = {"number_unencrypted": 0, "number_multi_encrypted": 0}
 
-        for remote_pk in Remote.objects.filter(possibly_affected_remotes).values_list(
-            "pk", flat=True
-        ):
-            try:
-                remote = Remote.objects.get(pk=remote_pk)
-                # if we can get the remote successfully, it is either OK or the fields are
-                # encrypted more than once
-            except cryptography.fernet.InvalidToken:
-                # If decryption fails then it probably hasn't been encrypted yet
-                # get the raw column value, avoiding any Django field handling
-                with connection.cursor() as cursor:
-                    cursor.execute(
-                        "SELECT username, password, proxy_username, proxy_password, client_key "
-                        "FROM core_remote WHERE pulp_id = %s",
-                        [str(remote_pk)],
-                    )
-                    row = cursor.fetchone()
+        # KI-08 (design doc's own listed example of this bug): `Remote` is data-plane, so a bare
+        # `Remote.objects.filter(...)` only ever sees `default`'s remotes. `for_each_domain()`
+        # (Layer 3) re-runs the sweep once per domain with `.using(alias)`/the raw-SQL fallback
+        # pinned to that domain's own alias.
+        def _repair_for_domain(domain, alias):
+            for remote_pk in (
+                Remote.objects.using(alias)
+                .filter(possibly_affected_remotes)
+                .values_list("pk", flat=True)
+            ):
+                try:
+                    remote = Remote.objects.using(alias).get(pk=remote_pk)
+                    # if we can get the remote successfully, it is either OK or the fields are
+                    # encrypted more than once
+                except cryptography.fernet.InvalidToken:
+                    # If decryption fails then it probably hasn't been encrypted yet
+                    # get the raw column value, avoiding any Django field handling
+                    with connections[alias].cursor() as cursor:
+                        cursor.execute(
+                            "SELECT username, password, proxy_username, proxy_password, "
+                            "client_key FROM core_remote WHERE pulp_id = %s",
+                            [str(remote_pk)],
+                        )
+                        row = cursor.fetchone()
 
-                field_values = {}
+                    field_values = {}
 
-                for field, value in zip(fields, row):
-                    field_values[field] = value
+                    for field, value in zip(fields, row):
+                        field_values[field] = value
 
-                if not dry_run:
-                    Remote.objects.filter(pk=remote_pk).update(**field_values)
-                number_unencrypted += 1
-            else:
-                times_decrypted = 0
-                keep_trying = True
-                needs_update = False
-
-                while keep_trying:
-                    for field in fields:
-                        field_value = getattr(remote, field)  # value gets decrypted once on access
-                        if not field_value:
-                            continue
-
-                        try:
-                            # try to decrypt it again
-                            field_value = force_str(fernet.decrypt(force_bytes(field_value)))
-                            # it was decrypted successfully again time, so it was probably
-                            # encrypted multiple times over. lets re-set the value with the
-                            # newly decrypted value
-                            setattr(remote, field, field_value)
-                            needs_update = True
-                        except cryptography.fernet.InvalidToken:
-                            # couldn't be decrypted again, stop here
-                            keep_trying = False
-
-                    times_decrypted += 1
-
-                if needs_update:
                     if not dry_run:
-                        remote.save()
-                    number_multi_encrypted += 1
+                        Remote.objects.using(alias).filter(pk=remote_pk).update(**field_values)
+                    counts["number_unencrypted"] += 1
+                else:
+                    times_decrypted = 0
+                    keep_trying = True
+                    needs_update = False
+
+                    while keep_trying:
+                        for field in fields:
+                            # value gets decrypted once on access
+                            field_value = getattr(remote, field)
+                            if not field_value:
+                                continue
+
+                            try:
+                                # try to decrypt it again
+                                field_value = force_str(fernet.decrypt(force_bytes(field_value)))
+                                # it was decrypted successfully again time, so it was probably
+                                # encrypted multiple times over. lets re-set the value with the
+                                # newly decrypted value
+                                setattr(remote, field, field_value)
+                                needs_update = True
+                            except cryptography.fernet.InvalidToken:
+                                # couldn't be decrypted again, stop here
+                                keep_trying = False
+
+                        times_decrypted += 1
+
+                    if needs_update:
+                        if not dry_run:
+                            remote.save()
+                        counts["number_multi_encrypted"] += 1
+
+        for_each_domain(_repair_for_domain)
+        number_unencrypted = counts["number_unencrypted"]
+        number_multi_encrypted = counts["number_multi_encrypted"]
 
         if dry_run:
             print("Remotes with un-encrypted fields: {}".format(number_unencrypted))

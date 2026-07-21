@@ -76,6 +76,13 @@
           retries: 2
           delay: 5
 
+        - name: "Wait for postgres-satellite"
+          ansible.builtin.wait_for:
+            host: "postgres-satellite"
+            port: 5432
+            timeout: 30
+          when: "multi_db_test | default(false)"
+
         - name: "Wait for Pulp"
           ansible.builtin.uri:
             url: "http://pulp{{ pulp_scenario_settings.api_root | default(pulp_settings.api_root | default('\/pulp\/', True), True) }}api/v3/status/"

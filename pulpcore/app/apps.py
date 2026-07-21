@@ -1,3 +1,4 @@
+import logging
 import random
 from collections import defaultdict
 from gettext import gettext as _
@@ -6,8 +7,8 @@ from importlib import import_module
 from django import apps
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.db import connection, transaction
-from django.db.models.signals import post_migrate, pre_migrate
+from django.db import connection, connections, transaction
+from django.db.models.signals import post_delete, post_migrate, post_save, pre_migrate
 from django.utils.module_loading import module_has_submodule
 
 from pulpcore.exceptions.plugin import MissingPlugin
@@ -126,6 +127,8 @@ class PulpPluginAppConfig(apps.AppConfig):
         self.import_urls()
         self.import_modelresources()
         self.import_replicators()
+        # AccessPolicy/Role are control-plane models (KI-07/KI-13): these hooks must only run
+        # once, against the control DB, never once per satellite `migrate --database=<alias>`.
         post_migrate.connect(
             _populate_access_policies,
             sender=self,
@@ -255,14 +258,57 @@ class PulpAppConfig(PulpPluginAppConfig):
         post_migrate.connect(
             _populate_system_id, sender=self, dispatch_uid="populate_system_id_identifier"
         )
+        # Also deliberately NOT guarded to `using == "default"` -- see
+        # `_ensure_domains_replicated`'s docstring for why a satellite's own `Domain` row can't
+        # simply wait for a later, separate `sync-domains` invocation. Connected here, right
+        # before `_populate_artifact_serving_distribution` (registration order == dispatch
+        # order for signals connected to the same sender), so that hook -- and any earlier
+        # plugin post_migrate hook that also needs `Domain` data on a satellite -- never race it.
+        post_migrate.connect(
+            _ensure_domains_replicated,
+            sender=self,
+            dispatch_uid="ensure_domains_replicated_identifier",
+        )
+        # KI-24: unlike the other post_migrate hooks above, this one is intentionally NOT
+        # guarded to `using == "default"`. The system ArtifactDistribution is a data-plane
+        # object (Artifact is data-plane) that must exist on every alias that ends up hosting
+        # artifacts, so it is deliberately (re-)created once per `migrate --database=<alias>`
+        # run, satellites included. Pinning it to `default` would be actively wrong once a
+        # domain's artifacts live on a satellite, not just weaker.
         post_migrate.connect(
             _populate_artifact_serving_distribution,
             sender=self,
             dispatch_uid="populate_artifact_serving_distribution_identifier",
         )
+        # KI-14/KI-15: write-through replication of Domain rows to every configured satellite
+        # alias. `sync-domains` provides full reconciliation for anything these signals miss
+        # (bulk_create/update() bypass signals; a satellite down when the signal fired never
+        # gets retried once it comes back, until reconciliation runs).
+        from pulpcore.app.domain_sync import on_domain_post_delete, on_domain_post_save
+        from pulpcore.app.models import Domain
+
+        post_save.connect(
+            on_domain_post_save, sender=Domain, dispatch_uid="replicate_domain_post_save"
+        )
+        post_delete.connect(
+            on_domain_post_delete, sender=Domain, dispatch_uid="replicate_domain_post_delete"
+        )
+
+        # KI-05: only connect this (deliberately sender-less, since BaseModel is abstract) when
+        # multi-DB is actually active -- single-DB deployments' native GenericRelation cascade
+        # already deletes UserRole/GroupRole correctly, so avoid the dispatch cost otherwise.
+        if len(settings.DATABASES) > 1:
+            from pulpcore.app.role_util import on_any_model_post_delete
+
+            post_delete.connect(
+                on_any_model_post_delete, dispatch_uid="cleanup_cross_plane_roles_post_delete"
+            )
 
 
 def _clean_app_status(sender, apps, verbosity, **kwargs):
+    # KI-07: AppStatus is a control-plane model; only ever clean it up against `default`.
+    if kwargs.get("using", "default") != "default":
+        return
     from django.contrib.postgres.functions import TransactionNow
     from django.db.models import F
 
@@ -276,6 +322,13 @@ def _clean_app_status(sender, apps, verbosity, **kwargs):
 
 
 def _populate_access_policies(sender, apps, verbosity, **kwargs):
+    # KI-07: AccessPolicy is a control-plane model. Only populate it when migrating the
+    # control DB -- running this against a satellite alias would attempt to write
+    # AccessPolicy rows there, which the router would then bounce right back to `default`
+    # anyway (silently succeeding against the wrong intent) or, worse, create a divergent copy.
+    if kwargs.get("using", "default") != "default":
+        return
+
     from pulpcore.app.util import get_view_urlpattern
     from pulpcore.app.viewsets import LoginViewSet
 
@@ -320,12 +373,20 @@ def _populate_access_policies(sender, apps, verbosity, **kwargs):
 
 
 def _populate_system_id(sender, apps, verbosity, **kwargs):
+    # KI-07: SystemID is a control-plane model; only ever populate it on `default`.
+    if kwargs.get("using", "default") != "default":
+        return
     SystemID = apps.get_model("core", "SystemID")
     if not SystemID.objects.exists():
         SystemID().save()
 
 
 def _ensure_default_domain(sender, **kwargs):
+    # KI-07: Domain is control-plane and authoritative on `default` only. Satellite copies of
+    # the "default" Domain row are populated by replication/`sync-domains`, not by this hook,
+    # once `default` has actually migrated (see the `migrate-all` ordering: default first).
+    if kwargs.get("using", "default") != "default":
+        return
     table_names = connection.introspection.table_names()
     if "core_domain" in table_names:
         from pulpcore.app.util import get_default_domain
@@ -343,7 +404,52 @@ def _ensure_default_domain(sender, **kwargs):
             default.save(skip_hooks=True)
 
 
+def _ensure_domains_replicated(sender, **kwargs):
+    """
+    Reconcile `Domain` rows onto a satellite alias, inline in its own `migrate` run.
+
+    Why this can't just wait for a separate `sync-domains` call afterwards (e.g. from
+    `migrate-all`, see `_migrate_satellite_forward`): Django's `post_migrate` signal fires for
+    every connected receiver at the end of *every* `migrate` invocation, regardless of which
+    app/migration was targeted -- there is no way to run only *some* of a satellite's
+    post_migrate hooks, sync `Domain` in between, then run the rest within one `migrate`
+    process. Since `_populate_artifact_serving_distribution` (KI-24) is deliberately unguarded
+    so it runs on every alias, and can create data-plane rows there that FK to `Domain`, `Domain`
+    must already be current on `alias` *before that same post_migrate wave*, not just before the
+    next `migrate` invocation. Connected right before it for exactly that reason.
+
+    Guarded to skip `default` (nothing to reconcile *onto* the authoritative alias) and to no-op
+    gracefully if `core_domain` doesn't exist yet on `alias` (e.g. a `migrate --database=<alias>
+    someapp` run that doesn't happen to touch `core` at all -- `_migrate_satellite_forward`
+    always migrates the whole `core` app first, but this hook can't assume every caller does).
+    Best-effort like the `post_save`/`post_delete` replication signals in `domain_sync.py`: logs
+    loudly and lets `sync-domains` catch it later rather than failing the whole `migrate` run.
+    """
+    using = kwargs.get("using", "default")
+    if using == "default":
+        return
+    if "core_domain" not in connections[using].introspection.table_names():
+        return
+    from pulpcore.app.domain_sync import reconcile_domains_to_alias
+
+    try:
+        reconcile_domains_to_alias(using)
+    except Exception:
+        logging.getLogger(__name__).error(
+            "Reconciling Domain rows to alias '%s' failed during migration. Data-plane objects "
+            "created on this alias by later migrations/post_migrate hooks that FK to Domain may "
+            "fail until 'pulpcore-manager sync-domains' is run.",
+            using,
+            exc_info=True,
+        )
+
+
 def _populate_roles(sender, apps, verbosity, **kwargs):
+    # KI-07/KI-13: Role is a control-plane model; only ever populate it on `default`. This
+    # guard also covers every plugin's copy of this hook, since all plugins share this same
+    # `_populate_roles` function (connected per-plugin-app in `PulpPluginAppConfig.ready()`).
+    if kwargs.get("using", "default") != "default":
+        return
     role_prefix = f"{sender.label}."
     # collect all plugin defined roles
     desired_roles = {}
@@ -403,6 +509,14 @@ def adjust_roles(apps, role_prefix, desired_roles, verbosity=1):
 
 
 def _populate_artifact_serving_distribution(sender, apps, verbosity, **kwargs):
+    # KI-24 correctness: the `using` alias this migration ran against is *not* necessarily
+    # where the router would send an unqualified `ArtifactDistribution.objects` query (the
+    # router has no instance/ContextVar hint here, so it would default to `default`). Every
+    # query below must be pinned to `alias` explicitly, or a `migrate --database=<satellite>`
+    # run would silently check/create against `default`'s row instead of creating the
+    # satellite's own -- defeating the whole point of this hook running unguarded on every
+    # alias.
+    alias = kwargs.get("using", "default")
     if (
         settings.STORAGES["default"]["BACKEND"] == "pulpcore.app.models.storage.FileSystem"
         or not settings.REDIRECT_TO_OBJECT_STORAGE
@@ -415,15 +529,17 @@ def _populate_artifact_serving_distribution(sender, apps, verbosity, **kwargs):
                 print(_("ArtifactDistribution model does not exist. Skipping initialization."))
             return
         try:
-            ArtifactDistribution.objects.get()
+            ArtifactDistribution.objects.using(alias).get()
         except ArtifactDistribution.DoesNotExist:
             name = f"{random.getrandbits(256):x}"
-            with transaction.atomic():
-                content_guard, _created = ContentRedirectContentGuard.objects.get_or_create(
+            with transaction.atomic(using=alias):
+                content_guard, _created = ContentRedirectContentGuard.objects.using(
+                    alias
+                ).get_or_create(
                     name=name,
                     pulp_type="core.content_redirect",
                 )
-                _dist, _created = ArtifactDistribution.objects.get_or_create(
+                _dist, _created = ArtifactDistribution.objects.using(alias).get_or_create(
                     name=name,
                     pulp_type="core.artifact",
                     defaults={"base_path": name, "content_guard": content_guard},

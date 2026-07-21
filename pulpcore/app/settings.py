@@ -306,6 +306,24 @@ UPLOAD_PROTECTION_TIME = 0
 TASK_PROTECTION_TIME = 0
 TMPFILE_PROTECTION_TIME = 0
 
+# KI-11: how long to wait, in minutes, after a cross-plane GenericForeignKey row
+# (CreatedResource/ExportedResource/UserRole/GroupRole with `content_object_domain` set) is
+# created/updated before the reconciliation sweep will flag an unresolvable `content_object` as
+# an orphan. Guards against false positives from ordinary in-flight replication/task lag rather
+# than an actual orphan (e.g. Domain replication hasn't caught up yet, or the referenced object's
+# own creating transaction hasn't committed on its alias yet).
+CROSS_PLANE_RECONCILIATION_GRACE_MINUTES = 60
+
+# KI-11: how long, in days, a confirmed-orphaned cross-plane row is kept (logged/alerted on every
+# sweep) before the reconciliation sweep deletes it outright. 0 disables purging entirely --
+# orphans are only ever logged, never deleted, which is the safe default.
+CROSS_PLANE_RECONCILIATION_PURGE_AFTER_DAYS = 0
+
+# KI-11: how often, in minutes, the reconciliation sweep itself is dispatched as a scheduled
+# task. 0 disables the periodic schedule entirely (the 'reconcile-cross-plane-references'
+# management command remains available for on-demand/manual runs either way).
+CROSS_PLANE_RECONCILIATION_INTERVAL_MINUTES = 24 * 60
+
 REMOTE_USER_ENVIRON_NAME = "REMOTE_USER"
 REMOTE_USER_OPENAPI_SECURITY_SCHEME = {"type": "mutualTLS"}
 
@@ -677,3 +695,27 @@ settings.set("V3_API_ROOT", api_root + "api/v3/")  # Not user configurable
 settings.set("V3_DOMAIN_API_ROOT", api_root + "<slug:pulp_domain>/api/v3/")
 settings.set("V3_API_ROOT_NO_FRONT_SLASH", settings.V3_API_ROOT.lstrip("/"))
 settings.set("V3_DOMAIN_API_ROOT_NO_FRONT_SLASH", settings.V3_DOMAIN_API_ROOT.lstrip("/"))
+
+# Domain-aware database routing (see architecture/domain-db-offloading-design.md). Only register
+# the router when more than one DATABASES alias is actually configured, so single-database
+# deployments -- the overwhelming majority of installs today -- see zero behavior change:
+# Django's ConnectionRouter never consults an empty `routers` list, so PulpDomainRouter isn't
+# merely a no-op, it's never instantiated or called at all.
+#
+# Deliberately set as a *plain module global* (`DATABASE_ROUTERS = [...]`) in addition to
+# `settings.set(...)`, not `settings.set(...)` alone like `V3_API_ROOT` above: dynaconf's Django
+# integration (`DjangoDynaconf()`, called above) replaces `sys.modules["django.conf"]` with a
+# wrapper whose `.settings` resolves to its own live `lazy_settings` object -- but only for code
+# that imports `django.conf.settings` *after* that replacement happens. Some Django internals
+# (e.g. `django.db.utils`, which owns the global `ConnectionRouter` singleton every query
+# consults) do `from django.conf import settings` earlier than that and keep a reference to the
+# original, vanilla `LazySettings` object, which resolves this settings module the normal
+# Django way (`Settings.__init__` snapshotting `dir(mod)`) whenever it's first touched -- and
+# that snapshot only sees real module-level globals, not anything added purely via
+# `settings.set(...)` on the dynaconf side. Setting the plain global here ensures both the
+# dynaconf-backed settings object (the overwhelming majority of settings consumers, via
+# `settings.set(...)`) and any such early/stale consumer (via `dir(mod)`) resolve
+# `DATABASE_ROUTERS` consistently.
+if len(settings.DATABASES) > 1:
+    DATABASE_ROUTERS = ["pulpcore.app.db_router.PulpDomainRouter"]
+    settings.set("DATABASE_ROUTERS", DATABASE_ROUTERS)

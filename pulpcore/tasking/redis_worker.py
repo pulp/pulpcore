@@ -20,7 +20,7 @@ from tempfile import TemporaryDirectory
 
 import redis
 from django.conf import settings
-from django.db import DatabaseError, IntegrityError, connection, transaction
+from django.db import DatabaseError, IntegrityError, connection, connections, transaction
 from django.utils import timezone
 
 from pulpcore.app.apps import pulp_plugin_configs
@@ -421,6 +421,36 @@ class RedisWorker:
             return False
         return True
 
+    def is_domain_available(self, task):
+        """
+        phase1-graceful-degradation / KI-12 (task-dispatch half): see the identical method on
+        `pulpcore.tasking.worker.Worker` for the full rationale (this is the Redis-backend
+        equivalent of that Postgres-advisory-lock-backend check) -- don't attempt to run `task`
+        while its domain's data-plane alias is unreachable or mid-move; leave it `waiting`
+        instead of failing it with a confusing `OperationalError` partway through.
+        """
+        domain = task.pulp_domain
+        if domain.moving:
+            _logger.info(
+                _("Domain '%s' is being moved between databases; deferring task %s."),
+                domain.name,
+                task.pk,
+            )
+            return False
+        alias = domain.database_alias
+        if alias != "default":
+            try:
+                connections[alias].ensure_connection()
+            except DatabaseError:
+                _logger.warning(
+                    _("Database alias '%s' for domain '%s' is unavailable; deferring task %s."),
+                    alias,
+                    domain.name,
+                    task.pk,
+                )
+                return False
+        return True
+
     def fetch_task(self):
         """
         Fetch an available waiting task using Redis locks.
@@ -648,8 +678,8 @@ class RedisWorker:
                     # No task found
                     break
 
-                if not self.is_compatible(task):
-                    # Incompatible task, add to ignored list
+                if not self.is_compatible(task) or not self.is_domain_available(task):
+                    # Incompatible (or domain-unavailable/moving), add to ignored list
                     self.ignored_task_ids.append(task.pk)
                     # Atomically release task lock + resource locks so other workers can attempt it
                     self._maybe_release_locks(task, mark_released=False)

@@ -2,7 +2,7 @@ import hashlib
 import os
 import socket
 import zlib
-from contextlib import ExitStack
+from contextlib import ExitStack, contextmanager
 from datetime import timedelta
 from functools import lru_cache
 from gettext import gettext as _
@@ -15,14 +15,14 @@ from uuid import UUID
 
 from django.apps import apps
 from django.conf import settings
-from django.db import connection
+from django.db import connections
 from django.db.models import Model, UUIDField
 from rest_framework.reverse import reverse as drf_reverse
 from rest_framework.serializers import ValidationError
 
 from pulpcore.app import models
 from pulpcore.app.apps import pulp_plugin_configs
-from pulpcore.app.contexts import _current_domain, _current_user_func
+from pulpcore.app.contexts import _current_domain, _current_user_func, with_domain
 from pulpcore.app.loggers import deprecation_logger
 from pulpcore.exceptions.validation import InvalidSignatureError
 
@@ -506,6 +506,17 @@ def configure_cleanup():
         ),
         ("tasks", "pulpcore.app.tasks.purge.purge", settings.TASK_PROTECTION_TIME),
         ("content", "pulpcore.app.tasks.orphan.orphan_cleanup", settings.ORPHAN_PROTECTION_TIME),
+        (
+            # KI-11: periodic sweep for orphaned cross-plane GenericForeignKey references.
+            # Control-plane only (Task/CreatedResource/UserRole/GroupRole all always live on
+            # `default`), and each row's target is resolved on *its own* recorded alias by the
+            # KI-18 resolver -- unlike orphan/upload/tmpfile cleanup, this needs no per-domain
+            # dispatch (KI-21) to reach satellite data; a single run against `default` already
+            # covers every domain.
+            "cross-plane references",
+            "pulpcore.app.tasks.reconciliation.reconcile_cross_plane_references",
+            settings.CROSS_PLANE_RECONCILIATION_INTERVAL_MINUTES,
+        ),
     ]:
         if protection_time > 0:
             dispatch_interval = timedelta(minutes=protection_time)
@@ -637,6 +648,18 @@ def get_domain_pk():
 
     This is ran in plugin migrations so we can not move this implemenation or change its
     semantics, EVER!
+
+    KI-06: the raw-SQL fallback below (reached when there is neither a domain ContextVar nor a
+    cached default domain -- notably true the first time this runs during `migrate
+    --database=<satellite alias>` before that satellite's `core_domain` table has been
+    populated by Domain replication/`sync-domains`) must always read from the `default` alias
+    explicitly. `default` is the only alias guaranteed to be migrated and to hold the
+    authoritative "default" Domain row at this point in the bootstrap sequence (`migrate-all`
+    always migrates `default` first, then replicates Domain rows, then migrates satellites).
+    Do not use the bare `django.db.connection` proxy here -- it happens to default to the
+    "default" alias today, but that's an implicit coincidence, not a guarantee, and this
+    function's raw SQL must never silently start querying a satellite that doesn't have the
+    domain data yet.
     """
     if domain := _current_domain.get():
         return domain.pk
@@ -644,7 +667,7 @@ def get_domain_pk():
     if default_domain:
         return default_domain.pk
     # If we haven't cached the default_domain then use raw SQL to get its PK
-    with connection.cursor() as cursor:
+    with connections["default"].cursor() as cursor:
         cursor.execute("SELECT pulp_id FROM core_domain WHERE name = 'default'")
         row = cursor.fetchone()
         return row[0]
@@ -654,6 +677,41 @@ def set_domain(new_domain):
     # Deprecated
     _current_domain.set(new_domain)
     return new_domain
+
+
+@contextmanager
+def domain_db(domain):
+    """
+    Set the domain ContextVar for `domain` and yield its `database_alias`.
+
+    Layer 3 of the query architecture (see the design doc's "Query Architecture" section):
+    for admin/management-command code that needs to iterate over every domain and run queries
+    against each domain's actual database, wrap each iteration in this context manager and use
+    the yielded alias with an explicit `.using(alias)` on every queryset touched -- do not rely
+    on the router alone, since it cannot see queryset filters (only the ContextVar, which this
+    sets).
+
+    Example:
+        for domain in Domain.objects.all():
+            with domain_db(domain) as alias:
+                for repo in Repository.objects.using(alias).filter(pulp_domain=domain):
+                    ...
+    """
+    with with_domain(domain):
+        yield domain.database_alias
+
+
+def for_each_domain(callback):
+    """
+    Call `callback(domain, alias)` once per `Domain`, with the domain ContextVar set and the
+    domain's database alias passed in for explicit `.using(alias)` calls.
+
+    See `domain_db()` for the underlying context manager and the design doc's Layer 3 for the
+    broader convention this implements (KI-08, KI-19, KI-21).
+    """
+    for domain in models.Domain.objects.all():
+        with domain_db(domain) as alias:
+            callback(domain, alias)
 
 
 def cache_key(base_path):

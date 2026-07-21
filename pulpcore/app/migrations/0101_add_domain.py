@@ -7,7 +7,6 @@ import pulpcore.app.models.access_policy
 import pulpcore.app.models.fields
 import uuid
 
-
 DEFAULT_DELETE_TRIGGER = """
 CREATE OR REPLACE FUNCTION protect_default() RETURNS TRIGGER as $protect_default$
   BEGIN
@@ -28,42 +27,62 @@ DROP FUNCTION IF EXISTS protect_default();
 
 
 def create_default_domain(apps, schema_editor):
-    Domain = apps.get_model('core', 'Domain')
+    # Domain-aware database routing (see architecture/domain-db-offloading-design.md): `Domain`
+    # is control-plane and authoritative on `default` only -- every satellite's copy is
+    # populated by replication/`sync-domains`, never created independently. This migration
+    # predates that design and, left as-is, would run unguarded on every alias (schema is
+    # identical everywhere, see KI-16, so `allow_migrate` never filters it out) and create its
+    # *own* "default"-named `Domain` row on each satellite the very first time `migrate-all`
+    # migrates it -- a duplicate, unreplicated row with a different `pulp_id` than `default`'s,
+    # which then collides with `sync-domains` (unique constraint on `name`). Guard it the same
+    # way `_ensure_default_domain`/KI-07 guards its own post_migrate hook.
+    if schema_editor.connection.alias != "default":
+        return
+    Domain = apps.get_model("core", "Domain")
     try:
-        default_domain = Domain.objects.get(name="default")
+        default_domain = Domain.objects.using("default").get(name="default")
     except Domain.DoesNotExist:
         default_domain = Domain(
             name="default", storage_class=settings.STORAGES["default"]["BACKEND"]
         )
-        default_domain.save(skip_hooks=True)
+        default_domain.save(using="default", skip_hooks=True)
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('contenttypes', '0002_remove_content_type_name'),
+        ("contenttypes", "0002_remove_content_type_name"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('core', '0100_upstreampulp'),
+        ("core", "0100_upstreampulp"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Domain',
+            name="Domain",
             fields=[
-                ('pulp_id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('pulp_created', models.DateTimeField(auto_now_add=True)),
-                ('pulp_last_updated', models.DateTimeField(auto_now=True, null=True)),
-                ('name', models.SlugField(unique=True)),
-                ('description', models.TextField(null=True)),
-                ('storage_class', models.TextField()),
-                ('storage_settings', pulpcore.app.models.fields.EncryptedJSONField(default=dict)),
-                ('redirect_to_object_storage', models.BooleanField(default=True)),
-                ('hide_guarded_distributions', models.BooleanField(default=False)),
+                (
+                    "pulp_id",
+                    models.UUIDField(
+                        default=uuid.uuid4, editable=False, primary_key=True, serialize=False
+                    ),
+                ),
+                ("pulp_created", models.DateTimeField(auto_now_add=True)),
+                ("pulp_last_updated", models.DateTimeField(auto_now=True, null=True)),
+                ("name", models.SlugField(unique=True)),
+                ("description", models.TextField(null=True)),
+                ("storage_class", models.TextField()),
+                ("storage_settings", pulpcore.app.models.fields.EncryptedJSONField(default=dict)),
+                ("redirect_to_object_storage", models.BooleanField(default=True)),
+                ("hide_guarded_distributions", models.BooleanField(default=False)),
             ],
             options={
-                'permissions': [('manage_roles_domain', 'Can manage role assignments on domain')],
+                "permissions": [("manage_roles_domain", "Can manage role assignments on domain")],
             },
-            bases=(django_lifecycle.mixins.LifecycleModelMixin, models.Model, pulpcore.app.models.access_policy.AutoAddObjPermsMixin),
+            bases=(
+                django_lifecycle.mixins.LifecycleModelMixin,
+                models.Model,
+                pulpcore.app.models.access_policy.AutoAddObjPermsMixin,
+            ),
         ),
         migrations.RunSQL(DEFAULT_DELETE_TRIGGER, reverse_sql=REMOVE_DEFAULT_DELETE_TRIGGER),
         migrations.RunPython(code=create_default_domain, reverse_code=migrations.RunPython.noop),

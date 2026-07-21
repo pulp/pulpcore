@@ -21,6 +21,7 @@ from url_normalize import url_normalize
 
 from pulpcore.app.files import PulpTemporaryUploadedFile
 from pulpcore.app.models import AutoAddObjPermsMixin
+from pulpcore.app.queryset import CrossDBQuerySetMixin
 from pulpcore.app.util import cache_key, get_domain_pk, get_url, retain_distributed_pub_enabled
 from pulpcore.cache import Cache
 from pulpcore.responses import ArtifactResponse
@@ -33,7 +34,7 @@ from .task import CreatedResource
 _logger = logging.getLogger(__name__)
 
 
-class PublicationQuerySet(models.QuerySet):
+class PublicationQuerySet(CrossDBQuerySetMixin, models.QuerySet):
     """A queryset that provides publication filtering methods."""
 
     def with_content(self, content):

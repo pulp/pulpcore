@@ -8,6 +8,7 @@ from django.db.models import Q, Sum
 
 from pulpcore import constants
 from pulpcore.app import pulp_hashlib
+from pulpcore.app.util import for_each_domain
 from pulpcore.plugin.models import (
     Artifact,
     Content,
@@ -51,19 +52,27 @@ class Command(BaseCommand):
                 )
             )
 
-    def _show_on_demand_content(self, checksums):
+    def _show_on_demand_content(self, checksums, alias):
         query = Q(pk__in=[])
         for checksum in checksums:
             query |= Q(**{f"{checksum}__isnull": False})
 
-        remote_artifacts = RemoteArtifact.objects.filter(query).filter(
-            content_artifact__artifact__isnull=True
+        remote_artifacts = (
+            RemoteArtifact.objects.using(alias)
+            .filter(query)
+            .filter(content_artifact__artifact__isnull=True)
         )
         ras_size = remote_artifacts.aggregate(Sum("size"))["size__sum"]
 
-        content_artifacts = ContentArtifact.objects.filter(remoteartifact__pk__in=remote_artifacts)
-        content = Content.objects.filter(contentartifact__pk__in=content_artifacts)
-        repo_versions = RepositoryVersion.objects.with_content(content).select_related("repository")
+        content_artifacts = ContentArtifact.objects.using(alias).filter(
+            remoteartifact__pk__in=remote_artifacts
+        )
+        content = Content.objects.using(alias).filter(contentartifact__pk__in=content_artifacts)
+        repo_versions = (
+            RepositoryVersion.objects.using(alias)
+            .with_content(content)
+            .select_related("repository")
+        )
 
         self.stdout.write(
             "Found {} on-demand content units with forbidden checksums.".format(content.count())
@@ -77,7 +86,7 @@ class Command(BaseCommand):
             self.stdout.write(_("\nAffected repository versions with remote content:"))
             self._print_out_repository_version_hrefs(repo_versions)
 
-    def _show_immediate_content(self, forbidden_checksums):
+    def _show_immediate_content(self, forbidden_checksums, alias):
         allowed_checksums = set(
             constants.ALL_KNOWN_CONTENT_CHECKSUMS.symmetric_difference(forbidden_checksums)
         )
@@ -89,10 +98,14 @@ class Command(BaseCommand):
         for allowed_checksum in allowed_checksums:
             query_required |= Q(**{f"{allowed_checksum}__isnull": True})
 
-        artifacts = Artifact.objects.filter(query_forbidden | query_required)
-        content_artifacts = ContentArtifact.objects.filter(artifact__in=artifacts)
-        content = Content.objects.filter(contentartifact__pk__in=content_artifacts)
-        repo_versions = RepositoryVersion.objects.with_content(content).select_related("repository")
+        artifacts = Artifact.objects.using(alias).filter(query_forbidden | query_required)
+        content_artifacts = ContentArtifact.objects.using(alias).filter(artifact__in=artifacts)
+        content = Content.objects.using(alias).filter(contentartifact__pk__in=content_artifacts)
+        repo_versions = (
+            RepositoryVersion.objects.using(alias)
+            .with_content(content)
+            .select_related("repository")
+        )
 
         self.stdout.write(
             "Found {} downloaded content units with forbidden or missing checksums.".format(
@@ -110,11 +123,11 @@ class Command(BaseCommand):
             self.stdout.write(_("\nAffected repository versions with present content:"))
             self._print_out_repository_version_hrefs(repo_versions)
 
-    def _download_artifact(self, artifact, checksum, file_path):
+    def _download_artifact(self, artifact, checksum, file_path, alias):
         restored = False
-        for ca in artifact.content_memberships.all():
+        for ca in artifact.content_memberships.using(alias).all():
             if not restored:
-                for ra in ca.remoteartifact_set.all():
+                for ra in ca.remoteartifact_set.using(alias).all():
                     remote = ra.remote.cast()
                     if remote.policy == "immediate":
                         self.stdout.write(_("Restoring missing file {}").format(file_path))
@@ -153,8 +166,15 @@ class Command(BaseCommand):
             allowed_checksums
         )
 
-        self._show_on_demand_content(forbidden_checksums)
-        self._show_immediate_content(forbidden_checksums)
+        # KI-08 (design doc's own listed example of this bug): every model touched below
+        # (`Artifact`, `Content`, `ContentArtifact`, `RemoteArtifact`, `RepositoryVersion`) is
+        # data-plane, so this report is re-run once per domain via `for_each_domain()`.
+        def _report_for_domain(domain, alias):
+            self.stdout.write(_("\n=== Domain '{name}' ===").format(name=domain.name))
+            self._show_on_demand_content(forbidden_checksums, alias)
+            self._show_immediate_content(forbidden_checksums, alias)
+
+        for_each_domain(_report_for_domain)
 
     def handle(self, *args, **options):
         if options["report"]:
@@ -167,30 +187,40 @@ class Command(BaseCommand):
 
         log.setLevel(logging.ERROR)
         hrefs = set()
-        for checksum in settings.ALLOWED_CONTENT_CHECKSUMS:
-            params = {f"{checksum}__isnull": True}
-            artifacts_qs = Artifact.objects.filter(**params)
-            artifacts = []
-            for a in artifacts_qs.iterator():
-                hasher = pulp_hashlib.new(checksum)
-                try:
-                    with a.file as fp:
-                        for chunk in fp.chunks(CHUNK_SIZE):
-                            hasher.update(chunk)
-                    setattr(a, checksum, hasher.hexdigest())
-                except FileNotFoundError:
-                    file_path = os.path.join(settings.MEDIA_ROOT, a.file.name)
-                    restored = self._download_artifact(a, checksum, file_path)
-                    if not restored:
-                        hrefs.add(file_path)
-                artifacts.append(a)
 
-                if len(artifacts) >= 1000:
-                    Artifact.objects.bulk_update(objs=artifacts, fields=[checksum], batch_size=1000)
-                    artifacts.clear()
+        # KI-08 (design doc's own listed example of this bug): `Artifact` is data-plane, so an
+        # unqualified `Artifact.objects.filter(...)`/`.bulk_update(...)` (the original shape of
+        # this loop) only ever touches `default`'s artifacts. `for_each_domain()` re-runs the
+        # whole populate/repair pass once per domain with `.using(alias)`.
+        def _populate_missing_for_domain(domain, alias):
+            for checksum in settings.ALLOWED_CONTENT_CHECKSUMS:
+                params = {f"{checksum}__isnull": True}
+                artifacts_qs = Artifact.objects.using(alias).filter(**params)
+                artifacts = []
+                for a in artifacts_qs.iterator():
+                    hasher = pulp_hashlib.new(checksum)
+                    try:
+                        with a.file as fp:
+                            for chunk in fp.chunks(CHUNK_SIZE):
+                                hasher.update(chunk)
+                        setattr(a, checksum, hasher.hexdigest())
+                    except FileNotFoundError:
+                        file_path = os.path.join(settings.MEDIA_ROOT, a.file.name)
+                        restored = self._download_artifact(a, checksum, file_path, alias)
+                        if not restored:
+                            hrefs.add(file_path)
+                    artifacts.append(a)
 
-            if artifacts:
-                Artifact.objects.bulk_update(objs=artifacts, fields=[checksum])
+                    if len(artifacts) >= 1000:
+                        Artifact.objects.using(alias).bulk_update(
+                            objs=artifacts, fields=[checksum], batch_size=1000
+                        )
+                        artifacts.clear()
+
+                if artifacts:
+                    Artifact.objects.using(alias).bulk_update(objs=artifacts, fields=[checksum])
+
+        for_each_domain(_populate_missing_for_domain)
 
         if hrefs:
             raise CommandError(
@@ -200,12 +230,20 @@ class Command(BaseCommand):
         forbidden_checksums = set(constants.ALL_KNOWN_CONTENT_CHECKSUMS).difference(
             settings.ALLOWED_CONTENT_CHECKSUMS
         )
-        for checksum in forbidden_checksums:
-            search_params = {f"{checksum}__isnull": False}
-            update_params = {f"{checksum}": None}
-            artifacts_qs = Artifact.objects.filter(**search_params)
-            if artifacts_qs.exists():
-                self.stdout.write("Removing forbidden checksum {} from database".format(checksum))
-                artifacts_qs.update(**update_params)
+
+        def _remove_forbidden_for_domain(domain, alias):
+            for checksum in forbidden_checksums:
+                search_params = {f"{checksum}__isnull": False}
+                update_params = {f"{checksum}": None}
+                artifacts_qs = Artifact.objects.using(alias).filter(**search_params)
+                if artifacts_qs.exists():
+                    self.stdout.write(
+                        "Removing forbidden checksum {} from database (domain '{}')".format(
+                            checksum, domain.name
+                        )
+                    )
+                    artifacts_qs.update(**update_params)
+
+        for_each_domain(_remove_forbidden_for_domain)
 
         self.stdout.write(_("Finished aligning checksums with settings.ALLOWED_CONTENT_CHECKSUMS"))

@@ -12,6 +12,7 @@ from rest_framework.serializers import DictField, URLField, ValidationError
 
 from pulpcore.app.models import (
     AppStatus,
+    Artifact,
     CreatedResource,
     ProfileArtifact,
     RepositoryVersion,
@@ -289,8 +290,15 @@ class TaskViewSet(
         task = self.get_object()
         data = {}
 
-        for pa in ProfileArtifact.objects.select_related("artifact").filter(task=task):
-            data[pa.name] = get_artifact_url(pa.artifact)
+        # KI-02/KI-03: ProfileArtifact is control-plane (task=task, always on `default`), but
+        # its `artifact` FK is data-plane and may live on a different physical database once
+        # the task's domain has moved to a satellite. `select_related("artifact")` compiles to
+        # a same-connection SQL JOIN, which cannot span two databases -- load the artifact
+        # explicitly via the task's own domain alias instead.
+        alias = task.pulp_domain.database_alias
+        for pa in ProfileArtifact.objects.filter(task=task):
+            artifact = Artifact.objects.using(alias).get(pk=pa.artifact_id)
+            data[pa.name] = get_artifact_url(artifact)
 
         return Response({"urls": data})
 
