@@ -12,7 +12,6 @@ import sys
 from contextlib import suppress
 from importlib import import_module
 from importlib.metadata import entry_points
-from logging import getLogger
 from pathlib import Path
 
 from cryptography.fernet import Fernet
@@ -629,6 +628,49 @@ def enable_v4_hook(settings):
     return data
 
 
+def api_root_hook(settings):
+    # protocol://host:port/{API_ROOT}{domain}/api/{version}/
+    # All of the below are DEPRECATED, and should be replaced by calling
+    # pulpcore.plugin.find_url.find_api_root() (q.v.)
+    if settings.API_ROOT_REWRITE_HEADER:
+        api_root = "/<path:api_root>/"
+    else:
+        api_root = settings.API_ROOT
+    return {
+        "V3_API_ROOT": api_root + "api/v3/",
+        "V3_DOMAIN_API_ROOT": api_root + "<slug:pulp_domain>/api/v3/",
+        "V3_API_ROOT_NO_FRONT_SLASH": (api_root + "api/v3/").lstrip("/"),
+        "V3_DOMAIN_API_ROOT_NO_FRONT_SLASH": (api_root + "<slug:pulp_domain>/api/v3/").lstrip("/"),
+    }
+
+
+def forbidden_checksums_hook(settings):
+    return {
+        "FORBIDDEN_CHECKSUMS": sorted(
+            set(constants.ALL_KNOWN_CONTENT_CHECKSUMS).difference(
+                settings.ALLOWED_CONTENT_CHECKSUMS
+            )
+        ),
+    }
+
+
+def validate_db_encryption_key_hook(settings):
+    if Path(sys.argv[0]).name in ["pytest", "sphinx-build"] or (
+        len(sys.argv) >= 2 and sys.argv[1] in ["collectstatic", "openapi"]
+    ):
+        return {}
+    try:
+        with open(settings.DB_ENCRYPTION_KEY, "rb") as key_file:
+            Fernet(key_file.read())
+    except Exception as ex:
+        raise ImproperlyConfigured(
+            "Could not load DB_ENCRYPTION_KEY file '{file}': {err}".format(
+                file=settings.DB_ENCRYPTION_KEY, err=ex
+            )
+        )
+    return {}
+
+
 del preload_settings
 
 settings = DjangoDynaconf(
@@ -657,40 +699,11 @@ settings = DjangoDynaconf(
         otel_middleware_hook,
         saml2_settings_hook,
         enable_v4_hook,
+        api_root_hook,
+        forbidden_checksums_hook,
+        validate_db_encryption_key_hook,
     ),
     dynaboxify=False,
 )
 
-_logger = getLogger(__name__)
-
-
-if not (
-    Path(sys.argv[0]).name in ["pytest", "sphinx-build"]
-    or (len(sys.argv) >= 2 and sys.argv[1] in ["collectstatic", "openapi"])
-):
-    try:
-        with open(DB_ENCRYPTION_KEY, "rb") as key_file:
-            Fernet(key_file.read())
-    except Exception as ex:
-        raise ImproperlyConfigured(
-            ("Could not load DB_ENCRYPTION_KEY file '{file}': {err}").format(
-                file=DB_ENCRYPTION_KEY, err=ex
-            )
-        )
-
-
-FORBIDDEN_CHECKSUMS = set(constants.ALL_KNOWN_CONTENT_CHECKSUMS).difference(
-    ALLOWED_CONTENT_CHECKSUMS
-)
-
-# protocol://host:port/{API_ROOT}{domain}/api/{version}/
-# All of the below are DEPRECATED, and should be replaced by calling
-# pulpcore.plugin.find_url.find_api_root() (q.v.)
-if settings.API_ROOT_REWRITE_HEADER:
-    api_root = "/<path:api_root>/"
-else:
-    api_root = settings.API_ROOT
-settings.set("V3_API_ROOT", api_root + "api/v3/")  # Not user configurable
-settings.set("V3_DOMAIN_API_ROOT", api_root + "<slug:pulp_domain>/api/v3/")
-settings.set("V3_API_ROOT_NO_FRONT_SLASH", settings.V3_API_ROOT.lstrip("/"))
-settings.set("V3_DOMAIN_API_ROOT_NO_FRONT_SLASH", settings.V3_DOMAIN_API_ROOT.lstrip("/"))
+# HERE ENDS DYNACONF EXTENSION LOAD (No more code below this line)
