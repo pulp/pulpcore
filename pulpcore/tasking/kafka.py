@@ -24,16 +24,16 @@ else:
 
     _logger = logging.getLogger(__name__)
     _kafka_producer = None
-    _producer_poll_timeout = settings.get("KAFKA_PRODUCER_POLL_TIMEOUT")
-    _security_protocol = settings.get("KAFKA_SECURITY_PROTOCOL")
-    _ssl_ca_pem = settings.get("KAFKA_SSL_CA_PEM")
-    _sasl_mechanism = settings.get("KAFKA_SASL_MECHANISM")
-    _sasl_username = settings.get("KAFKA_SASL_USERNAME")
-    _sasl_password = settings.get("KAFKA_SASL_PASSWORD")
+    _producer_poll_timeout = getattr(settings, "KAFKA_PRODUCER_POLL_TIMEOUT", None)
+    _security_protocol = getattr(settings, "KAFKA_SECURITY_PROTOCOL", None)
+    _ssl_ca_pem = getattr(settings, "KAFKA_SSL_CA_PEM", None)
+    _sasl_mechanism = getattr(settings, "KAFKA_SASL_MECHANISM", None)
+    _sasl_username = getattr(settings, "KAFKA_SASL_USERNAME", None)
+    _sasl_password = getattr(settings, "KAFKA_SASL_PASSWORD", None)
 
-    _kafka_tasks_status_topic = settings.get("KAFKA_TASKS_STATUS_TOPIC")
-    _kafka_tasks_status_producer_sync_enabled = settings.get(
-        "KAFKA_TASKS_STATUS_PRODUCER_SYNC_ENABLED"
+    _kafka_tasks_status_topic = getattr(settings, "KAFKA_TASKS_STATUS_TOPIC", None)
+    _kafka_tasks_status_producer_sync_enabled = getattr(
+        settings, "KAFKA_TASKS_STATUS_PRODUCER_SYNC_ENABLED", None
     )
 
     class KafkaProducerPollingWorker:
