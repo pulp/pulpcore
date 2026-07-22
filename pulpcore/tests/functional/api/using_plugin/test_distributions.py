@@ -168,6 +168,66 @@ def test_distribution_base_path(
 
 
 @pytest.mark.parallel
+def test_distribution_update_task_reservations(
+    file_bindings,
+    monitor_task,
+):
+    create_task = monitor_task(
+        file_bindings.DistributionsFileApi.create(
+            {"name": str(uuid4()), "base_path": str(uuid4())}
+        ).task
+    )
+    assert any(
+        resource.endswith(":distributions") for resource in create_task.reserved_resources_record
+    )
+    distribution = file_bindings.DistributionsFileApi.read(create_task.created_resources[0])
+    assert distribution.prn not in create_task.reserved_resources_record
+
+    no_base_path_update_task = monitor_task(
+        file_bindings.DistributionsFileApi.partial_update(
+            distribution.pulp_href,
+            {"name": str(uuid4())},
+        ).task
+    )
+    assert distribution.prn in no_base_path_update_task.reserved_resources_record
+    assert not any(
+        resource.endswith(":distributions")
+        for resource in no_base_path_update_task.reserved_resources_record
+    )
+
+    unchanged_base_path_update_task = monitor_task(
+        file_bindings.DistributionsFileApi.partial_update(
+            distribution.pulp_href,
+            {"name": str(uuid4()), "base_path": distribution.base_path},
+        ).task
+    )
+    assert distribution.prn in unchanged_base_path_update_task.reserved_resources_record
+    assert not any(
+        resource.endswith(":distributions")
+        for resource in unchanged_base_path_update_task.reserved_resources_record
+    )
+
+    base_path_update_task = monitor_task(
+        file_bindings.DistributionsFileApi.partial_update(
+            distribution.pulp_href, {"base_path": str(uuid4())}
+        ).task
+    )
+    assert distribution.prn in base_path_update_task.reserved_resources_record
+    assert any(
+        resource.endswith(":distributions")
+        for resource in base_path_update_task.reserved_resources_record
+    )
+
+    delete_task = monitor_task(
+        file_bindings.DistributionsFileApi.delete(distribution.pulp_href).task
+    )
+    assert distribution.prn in delete_task.reserved_resources_record
+    assert any(
+        resource.endswith(":distributions") for resource in delete_task.reserved_resources_record
+    )
+
+
+@pytest.mark.parallel
 def test_distribution_filtering(
     file_bindings,
     file_remote_factory,
