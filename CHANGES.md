@@ -8,6 +8,96 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.115.1 (2026-07-21) {: #3.115.1 }
+
+### REST API {: #3.115.1-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.115.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.115.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.115.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.115.0 (2026-07-21) {: #3.115.0 }
+
+### REST API {: #3.115.0-rest-api }
+
+#### Features {: #3.115.0-rest-api-feature }
+
+- Add `/v4/` API to Pulp.
+
+  This adds a `/v4/` API path to Pulp, in parallel to the existing `/v3/` path. The two
+  are currently (nearly) identical APIs - see the `/pulp/api/v4/status/` ouput for the
+  only (current) end-user-visible impact.
+
+  This change is primarily setting the stage to allow for future API changes and growth.
+  It is in TECH PREVIEW, and is likely to have significant changes happening to it as we
+  continue integrating into the rest of the Pulp architecture.
+  [#6462](https://github.com/pulp/pulpcore/issues/6462)
+- Allow commas in `pulp_labels` values. To filter for labels containing commas, escape them
+  with a backslash (e.g. `?pulp_label_select=key=val\,ue`).
+  [#7789](https://github.com/pulp/pulpcore/issues/7789)
+- Optimized response time when filtering repository versions by content.
+  [#7799](https://github.com/pulp/pulpcore/issues/7799)
+- Added `saml2` as a dependency option accompanied by the `SAML_CONFIG` setting.
+
+#### Bugfixes {: #3.115.0-rest-api-bugfix }
+
+- Fixed content app directory listing generating broken links when distribution base paths contain colons.
+  [#6955](https://github.com/pulp/pulpcore/issues/6955)
+- Fixed `RelatedField` rendering wrong domain in hrefs when `DOMAIN_ENABLED=True`.
+  [#7835](https://github.com/pulp/pulpcore/issues/7835)
+- Fixed `RepositoryVersion.remove_content` failing when the queryset is derived from `self.content` and the repository version contains >= 65,535 content items. The lazy queryset was re-evaluated after `content_ids` was already updated, causing `RepositoryContent` entries to be left orphaned.
+  [#7851](https://github.com/pulp/pulpcore/issues/7851)
+- Fixed a race condition when creating content with `file_url` or `upload` that could result in a duplicate artifact error.
+- Fixed delete timeouts when removing repositories or repository versions with large numbers of PublishedArtifacts by batching bulk deletes and avoiding nested subqueries that produce poor PostgreSQL execution plans.
+- Improved validation of relative paths to prevent a path traversal attack in filesystem exports. (CVE-2026-12701)
+- Stopped shipping an insecure default as DJANGO_SECRET.
+
+#### Improved Documentation {: #3.115.0-rest-api-doc }
+
+- Reformatted and partially rewrote the Pull-Request Walkthrough.
+
+#### Removals {: #3.115.0-rest-api-removal }
+
+- Drop support for running with Django 4.
+  [#7343](https://github.com/pulp/pulpcore/issues/7343)
+
+### Plugin API {: #3.115.0-plugin-api }
+
+#### Features {: #3.115.0-plugin-api-feature }
+
+- Added `pulp_domain` to `TaskSchedule` so scheduled tasks dispatch in the correct domain. Name uniqueness is now per domain.
+  [#7829](https://github.com/pulp/pulpcore/issues/7829)
+
+#### Removals {: #3.115.0-plugin-api-removal }
+
+- Made `content_ids` cache required with forceful migration and removed the `/pulp/api/v3/datarepair/7465/` endpoint. This **will** run a migration that could take a while if you haven't already run the datarepair endpoint.
+  [#7466](https://github.com/pulp/pulpcore/issues/7466)
+- Deactivated dynaconf boxify. This can affect plugins that access nested settings via dot instead of subscribing.
+
+### Pulp File {: #3.115.0-pulp-file }
+
+#### Features {: #3.115.0-pulp-file-feature }
+
+- Added sync optimization that skips re-syncing when the remote manifest has not changed. An `optimize` flag on the sync endpoint (default `True`) allows forcing a full sync when needed.
+
+### Pulp Cert Guard {: #3.115.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.114.2 (2026-07-20) {: #3.114.2 }
 
 ### REST API {: #3.114.2-rest-api }
