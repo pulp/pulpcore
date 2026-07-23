@@ -10,7 +10,7 @@ from django.contrib.auth.backends import RemoteUserBackend
 from rest_framework.authentication import BaseAuthentication, RemoteUserAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 
-from pulpcore.app import settings
+from pulpcore.app import settings  # noqa: TID251 Unfixable in old dynaconf version.
 
 _logger = logging.getLogger(__name__)
 

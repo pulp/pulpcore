@@ -1,7 +1,7 @@
 from redis import Redis
 from redis.asyncio import Redis as aRedis
 
-from pulpcore.app.settings import settings
+from pulpcore.app.settings import settings  # noqa: TID251 Unfixable in old dynaconf version.
 
 _conn = None
 _a_conn = None
