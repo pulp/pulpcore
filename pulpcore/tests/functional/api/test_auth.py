@@ -9,7 +9,7 @@ from base64 import b64encode
 
 import pytest
 
-from pulpcore.app import settings
+from pulpcore.app import settings  # noqa: TID251 Unfixable in old dynaconf version.
 from pulpcore.client.pulpcore import ApiException
 
 

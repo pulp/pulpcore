@@ -6,7 +6,7 @@ from cryptography.x509 import load_pem_x509_certificate
 from rest_framework import fields, serializers
 from rest_framework_nested.serializers import NestedHyperlinkedModelSerializer
 
-from pulpcore.app import models, settings
+from pulpcore.app import models, settings  # noqa: TID251 Unfixable in old dynaconf version.
 from pulpcore.app.serializers import (
     DetailIdentityField,
     DetailRelatedField,

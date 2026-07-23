@@ -15,7 +15,7 @@ from pulpcore.app.redis_connection import (
     get_async_redis_connection,
     get_redis_connection,
 )
-from pulpcore.app.settings import settings
+from pulpcore.app.settings import settings  # noqa: TID251 Unfixable in old dynaconf version.
 from pulpcore.responses import ArtifactResponse
 
 DEFAULT_EXPIRES_TTL = settings.CACHE_SETTINGS["EXPIRES_TTL"]

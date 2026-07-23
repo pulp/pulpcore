@@ -6,7 +6,7 @@ from drf_spectacular.utils import extend_schema
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from pulpcore.app import settings
+from pulpcore.app import settings  # noqa: TID251 Unfixable in old dynaconf version.
 from pulpcore.app.serializers import PulpImportCheckResponseSerializer, PulpImportCheckSerializer
 
 
