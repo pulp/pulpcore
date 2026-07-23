@@ -8,7 +8,29 @@
 
 [//]: # (towncrier release notes start)
 
-## 3.115.1 (2026-07-21) {: #3.115.1 }
+## 3.115.2 (2026-07-22) {: #3.115.2 }
+
+### REST API {: #3.115.2-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.115.2-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.115.2-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.115.2-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## YANKED 3.115.1 (2026-07-21) {: #3.115.1 }
+
+Yank reason: Broken settings-setup - fixed in .115.2
 
 ### REST API {: #3.115.1-rest-api }
 
