@@ -3,7 +3,7 @@ import uuid
 
 import pytest
 
-from pulpcore.app import settings
+from pulpcore.app import settings  # noqa: TID251 Unfixable in old dynaconf version.
 from pulpcore.client.pulp_file import ApiException
 from pulpcore.client.pulpcore import ApiException as CoreApiException
 from pulpcore.client.pulpcore import Repair

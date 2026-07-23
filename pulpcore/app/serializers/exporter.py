@@ -5,7 +5,7 @@ from gettext import gettext as _
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
-from pulpcore.app import models, settings
+from pulpcore.app import models, settings  # noqa: TID251 Unfixable in old dynaconf version.
 from pulpcore.app.serializers import (
     DetailIdentityField,
     DetailRelatedField,
