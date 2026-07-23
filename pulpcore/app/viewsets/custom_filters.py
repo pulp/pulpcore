@@ -9,7 +9,7 @@ from itertools import chain
 
 from django.conf import settings
 from django.db.models import Q
-from django_filters import BaseInFilter, CharFilter, Filter
+from django_filters import BaseInFilter, BaseRangeFilter, CharFilter, Filter
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
@@ -145,9 +145,12 @@ class RepoVersionHrefPrnFilter(Filter):
                 detail=_("No value supplied for repository version filter")
             )
 
-        object = NamedModelViewSet.get_resource(value)
+        # content_ids is only consumed as a database-side subquery (see
+        # RepositoryVersion.content_ids_subquery), so defer the potentially huge array column here
+        # to keep it from being loaded into Python when resolving the version.
+        object = NamedModelViewSet.get_resource(value, deferred_fields=("content_ids",))
         if isinstance(object, Repository):
-            object = object.latest_version()
+            object = object.versions.complete().defer("content_ids").last()
         if not isinstance(object, RepositoryVersion):
             raise serializers.ValidationError(
                 detail=_("URI {u} not found for {m}.").format(u=value, m="repositoryversion")
@@ -161,6 +164,90 @@ class RepoVersionHrefPrnFilter(Filter):
             value (string): The RepositoryVersion href/prn to filter by
         """
         raise NotImplementedError()
+
+
+class RepositoryVersionBetweenFilter(BaseRangeFilter, RepoVersionHrefPrnFilter):
+    """
+    Base class for range filters that diff content between two arbitrary repository versions.
+
+    The filter accepts exactly two comma-separated Repository Version (or Repository) HREF/PRN
+    values in ``base,target`` order: the first is the base version and the second is the target
+    version. Subclasses implement :meth:`diff` to return the appropriate net set of content.
+    """
+
+    def diff(self, base_version, target_version):
+        """
+        Return the content that differs between ``base_version`` and ``target_version``.
+
+        Args:
+            base_version (pulpcore.app.models.RepositoryVersion): The base repository version.
+            target_version (pulpcore.app.models.RepositoryVersion): The target repository version.
+
+        Returns:
+            django.db.models.query.QuerySet: A Content queryset with the diff.
+        """
+        raise NotImplementedError()
+
+    def filter(self, qs, value):
+        """
+        Args:
+            qs (django.db.models.query.QuerySet): The Content Queryset
+            value (list): The ``[base, target]`` RepositoryVersion href/prn pair to diff between.
+        """
+        if not value:
+            return qs
+
+        base_version = self.get_repository_version(value[0])
+        target_version = self.get_repository_version(value[1])
+        return qs.filter(pk__in=self.diff(base_version, target_version))
+
+
+class RepositoryVersionAddedBetweenFilter(RepositoryVersionBetweenFilter):
+    """
+    Filter Content to the net set added going from a base repository version to a target version.
+
+    Given ``base,target``, returns the content present in ``target`` but not in ``base`` -- the
+    net difference across two arbitrary (possibly non-adjacent) repository versions, rather than
+    the single-step difference computed by ``repository_version_added``.
+    """
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault(
+            "help_text",
+            _(
+                "Two Repository Versions referenced by HREF/PRN as 'base,target'. Returns the "
+                "content added going from the base version to the target version (present in "
+                "target but not in base)."
+            ),
+        )
+        super().__init__(*args, **kwargs)
+
+    def diff(self, base_version, target_version):
+        return target_version.added(base_version=base_version)
+
+
+class RepositoryVersionRemovedBetweenFilter(RepositoryVersionBetweenFilter):
+    """
+    Filter Content to the net set removed going from a base repository version to a target version.
+
+    Given ``base,target``, returns the content present in ``base`` but not in ``target`` -- the
+    net difference across two arbitrary (possibly non-adjacent) repository versions, rather than
+    the single-step difference computed by ``repository_version_removed``.
+    """
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault(
+            "help_text",
+            _(
+                "Two Repository Versions referenced by HREF/PRN as 'base,target'. Returns the "
+                "content removed going from the base version to the target version (present in "
+                "base but not in target)."
+            ),
+        )
+        super().__init__(*args, **kwargs)
+
+    def diff(self, base_version, target_version):
+        return target_version.removed(base_version=base_version)
 
 
 class RepositoryVersionFilter(RepoVersionHrefPrnFilter):
