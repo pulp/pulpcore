@@ -527,8 +527,26 @@ class BaseDistributionViewSet(NamedModelViewSet):
         return qs
 
     def async_reserved_resources(self, instance):
-        """Return resource that locks all Distributions."""
-        return [f"pdrn:{get_domain().pulp_id}:distributions"]
+        """
+        Reserve the narrowest safe lock for async distribution operations.
+
+        Creates, deletes, and base_path changes still lock the domain-wide distributions resource
+        because base_path overlap validation is domain scoped. Other updates only need to lock the
+        specific distribution instance.
+        """
+        domain_distributions = f"pdrn:{get_domain().pulp_id}:distributions"
+        if instance is None:
+            return [domain_distributions]
+
+        if getattr(self, "action", "") == "destroy":
+            return [instance, domain_distributions]
+
+        request_data = getattr(getattr(self, "request", None), "data", {})
+        requested_base_path = request_data.get("base_path", instance.base_path)
+        if requested_base_path == instance.base_path:
+            return [instance]
+
+        return [instance, domain_distributions]
 
 
 class ListDistributionViewSet(BaseDistributionViewSet, mixins.ListModelMixin):
@@ -567,9 +585,9 @@ class DistributionViewSet(
     LabelsMixin,
 ):
     """
-    Provides read and list methods and also provides asynchronous CUD methods to dispatch tasks
-    with reservation that lock all Distributions preventing race conditions during base_path
-    checking.
+    Provides read and list methods plus asynchronous CUD methods that reserve the narrowest safe
+    distribution locks, only taking the domain-wide lock when base_path overlap validation or
+    base_path release needs it.
     """
 
 
