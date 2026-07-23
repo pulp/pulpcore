@@ -1,0 +1,5 @@
+Optimized the `q` complex filter to compose `NOT`/`AND`/`OR` operands as flat `WHERE`
+conditions in a single SQL statement for standard field filters, falling back to `pk__in`
+subqueries only for opaque operands (label, `repository_version`, and href/prn/id resolvers).
+This replaces the previous `EXCEPT`/`INTERSECT`/`UNION` set operations, avoiding full-table
+scans and disk-spilling sorts, and keeps the query flat regardless of expression nesting depth.
