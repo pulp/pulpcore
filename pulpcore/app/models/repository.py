@@ -885,6 +885,10 @@ class RepositoryContent(BaseModel):
 class RepositoryVersionQuerySet(models.QuerySet):
     """A queryset that provides repository version filtering methods."""
 
+    def get_queryset(self):
+        # Prevent the content_ids to be automatically hydrated.
+        return super().get_queryset().defer("content_ids")
+
     def complete(self):
         return self.filter(complete=True)
 
@@ -997,15 +1001,13 @@ class RepositoryVersion(BaseModel):
         if content_qs is None:
             content_qs = Content.objects
 
-        content_ids = self.content_ids
-        if len(content_ids) >= 65535:
-            # Workaround for PostgreSQL's limit on the number of parameters in a query
-            content_ids = (
-                RepositoryVersion.objects.filter(pk=self.pk)
-                .annotate(cids=Func(F("content_ids"), function="unnest"))
-                .values_list("cids", flat=True)
-            )
-        return content_qs.filter(pk__in=content_ids)
+        # Try to not even attempt to evaluate the content_ids on the python side.
+        content_ids_subquery = (
+            RepositoryVersion.objects.filter(pk=self.pk)
+            .annotate(cids=Func(F("content_ids"), function="unnest"))
+            .values_list("cids", flat=True)
+        )
+        return content_qs.filter(pk__in=content_ids_subquery)
 
     @property
     def content(self):
