@@ -16,12 +16,17 @@ class DefaultAccessPolicy(AccessPolicy):
     """
 
     def get_user_group_values(self, user):
-        """Let a stateless principal supply its groups directly instead of via the ORM."""
-        from pulpcore.app.workload_identity.principal import WorkloadIdentityPrincipal
+        """Read groups from the ORM only for real database users.
 
-        if isinstance(user, WorkloadIdentityPrincipal):
-            return list(user.group_names)
-        return super().get_user_group_values(user)
+        drf-access-policy assumes groups live in ``django.contrib.auth`` and prefetches them,
+        which does not work for a stateless principal. Any non-database user (a workload-identity
+        principal, or another one added later) supplies its groups via a ``group_names`` attribute.
+        """
+        from django.contrib.auth import get_user_model
+
+        if isinstance(user, get_user_model()):
+            return super().get_user_group_values(user)
+        return list(getattr(user, "group_names", []))
 
     @classmethod
     def get_access_policy(cls, view):

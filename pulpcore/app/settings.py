@@ -158,6 +158,7 @@ MIDDLEWARE = [
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
     "pulpcore.backends.ObjectRolePermissionBackend",
+    "pulpcore.app.workload_identity.backend.WorkloadIdentityBackend",
 ]
 
 ROOT_URLCONF = "pulpcore.app.urls"
