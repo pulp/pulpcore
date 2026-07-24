@@ -1,4 +1,4 @@
-"""Access to the ``WORKLOAD_IDENTITY`` setting and per-provider JWKS clients."""
+"""Access to the `WORKLOAD_IDENTITY` setting and per-provider JWKS clients."""
 
 import functools
 
@@ -19,12 +19,16 @@ def providers():
 
 
 def basic_username():
-    """The reserved username that flags a token carried in the ``Basic`` password field."""
-    return config().get("basic_auth_username", "workload-identity")
+    """The reserved username that flags a token carried in the `Basic` password field.
+
+    Defaults to `__token__`, the common convention for "the password is a token, the username
+    is irrelevant" used by clients that only speak Basic auth.
+    """
+    return config().get("basic_auth_username", "__token__")
 
 
 def provider_for_issuer(issuer):
-    """Return the provider entry whose ``issuer`` matches, or ``None``."""
+    """Return the provider entry whose `issuer` matches, or `None`."""
     for entry in providers().values():
         if entry.get("issuer") == issuer:
             return entry

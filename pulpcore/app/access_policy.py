@@ -18,9 +18,9 @@ class DefaultAccessPolicy(AccessPolicy):
     def get_user_group_values(self, user):
         """Read groups from the ORM only for real database users.
 
-        drf-access-policy assumes groups live in ``django.contrib.auth`` and prefetches them,
+        drf-access-policy assumes groups live in `django.contrib.auth` and prefetches them,
         which does not work for a stateless principal. Any non-database user (a workload-identity
-        principal, or another one added later) supplies its groups via a ``group_names`` attribute.
+        principal, or another one added later) supplies its groups via a `group_names` attribute.
         """
         from django.contrib.auth import get_user_model
 

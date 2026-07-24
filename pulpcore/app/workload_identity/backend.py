@@ -1,25 +1,24 @@
 """A Django authentication backend that resolves permissions for a workload-identity principal.
 
-Permission checks on a ``WorkloadIdentityPrincipal`` are answered here, from the per-request
-grants carried on the principal, so the feature plugs into the normal ``AUTHENTICATION_BACKENDS``
+Permission checks on a `WorkloadIdentityPrincipal` are answered here, from the per-request
+grants carried on the principal, so the feature plugs into the normal `AUTHENTICATION_BACKENDS`
 machinery. For any other user this backend defers by returning nothing.
 """
 
 from django.contrib.auth.backends import BaseBackend
 
+from pulpcore.app.workload_identity.authz import has_grant_perm, permissions_for
+from pulpcore.app.workload_identity.principal import WorkloadIdentityPrincipal
+
 
 class WorkloadIdentityBackend(BaseBackend):
     @staticmethod
     def _grants(user_obj):
-        from pulpcore.app.workload_identity.principal import WorkloadIdentityPrincipal
-
         if isinstance(user_obj, WorkloadIdentityPrincipal):
             return user_obj.grants
         return None
 
     def has_perm(self, user_obj, perm, obj=None):
-        from pulpcore.app.workload_identity.authz import has_grant_perm
-
         grants = self._grants(user_obj)
         if grants is None:
             return False
@@ -33,8 +32,6 @@ class WorkloadIdentityBackend(BaseBackend):
         return any(perm.startswith(prefix) for perm in self.get_all_permissions(user_obj))
 
     def get_all_permissions(self, user_obj, obj=None):
-        from pulpcore.app.workload_identity.authz import permissions_for
-
         grants = self._grants(user_obj)
         if grants is None:
             return set()
