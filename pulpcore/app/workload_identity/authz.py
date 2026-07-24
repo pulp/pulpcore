@@ -1,15 +1,19 @@
 """Shared authorization logic over a list of grants.
 
-A grant is ``{"role": <role name>, "scope": {...}}``. Scope is one of:
+A grant is `{"role": <role name>, "scope": {...}}`. Scope is one of:
 
-* ``{"type": "global"}``
-* ``{"type": "domain", "domain": "<name>"}``
-* ``{"type": "object", "name": "<name>"}`` (or ``"prn"``)
+* `{"type": "global"}`
+* `{"type": "domain", "domain": "<name>"}`
+* `{"type": "object", "name": "<name>"}` (or `"prn"`)
 
 Roles are read from the database to resolve their permissions; the grant assignment is never stored.
 """
 
 from django.db.models import Q
+
+from pulpcore.app.models import Domain
+from pulpcore.app.models.role import Role
+from pulpcore.app.util import extract_pk, get_prn
 
 
 def _split(permission):
@@ -18,8 +22,6 @@ def _split(permission):
 
 
 def _role_has_perm(role_name, app_label, codename):
-    from pulpcore.app.models.role import Role
-
     if not role_name:
         return False
     try:
@@ -30,9 +32,7 @@ def _role_has_perm(role_name, app_label, codename):
 
 
 def _scope_matches(scope, obj):
-    """Whether a scope applies to a single object (``obj`` may be ``None`` for model-level)."""
-    from pulpcore.app.models import Domain
-
+    """Whether a scope applies to a single object (`obj` may be `None` for model-level)."""
     stype = scope.get("type")
     if stype == "global":
         return True
@@ -47,8 +47,6 @@ def _scope_matches(scope, obj):
         if "prn" not in scope and "name" not in scope:
             return False
         if "prn" in scope:
-            from pulpcore.app.util import get_prn
-
             try:
                 if get_prn(obj) != scope["prn"]:
                     return False
@@ -65,7 +63,7 @@ def _scope_matches(scope, obj):
 
 
 def has_grant_perm(grants, permission, obj=None):
-    """True if any grant confers ``permission`` and its scope matches ``obj``."""
+    """True if any grant confers `permission` and its scope matches `obj`."""
     app_label, codename = _split(permission)
     for grant in grants:
         if _role_has_perm(grant.get("role"), app_label, codename) and _scope_matches(
@@ -76,9 +74,7 @@ def has_grant_perm(grants, permission, obj=None):
 
 
 def permissions_for(grants, obj=None):
-    """The set of ``app_label.codename`` the grants confer, scoped to ``obj`` when given."""
-    from pulpcore.app.models.role import Role
-
+    """The set of `app_label.codename` the grants confer, scoped to `obj` when given."""
     names = {g.get("role") for g in grants if g.get("role")}
     if not names:
         return set()
@@ -99,7 +95,7 @@ def permissions_for(grants, obj=None):
 
 
 def grants_queryset(grants, permission, queryset):
-    """Return ``queryset`` filtered to the objects the grants allow for ``permission``."""
+    """Return `queryset` filtered to the objects the grants allow for `permission`."""
     app_label, codename = _split(permission)
     relevant = [g for g in grants if _role_has_perm(g.get("role"), app_label, codename)]
     if not relevant:
@@ -117,8 +113,6 @@ def grants_queryset(grants, permission, queryset):
             clause = Q(pulp_domain__name=scope.get("domain"))
         elif stype == "object":
             if "prn" in scope:
-                from pulpcore.app.util import extract_pk
-
                 try:
                     clause = Q(pk=extract_pk(scope["prn"], only_prn=True))
                 except Exception:

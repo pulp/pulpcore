@@ -326,7 +326,7 @@ def test_get_token_bearer():
 
 def test_get_token_basic_reserved_username():
     auth = WorkloadIdentityAuthentication()
-    assert auth._get_token(_FakeRequest(_basic("workload-identity", "the-token"))) == "the-token"
+    assert auth._get_token(_FakeRequest(_basic("__token__", "the-token"))) == "the-token"
 
 
 def test_get_token_basic_wrong_username_falls_through():
@@ -357,7 +357,7 @@ def test_config_provider_for_issuer():
 
 @override_settings(WORKLOAD_IDENTITY={})
 def test_config_basic_username_default():
-    assert wi_config.basic_username() == "workload-identity"
+    assert wi_config.basic_username() == "__token__"
 
 
 @override_settings(WORKLOAD_IDENTITY={"basic_auth_username": "ci-bot"})

@@ -1,8 +1,8 @@
 """DRF authentication that validates a third-party OIDC token against its provider's JWKS.
 
-The token arrives as a ``Bearer`` token, or as the password of a ``Basic`` header whose username
+The token arrives as a `Bearer` token, or as the password of a `Basic` header whose username
 is the reserved workload-identity name. On success its claims map to grants and a stateless
-``WorkloadIdentityPrincipal`` is returned.
+`WorkloadIdentityPrincipal` is returned.
 """
 
 import base64
@@ -22,17 +22,17 @@ _logger = logging.getLogger("pulpcore.workload_identity")
 class WorkloadIdentityAuthentication(BaseAuthentication):
     """Authenticate requests bearing a third-party OIDC token.
 
-    On success this returns a stateless ``WorkloadIdentityPrincipal`` whose permissions are
+    On success this returns a stateless `WorkloadIdentityPrincipal` whose permissions are
     derived entirely from the grants earned by the token's claims. When the
     request carries no token, or a token that is not meant for us, the
-    authenticator returns ``None`` so that other authenticators may run.
+    authenticator returns `None` so that other authenticators may run.
     """
 
     def _get_token(self, request):
         """Return the token from the Authorization header, or None.
 
-        Accepts a ``Bearer`` token, or a token carried as the password of a ``Basic`` header whose
-        username is the reserved workload-identity name. Any other ``Basic`` header is left for the
+        Accepts a `Bearer` token, or a token carried as the password of a `Basic` header whose
+        username is the reserved workload-identity name. Any other `Basic` header is left for the
         regular authenticators.
         """
         header = request.META.get("HTTP_AUTHORIZATION", "")
@@ -55,7 +55,7 @@ class WorkloadIdentityAuthentication(BaseAuthentication):
         return None
 
     def authenticate(self, request):
-        """Validate the token and return ``(principal, claims)``, or ``None`` if it is not ours."""
+        """Validate the token and return `(principal, claims)`, or `None` if it is not ours."""
         token = self._get_token(request)
         if not token:
             return None
@@ -96,5 +96,5 @@ class WorkloadIdentityAuthentication(BaseAuthentication):
         return (WorkloadIdentityPrincipal(grants, username=""), claims)
 
     def authenticate_header(self, request):
-        """Return the ``WWW-Authenticate`` value so failures are 401, not 403."""
+        """Return the `WWW-Authenticate` value so failures are 401, not 403."""
         return "Bearer"
