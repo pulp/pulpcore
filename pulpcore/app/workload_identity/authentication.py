@@ -55,7 +55,7 @@ class WorkloadIdentityAuthentication(BaseAuthentication):
         return None
 
     def authenticate(self, request):
-        """Validate an OIDC token and return ``(WorkloadIdentityPrincipal, claims)``, or ``None`` if not ours."""
+        """Validate the token and return ``(principal, claims)``, or ``None`` if it is not ours."""
         token = self._get_token(request)
         if not token:
             return None
