@@ -742,38 +742,44 @@ def test_fetch_task_beyond_initial_batch(dispatch_task, monitor_task, pulpcore_b
     """Test that tasks beyond the initial fetch batch are still processed.
 
     When more than FETCH_TASK_LIMIT tasks are blocked on the same exclusive resource,
-    the RedisWorker should double the fetch limit and find runnable tasks further
-    down the queue.
+    the RedisWorker should find runnable tasks further down the queue. All tasks share
+    a common shared resource (simulating a domain) to ensure the blocked-resource
+    exclusion filter does not over-exclude tasks that share a domain.
     """
     blocker_resource = str(uuid4())
     other_resource = str(uuid4())
+    shared_domain_resource = str(uuid4())
 
     # Dispatch a long-running task that holds the blocker resource
     blocker_href = dispatch_task(
         "pulpcore.app.tasks.test.sleep",
         args=(60,),
         exclusive_resources=[blocker_resource],
+        shared_resources=[shared_domain_resource],
     )
     time.sleep(2)
 
-    # Dispatch 25 tasks that all need the same blocked resource
+    # Dispatch 25 tasks that all need the same blocked resource AND shared domain
     blocked_hrefs = []
     for _ in range(25):
         href = dispatch_task(
             "pulpcore.app.tasks.test.sleep",
             args=(0,),
             exclusive_resources=[blocker_resource],
+            shared_resources=[shared_domain_resource],
         )
         blocked_hrefs.append(href)
 
-    # Dispatch a task that uses a completely different resource (position 27 in the queue)
+    # Dispatch a task that uses a different exclusive resource but the SAME shared domain
     unblocked_href = dispatch_task(
         "pulpcore.app.tasks.test.sleep",
         args=(0,),
         exclusive_resources=[other_resource],
+        shared_resources=[shared_domain_resource],
     )
 
     # The unblocked task should complete even though 25 tasks ahead of it are blocked
+    # and all tasks share the same domain resource
     unblocked_task = monitor_task(unblocked_href)
     assert unblocked_task.state == "completed"
 

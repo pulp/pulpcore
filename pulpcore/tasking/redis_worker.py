@@ -425,28 +425,34 @@ class RedisWorker:
         """
         Fetch an available waiting task using Redis locks.
 
-        This method:
-        1. Queries waiting tasks (sorted by creation time, limited)
-        2. For each task, attempts to acquire Redis distributed locks for exclusive resources
-        3. If resource locks acquired, attempts to claim the task
-           with a Redis task lock (24h expiration)
-        4. Returns the first task for which both locks can be acquired
-        5. If no task found in the batch, doubles the fetch limit and retries from the oldest
+        Uses a resource-aware scanning strategy to avoid head-of-line blocking:
+        1. Queries waiting tasks sorted by creation time in fixed-size batches
+        2. For each task, attempts to acquire Redis distributed locks
+        3. When lock acquisition fails, records the blocked resources
+        4. Subsequent batch queries exclude tasks needing those blocked resources
+           at the DB level using reserved_resources_record array overlap
+        5. This prevents head-of-line blocking when many tasks need the same
+           exclusive resource while tasks for other resources are available
 
         Returns:
             Task: A task object if one was successfully locked, None otherwise
         """
-        fetch_limit = FETCH_TASK_LIMIT
+        blocked_resources = set()
+        prev_blocked_count = 0
 
         while True:
             taken_exclusive = set()
             taken_shared = set()
 
+            qs = Task.objects.filter(state=TASK_STATES.WAITING, app_lock=None).exclude(
+                pk__in=self.ignored_task_ids
+            )
+
+            if blocked_resources:
+                qs = qs.exclude(reserved_resources_record__overlap=list(blocked_resources))
+
             waiting_tasks = list(
-                Task.objects.filter(state=TASK_STATES.WAITING, app_lock=None)
-                .exclude(pk__in=self.ignored_task_ids)
-                .order_by("pulp_created")
-                .select_related("pulp_domain")[:fetch_limit]
+                qs.order_by("pulp_created").select_related("pulp_domain")[:FETCH_TASK_LIMIT]
             )
 
             if not waiting_tasks:
@@ -482,6 +488,9 @@ class RedisWorker:
                         shared_resources,
                     )
                     if blocked_resource_list:
+                        for res in blocked_resource_list:
+                            if res != "__task_lock__":
+                                blocked_resources.add(res)
                         continue
 
                     rows = Task.objects.filter(
@@ -500,12 +509,15 @@ class RedisWorker:
 
                 except Exception as e:
                     _logger.error("Error processing task %s: %s", task.pk, e)
+                    try:
+                        safe_release_task_locks(task, lock_owner=self.name)
+                    except Exception:
+                        pass
                     continue
 
-            if len(waiting_tasks) < fetch_limit:
+            if len(blocked_resources) == prev_blocked_count:
                 break
-
-            fetch_limit *= 2
+            prev_blocked_count = len(blocked_resources)
 
         return None
 

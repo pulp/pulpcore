@@ -1,0 +1,4 @@
+Fixed head-of-line blocking in RedisWorker task selection. When thousands of
+tasks need the same exclusive resource, workers now skip blocked resources at
+the database level instead of scanning past them repeatedly, allowing tasks
+with free resources to be picked up without delay.
