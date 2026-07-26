@@ -277,6 +277,7 @@ extend-exclude = [
 
 [tool.ruff.lint]
 # This section is managed by the plugin template. Do not edit manually.
+select = ["E4", "E7", "E9", "F"]
 extend-select = [
   "I",
   "INT",
