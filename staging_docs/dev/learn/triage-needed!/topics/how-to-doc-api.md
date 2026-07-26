@@ -17,13 +17,12 @@ Response status codes can be generated through the `Meta` class on the serialize
 ```python
 from rest_framework.status import HTTP_400_BAD_REQUEST
 
+
 class SnippetSerializerV1(serializers.Serializer):
     title = serializers.CharField(required=False, allow_blank=True, max_length=100)
 
     class Meta:
-        error_status_codes = {
-            HTTP_400_BAD_REQUEST: 'Bad Request'
-        }
+        error_status_codes = {HTTP_400_BAD_REQUEST: "Bad Request"}
 ```
 
 You may disable schema generation for a view by setting `schema` to `None`:

@@ -24,7 +24,7 @@ For example, a ContentViewSet for `app_label` "foobar" like this:
 
 ```python
 class PackageViewSet(ContentViewSet):
-    endpoint_name = 'packages'
+    endpoint_name = "packages"
 ```
 
 The above example will create set of CRUD endpoints for Packages at
@@ -37,9 +37,9 @@ In addition to the CRUD endpoints, a Viewset can also add a custom endpoint. For
 
 ```python
 class PackageViewSet(ContentViewSet):
-    endpoint_name = 'packages'
+    endpoint_name = "packages"
 
-    @decorators.detail_route(methods=('get',))
+    @decorators.detail_route(methods=("get",))
     def hello(self, request):
         return Response("Hey!")
 ```
@@ -68,7 +68,7 @@ a task.
 
 ```python
 # We recommend using POST for any endpoints that kick off task.
-@detail_route(methods=('post',), serializer_class=RepositorySyncURLSerializer)
+@detail_route(methods=("post",), serializer_class=RepositorySyncURLSerializer)
 # `pk` is a part of the URL
 def sync(self, request, pk):
     """
@@ -76,22 +76,18 @@ def sync(self, request, pk):
     The ``repository`` field has to be provided.
     """
     remote = self.get_object()
-    serializer = RepositorySyncURLSerializer(data=request.data, context={'request': request})
+    serializer = RepositorySyncURLSerializer(data=request.data, context={"request": request})
     # This is how non-crud validation is accomplished
     serializer.is_valid(raise_exception=True)
-    repository = serializer.validated_data.get('repository')
-    mirror = serializer.validated_data.get('mirror', False)
+    repository = serializer.validated_data.get("repository")
+    mirror = serializer.validated_data.get("mirror", False)
 
     # This is how tasks are kicked off.
     result = dispatch(
         tasks.synchronize,
         exclusive_resources=[repository],
         shared_resources=[remote],
-        kwargs={
-            'remote_pk': remote.pk,
-            'repository_pk': repository.pk,
-            'mirror': mirror
-        }
+        kwargs={"remote_pk": remote.pk, "repository_pk": repository.pk, "mirror": mirror},
     )
     # Since tasks are asynchronous, we return a 202
     return OperationPostponedResponse(result, request)

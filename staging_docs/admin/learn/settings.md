@@ -29,8 +29,8 @@ The following code snippet can be used to generate a random SECRET_KEY.
 ```python linenums="1"
 import random
 
-chars = 'abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)'
-print(''.join(random.choice(chars) for i in range(50)))
+chars = "abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)"
+print("".join(random.choice(chars) for i in range(50)))
 ```
 
 ### DB_ENCRYPTION_KEY

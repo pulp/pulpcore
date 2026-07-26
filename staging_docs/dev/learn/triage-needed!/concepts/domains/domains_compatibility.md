@@ -20,6 +20,7 @@ See the code below for an example:
 ```python
 from pulpcore.plugin.util import get_domain_pk
 
+
 class FileContent(Content):
     ...
     _pulp_domain = models.ForeignKey("core.Domain", default=get_domain_pk, on_delete=models.PROTECT)
@@ -58,6 +59,7 @@ already properly handled on the `Publication`, `PublishedArtifacts` and `Publish
 from pulpcore.plugin.models import Task
 from pulpcore.plugin.util import get_domain
 from .models import CustomModel
+
 
 def custom_task(custom_property):
     # How to get the current domain for this task

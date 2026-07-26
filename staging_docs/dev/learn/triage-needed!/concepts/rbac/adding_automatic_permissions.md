@@ -74,8 +74,7 @@ To enable automatic permission creation for an object managed by an AccessPolicy
 use the `pulpcore.plugin.models.AutoAddObjPermsMixin`. See the example below as an example:
 
 ```python
-class MyModel(BaseModel, AutoAddObjPermsMixin):
-   ...
+class MyModel(BaseModel, AutoAddObjPermsMixin): ...
 ```
 
 See the docstring below for more information on this mixin.
@@ -124,13 +123,13 @@ the `function` are method names on the Model that need to be registered with
 
 ```python
 class MyModel(BaseModel, AutoAddObjPermsMixin):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.REGISTERED_CREATION_HOOKS["my_custom_callable"] = self.my_custom_callable
 
     def my_custom_callable(self, role, users, groups):
         from pulpcore.app.util import assign_role
+
         for user in users:
             assign_role(role, user, self)  # self is the object being assigned
         for group in groups:

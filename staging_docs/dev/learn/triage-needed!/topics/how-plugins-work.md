@@ -37,9 +37,9 @@ plugin, by pointing the pulpcore.plugin entry point at it. If, for example, we s
 this:
 
 ```python
-entry_points={
-    'pulpcore.plugin': [
-        'pulp_myplugin = pulp_myplugin:default_app_config',
+entry_points = {
+    "pulpcore.plugin": [
+        "pulp_myplugin = pulp_myplugin:default_app_config",
     ]
 }
 ```

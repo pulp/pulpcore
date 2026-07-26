@@ -285,7 +285,7 @@ This is what the ViewSet should look like:
 class RepositoryViewSet(viewsets.ModelViewSet):
     queryset = models.Repository.objects.all()
     serializer_class = serializers.RepositorySerializer
-    filterset_fields = ('name',)
+    filterset_fields = ("name",)
 ```
 
 #### FilterSet
@@ -303,7 +303,8 @@ class RepositoryFilter(filters.FilterSet):
 
     class Meta:
         model = models.Repository
-        fields = ['name']
+        fields = ["name"]
+
 
 class RepositoryViewSet(viewsets.ModelViewSet):
     queryset = models.Repository.objects.all()
@@ -328,11 +329,11 @@ Simply define any filters in the `FilterSet` and then include them in `fields` i
 
 ```python
 class RepositoryFilter(filters.FilterSet):
-    name_contains = django_filters.filters.CharFilter(field_name='name', lookup_expr='contains')
+    name_contains = django_filters.filters.CharFilter(field_name="name", lookup_expr="contains")
 
     class Meta:
         model = models.Repository
-        fields = ['name_contains']
+        fields = ["name_contains"]
 ```
 
 #### Custom Filters
@@ -348,16 +349,16 @@ http 'http://192.168.121.134:24817/pulp/api/v3/repositories/?name_in_list=singin
 ```
 
 ```python
-class CharInFilter(django_filters.filters.BaseInFilter,
-                   django_filters.filters.CharFilter):
+class CharInFilter(django_filters.filters.BaseInFilter, django_filters.filters.CharFilter):
     pass
 
+
 class RepositoryFilter(filters.FilterSet):
-    name_in_list = CharInFilter(name='name', lookup_expr='in')
+    name_in_list = CharInFilter(name="name", lookup_expr="in")
 
     class Meta:
         model = models.Repository
-        fields = ['name_in_list']
+        fields = ["name_in_list"]
 ```
 
 !!! note
