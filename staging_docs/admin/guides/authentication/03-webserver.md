@@ -30,9 +30,9 @@ Specify how to receive the username from the webserver. Do this by specifying to
 `DEFAULT_AUTHENTICATION_CLASSES`. For example, consider this example:
 
  ```python
- REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES'] = (
-     'rest_framework.authentication.SessionAuthentication',
-     'pulpcore.app.authentication.PulpRemoteUserAuthentication'
+ REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"] = (
+     "rest_framework.authentication.SessionAuthentication",
+     "pulpcore.app.authentication.PulpRemoteUserAuthentication",
  )
  ```
 

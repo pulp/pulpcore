@@ -21,8 +21,8 @@ passwords against. By default it is set to:
 
 ```python
 AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModelBackend',  # Django's users, groups, and permissions
-    'pulpcore.backends.ObjectRolePermissionBackend'  # Pulp's RBAC object and model permissions
+    "django.contrib.auth.backends.ModelBackend",  # Django's users, groups, and permissions
+    "pulpcore.backends.ObjectRolePermissionBackend",  # Pulp's RBAC object and model permissions
 ]
 ```
 
@@ -31,9 +31,9 @@ Django Rest Framework defines the source usernames and passwords come from with 
 
 ```python
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.SessionAuthentication',  # Session Auth
-        'rest_framework.authentication.BasicAuthentication'  # Basic Auth
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",  # Session Auth
+        "rest_framework.authentication.BasicAuthentication",  # Basic Auth
     ]
 }
 ```

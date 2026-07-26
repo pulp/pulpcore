@@ -56,14 +56,11 @@ Here's an example of adding a permission like this for `FileRepository`:
 
 ```python
 class FileRepository(Repository):
-
     ...
 
     class Meta:
         ...
-        permissions = (
-            ('modify_repo_content', 'Modify Repository Content'),
-        )
+        permissions = (("modify_repo_content", "Modify Repository Content"),)
 ```
 
 !!! note

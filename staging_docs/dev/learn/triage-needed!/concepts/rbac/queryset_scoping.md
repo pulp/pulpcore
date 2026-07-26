@@ -74,14 +74,14 @@ parameters can also be accepted by supplying them in a `parameters` section of t
 from pulpcore.plugin.viewsets import NamedModelViewSet
 from pulpcore.plugin.util import get_objects_for_user
 
-class MyViewSet(NamedModelViewSet):
 
+class MyViewSet(NamedModelViewSet):
     DEFAULT_ACCESS_POLICY = {
         # Statements omitted
-        "queryset_scoping" : {
+        "queryset_scoping": {
             # This entire field is editable by the user
             "function": "different_permission_scope",
-            "parameters": {"permission": "my.example_permission"}
+            "parameters": {"permission": "my.example_permission"},
         }
     }
 
@@ -100,8 +100,8 @@ provided by pulpcore. Here's an example:
 ```python
 from pulpcore.plugin.util import get_objects_for_user
 
-class MyViewSet(rest_framework.viewsets.GenericViewSet):
 
+class MyViewSet(rest_framework.viewsets.GenericViewSet):
     def get_queryset(self):
         qs = super().get_queryset()
         permission_name = "my.example_permission"

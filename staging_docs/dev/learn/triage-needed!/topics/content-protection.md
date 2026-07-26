@@ -38,9 +38,9 @@ secret both authenticates the user and authorizes them for this Content.
 from django.db import models
 from pulpcore.plugin.models import ContentGuard
 
-class SecretStringContentGuard(ContentGuard):
 
-    TYPE = 'secret_string'
+class SecretStringContentGuard(ContentGuard):
+    TYPE = "secret_string"
 
     secret_string = models.FileField(max_length=255)
 
@@ -56,7 +56,7 @@ class SecretStringContentGuard(ContentGuard):
             PermissionError: When the request cannot be authorized.
         """
         ca = self.ca_certificate.read()
-        validator = Validator(ca.decode('utf8'))
+        validator = Validator(ca.decode("utf8"))
         validator(request)
 
     class Meta:

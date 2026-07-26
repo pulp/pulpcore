@@ -178,7 +178,7 @@ temp_file.save()
 
 # Example 2 - Validating the digest and saving a temporary file:
 temp_file = PulpTemporaryFile.init_and_validate(
-    my_file, expected_digests={'md5': '912ec803b2ce49e4a541068d495ab570'}
+    my_file, expected_digests={"md5": "912ec803b2ce49e4a541068d495ab570"}
 )
 temp_file.save()
 
@@ -259,18 +259,15 @@ GroupProgressReport needs to be updated.
 task_group = TaskGroup(description="Migration Sub-tasks")
 task_group.save()
 group_pr = GroupProgressReport(
-    message="Repo migration",
-    code="create.repo_version",
-    total=1,
-    done=0,
-    task_group=task_group)
+    message="Repo migration", code="create.repo_version", total=1, done=0, task_group=task_group
+)
 group_pr.save()
 # When a task that will be executing certain work, which is part of a TaskGroup, it will look
 # for the TaskGroup it belongs to and find appropriate progress report by its code and will
 # update it accordingly.
 task_group = TaskGroup.current()
-progress_repo = task_group.group_progress_reports.filter(code='create.repo_version')
-progress_repo.update(done=F('done') + 1)
+progress_repo = task_group.group_progress_reports.filter(code="create.repo_version")
+progress_repo.update(done=F("done") + 1)
 # To avoid race conditions/cache invalidation issues, this pattern needs to be used so that
 # operations are performed directly inside the database:
 
@@ -369,13 +366,10 @@ below so `dynaconf` can run your plugin's validators. See [dynaconf validator do
 ```python
 from dynaconf import Validator
 
+
 def post(settings):
     """This hook is called by dynaconf after the settings are completely loaded"""
-    settings.validators.register(
-        Validator(...),
-        Validator(...),
-        ...
-    )
+    settings.validators.register(Validator(...), Validator(...), ...)
     settings.validators.validate()
 ```
 

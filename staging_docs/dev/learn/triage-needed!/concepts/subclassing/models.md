@@ -34,7 +34,8 @@ class FileContent(Content):
     Fields:
         digest (str): The SHA256 HEX digest.
     """
-    TYPE = 'file'
+
+    TYPE = "file"
     digest = models.TextField(null=False)
 
     class Meta:
@@ -75,13 +76,13 @@ class FileContent(Content):
         digest (str): The SHA256 HEX digest.
     """
 
-    TYPE = 'file'
+    TYPE = "file"
 
     digest = models.TextField(null=False)
 
     class Meta:
         # Note the comma, this must be a tuple.
-        unique_together = ('digest',)
+        unique_together = ("digest",)
         default_related_name = "%(app_label)s_%(model_name)s"
 ```
 
@@ -99,7 +100,7 @@ class FileContent(Content):
         digest (str): The SHA256 HEX digest.
     """
 
-    TYPE = 'file'
+    TYPE = "file"
 
     relative_path = models.TextField(null=False)
     digest = models.TextField(null=False)
@@ -107,8 +108,8 @@ class FileContent(Content):
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
         unique_together = (
-           'relative_path',
-           'digest',
+            "relative_path",
+            "digest",
         )
 ```
 

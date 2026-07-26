@@ -29,9 +29,10 @@ class FileContentSerializer(SingleArtifactContentSerializer):
         help_text="Relative location of the file within the repository"
     )
 
+
 class Meta:
-      fields = SingleArtifactContentSerializer.Meta.fields + ('relative_path',)
-      model = FileContent
+    fields = SingleArtifactContentSerializer.Meta.fields + ("relative_path",)
+    model = FileContent
 ```
 
 ### Help Text

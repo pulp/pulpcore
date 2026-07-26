@@ -28,8 +28,8 @@ provided by overriding the various methods of `Handler`, but here is the simples
 ```python
 from pulpcore.plugin.content import Handler
 
-class MyHandler(Handler):
 
+class MyHandler(Handler):
     pass
 ```
 
@@ -43,7 +43,7 @@ adding a custom route to it. Here's an example:
 ```python
 from pulpcore.content import app
 
-app.add_routes([web.get(r'/my/custom/{somevar:.+}', MyHandler().stream_content)])
+app.add_routes([web.get(r"/my/custom/{somevar:.+}", MyHandler().stream_content)])
 ```
 
 Here is an example of [Container registering some custom routes](https://github.com/pulp/pulp_container/blob/master/pulp_container/app/content.py).
@@ -60,7 +60,6 @@ from models import MyDistribution
 
 
 class MyHandler(Handler):
-
     distribution_model = MyDistribution
 ```
 
