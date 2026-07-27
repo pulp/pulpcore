@@ -18,6 +18,7 @@ from pulpcore.app.pulpcore_gunicorn_application import (
     PulpcoreGunicornApplication,
     handle_control_interface_feature,
 )
+from pulpcore.app.util import _is_read_only_db_error
 
 logger = getLogger(__name__)
 
@@ -52,6 +53,27 @@ class PulpApiWorker(SyncWorker):
             os._exit(Arbiter.WORKER_BOOT_ERROR)
 
     def heartbeat(self):
+        if self.app_status is None:
+            from pulpcore.app.models import AppStatus
+
+            try:
+                self.app_status = AppStatus.objects.create(
+                    name=self.name, app_type="api", versions=self.versions
+                )
+            except IntegrityError:
+                logger.error(
+                    f"An API app with name {self.name} already exists in the database."
+                )
+                raise
+            except (InterfaceError, DatabaseError) as e:
+                if _is_read_only_db_error(e):
+                    connection.close_if_unusable_or_obsolete()
+                    logger.debug(
+                        f"Api App '{self.name}' heartbeat skipped (read-only transaction)."
+                    )
+                    return
+                raise
+
         try:
             self.app_status.save_heartbeat()
             logger.debug(self.beat_msg)
@@ -61,6 +83,11 @@ class PulpApiWorker(SyncWorker):
                 self.app_status.save_heartbeat()
                 logger.debug(self.beat_msg)
             except (InterfaceError, DatabaseError) as e:
+                if _is_read_only_db_error(e):
+                    logger.warning(
+                        f"Api App '{self.name}' heartbeat skipped (read-only transaction)."
+                    )
+                    return
                 logger.error(f"{self.fail_beat_msg} Exception: {str(e)}")
                 raise
 
@@ -101,6 +128,15 @@ class PulpApiWorker(SyncWorker):
         except IntegrityError:
             logger.error(f"An API app with name {self.name} already exists in the database.")
             exit(Arbiter.WORKER_BOOT_ERROR)
+        except DatabaseError as e:
+            if _is_read_only_db_error(e):
+                logger.warning(
+                    f"Api App '{self.name}' could not register in the database "
+                    "(read-only transaction). Heartbeat will retry."
+                )
+                self.app_status = None
+            else:
+                raise
 
         self.heartbeat_interval = settings.API_APP_TTL // 3
 
@@ -115,9 +151,13 @@ class PulpApiWorker(SyncWorker):
         try:
             super().run()
         finally:
-            # cleanup
             if self.app_status:
-                self.app_status.delete()
+                try:
+                    self.app_status.delete()
+                except (InterfaceError, DatabaseError):
+                    logger.info(
+                        f"Api App '{self.name}' could not clean up its status record."
+                    )
 
 
 class PulpcoreApiApplication(PulpcoreGunicornApplication):
