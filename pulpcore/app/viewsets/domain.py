@@ -45,6 +45,7 @@ class DomainViewSet(
     serializer_class = DomainSerializer
     endpoint_name = "domains"
     filterset_class = DomainFilter
+    queryset_filtering_required_permission = "core.view_domain"
     DEFAULT_ACCESS_POLICY = {
         "statements": [
             {
