@@ -814,6 +814,48 @@ No significant changes.
 
 ---
 
+## 3.105.14 (2026-07-28) {: #3.105.14 }
+
+### REST API {: #3.105.14-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.105.14-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.105.14-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.105.14-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.105.13 (2026-07-27) {: #3.105.13 }
+
+### REST API {: #3.105.13-rest-api }
+
+#### Bugfixes {: #3.105.13-rest-api-bugfix }
+
+- Stopped shipping an insecure default as DJANGO_SECRET.
+
+### Plugin API {: #3.105.13-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.105.13-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.105.13-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.105.12 (2026-07-20) {: #3.105.12 }
 
 ### REST API {: #3.105.12-rest-api }
