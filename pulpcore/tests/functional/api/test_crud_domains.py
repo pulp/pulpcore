@@ -353,3 +353,41 @@ def test_set_label_on_domain(pulpcore_bindings, domain_factory, gen_user):
         response = pulpcore_bindings.DomainsApi.unset_label(domain.pulp_href, {"key": "abc"})
         assert response.key == "abc"
         assert response.value == "def"
+
+
+@pytest.mark.parallel
+def test_domain_list_queryset_scoping(pulpcore_bindings, gen_user, gen_object_with_cleanup):
+    """Test that domain list is scoped to domains the user can view."""
+    body = {
+        "name": str(uuid.uuid4()),
+        "storage_class": "pulpcore.app.models.storage.FileSystem",
+        "storage_settings": {"MEDIA_ROOT": ""},
+    }
+    domain = gen_object_with_cleanup(pulpcore_bindings.DomainsApi, body)
+    gen_object_with_cleanup(pulpcore_bindings.DomainsApi, {**body, "name": str(uuid.uuid4())})
+
+    # Authenticated users without view_domain see no domains
+    with gen_user():
+        assert pulpcore_bindings.DomainsApi.list().count == 0
+
+    # Object-level domain_viewer can see only that domain
+    with gen_user(object_roles=[("core.domain_viewer", domain.pulp_href)]):
+        domains = pulpcore_bindings.DomainsApi.list()
+        assert domains.count == 1
+        assert domains.results[0].pulp_href == domain.pulp_href
+
+    # Object-level domain_owner can see only that domain
+    with gen_user(object_roles=[("core.domain_owner", domain.pulp_href)]):
+        domains = pulpcore_bindings.DomainsApi.list()
+        assert domains.count == 1
+        assert domains.results[0].pulp_href == domain.pulp_href
+
+    # Domain creator sees domains they create (via creation_hooks), not others
+    creator = gen_user(model_roles=["core.domain_creator"])
+    with creator:
+        created = gen_object_with_cleanup(
+            pulpcore_bindings.DomainsApi, {**body, "name": str(uuid.uuid4())}
+        )
+        domains = pulpcore_bindings.DomainsApi.list()
+        assert domains.count == 1
+        assert domains.results[0].pulp_href == created.pulp_href
