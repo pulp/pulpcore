@@ -8,6 +8,29 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.49.67 (2026-07-28) {: #3.49.67 }
+
+### REST API {: #3.49.67-rest-api }
+
+#### Bugfixes {: #3.49.67-rest-api-bugfix }
+
+- Fixed domain list returning all domains to authenticated users instead of only domains they can view.
+  [#7898](https://github.com/pulp/pulpcore/issues/7898)
+
+### Plugin API {: #3.49.67-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.67-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.67-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.49.66 (2026-07-20) {: #3.49.66 }
 
 ### REST API {: #3.49.66-rest-api }
