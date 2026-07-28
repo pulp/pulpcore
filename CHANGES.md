@@ -8,6 +8,30 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.85.27 (2026-07-28) {: #3.85.27 }
+
+### REST API {: #3.85.27-rest-api }
+
+#### Bugfixes {: #3.85.27-rest-api-bugfix }
+
+- Fixed domain list returning all domains to authenticated users instead of only domains they can view.
+  [#7898](https://github.com/pulp/pulpcore/issues/7898)
+- Stopped shipping an insecure default as DJANGO_SECRET.
+
+### Plugin API {: #3.85.27-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.85.27-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.27-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.85.26 (2026-07-20) {: #3.85.26 }
 
 ### REST API {: #3.85.26-rest-api }
