@@ -94,6 +94,66 @@ def test_get_view_name_for_model_not_found(monkeypatch):
         util.get_view_name_for_model(mock.Mock(), "foo")
 
 
+class _FakeModel:
+    """A standalone model stand-in, distinct per test, so the real _model_viewset_cache
+    (keyed by model class) never collides across test runs or with real Pulp models."""
+
+    _meta = mock.Mock()
+
+
+_FakeModel._meta.model = _FakeModel
+
+
+def _fake_viewset(model, *, parent_viewset=None):
+    viewset = mock.Mock()
+    viewset.queryset.model = model
+    viewset.parent_viewset = parent_viewset
+    return viewset
+
+
+def _fake_app_config(named_viewsets):
+    app_config = mock.Mock()
+    app_config.named_viewsets = named_viewsets
+    return app_config
+
+
+def test_get_viewset_for_model_ignores_nested_viewsets_when_disambiguating(monkeypatch):
+    """
+    A plugin may register an additional read-only, nested viewset that reuses an existing
+    content type's queryset for its own purposes (e.g. a ContentView search endpoint reusing
+    Package's queryset) without intending to compete for that model's canonical viewset. Since
+    such viewsets are always nested (they declare parent_viewset), the canonical, non-nested
+    viewset should still be resolvable.
+    """
+    model = _FakeModel
+    canonical = _fake_viewset(model)
+    nested_1 = _fake_viewset(model, parent_viewset=mock.Mock())
+    nested_2 = _fake_viewset(model, parent_viewset=mock.Mock())
+    app_config = _fake_app_config({model: [canonical, nested_1, nested_2]})
+
+    monkeypatch.setattr(util, "pulp_plugin_configs", lambda: [app_config])
+    monkeypatch.setattr(util, "_model_viewset_cache", {})
+
+    assert util.get_viewset_for_model(model) is canonical
+
+
+def test_get_viewset_for_model_still_ambiguous_without_unique_non_nested_viewset(monkeypatch):
+    """
+    If there isn't exactly one non-nested candidate (e.g. two genuinely competing top-level
+    viewsets), the mapping is still ambiguous and raises LookupError, same as before.
+    """
+    model = _FakeModel
+    viewset_a = _fake_viewset(model)
+    viewset_b = _fake_viewset(model)
+    app_config = _fake_app_config({model: [viewset_a, viewset_b]})
+
+    monkeypatch.setattr(util, "pulp_plugin_configs", lambda: [app_config])
+    monkeypatch.setattr(util, "_model_viewset_cache", {})
+
+    with pytest.raises(LookupError):
+        util.get_viewset_for_model(model)
+
+
 class TestHashingFileWriter(unittest.TestCase):
     def setUp(self) -> None:
         self.test_dir_obj = tempfile.TemporaryDirectory()
