@@ -15,6 +15,11 @@ from .access_policy import (
     Group,
 )
 
+# Must be imported before any module that imports `pulpcore.plugin.models` (which re-exports
+# ContentView), e.g. `.replica` below -- otherwise that triggers a circular import back into
+# this partially-initialized module.
+from .content_view import ContentView
+
 from .domain import Domain
 
 from .acs import AlternateContentSource, AlternateContentSourcePath
@@ -166,6 +171,7 @@ __all__ = [
     "GroupProgressReport",
     "ProgressReport",
     "UpstreamPulp",
+    "ContentView",
     "OpenPGPDistribution",
     "OpenPGPKeyring",
     "OpenPGPPublicKey",

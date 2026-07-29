@@ -1,3 +1,4 @@
+from pulpcore.app.contexts import with_domain
 from pulpcore.app.role_util import (
     assign_role,
     get_groups_with_perms,
@@ -30,8 +31,19 @@ from pulpcore.app.util import (
     set_current_user,
     set_domain,
 )
+from pulpcore.app.util_content_view import (
+    group_versions_by_domain,
+    resolve_content_view_distributions,
+    scatter_gather,
+    user_can_view_domain,
+)
 
 __all__ = [
+    "with_domain",
+    "group_versions_by_domain",
+    "resolve_content_view_distributions",
+    "scatter_gather",
+    "user_can_view_domain",
     "assign_role",
     "get_groups_with_perms",
     "get_groups_with_perms_attached_perms",
