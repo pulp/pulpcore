@@ -1,3 +1,6 @@
+from collections import defaultdict
+from logging import getLogger
+
 from asgiref.sync import sync_to_async
 from django.db import transaction
 
@@ -5,6 +8,8 @@ from pulpcore.app.apps import get_plugin_config
 from pulpcore.app.loggers import deprecation_logger
 from pulpcore.app.models import CreatedResource
 from pulpcore.plugin.models import MasterModel
+
+log = getLogger(__name__)
 
 
 def general_create_from_temp_file(app_label, serializer_name, temp_file_pk, *args, **kwargs):
@@ -93,16 +98,32 @@ def general_delete(instance_id, app_label, serializer_name, **kwargs):
         id (str): the id of the model
         app_label (str): the Django app label of the plugin that provides the model
         serializer_name (str): name of the serializer class for the model
+
+    Returns:
+        dict: Task result. Skipped instances are listed under `skipped`; otherwise contains
+            the per-model delete counts from `Model.delete()`.
     """
     deprecation_logger.warning(
         "`pulpcore.app.tasks.base.general_delete` is deprecated and will be removed in Pulp 4. "
         "Use `pulpcore.app.tasks.base.ageneral_delete` instead."
     )
     serializer_class = get_plugin_config(app_label).named_serializers[serializer_name]
-    instance = serializer_class.Meta.model.objects.get(pk=instance_id)
+    model = serializer_class.Meta.model
+    output = defaultdict(list)
+    try:
+        instance = model.objects.get(pk=instance_id)
+    except model.DoesNotExist:
+        log.debug(
+            "Skipping delete of %s pk=%s; it no longer exists.",
+            model.__name__,
+            instance_id,
+        )
+        output["skipped"].append(f"{model.__name__}:{instance_id}")
+        return dict(output)
     if isinstance(instance, MasterModel):
         instance = instance.cast()
-    instance.delete()
+    output.update(instance.delete()[1])
+    return dict(output)
 
 
 def general_multi_delete(instance_ids, **kwargs):
@@ -110,20 +131,40 @@ def general_multi_delete(instance_ids, **kwargs):
     Delete a list of model instances in a transaction
 
     The model instances are identified using the id, app_label, and serializer_name.
+    Instances that no longer exist are skipped.
 
     Args:
         instance_ids (list): List of tupels of id, app_label, serializer_name
+
+    Returns:
+        dict: Task result. Skipped instances are listed under `skipped`; otherwise contains
+            the accumulated per-model delete counts from `Model.delete()`.
     """
+    output = defaultdict(list)
+    counts = defaultdict(int)
     instances = []
     for instance_id, app_label, serializer_name in instance_ids:
         serializer_class = get_plugin_config(app_label).named_serializers[serializer_name]
-        instance = serializer_class.Meta.model.objects.get(pk=instance_id)
+        model = serializer_class.Meta.model
+        try:
+            instance = model.objects.get(pk=instance_id)
+        except model.DoesNotExist:
+            log.debug(
+                "Skipping delete of %s pk=%s; it no longer exists.",
+                model.__name__,
+                instance_id,
+            )
+            output["skipped"].append(f"{model.__name__}:{instance_id}")
+            continue
         if isinstance(instance, MasterModel):
             instance = instance.cast()
         instances.append(instance)
     with transaction.atomic():
         for instance in instances:
-            instance.delete()
+            for model_label, count in instance.delete()[1].items():
+                counts[model_label] += count
+    output.update(counts)
+    return dict(output)
 
 
 async def ageneral_update(instance_id, app_label, serializer_name, *args, **kwargs):
@@ -148,9 +189,25 @@ async def ageneral_update(instance_id, app_label, serializer_name, *args, **kwar
 async def ageneral_delete(instance_id, app_label, serializer_name, **kwargs):
     """
     Async version of [pulpcore.app.tasks.base.general_delete][].
+
+    Returns:
+        dict: Task result. Skipped instances are listed under `skipped`; otherwise contains
+            the per-model delete counts from `Model.adelete()`.
     """
     serializer_class = get_plugin_config(app_label).named_serializers[serializer_name]
-    instance = await serializer_class.Meta.model.objects.aget(pk=instance_id)
+    model = serializer_class.Meta.model
+    output = defaultdict(list)
+    try:
+        instance = await model.objects.aget(pk=instance_id)
+    except model.DoesNotExist:
+        log.debug(
+            "Skipping delete of %s pk=%s; it no longer exists.",
+            model.__name__,
+            instance_id,
+        )
+        output["skipped"].append(f"{model.__name__}:{instance_id}")
+        return dict(output)
     if isinstance(instance, MasterModel):
         instance = await instance.acast()
-    await instance.adelete()
+    output.update((await instance.adelete())[1])
+    return dict(output)
