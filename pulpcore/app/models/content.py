@@ -172,9 +172,10 @@ class HandleTempFilesMixin:
             args (list): list of positional arguments for Model.delete()
             kwargs (dict): dictionary of keyword arguments to pass to Model.delete()
         """
-        super().delete(*args, **kwargs)
+        delete_result = super().delete(*args, **kwargs)
         # In case of rollback, we want the artifact to stay connected with it's file.
         transaction.on_commit(partial(self.file.delete, save=False))
+        return delete_result
 
 
 class ArtifactQuerySet(BulkTouchQuerySet):
