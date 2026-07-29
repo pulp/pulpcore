@@ -8,6 +8,29 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.115.3 (2026-07-28) {: #3.115.3 }
+
+### REST API {: #3.115.3-rest-api }
+
+#### Bugfixes {: #3.115.3-rest-api-bugfix }
+
+- Fixed domain list returning all domains to authenticated users instead of only domains they can view.
+  [#7898](https://github.com/pulp/pulpcore/issues/7898)
+
+### Plugin API {: #3.115.3-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.115.3-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.115.3-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.115.2 (2026-07-22) {: #3.115.2 }
 
 ### REST API {: #3.115.2-rest-api }
@@ -809,6 +832,29 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.106.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.105.15 (2026-07-28) {: #3.105.15 }
+
+### REST API {: #3.105.15-rest-api }
+
+#### Bugfixes {: #3.105.15-rest-api-bugfix }
+
+- Fixed domain list returning all domains to authenticated users instead of only domains they can view.
+  [#7898](https://github.com/pulp/pulpcore/issues/7898)
+
+### Plugin API {: #3.105.15-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.105.15-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.105.15-pulp-cert-guard }
 
 No significant changes.
 
@@ -2127,6 +2173,30 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.86.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.85.27 (2026-07-28) {: #3.85.27 }
+
+### REST API {: #3.85.27-rest-api }
+
+#### Bugfixes {: #3.85.27-rest-api-bugfix }
+
+- Fixed domain list returning all domains to authenticated users instead of only domains they can view.
+  [#7898](https://github.com/pulp/pulpcore/issues/7898)
+- Stopped shipping an insecure default as DJANGO_SECRET.
+
+### Plugin API {: #3.85.27-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.85.27-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.27-pulp-cert-guard }
 
 No significant changes.
 
@@ -3502,6 +3572,30 @@ No significant changes.
   [#6244](https://github.com/pulp/pulpcore/issues/6244)
 
 ### Pulp Cert Guard {: #3.74.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.73.41 (2026-07-28) {: #3.73.41 }
+
+### REST API {: #3.73.41-rest-api }
+
+#### Bugfixes {: #3.73.41-rest-api-bugfix }
+
+- Fixed domain list returning all domains to authenticated users instead of only domains they can view.
+  [#7898](https://github.com/pulp/pulpcore/issues/7898)
+- Stopped shipping an insecure default as DJANGO_SECRET.
+
+### Plugin API {: #3.73.41-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.73.41-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.41-pulp-cert-guard }
 
 No significant changes.
 
@@ -5125,6 +5219,29 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.64.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.63.44 (2026-07-28) {: #3.63.44 }
+
+### REST API {: #3.63.44-rest-api }
+
+#### Bugfixes {: #3.63.44-rest-api-bugfix }
+
+- Fixed domain list returning all domains to authenticated users instead of only domains they can view.
+  [#7898](https://github.com/pulp/pulpcore/issues/7898)
+
+### Plugin API {: #3.63.44-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.44-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.44-pulp-cert-guard }
 
 No significant changes.
 
@@ -6967,6 +7084,29 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard
+
+No significant changes.
+
+---
+
+## 3.49.67 (2026-07-28) {: #3.49.67 }
+
+### REST API {: #3.49.67-rest-api }
+
+#### Bugfixes {: #3.49.67-rest-api-bugfix }
+
+- Fixed domain list returning all domains to authenticated users instead of only domains they can view.
+  [#7898](https://github.com/pulp/pulpcore/issues/7898)
+
+### Plugin API {: #3.49.67-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.67-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.67-pulp-cert-guard }
 
 No significant changes.
 
