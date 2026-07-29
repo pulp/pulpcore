@@ -39,6 +39,7 @@ class ContentViewViewSet(
 
     queryset = ContentView.objects.all()
     endpoint_name = "content-views"
+    router_lookup = "content_view"
     serializer_class = ContentViewSerializer
     filterset_class = ContentViewFilter
     ordering = "-pulp_created"
