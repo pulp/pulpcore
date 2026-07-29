@@ -1400,14 +1400,14 @@ class RepositoryVersion(BaseModel):
                     raise RuntimeError(
                         _("Some repo relations of this version were not translated.")
                     )
-                super().delete(**kwargs)
+                return super().delete(**kwargs)
 
         else:
             with transaction.atomic():
                 RepositoryContent.objects.filter(version_added=self).delete()
                 RepositoryContent.objects.filter(version_removed=self).update(version_removed=None)
                 CreatedResource.objects.filter(object_id=self.pk).delete()
-                super().delete(**kwargs)
+                return super().delete(**kwargs)
 
     def _compute_counts(self):
         """
