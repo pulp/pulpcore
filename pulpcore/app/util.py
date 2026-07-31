@@ -26,15 +26,13 @@ from pulpcore.app.contexts import _current_domain, _current_user_func, current_p
 from pulpcore.app.loggers import deprecation_logger
 from pulpcore.exceptions.validation import InvalidSignatureError
 
-POSTGRES_MAX_QUERY_PARAMS = 65535
-
 
 class AnyArray(Lookup):
-    """PostgreSQL `= ANY(%s)` lookup that passes a list as a single array parameter.
+    """PostgreSQL ``= ANY(%s)`` lookup that passes a list as a single array parameter.
 
     psycopg3 adapts the Python list into a PostgreSQL array, so the entire list
     counts as **one** bind parameter regardless of size.  This avoids the
-    protocol-level 65535-parameter limit that `IN ($1, $2, …)` hits.
+    protocol-level 65,535-parameter limit that ``IN ($1, $2, …)`` hits.
     """
 
     lookup_name = "any_array"
@@ -51,20 +49,23 @@ Field.register_lookup(AnyArray)
 
 
 def safe_in(field_name, values):
-    """Build a `Q` object for `field__in` that is safe for arbitrarily large lists.
+    """Build a ``Q`` object for filtering by a list of values that is safe at any size.
 
-    * If *values* is already a queryset (or other non-collection type), the
-      normal `__in` lookup is used — Django turns it into a subquery.
-    * If the collection has fewer than 65 535 items, `__in` is used as-is.
-    * Otherwise `__any_array` is used so the whole list travels as a single
-      PostgreSQL array parameter.
+    Uses PostgreSQL's ``= ANY(array)`` syntax so the entire list is sent as a
+    single bind parameter, avoiding the 65,535-parameter protocol limit that
+    Django's default ``__in`` lookup hits with large lists.
+
+    Use this for values that are **already materialised in Python** (e.g.
+    parsed from JSON, accumulated in a loop).  When the IDs live in a database
+    column, prefer a subquery instead — it keeps the data server-side and
+    avoids the round-trip entirely.
+
+    If *values* is a queryset (or other non-collection type), falls back to
+    the normal ``__in`` lookup, which Django turns into a subquery.
     """
     if not isinstance(values, (list, set, tuple, frozenset)):
         return Q(**{f"{field_name}__in": values})
-    values = list(values)
-    if len(values) < POSTGRES_MAX_QUERY_PARAMS:
-        return Q(**{f"{field_name}__in": values})
-    return Q(**{f"{field_name}__any_array": values})
+    return Q(**{f"{field_name}__any_array": list(values)})
 
 
 # a little cache so viewset_for_model doesn't have to iterate over every app every time

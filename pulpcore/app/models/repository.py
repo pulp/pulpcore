@@ -908,7 +908,7 @@ class RepositoryVersionQuerySet(models.QuerySet):
         return self.filter(content_ids__overlap=content_pks)
 
 
-class RepositoryVersionManager(models.Manager):
+class RepositoryVersionManager(models.Manager.from_queryset(RepositoryVersionQuerySet)):
     """Manager that defers the content_ids array column by default.
 
     The content_ids array can be very large and is expensive to transfer from
@@ -918,7 +918,7 @@ class RepositoryVersionManager(models.Manager):
     """
 
     def get_queryset(self):
-        return RepositoryVersionQuerySet(self.model, using=self._db).defer("content_ids")
+        return super().get_queryset().defer("content_ids")
 
 
 class RepositoryVersion(BaseModel):
