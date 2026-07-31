@@ -1,0 +1,1 @@
+Fixed Redis workers polling the database at the single-worker rate during startup by learning the online worker count before the first heartbeat.

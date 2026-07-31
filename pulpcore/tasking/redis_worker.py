@@ -133,8 +133,10 @@ class RedisWorker:
         # Metric recording interval
         self.metric_heartbeat_countdown = METRIC_HEARTBEAT_INTERVAL
 
-        # Cache worker count for sleep calculation (updated during beat)
-        self.num_workers = 1
+        # Cache worker count for sleep calculation. Learn the real fleet size at
+        # startup so new workers do not poll at the single-worker rate until the
+        # first heartbeat (~WORKER_TTL/3). Refreshed on each heartbeat in beat().
+        self.num_workers = max(1, AppStatus.objects.online().filter(app_type="worker").count())
 
         # Redis connection for distributed locks
         self.redis_conn = get_redis_connection()
@@ -157,7 +159,10 @@ class RedisWorker:
 
         startup_hook()
 
-        _logger.info("Initialized RedisWorker with Redis lock-based algorithm")
+        _logger.info(
+            "Initialized RedisWorker with Redis lock-based algorithm (online workers=%d)",
+            self.num_workers,
+        )
 
     def _init_instrumentation(self):
         """Initialize OpenTelemetry instrumentation if enabled."""
@@ -210,7 +215,11 @@ class RedisWorker:
             self.app_status.save_heartbeat()
             _logger.debug(msg)
         except (IntegrityError, DatabaseError):
-            _logger.error(f"Updating the heartbeat of worker {self.name} failed.")
+            _logger.error(
+                "Updating the heartbeat of worker %s failed.",
+                self.name,
+                exc_info=True,
+            )
             self.shutdown_requested = True
 
     def handle_redis_heartbeat(self):
@@ -363,7 +372,7 @@ class RedisWorker:
                     self.record_waiting_tasks_metric()
 
             # Update cached worker count for sleep calculation
-            self.num_workers = AppStatus.objects.online().filter(app_type="worker").count()
+            self.num_workers = max(1, AppStatus.objects.online().filter(app_type="worker").count())
 
     def _maybe_release_locks(self, task, mark_released=True):
         """
