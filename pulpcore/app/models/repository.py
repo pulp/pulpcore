@@ -25,7 +25,6 @@ from pulpcore.app.util import (
     get_prn,
     get_view_name_for_model,
     reverse,
-    safe_in,
 )
 from pulpcore.cache import Cache
 from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS, PROTECTED_REPO_VERSION_MESSAGE
@@ -909,6 +908,19 @@ class RepositoryVersionQuerySet(models.QuerySet):
         return self.filter(content_ids__overlap=content_pks)
 
 
+class RepositoryVersionManager(models.Manager):
+    """Manager that defers the content_ids array column by default.
+
+    The content_ids array can be very large and is expensive to transfer from
+    PostgreSQL to Python.  Most queries don't need it — callers that do
+    (add_content, remove_content, set_content_ids, etc.) access it through
+    the model instance which triggers a deferred-field load automatically.
+    """
+
+    def get_queryset(self):
+        return RepositoryVersionQuerySet(self.model, using=self._db).defer("content_ids")
+
+
 class RepositoryVersion(BaseModel):
     """
     A version of a repository's content set.
@@ -937,7 +949,7 @@ class RepositoryVersion(BaseModel):
         base_version (models.ForeignKey): The repository version this was created from.
     """
 
-    objects = RepositoryVersionQuerySet.as_manager()
+    objects = RepositoryVersionManager()
 
     repository = models.ForeignKey(Repository, on_delete=models.CASCADE)
     number = models.PositiveIntegerField(db_index=True)
@@ -975,6 +987,19 @@ class RepositoryVersion(BaseModel):
         else:
             self.content_ids = previous.content_ids
 
+    def _content_ids_subquery(self):
+        """Return a subquery that unnests content_ids server-side.
+
+        Keeps the array data inside PostgreSQL, avoiding the round-trip of
+        loading a potentially huge list into Python and sending it back as
+        query parameters.
+        """
+        return (
+            RepositoryVersion.objects.filter(pk=self.pk)
+            .annotate(cids=Func(F("content_ids"), function="unnest"))
+            .values_list("cids", flat=True)
+        )
+
     def get_content(self, content_qs=None):
         """
         Returns a set of content for a repository version
@@ -998,7 +1023,7 @@ class RepositoryVersion(BaseModel):
         if content_qs is None:
             content_qs = Content.objects
 
-        return content_qs.filter(safe_in("pk", self.content_ids))
+        return content_qs.filter(pk__in=self._content_ids_subquery())
 
     @property
     def content(self):
@@ -1112,8 +1137,8 @@ class RepositoryVersion(BaseModel):
         if not base_version:
             return Content.objects.filter(version_memberships__version_added=self)
 
-        return Content.objects.filter(safe_in("pk", self.content_ids)).exclude(
-            safe_in("pk", base_version.content_ids)
+        return Content.objects.filter(pk__in=self._content_ids_subquery()).exclude(
+            pk__in=base_version._content_ids_subquery()
         )
 
     def removed(self, base_version=None):
@@ -1127,8 +1152,8 @@ class RepositoryVersion(BaseModel):
         if not base_version:
             return Content.objects.filter(version_memberships__version_removed=self)
 
-        return Content.objects.filter(safe_in("pk", base_version.content_ids)).exclude(
-            safe_in("pk", self.content_ids)
+        return Content.objects.filter(pk__in=base_version._content_ids_subquery()).exclude(
+            pk__in=self._content_ids_subquery()
         )
 
     def contains(self, content):
