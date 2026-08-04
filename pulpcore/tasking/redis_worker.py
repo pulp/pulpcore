@@ -93,6 +93,57 @@ def exclusive(lock):
     return _decorator
 
 
+def count_waiting_tasks_for_metric():
+    """
+    Count WAITING/RUNNING tasks older than five seconds that can run at the same
+    time given exclusive/shared resource reservations (FIFO-aware).
+
+    Returns:
+        int: Parallelizable unfinished-task count. Callers subtract online workers
+            when publishing the OpenTelemetry `waiting_tasks` gauge.
+    """
+    cutoff_time = timezone.now() - timedelta(seconds=5)
+
+    incomplete_tasks = (
+        Task.objects.filter(
+            state__in=[TASK_STATES.RUNNING, TASK_STATES.WAITING],
+            pulp_created__lt=cutoff_time,
+        )
+        .order_by("pulp_created")
+        .only("reserved_resources_record")
+    )
+
+    taken_exclusive = set()
+    taken_shared = set()
+    parallel_count = 0
+
+    for task in incomplete_tasks:
+        exclusive_resources, shared_resources = extract_task_resources(task)
+        conflicts = False
+
+        for resource in exclusive_resources:
+            if resource in taken_exclusive or resource in taken_shared:
+                conflicts = True
+                break
+
+        if not conflicts:
+            for resource in shared_resources:
+                if resource in taken_exclusive:
+                    conflicts = True
+                    break
+
+        # Always reserve (even on conflict) so FIFO can't be bypassed; see fetch_task.
+        # e.g. T1(A,B), T2(B,C), T3(C): without reserving C for T2, T3 counts as +1.
+        taken_exclusive.update(exclusive_resources)
+        taken_shared.update(shared_resources)
+        if conflicts:
+            continue
+
+        parallel_count += 1
+
+    return parallel_count
+
+
 class RedisWorker:
     """
     Worker implementation using Redis distributed lock-based resource acquisition.
@@ -331,19 +382,10 @@ class RedisWorker:
         """
         Record metrics for waiting tasks in the queue.
 
-        This method counts all tasks in RUNNING or WAITING state that are older
-        than 5 seconds, then subtracts the number of active workers to get the
-        number of tasks waiting to be picked up by workers.
+        Publishes `count_waiting_tasks_for_metric() - num_workers` as the
+        OpenTelemetry `waiting_tasks` gauge.
         """
-        cutoff_time = timezone.now() - timedelta(seconds=5)
-
-        task_count = Task.objects.filter(
-            state__in=[TASK_STATES.RUNNING, TASK_STATES.WAITING], pulp_created__lt=cutoff_time
-        ).count()
-
-        waiting_tasks = task_count - self.num_workers
-
-        self.waiting_tasks_meter.set(waiting_tasks)
+        self.waiting_tasks_meter.set(count_waiting_tasks_for_metric() - self.num_workers)
 
     def beat(self):
         """Periodic worker maintenance tasks (heartbeat, cleanup, etc.)."""
