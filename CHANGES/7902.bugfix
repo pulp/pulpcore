@@ -1,0 +1,1 @@
+Fixed RedisWorker leaking Redis locks when task acquire, abort, cancel, or immediate dispatch cleanup failed.

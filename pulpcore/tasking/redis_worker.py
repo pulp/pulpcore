@@ -551,6 +551,10 @@ class RedisWorker:
 
                 except Exception as e:
                     _logger.error("Error processing task %s: %s", task.pk, e)
+                    try:
+                        safe_release_task_locks(task, lock_owner=self.name)
+                    except Exception:
+                        pass
                     continue
 
             if len(waiting_tasks) < fetch_limit:
@@ -668,24 +672,23 @@ class RedisWorker:
         if cancel_state:
             from pulpcore.tasking._util import delete_incomplete_resources
 
-            # Reload task from database to get current state
-            task.refresh_from_db()
-            # Only clean up if task is not already in a final state
-            # (subprocess may have already handled cancellation)
-            if task.state not in TASK_FINAL_STATES:
-                # Release locks BEFORE setting canceled state
-                # Atomically release task lock + resource locks in a single operation
+            try:
+                # Reload task from database to get current state
+                task.refresh_from_db()
+                # Only clean up if task is not already in a final state
+                # (subprocess may have already handled cancellation)
+                if task.state not in TASK_FINAL_STATES:
+                    task.set_canceling()
+                    _logger.info(
+                        "Cleaning up task %s in domain: %s and marking as %s.",
+                        task.pk,
+                        domain.name,
+                        cancel_state,
+                    )
+                    delete_incomplete_resources(task)
+                    task.set_canceled(final_state=cancel_state, reason=cancel_reason)
+            finally:
                 self._maybe_release_locks(task)
-
-                task.set_canceling()
-                _logger.info(
-                    "Cleaning up task %s in domain: %s and marking as %s.",
-                    task.pk,
-                    domain.name,
-                    cancel_state,
-                )
-                delete_incomplete_resources(task)
-                task.set_canceled(final_state=cancel_state, reason=cancel_reason)
 
         self.task = None
 
@@ -714,9 +717,7 @@ class RedisWorker:
             finally:
                 # Safety net: if _execute_task() crashed before releasing locks,
                 # atomically release all locks here (task lock + resource locks)
-                # NOTE: Only for immediate tasks that execute in this process.
-                # Deferred tasks execute in subprocess which handles its own lock release.
-                if task and task.immediate:
+                if task:
                     self._maybe_release_locks(task)
 
     def sleep(self):
