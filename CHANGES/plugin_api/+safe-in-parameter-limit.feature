@@ -1,0 +1,1 @@
+Added `safe_in()` to the plugin API for building `Q` objects that are safe for arbitrarily large value lists, avoiding PostgreSQL's 65,535 query parameter limit.
