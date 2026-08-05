@@ -73,6 +73,37 @@ CONTROL_PLANE_LABELS = frozenset(
 CONTROL_PLANE_APPS = frozenset({"auth", "contenttypes", "admin", "sessions"})
 
 
+def _database_alias(domain):
+    """
+    Read `database_alias` off an already-fetched `Domain` instance without ever triggering a
+    query of its own.
+
+    `getattr(domain, "database_alias", "default")` goes through the exact same
+    `DeferredAttribute.__get__` as any other field (see the `pulp_domain_id` comment in
+    `_resolve_db` below) and would call `domain.refresh_from_db(fields=["database_alias"])` if
+    a `Domain` instance ever reached here with that field deferred (e.g. via `.only()`/
+    `.defer()` on the queryset that produced it). Every current call site avoids this in
+    practice -- `DomainMiddleware` uses a plain `Domain.objects.get(name=...)` and every task
+    fetch path uses `select_related("pulp_domain")` with no field restriction on the related
+    object, so `database_alias` is always already loaded -- but relying on "no caller defers
+    it today" to stay true forever is exactly the kind of assumption KI-27 already burned us
+    on once for `pulp_domain_id`, so it's worth closing out unconditionally rather than
+    trusting the callers.
+
+    Note this specific `refresh_from_db()` could not actually recurse back into this router
+    the way the `pulp_domain_id` case does: `Domain` is control-plane
+    (`CONTROL_PLANE_LABELS`), so a re-entrant `db_for_read(Domain, instance=domain)` call
+    would hit the `_is_control_plane` short-circuit at the top of `_resolve_db` and return
+    `"default"` immediately -- it can't loop back into this function's instance-hint branch,
+    which is only reached for data-plane models. So the failure mode here is a silent extra
+    (cheap, always-to-`default`) query, never the `RecursionError` KI-27 describes. Still not
+    worth paying for on every single router call when a plain dict lookup avoids it for free.
+    """
+    if "database_alias" in domain.__dict__:
+        return domain.__dict__["database_alias"]
+    return "default"
+
+
 class PulpDomainRouter:
     """
     Routes data-plane models to the database alias of the `Domain` they belong to, and pins
@@ -84,9 +115,12 @@ class PulpDomainRouter:
     1. **Instance hint** -- if Django passes the actual model instance being saved/read (most
        reliable; e.g. `instance.save()`), and it already has an *in-memory* `pulp_domain_id` and
        a *cached* `pulp_domain` relation object (e.g. via `select_related("pulp_domain")`, or
-       because the domain was explicitly assigned), use `pulp_domain.database_alias`. This never
-       triggers a fresh query or a `refresh_from_db()` call -- see the inline comments in
-       `_resolve_db` (KI-27) for why both of those are unsafe here.
+       because the domain was explicitly assigned), use `pulp_domain.database_alias`. Every
+       field read along this path (`pulp_domain_id`, the cached `pulp_domain` object itself, and
+       `database_alias` on it) goes through a plain `__dict__`/`fields_cache` lookup rather than
+       `getattr()`/`hasattr()`, so none of it can trigger a fresh query or a `refresh_from_db()`
+       call -- see the inline comments in `_resolve_db` and `_database_alias()` (KI-27) for why
+       that matters.
     2. **ContextVar** -- set by `DomainMiddleware` for every HTTP request and by
        `with_task_context()` for every task; covers the common API/task code path where Django
        does not pass an instance hint (e.g. `Model.objects.filter(...)`).
@@ -157,11 +191,11 @@ class PulpDomainRouter:
                 # to the ContextVar/default resolution below rather than paying for a fetch here.
                 domain = instance._state.fields_cache.get("pulp_domain")
                 if domain is not None:
-                    return getattr(domain, "database_alias", "default")
+                    return _database_alias(domain)
 
         domain = get_domain()
         if domain is not None:
-            return getattr(domain, "database_alias", "default")
+            return _database_alias(domain)
 
         return "default"
 
