@@ -1,7 +1,7 @@
 """
 Integration tests for `move-domain`/`cleanup-moved-domain`/`domain-size` (phase2-move-domain,
-phase2-cleanup), implementing Strategy A ("Read-Only Cutover") from
-`architecture/domain-db-offloading-design.md`.
+phase2-cleanup), implementing Strategy A ("Read-Only Cutover"): pause the domain, copy its rows
+from the source alias to the destination alias, verify counts, then flip `Domain.database_alias`.
 
 See `test_multi_database_routing.py`'s module docstring for why these require a real `data_1`
 alias (set via `PULP_DATABASES__data_1__*` env vars) to run at all, rather than skipping.

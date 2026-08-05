@@ -4,18 +4,23 @@ Domain-aware database router (Phase 1, Layer 1 of the query architecture).
 `PulpDomainRouter` splits models into a "control plane" (always on the `default` database
 alias -- Task, Domain itself, RBAC, Django built-ins, etc.) and a "data plane" (routed by the
 owning `Domain.database_alias` -- repositories, content, artifacts, and every plugin-defined
-model). See `architecture/domain-db-offloading-design.md` for the full design.
+model).
 
-This router is only registered in `DATABASE_ROUTERS` when more than one database alias is
-configured (see `pulpcore/app/settings.py`) -- for the overwhelmingly common single-database
-deployment, Django's own routing (`django.db.utils.ConnectionRouter._route_db`) never even
-consults `self.routers` when it is empty, so this module has zero runtime cost unless a second
-alias is actually configured.
+Not registered automatically. A deployment that wants domain-aware routing must add it to
+`DATABASE_ROUTERS` itself:
+
+    DATABASE_ROUTERS = ["pulpcore.app.db_router.PulpDomainRouter"]
+
+(or the dynaconf-env-var equivalent). Deployments that leave `DATABASE_ROUTERS` unset are
+entirely unaffected: Django's own routing (`django.db.utils.ConnectionRouter._route_db`) never
+even consults `self.routers` when it is empty, so this module has zero runtime cost unless a
+deployment explicitly configures it.
 """
 
 import logging
 
 from django.apps import apps as django_apps
+from django.db import router as django_router
 
 from pulpcore.app.contexts import _current_migration_alias
 from pulpcore.app.util import get_domain
@@ -24,10 +29,9 @@ logger = logging.getLogger(__name__)
 
 #: Control-plane models: coordination/bookkeeping data that must always live on the same
 #: physical database as the worker/task coordination primitives (`pg_notify`, advisory locks,
-#: `SELECT ... FOR UPDATE SKIP LOCKED`), which require a single PostgreSQL instance (see the
-#: design doc's "Why Control Plane Stays on the Original RDS"). `Domain` itself is here too: it
-#: is authoritative on `default` and merely replicated (read-only, from the routing
-#: perspective) to every other alias.
+#: `SELECT ... FOR UPDATE SKIP LOCKED`), which require a single PostgreSQL instance. `Domain`
+#: itself is here too: it is authoritative on `default` and merely replicated (read-only, from
+#: the routing perspective) to every other alias.
 CONTROL_PLANE_LABELS = frozenset(
     {
         "core.domain",
@@ -109,8 +113,7 @@ class PulpDomainRouter:
     Routes data-plane models to the database alias of the `Domain` they belong to, and pins
     control-plane models (and Django's own built-in apps) to `default`.
 
-    Resolution order for data-plane models (see "Known Router Limitations and Mitigations" in
-    the design doc):
+    Resolution order for data-plane models:
 
     1. **Instance hint** -- if Django passes the actual model instance being saved/read (most
        reliable; e.g. `instance.save()`), and it already has an *in-memory* `pulp_domain_id` and
@@ -119,8 +122,8 @@ class PulpDomainRouter:
        field read along this path (`pulp_domain_id`, the cached `pulp_domain` object itself, and
        `database_alias` on it) goes through a plain `__dict__`/`fields_cache` lookup rather than
        `getattr()`/`hasattr()`, so none of it can trigger a fresh query or a `refresh_from_db()`
-       call -- see the inline comments in `_resolve_db` and `_database_alias()` (KI-27) for why
-       that matters.
+       call -- see the inline comments in `_resolve_db` and `_database_alias()` for why that
+       matters.
     2. **ContextVar** -- set by `DomainMiddleware` for every HTTP request and by
        `with_task_context()` for every task; covers the common API/task code path where Django
        does not pass an instance hint (e.g. `Model.objects.filter(...)`).
@@ -218,3 +221,7 @@ class PulpDomainRouter:
         # satellite or original, gets the full pulpcore + plugin schema so that `allow_migrate`
         # never has to reason about which tables "belong" on which alias.
         return True
+
+
+def is_multi_db_routing_active():
+    return any(isinstance(r, PulpDomainRouter) for r in django_router.routers)

@@ -1,18 +1,18 @@
 """
 Shared helpers for the `move-domain` and `cleanup-moved-domain` management commands
-(phase2-move-domain / phase2-cleanup), implementing Strategy A ("Read-Only Cutover") from
-`architecture/domain-db-offloading-design.md`'s "Domain Movement Procedure".
+(phase2-move-domain / phase2-cleanup), implementing Strategy A ("Read-Only Cutover"): pause the
+domain, copy its rows from the source alias to the destination alias, verify counts, then flip
+`Domain.database_alias`.
 
-Data copy uses Option B from the design doc (application-level Django read+write, filtered by
-`pulp_domain_id`) rather than Option A (`pg_dump --where`, requires pg_dump >= 16) or Option C
-(`dblink`/`postgres_fdw`, requires network access configured between the two RDS instances
-specifically for this purpose): Option B needs nothing beyond the ordinary Django DB connections
-this process already holds to every configured alias, at the cost of being slower for very large
-domains. Operators with `pg_dump` >= 16 or `postgres_fdw` connectivity already set up between
-their RDS instances may prefer Option A/C for a large domain instead -- this module does not
-implement either, but nothing here precludes running them manually and then using
-`move-domain --skip-copy` (see the command) to drive the rest of the procedure (verification
-through cutover) against data copied out-of-band.
+Data copy uses application-level Django read+write (filtered by `pulp_domain_id`) rather than
+`pg_dump --where` (requires pg_dump >= 16) or `dblink`/`postgres_fdw` (requires network access
+configured between the two RDS instances specifically for this purpose): the Django approach
+needs nothing beyond the ordinary DB connections this process already holds to every configured
+alias, at the cost of being slower for very large domains. Operators with `pg_dump` >= 16 or
+`postgres_fdw` connectivity already set up between their RDS instances may prefer one of those
+approaches for a large domain instead -- this module does not implement either, but nothing here
+precludes running them manually and then using `move-domain --skip-copy` (see the command) to
+drive the rest of the procedure (verification through cutover) against data copied out-of-band.
 """
 
 import logging
@@ -127,11 +127,10 @@ def _domain_queryset(model, lookup, alias, domain):
 
 def estimate_domain_size(domain, alias):
     """
-    Step 1 size estimate (design doc): for every data-plane model, this domain's own row count
-    on `alias` plus that table's total on-disk size for scale/context.
+    Step 1 size estimate: for every data-plane model, this domain's own row count on `alias`
+    plus that table's total on-disk size for scale/context.
 
-    Mirrors the design doc's own example SQL exactly (`SELECT COUNT(*),
-    pg_total_relation_size(...) FROM <table> WHERE pulp_domain_id = <pk>`): Postgres has no
+    Uses `SELECT COUNT(*)` plus `pg_total_relation_size(...)` per table: Postgres has no
     built-in function for "the on-disk size of just these rows", so `table_total_size_bytes`
     below is the size of the *entire* table (data + indexes + TOAST, shared across every domain
     that has rows in it), not this domain's share of it -- read it as "this table could be at
@@ -208,8 +207,8 @@ def _copy_model(model, lookup, domain, source_alias, target_alias):
             value = getattr(row, field.attname)
             if isinstance(field, FileField) and value:
                 # Object storage is shared/global infrastructure and is never moved by a
-                # domain move (design doc, "Object storage" section) -- only this row's
-                # *reference* to the already-existing blob moves, not the blob itself. Passing
+                # domain move -- only this row's *reference* to the already-existing blob moves,
+                # not the blob itself. Passing
                 # the bound `FieldFile` through as-is would make `ArtifactFileField.pre_save`
                 # (see pulpcore.app.models.fields) think a *newly uploaded* file needs to be
                 # moved into place, and try to open it by its bare relative name relative to
@@ -256,8 +255,8 @@ def _copy_model(model, lookup, domain, source_alias, target_alias):
 
 def copy_domain_data(domain, source_alias, target_alias):
     """
-    Step 3 (Option B) of the design doc's Read-Only Cutover procedure: copy every data-plane row
-    belonging to `domain` from `source_alias` to `target_alias`.
+    Step 3 of the Read-Only Cutover procedure: copy every data-plane row belonging to `domain`
+    from `source_alias` to `target_alias` via application-level Django reads/writes.
 
     Returns a `{model_label: row_count_copied}` dict. Safe to re-run (see `_copy_model`).
 
@@ -267,6 +266,12 @@ def copy_domain_data(domain, source_alias, target_alias):
     without this, saving a copied `Artifact` row would compute storage paths as if it belonged
     to whichever domain (typically "default") happened to be in context when this function was
     called, silently mismatching the path the blob was actually written under.
+
+    Precondition: `domain`'s own row must already exist on `target_alias`, or every copied row's
+    `pulp_domain` FK insert fails immediately. The caller (`move-domain`) guarantees this via an
+    explicit `ensure_domain_on_alias()` call before invoking this function -- ambient replication
+    (`domain_sync.py`) won't have put it there on its own, since `domain.database_alias` doesn't
+    flip to `target_alias` until cutover, after this function returns.
     """
     with with_domain(domain):
         return _run_passes(
@@ -284,8 +289,8 @@ def _row_checksum(pks):
 
 def verify_domain_data(domain, source_alias, target_alias):
     """
-    Step 4 of the design doc's procedure: for every data-plane model, compare row counts and a
-    checksum (SHA-256 over the sorted set of primary keys) between `source_alias` and
+    Step 4 of the Read-Only Cutover procedure: for every data-plane model, compare row counts and
+    a checksum (SHA-256 over the sorted set of primary keys) between `source_alias` and
     `target_alias` for this domain's rows.
 
     Returns a list of mismatch dicts (empty list means the copy verified clean). Each dict has
@@ -320,7 +325,7 @@ def _delete_model(model, lookup, domain, alias):
 
 def delete_domain_data(domain, alias):
     """
-    Step 7 (cleanup) of the design doc's procedure: delete every data-plane row belonging to
+    Step 7 (cleanup) of the Read-Only Cutover procedure: delete every data-plane row belonging to
     `domain` from `alias`.
 
     Used by `cleanup-moved-domain` to remove the stale copy left on the original alias after a

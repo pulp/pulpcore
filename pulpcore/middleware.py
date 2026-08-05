@@ -66,16 +66,15 @@ class DomainMiddleware:
     def _degraded_response(request, domain):
         """
         Graceful degradation for a domain whose data-plane alias is unreachable, or that is
-        mid-move (phase1-graceful-degradation / KI-12). Returns a 503 `JsonResponse` to short
-        -circuit `process_view` (Django dispatches whatever a `process_view` hook returns
-        instead of calling the view), or `None` if the request should proceed normally.
+        mid-move (phase1-graceful-degradation). Returns a 503 `JsonResponse` to short-circuit
+        `process_view` (Django dispatches whatever a `process_view` hook returns instead of
+        calling the view), or `None` if the request should proceed normally.
 
         Deliberately handled here rather than in `PulpDomainRouter` itself: routers only return
-        an alias name, they have no mechanism to short-circuit a request with an HTTP response
-        (see the design doc's Problem 2 discussion of KI-12) -- by the time a router's
-        `db_for_read`/`db_for_write` raises, the error surfaces from deep inside whatever
-        viewset/serializer code first touched the database, with no guarantee of a clean, single
-        error message.
+        an alias name, they have no mechanism to short-circuit a request with an HTTP response --
+        by the time a router's `db_for_read`/`db_for_write` raises, the error surfaces from deep
+        inside whatever viewset/serializer code first touched the database, with no guarantee of
+        a clean, single error message.
         """
         alias = domain.database_alias
         if alias != "default":

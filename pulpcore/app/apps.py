@@ -295,9 +295,14 @@ class PulpAppConfig(PulpPluginAppConfig):
         )
 
         # KI-05: only connect this (deliberately sender-less, since BaseModel is abstract) when
-        # multi-DB is actually active -- single-DB deployments' native GenericRelation cascade
-        # already deletes UserRole/GroupRole correctly, so avoid the dispatch cost otherwise.
-        if len(settings.DATABASES) > 1:
+        # multi-DB routing is actually active -- single-DB deployments' native GenericRelation
+        # cascade already deletes UserRole/GroupRole correctly, so avoid the dispatch cost
+        # otherwise. Checking `is_multi_db_routing_active()` rather than `len(settings.DATABASES)
+        # > 1` matters because the two can now disagree: DATABASE_ROUTERS is an explicit,
+        # independent opt-in, not something pulpcore auto-derives from DATABASES.
+        from pulpcore.app.db_router import is_multi_db_routing_active
+
+        if is_multi_db_routing_active():
             from pulpcore.app.role_util import on_any_model_post_delete
 
             post_delete.connect(

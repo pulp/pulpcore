@@ -31,8 +31,8 @@ def _orchestrator_lock():
     re-running `migrate-all` while one is already in progress should see a clear error, not hang.
 
     Session-level (not transaction-level): released automatically if the holding connection
-    drops (e.g. the pod running this command crashes), matching the design doc's failure-mode
-    table ("Pod crashes mid-migrate-all: Advisory lock released on disconnect").
+    drops (e.g. the pod running this command crashes), so a crash mid-run doesn't leave the lock
+    stuck held forever -- a subsequent `migrate-all` invocation can acquire it and retry.
     """
     with connections["default"].cursor() as cursor:
         cursor.execute("SELECT pg_try_advisory_lock(%s)", [MIGRATION_ORCHESTRATOR_LOCK])
@@ -55,8 +55,8 @@ class Command(BaseCommand):
     Migrate every configured `DATABASES` alias, in the correct order.
 
     Every RDS instance -- `default` and every satellite -- runs an identical Django schema
-    (accepted trade-off, see KI-16 in the design doc), so `allow_migrate` never has to reason
-    about which tables "belong" on which alias; this command just runs Django's own `migrate`
+    (an accepted trade-off), so `allow_migrate` never has to reason about which tables "belong"
+    on which alias; this command just runs Django's own `migrate`
     once per alias, in an order that respects the one real cross-alias dependency: satellite
     bootstrap logic (e.g. `get_domain_pk()`'s default-domain lookup, run as a migration default
     via `Domain.objects.using(<satellite>)` reads) can depend on the `Domain` table already

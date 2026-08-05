@@ -27,15 +27,14 @@ DROP FUNCTION IF EXISTS protect_default();
 
 
 def create_default_domain(apps, schema_editor):
-    # Domain-aware database routing (see architecture/domain-db-offloading-design.md): `Domain`
-    # is control-plane and authoritative on `default` only -- every satellite's copy is
-    # populated by replication/`sync-domains`, never created independently. This migration
-    # predates that design and, left as-is, would run unguarded on every alias (schema is
-    # identical everywhere, see KI-16, so `allow_migrate` never filters it out) and create its
-    # *own* "default"-named `Domain` row on each satellite the very first time `migrate-all`
-    # migrates it -- a duplicate, unreplicated row with a different `pulp_id` than `default`'s,
-    # which then collides with `sync-domains` (unique constraint on `name`). Guard it the same
-    # way `_ensure_default_domain`/KI-07 guards its own post_migrate hook.
+    # In a multi-database deployment, `Domain` is control-plane and authoritative on `default`
+    # only -- every satellite's copy is populated by replication/`sync-domains`, never created
+    # independently. This migration predates domain-aware routing and, left as-is, would run
+    # unguarded on every alias (schema is identical everywhere, so `allow_migrate` never filters
+    # it out) and create its *own* "default"-named `Domain` row on each satellite the very first
+    # time `migrate-all` migrates it -- a duplicate, unreplicated row with a different `pulp_id`
+    # than `default`'s, which then collides with `sync-domains` (unique constraint on `name`).
+    # Guard it the same way `_ensure_default_domain`'s own post_migrate hook is guarded.
     if schema_editor.connection.alias != "default":
         return
     Domain = apps.get_model("core", "Domain")

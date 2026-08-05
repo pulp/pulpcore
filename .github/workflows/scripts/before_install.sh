@@ -123,8 +123,8 @@ pulp_scenario_env: {}
 VARSYAML
 fi
 
-# Domain-aware multi-database routing (architecture/domain-db-offloading-design.md) needs a
-# second, independently-addressable Postgres instance to exercise the "data_1" satellite alias in
+# Domain-aware multi-database routing needs a second, independently-addressable Postgres
+# instance to exercise the "data_1" satellite alias in
 # pulpcore.tests.unit -- this adds a standalone Postgres service container reachable from the
 # "pulp" service over the shared "pulp_ci_bridge" docker network. The "data_1" connection settings
 # themselves are passed straight to the pytest invocation in script.sh (mirroring how

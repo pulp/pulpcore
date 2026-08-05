@@ -684,8 +684,8 @@ def domain_db(domain):
     """
     Set the domain ContextVar for `domain` and yield its `database_alias`.
 
-    Layer 3 of the query architecture (see the design doc's "Query Architecture" section):
-    for admin/management-command code that needs to iterate over every domain and run queries
+    Layer 3 of the domain-aware query architecture: for admin/management-command code that
+    needs to iterate over every domain and run queries
     against each domain's actual database, wrap each iteration in this context manager and use
     the yielded alias with an explicit `.using(alias)` on every queryset touched -- do not rely
     on the router alone, since it cannot see queryset filters (only the ContextVar, which this
@@ -706,8 +706,11 @@ def for_each_domain(callback):
     Call `callback(domain, alias)` once per `Domain`, with the domain ContextVar set and the
     domain's database alias passed in for explicit `.using(alias)` calls.
 
-    See `domain_db()` for the underlying context manager and the design doc's Layer 3 for the
-    broader convention this implements (KI-08, KI-19, KI-21).
+    See `domain_db()` for the underlying context manager and Layer 3 convention this implements:
+    any code that needs to run a query against *every* domain's data (not just the current
+    request/task's domain) must loop over domains explicitly and pass `alias` into an explicit
+    `.using(alias)` -- a bare `Model.objects.filter(...)` call only ever sees whichever single
+    alias the router/ContextVar currently resolves to.
     """
     for domain in models.Domain.objects.all():
         with domain_db(domain) as alias:

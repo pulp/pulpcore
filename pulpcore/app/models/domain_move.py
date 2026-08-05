@@ -3,11 +3,10 @@ Historical record of `move-domain` runs (Phase 2, Strategy A -- "Read-Only Cutov
 
 Purely operational bookkeeping, always on `default`: fleet-management metadata about *when* and
 *between which aliases* a domain moved, not data belonging to any one domain. Gives an operator
-something concrete to consult during the design doc's Step 6 "Monitoring" window (there is no
-real monitoring/alerting infra in this implementation pass -- see the design doc and
-`architecture/domain-db-offloading-runbook.md` -- this is just a durable timestamped record, not
-a substitute for it) and lets `cleanup-moved-domain` refuse to run before `monitoring_until` has
-elapsed.
+something concrete to consult during the Step 6 "Monitoring" window (there is no real
+monitoring/alerting infra in this implementation pass -- this is just a durable timestamped
+record, not a substitute for it) and lets `cleanup-moved-domain` refuse to run before
+`monitoring_until` has elapsed.
 """
 
 from django.db import models

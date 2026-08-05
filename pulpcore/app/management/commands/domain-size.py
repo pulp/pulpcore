@@ -11,10 +11,10 @@ class Command(BaseCommand):
     Report per-model row counts (and each table's total on-disk size, for scale/context) for a
     domain's data-plane objects on its current database alias.
 
-    Standalone tooling for Step 1 ("Preparation") of the design doc's Domain Movement
-    Procedure -- `move-domain` also prints this same report automatically before starting a
-    move, so this command exists for an operator to check ahead of time (e.g. while deciding
-    which domain is worth moving) without actually starting one.
+    Standalone tooling for Step 1 ("Preparation") of the domain move procedure -- `move-domain`
+    also prints this same report automatically before starting a move, so this command exists
+    for an operator to check ahead of time (e.g. while deciding which domain is worth moving)
+    without actually starting one.
     """
 
     help = __doc__

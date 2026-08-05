@@ -699,26 +699,12 @@ settings.set("V3_DOMAIN_API_ROOT", api_root + "<slug:pulp_domain>/api/v3/")
 settings.set("V3_API_ROOT_NO_FRONT_SLASH", settings.V3_API_ROOT.lstrip("/"))
 settings.set("V3_DOMAIN_API_ROOT_NO_FRONT_SLASH", settings.V3_DOMAIN_API_ROOT.lstrip("/"))
 
-# Domain-aware database routing (see architecture/domain-db-offloading-design.md). Only register
-# the router when more than one DATABASES alias is actually configured, so single-database
-# deployments -- the overwhelming majority of installs today -- see zero behavior change:
-# Django's ConnectionRouter never consults an empty `routers` list, so PulpDomainRouter isn't
-# merely a no-op, it's never instantiated or called at all.
+# Domain-aware database routing is not auto-registered here. A deployment that wants
+# `PulpDomainRouter` active must set it itself, the normal Django way:
 #
-# Deliberately set as a *plain module global* (`DATABASE_ROUTERS = [...]`) in addition to
-# `settings.set(...)`, not `settings.set(...)` alone like `V3_API_ROOT` above: dynaconf's Django
-# integration (`DjangoDynaconf()`, called above) replaces `sys.modules["django.conf"]` with a
-# wrapper whose `.settings` resolves to its own live `lazy_settings` object -- but only for code
-# that imports `django.conf.settings` *after* that replacement happens. Some Django internals
-# (e.g. `django.db.utils`, which owns the global `ConnectionRouter` singleton every query
-# consults) do `from django.conf import settings` earlier than that and keep a reference to the
-# original, vanilla `LazySettings` object, which resolves this settings module the normal
-# Django way (`Settings.__init__` snapshotting `dir(mod)`) whenever it's first touched -- and
-# that snapshot only sees real module-level globals, not anything added purely via
-# `settings.set(...)` on the dynaconf side. Setting the plain global here ensures both the
-# dynaconf-backed settings object (the overwhelming majority of settings consumers, via
-# `settings.set(...)`) and any such early/stale consumer (via `dir(mod)`) resolve
-# `DATABASE_ROUTERS` consistently.
-if len(settings.DATABASES) > 1:
-    DATABASE_ROUTERS = ["pulpcore.app.db_router.PulpDomainRouter"]
-    settings.set("DATABASE_ROUTERS", DATABASE_ROUTERS)
+#     DATABASE_ROUTERS = ["pulpcore.app.db_router.PulpDomainRouter"]
+#
+# (or the dynaconf-env-var equivalent, e.g. `PULP_DATABASE_ROUTERS='["pulpcore.app.db_router.
+# PulpDomainRouter"]'`). Single-database deployments are unaffected either way -- an empty/unset
+# `DATABASE_ROUTERS` is Django's own default, and `ConnectionRouter` never consults an empty
+# `routers` list, so `PulpDomainRouter` still costs nothing unless explicitly configured.

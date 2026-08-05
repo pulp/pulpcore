@@ -41,9 +41,9 @@ def _resolve_domain_id(value, _depth=0, _seen=None):
     satellite-hosted `RepositoryVersion` (the single most common created-resource shape --
     every sync/publish creates one) silently got `content_object_domain_id=None`, which made
     `content_object`'s getter fall back to resolving on *this row's own* (control-plane,
-    `default`) alias instead of the target's real satellite alias -- i.e. exactly the KI-18
-    landmine the denormalized field exists to prevent, just reached via a different route than
-    the one KI-18 originally documented.
+    `default`) alias instead of the target's real satellite alias -- i.e. exactly the cross-plane
+    landmine the denormalized field exists to prevent (see `DomainResolvedGenericRelation` above),
+    just reached via a different route than that class's docstring originally covered.
 
     Walks concrete forward FK/O2O fields (bounded depth, cycle-guarded) looking for any related
     object that itself resolves to a domain id. Not on any hot/read path -- only called from the
@@ -81,15 +81,14 @@ class DomainResolvedGenericRelation:
     """
     Mixin providing a cross-database-safe `content_object` for models with a
     `content_type`/`object_id` `GenericForeignKey` pair whose target may be a data-plane object
-    living on a different database alias than the row holding the FK (KI-18, Critical).
+    living on a different database alias than the row holding the FK.
 
     Every model in pulpcore/plugins that declares a `GenericForeignKey` (`CreatedResource`,
     `ExportedResource`, `UserRole`, `GroupRole` -- no plugin declares its own, confirmed by
     full-codebase audit) is itself a control-plane model, always on `default`, while its target
     may be any model at all, including a data-plane one that has since moved to a satellite.
-    Django's stock `GenericForeignKey` has *two* cross-DB landmines for exactly this shape,
-    both found empirically (real multi-Postgres integration testing), not just by reading the
-    design doc's KI-18 writeup (which only covers the first):
+    Django's stock `GenericForeignKey` has *two* cross-DB landmines for exactly this shape, both
+    found empirically via real multi-Postgres integration testing:
 
     1. `__get__` resolves the target using `instance._state.db` -- the *FK-holding row's*
        database, not the target's -- and silently swallows `ObjectDoesNotExist`, returning
@@ -110,8 +109,8 @@ class DomainResolvedGenericRelation:
        *different* model happens to have that id on `default`. Reproduced in integration testing
        as a `CreatedResource` for a `Repository` resolving to an unrelated `Remote` instead.
 
-    Locked fix for #1 (see `architecture/domain-db-offloading-design.md`, KI-18): denormalize a
-    nullable `content_object_domain` FK onto the model, auto-populated by the `content_object`
+    Fix for #1: denormalize a nullable `content_object_domain` FK onto the model, auto-populated
+    by the `content_object`
     setter below via `_resolve_domain_id()` whenever a target is set -- no call site needs to
     set it explicitly, and it's set eagerly (not deferred to `save()`) specifically so
     that `bulk_create()` -- which never calls `save()` -- still populates it correctly; see
@@ -164,7 +163,7 @@ class DomainResolvedGenericRelation:
         model_class = self.content_type.model_class()
         if self.content_object_domain_id is not None:
             # Cross-plane target loaded fresh from the DB: resolve on the target's own alias,
-            # not this (control-plane) row's alias -- this is the KI-18 fix.
+            # not this (control-plane) row's alias -- see class docstring, fix for #1.
             alias = self.content_object_domain.database_alias
             try:
                 resolved = model_class.objects.using(alias).get(pk=self.object_id)
@@ -236,9 +235,9 @@ class GenericRelationModel(DomainResolvedGenericRelation, BaseModel):
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.UUIDField()
     _content_object = GenericForeignKey("content_type", "object_id", for_concrete_model=False)
-    # KI-18: denormalized target domain, auto-populated by DomainResolvedGenericRelation's
-    # `content_object` setter. Internal/operational only, like Domain.database_alias/moving --
-    # not exposed via any serializer.
+    # Denormalized target domain, auto-populated by DomainResolvedGenericRelation's
+    # `content_object` setter (see that class's docstring). Internal/operational only, like
+    # Domain.database_alias/moving -- not exposed via any serializer.
     content_object_domain = models.ForeignKey(
         "core.Domain", null=True, on_delete=models.SET_NULL, related_name="+"
     )

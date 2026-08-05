@@ -7,20 +7,18 @@ live on two different physical PostgreSQL instances -- there is no way for one P
 to run a subquery against rows that live on a different server. The clearest example is RBAC:
 `role_util.get_objects_for_user_roles()` builds `Q(pk_str__in=user_role_pks)` where
 `user_role_pks` is a lazy `UserRole` queryset (control-plane, always `default`) and the outer
-queryset is a data-plane model that may be routed to a satellite (KI-01, KI-25).
+queryset is a data-plane model that may be routed to a satellite.
 
 `CrossDBQuerySetMixin` detects exactly this situation -- a queryset-valued kwarg/`Q` child whose
 `.db` differs from the outer queryset's `.db` -- and materializes it with `list()` before letting
 the normal `filter()`/`exclude()` machinery run, at which point Django emits an `IN (values...)`
-clause instead of a subquery. For single-database deployments `value.db != self.db` is always
-`False`, so the fast-path below (`len(settings.DATABASES) <= 1`) skips the extra work entirely
-and every one of Django's original semantics/optimizations are preserved -- see the design doc's
-Feasibility & Impact Assessment §1 for why that fast path matters (a permanent unconditional tax
-on `.filter()`/`.exclude()` for every install otherwise, most of whom never configure a second
-database).
+clause instead of a subquery. When domain-aware routing isn't active, `value.db != self.db` is
+always `False`, so the fast-path below (`not is_multi_db_routing_active()`) skips the extra work
+entirely and every one of Django's original semantics/optimizations are preserved -- this fast
+path matters because the alternative is a permanent unconditional tax on `.filter()`/`.exclude()`
+for every install, most of whom never register `PulpDomainRouter`.
 """
 
-from django.conf import settings
 from django.db import models
 from django.db.models import Q
 
@@ -29,19 +27,27 @@ class CrossDBQuerySetMixin:
     """
     Mix into any base `QuerySet` class whose `.filter()`/`.exclude()` calls might receive a
     queryset (directly, or nested in a `Q()`) that lives on a different database alias than
-    `self`. Safe to mix into every queryset unconditionally: the `len(settings.DATABASES) <= 1`
-    fast path makes this a no-op for the common single-database case.
+    `self`. Safe to mix into every queryset unconditionally: the `is_multi_db_routing_active()`
+    fast path makes this a no-op unless `PulpDomainRouter` is actually registered.
     """
 
     def filter(self, *args, **kwargs):
-        if len(settings.DATABASES) <= 1:
+        # Local import to avoid a circular import: pulpcore.app.db_router imports
+        # pulpcore.app.util, which imports pulpcore.app.models, whose __init__ imports several
+        # model modules (content.py, publication.py, repository.py) that import *this* module at
+        # class-definition time for CrossDBQuerySetMixin itself.
+        from pulpcore.app.db_router import is_multi_db_routing_active
+
+        if not is_multi_db_routing_active():
             return super().filter(*args, **kwargs)
         args = tuple(self._resolve_cross_db_q(a) if isinstance(a, Q) else a for a in args)
         self._resolve_cross_db_kwargs(kwargs)
         return super().filter(*args, **kwargs)
 
     def exclude(self, *args, **kwargs):
-        if len(settings.DATABASES) <= 1:
+        from pulpcore.app.db_router import is_multi_db_routing_active
+
+        if not is_multi_db_routing_active():
             return super().exclude(*args, **kwargs)
         args = tuple(self._resolve_cross_db_q(a) if isinstance(a, Q) else a for a in args)
         self._resolve_cross_db_kwargs(kwargs)

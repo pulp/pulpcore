@@ -48,10 +48,9 @@ class Command(BaseCommand):
 
         counts = {"number_unencrypted": 0, "number_multi_encrypted": 0}
 
-        # KI-08 (design doc's own listed example of this bug): `Remote` is data-plane, so a bare
-        # `Remote.objects.filter(...)` only ever sees `default`'s remotes. `for_each_domain()`
-        # (Layer 3) re-runs the sweep once per domain with `.using(alias)`/the raw-SQL fallback
-        # pinned to that domain's own alias.
+        # `Remote` is data-plane, so a bare `Remote.objects.filter(...)` only ever sees
+        # `default`'s remotes. `for_each_domain()` (Layer 3) re-runs the sweep once per domain
+        # with `.using(alias)`/the raw-SQL fallback pinned to that domain's own alias.
         def _repair_for_domain(domain, alias):
             for remote_pk in (
                 Remote.objects.using(alias)
