@@ -23,10 +23,11 @@ a `data_1` alias before pytest starts, e.g.:
     export PULP_DATABASES__data_1__HOST=<second-postgres-host>
     export PULP_DATABASES__data_1__PORT=<second-postgres-port>
 
-When `data_1` isn't configured (the default for a single-database checkout/CI run), every test
-below is skipped with a clear reason rather than silently doing nothing useful -- this mirrors
-`PulpDomainRouter` itself only activating when `len(settings.DATABASES) > 1`, so there is no
-meaningful "multi-db routing" behavior to test at all without it.
+When `data_1` isn't configured, or `PulpDomainRouter` isn't registered in `DATABASE_ROUTERS`
+(the default for a single-database checkout/CI run, and not something pulpcore auto-derives from
+`DATABASES`), every test below is skipped with a clear reason rather than silently doing nothing
+useful or failing confusingly -- there is no meaningful "multi-db routing" behavior to test at
+all without both.
 """
 
 from contextlib import contextmanager
@@ -38,6 +39,7 @@ from django.core.management import call_command
 from django.db.utils import OperationalError
 
 from pulpcore.app.contexts import with_domain
+from pulpcore.app.db_router import is_multi_db_routing_active
 from pulpcore.app.models import (
     ContentArtifact,
     Domain,
@@ -52,10 +54,11 @@ from pulpcore.constants import TASK_STATES
 SATELLITE_ALIAS = "data_1"
 
 requires_multi_db = pytest.mark.skipif(
-    SATELLITE_ALIAS not in settings.DATABASES,
+    SATELLITE_ALIAS not in settings.DATABASES or not is_multi_db_routing_active(),
     reason=(
         f"Multi-database routing tests require a '{SATELLITE_ALIAS}' alias in settings.DATABASES "
-        f"(set PULP_DATABASES__{SATELLITE_ALIAS}__* env vars to a second real Postgres instance)."
+        f"(set PULP_DATABASES__{SATELLITE_ALIAS}__* env vars to a second real Postgres instance) "
+        "and PulpDomainRouter registered in DATABASE_ROUTERS."
     ),
 )
 
@@ -186,7 +189,7 @@ class TestRouterInstanceHintSafety:
         constructing one with an unsaved `ContentArtifact` -- exactly how
         `content/handler.py`'s pull-through path builds it, e.g. around line 909:
         `RemoteArtifact(remote=remote, url=url, content_artifact=ca)` -- used to recurse
-        infinitely the moment `len(settings.DATABASES) > 1` activated the router: assigning
+        infinitely once `PulpDomainRouter` was registered and active: assigning
         `content_artifact` makes Django's `ForwardManyToOneDescriptor.__set__` ask the router to
         resolve a DB for the (unsaved) `ContentArtifact` value, hinting the half-built
         `RemoteArtifact` itself back into `_resolve_db`, which then tried to read
@@ -218,8 +221,7 @@ class TestRouterInstanceHintSafety:
         relation object must resolve through the router in exactly the number of queries the
         relation access itself needs -- zero extra queries to fetch `Domain` just to ask the
         router which alias to use. Mirrors `test_base.py::test_cast`, scoped explicitly to a
-        real multi-DB configuration (`len(settings.DATABASES) > 1`, the condition that actually
-        activates `PulpDomainRouter` -- see the module docstring in `db_router.py`).
+        real multi-DB configuration where `PulpDomainRouter` is actually registered and active.
         """
         from pulp_file.app.models import FileRemote, FileRepository
 

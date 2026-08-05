@@ -20,8 +20,8 @@ class Command(_DjangoMigrateCommand):
     instead of the satellite actually being migrated -- harmless (a no-op) as long as `default` has
     an identical, in-sync schema, but broken the instant `default` has already progressed further
     through the migration graph than the satellite currently being migrated (exactly the case for
-    `migrate-all`, which always migrates `default` to completion first) -- see the design doc's
-    router limitations. `PulpDomainRouter` uses this ContextVar to route bare queries against
+    `migrate-all`, which always migrates `default` to completion first). `PulpDomainRouter` uses
+    this ContextVar to route bare queries against
     *historical* (migration-state) models to the alias actually being migrated instead, and only
     falls back to its normal control-/data-plane logic for models obtained the ordinary way (i.e.
     everywhere outside of a migration).

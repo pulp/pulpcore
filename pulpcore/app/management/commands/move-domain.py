@@ -15,11 +15,12 @@ from pulpcore.app.domain_move import (
     estimate_domain_size,
     verify_domain_data,
 )
+from pulpcore.app.domain_sync import ensure_domain_on_alias
 from pulpcore.app.models import Domain, DomainMove, Task
 from pulpcore.constants import TASK_INCOMPLETE_STATES
 
-#: Default length of the Step 6 "Monitoring" window (design doc: "Observe for N days
-#: (configurable, default 7)").
+#: Default length of the Step 6 "Monitoring" window: observe for N days (configurable) before
+#: it's safe to run `cleanup-moved-domain`.
 DEFAULT_MONITORING_DAYS = 7
 
 
@@ -27,13 +28,12 @@ class Command(BaseCommand):
     """
     Move a domain's data-plane objects to a different `DATABASES` alias.
 
-    Implements Strategy A ("Read-Only Cutover") from the design doc's Domain Movement
-    Procedure: the domain is set read-only (`Domain.moving = True`) for the duration of the
-    data copy, which is simpler to implement than Strategy B's incremental sync but leaves the
-    domain unavailable for writes for the whole copy -- acceptable for the moderate-sized
-    domains this tooling targets, and the only strategy implemented by this command (Strategy B
-    remains "backburner" per the design doc; passing `--strategy incremental` fails fast with a
-    clear message rather than silently falling back to Strategy A).
+    Implements Strategy A ("Read-Only Cutover"): the domain is set read-only
+    (`Domain.moving = True`) for the duration of the data copy, which is simpler to implement
+    than an incremental-sync strategy but leaves the domain unavailable for writes for the whole
+    copy -- acceptable for the moderate-sized domains this tooling targets, and the only strategy
+    implemented by this command (`--strategy incremental` fails fast with a clear message rather
+    than silently falling back to read-only).
 
     Steps 1-6 of the procedure are all handled by a single invocation of this command:
     preparation/verification, read-only mode, data copy (Option B -- application-level Django
@@ -59,8 +59,7 @@ class Command(BaseCommand):
             choices=["read-only", "incremental"],
             help=_(
                 "Movement strategy. Only 'read-only' (Strategy A) is implemented; 'incremental' "
-                "(Strategy B) remains on the backburner in the design doc pending a sync-"
-                "strategy decision."
+                "(Strategy B) is not yet implemented."
             ),
         )
         parser.add_argument(
@@ -93,9 +92,7 @@ class Command(BaseCommand):
         if options["strategy"] == "incremental":
             raise CommandError(
                 _(
-                    "Strategy B (incremental sync) is not implemented -- see the 'Domain "
-                    "Movement Procedure' section of architecture/domain-db-offloading-design.md. "
-                    "Use --strategy read-only."
+                    "Strategy B (incremental sync) is not implemented. Use --strategy read-only."
                 )
             )
 
@@ -204,12 +201,20 @@ class Command(BaseCommand):
         )
         try:
             # Step 2 -- read-only mode. Deliberately NOT skip_hooks: the post_save signal in
-            # domain_sync.py must fire so every satellite (including `to_alias`, before any data
-            # even lands there) sees moving=True too -- DomainMiddleware/PulpcoreWorker consult
-            # the ContextVar-cached copy of this row on whichever alias/process they happen to
-            # be running against, not necessarily `default`.
+            # domain_sync.py fires and keeps `from_alias` (the domain's row's current, still-
+            # unchanged host) up to date -- DomainMiddleware/PulpcoreWorker consult the
+            # ContextVar-cached copy of this row on whichever alias/process they happen to be
+            # running against, not necessarily `default`.
             domain.moving = True
             domain.save(update_fields=["moving"])
+
+            # Step 2b -- explicitly seed the domain's row on `to_alias`. Ambient replication
+            # (domain_sync.py) only ever targets a domain's *current* `database_alias`, which is
+            # still `from_alias` at this point -- it only flips at cutover, below -- so the
+            # post_save signal above never reaches `to_alias` on its own. `copy_domain_data`'s
+            # FK inserts (every data-plane row copied there FKs to `pulp_domain`) need this row
+            # to already exist on `to_alias` first.
+            ensure_domain_on_alias(domain, to_alias)
 
             if options["skip_copy"]:
                 self.stdout.write(

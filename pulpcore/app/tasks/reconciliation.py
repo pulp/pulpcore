@@ -1,14 +1,14 @@
 """
-KI-11 reconciliation: periodic sweep for orphaned cross-plane `GenericForeignKey` references.
+Cross-plane reconciliation: periodic sweep for orphaned cross-plane `GenericForeignKey`
+references.
 
 There is no distributed transaction spanning `default` (control plane) and a satellite alias
 (data plane) -- e.g. a task can write its `CreatedResource` row on `default` and then crash (or
 the process can be killed) before/without the corresponding data-plane write ever landing on the
 satellite, or a domain can be moved/cleaned-up (`move-domain` / `cleanup-moved-domain`) while a
-handful of in-flight cross-plane rows still point at the old alias. This is an accepted trade-off
-(see the design doc's KI-11 and "No Distributed Transactions" sections), mitigated by detecting
-and reporting (optionally purging) the resulting orphans here rather than by trying to eliminate
-them.
+handful of in-flight cross-plane rows still point at the old alias. This is an accepted
+trade-off, mitigated by detecting and reporting (optionally purging) the resulting orphans here
+rather than by trying to eliminate them.
 
 This does its own existence check per candidate row (`_target_exists()` below) rather than
 resolving through `DomainResolvedGenericRelation.content_object` (`pulpcore.app.models.generic`):

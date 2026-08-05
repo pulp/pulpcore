@@ -9,8 +9,10 @@ from pulpcore.app.models import Domain, DomainMove
 
 class Command(BaseCommand):
     """
-    Step 7 ("Cleanup") of the design doc's Domain Movement Procedure: delete a moved domain's
-    stale rows from the database alias it moved *away from*.
+    Step 7 ("Cleanup") of the domain move procedure: delete a moved domain's stale data-plane
+    rows from the database alias it moved *away from* -- and, if that alias was a satellite
+    (not `"default"`, which is always the domain's authoritative home regardless of which alias
+    hosts its data), its now-stale replicated `Domain` metadata row too.
 
     Only proceeds for a domain that is not currently mid-move (`Domain.moving` is `False`) and
     whose current `database_alias` is not `default` (a domain can only have been moved *to* a
@@ -123,6 +125,19 @@ class Command(BaseCommand):
         for label, count in deleted.items():
             if count:
                 self.stdout.write(f"  {label}: {count} row(s) deleted")
+
+        # The domain's own metadata row on `from_alias` (replicated there by domain_sync.py back
+        # when it was still hosted there) is stale now too -- unless `from_alias` is `"default"`,
+        # which is *always* the authoritative home for every `Domain` row regardless of
+        # `database_alias` (see domain_sync.py's module docstring); there is never a "replica" of
+        # it to prune there, only a genuine satellite-to-satellite move leaves a stale replica
+        # behind. `reconcile_domains_to_alias` would eventually prune a genuine stale replica as
+        # "extra" on the next periodic/migrate-all-driven 'sync-domains' run regardless, but
+        # there's no reason to wait: we're already past the confirmation safeguard above for
+        # permanently deleting this domain's data from `from_alias`, so clean up its stale
+        # `Domain` row too, right now, in the same pass.
+        if from_alias != "default":
+            Domain.objects.using(from_alias).filter(pulp_id=domain.pulp_id).delete()
 
         if move:
             move.cleaned_up_at = now()

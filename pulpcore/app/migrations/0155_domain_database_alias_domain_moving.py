@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("core", "0153_taskschedule_pulp_domain_alter_taskschedule_name_and_more"),
+        ("core", "0154_task_api_version"),
     ]
 
     operations = [

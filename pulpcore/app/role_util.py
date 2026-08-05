@@ -618,9 +618,9 @@ def on_any_model_post_delete(sender, instance, **kwargs):
 
     Connected (in `apps.py`, without a `sender` filter, since `BaseModel` is abstract and every
     concrete model -- core and plugin -- inherits the `user_roles`/`group_roles`
-    `GenericRelation`s) only when `len(settings.DATABASES) > 1`: for single-database
-    deployments Django's own cascade delete already handles this correctly, so the receiver
-    isn't connected at all rather than paying a per-delete dispatch cost for a no-op.
+    `GenericRelation`s) only when `is_multi_db_routing_active()`: when domain-aware routing isn't
+    active, Django's own cascade delete already handles this correctly, so the receiver isn't
+    connected at all rather than paying a per-delete dispatch cost for a no-op.
     """
     from pulpcore.app.models import BaseModel
 

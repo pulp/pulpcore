@@ -138,17 +138,16 @@ class StatusView(APIView):
     def _get_databases_status():
         """
         Per-alias connectivity + migration-completeness report, one entry per configured
-        `settings.DATABASES` alias (phase1-status-endpoint; see the design doc's "Updated
-        `/status/` endpoint" section for the exact shape). For a single-database deployment
+        `settings.DATABASES` alias (phase1-status-endpoint). For a single-database deployment
         this is a one-element list equivalent to `database_connection` above; it becomes
         actionable once satellite aliases exist, e.g. for an operator/monitoring check that
         wants to know *which* alias is unreachable or mid-migration rather than just "the
         database" in aggregate.
 
         `migrations_complete` is `None` (not `False`) when connectivity itself fails, since
-        migration completeness can't be determined without a connection -- mirrors the JSON
-        shape in the design doc, and avoids conflating "definitely has pending migrations"
-        with "unknown, because we can't even connect".
+        migration completeness can't be determined without a connection -- this avoids
+        conflating "definitely has pending migrations" with "unknown, because we can't even
+        connect".
         """
         results = []
         for alias in settings.DATABASES:

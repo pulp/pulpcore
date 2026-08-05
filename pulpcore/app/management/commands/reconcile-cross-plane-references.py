@@ -8,14 +8,14 @@ from pulpcore.app.tasks.reconciliation import reconcile_cross_plane_references
 
 class Command(BaseCommand):
     """
-    KI-11: sweep for orphaned cross-plane `GenericForeignKey` references.
+    Sweep for orphaned cross-plane `GenericForeignKey` references.
 
     Checks every `CreatedResource`/`ExportedResource`/`UserRole`/`GroupRole` row that records a
     cross-plane target (a `content_object` living on a different alias than the row itself, per
-    the KI-18 `content_object_domain` field) and reports any whose target can no longer be
-    resolved on its recorded alias -- e.g. because the referencing task crashed before its
-    data-plane write landed (no distributed transactions, see the design doc's KI-11), or because
-    a domain was moved/cleaned-up while the row still pointed at the old alias.
+    the `content_object_domain` field) and reports any whose target can no longer be resolved on
+    its recorded alias -- e.g. because the referencing task crashed before its data-plane write
+    landed (there are no distributed transactions spanning two aliases), or because a domain was
+    moved/cleaned-up while the row still pointed at the old alias.
 
     Safe to run at any time, including on a single-database deployment (there are no cross-plane
     rows to find, so it's a fast no-op). Intended to also run periodically via a `TaskSchedule`

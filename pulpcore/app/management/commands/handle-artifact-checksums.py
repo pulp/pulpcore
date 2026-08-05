@@ -166,9 +166,9 @@ class Command(BaseCommand):
             allowed_checksums
         )
 
-        # KI-08 (design doc's own listed example of this bug): every model touched below
-        # (`Artifact`, `Content`, `ContentArtifact`, `RemoteArtifact`, `RepositoryVersion`) is
-        # data-plane, so this report is re-run once per domain via `for_each_domain()`.
+        # Every model touched below (`Artifact`, `Content`, `ContentArtifact`, `RemoteArtifact`,
+        # `RepositoryVersion`) is data-plane, so this report is re-run once per domain via
+        # `for_each_domain()` -- a bare query would only ever see `default`'s rows.
         def _report_for_domain(domain, alias):
             self.stdout.write(_("\n=== Domain '{name}' ===").format(name=domain.name))
             self._show_on_demand_content(forbidden_checksums, alias)
@@ -188,10 +188,10 @@ class Command(BaseCommand):
         log.setLevel(logging.ERROR)
         hrefs = set()
 
-        # KI-08 (design doc's own listed example of this bug): `Artifact` is data-plane, so an
-        # unqualified `Artifact.objects.filter(...)`/`.bulk_update(...)` (the original shape of
-        # this loop) only ever touches `default`'s artifacts. `for_each_domain()` re-runs the
-        # whole populate/repair pass once per domain with `.using(alias)`.
+        # `Artifact` is data-plane, so an unqualified `Artifact.objects.filter(...)`/
+        # `.bulk_update(...)` (the original shape of this loop) only ever touches `default`'s
+        # artifacts. `for_each_domain()` re-runs the whole populate/repair pass once per domain
+        # with `.using(alias)`.
         def _populate_missing_for_domain(domain, alias):
             for checksum in settings.ALLOWED_CONTENT_CHECKSUMS:
                 params = {f"{checksum}__isnull": True}

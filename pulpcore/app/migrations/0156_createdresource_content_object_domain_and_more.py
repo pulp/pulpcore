@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
     """
 
     dependencies = [
-        ("core", "0154_domain_database_alias_domain_moving"),
+        ("core", "0155_domain_database_alias_domain_moving"),
     ]
 
     operations = [
