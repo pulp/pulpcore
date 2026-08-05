@@ -1116,6 +1116,27 @@ else
 fi
 """
 
+SQ_SIGNING_SCRIPT_STRING = """#!/usr/bin/env bash
+
+FILE_PATH=$1
+SIGNATURE_PATH="$1.asc"
+
+SQ_HOME="{sq_home}"
+SIGNER="{signer_fingerprint}"
+
+# Create a detached signature using Sequoia (sq)
+sq --home "${{SQ_HOME}}" sign --signer "${{SIGNER}}" \\
+   --signature-file="${{SIGNATURE_PATH}}" "${{FILE_PATH}}"
+
+# Check the exit status
+STATUS=$?
+if [[ ${{STATUS}} -eq 0 ]]; then
+   echo '{{"file": "'${{FILE_PATH}}'", "signature": "'${{SIGNATURE_PATH}}'"}}'
+else
+   exit ${{STATUS}}
+fi
+"""
+
 
 @pytest.fixture(scope="session")
 def signing_script_path(signing_script_temp_dir, signing_gpg_homedir_path, signing_gpg_metadata):
@@ -1207,53 +1228,132 @@ def ascii_armored_detached_signing_service(
     ).results[0]
 
 
-def import_signing_key(key_url, gpg_home):
-    """Import a PGP key into a GPG home directory and trust it.
+@pytest.fixture(scope="session")
+def sq_signing_home_path(tmp_path_factory):
+    return tmp_path_factory.mktemp("sq_home")
 
-    Returns ``(gpg, fingerprint, keyid)``.
+
+@pytest.fixture(scope="session")
+def sq_signing_script_temp_dir(tmp_path_factory):
+    return tmp_path_factory.mktemp("sq_signing_script_dir")
+
+
+@pytest.fixture(scope="session")
+def sq_signing_metadata(sq_signing_home_path):
+    """A fixture that returns Sequoia signing metadata (i.e., fingerprint, keyid)."""
+    return import_signing_key(KEY_V6_ED25519_PRIVATE, sq_signing_home_path, backend="sq")
+
+
+@pytest.fixture(scope="session")
+def sq_signing_script_path(sq_signing_script_temp_dir, sq_signing_home_path, sq_signing_metadata):
+    _sq, fingerprint, _keyid = sq_signing_metadata
+    return make_signing_script(
+        sq_signing_home_path, fingerprint, sq_signing_script_temp_dir, backend="sq"
+    )
+
+
+@pytest.fixture(scope="session")
+def _sq_ascii_armored_detached_signing_service_name(
+    sq_signing_script_path,
+    sq_signing_metadata,
+    sq_signing_home_path,
+):
+    _sq, fingerprint, _keyid = sq_signing_metadata
+    service_name = create_signing_service(
+        sq_signing_home_path, fingerprint, sq_signing_script_path, backend="sq"
+    )
+
+    yield service_name
+
+    remove_signing_service(service_name)
+
+
+@pytest.fixture(scope="session")
+def sq_ascii_armored_detached_signing_service(
+    _sq_ascii_armored_detached_signing_service_name, pulpcore_bindings
+):
+    return pulpcore_bindings.SigningServicesApi.list(
+        name=_sq_ascii_armored_detached_signing_service_name
+    ).results[0]
+
+
+def import_signing_key(key_url, home, *, backend="gpg"):
+    """Import a PGP key into a keyring and return metadata.
+
+    Returns `(gpg_instance_or_none, fingerprint, keyid)`. The first element
+    is a `gnupg.GPG` instance when `backend` is `"gpg"`, or `None` when
+    `backend` is `"sq"`.
     """
-    try:
-        import gnupg
-    except ImportError:
-        pytest.skip("python-gnupg not installed")
-
-    gpg = gnupg.GPG(gnupghome=gpg_home)
-
     response = requests.get(key_url)
     response.raise_for_status()
-    result = gpg.import_keys(response.content)
-    assert result.count >= 1, f"Failed to import key from {key_url}"
 
-    key_info = gpg.list_keys()[0]
-    fingerprint = key_info["fingerprint"]
-    keyid = key_info["keyid"]
-    gpg.trust_keys(fingerprint, "TRUST_ULTIMATE")
+    if backend == "sq":
+        from pysequoia import Cert
 
-    return gpg, fingerprint, keyid
+        completed = subprocess.run(
+            ("sq", "--home", str(home), "key", "import"),
+            input=response.content,
+            capture_output=True,
+        )
+        assert completed.returncode == 0, completed.stderr.decode()
+
+        cert = Cert.from_bytes(response.content)
+        fingerprint = cert.fingerprint.upper()
+        keyid = fingerprint[-16:]
+
+        return None, fingerprint, keyid
+    else:
+        try:
+            import gnupg
+        except ImportError:
+            pytest.skip("python-gnupg not installed")
+
+        gpg = gnupg.GPG(gnupghome=home)
+
+        result = gpg.import_keys(response.content)
+        assert result.count >= 1, f"Failed to import key from {key_url}"
+
+        key_info = gpg.list_keys()[0]
+        fingerprint = key_info["fingerprint"]
+        keyid = key_info["keyid"]
+        gpg.trust_keys(fingerprint, "TRUST_ULTIMATE")
+
+        return gpg, fingerprint, keyid
 
 
-def make_signing_script(gpg_home, fingerprint, script_dir=None):
+def make_signing_script(home, fingerprint, script_dir=None, *, backend="gpg"):
     """Create a detached-signature signing script.
 
     Returns the script path.
     """
     if script_dir is None:
-        script_dir = gpg_home
-    script_path = script_dir / "sign.sh"
-    script_path.write_text(SIGNING_SCRIPT_STRING.format(gpg_home=gpg_home, gpg_key_id=fingerprint))
+        script_dir = home
+    if backend == "sq":
+        script_path = script_dir / "sq_sign.sh"
+        script_path.write_text(
+            SQ_SIGNING_SCRIPT_STRING.format(sq_home=home, signer_fingerprint=fingerprint)
+        )
+    else:
+        script_path = script_dir / "sign.sh"
+        script_path.write_text(SIGNING_SCRIPT_STRING.format(gpg_home=home, gpg_key_id=fingerprint))
     script_path.chmod(0o755)
     return script_path
 
 
 def create_signing_service(
-    gpg_home, fingerprint, script_path, *, service_class="core:AsciiArmoredDetachedSigningService"
+    home,
+    fingerprint,
+    script_path,
+    *,
+    backend="gpg",
+    service_class="core:AsciiArmoredDetachedSigningService",
 ):
     """Register a signing service via pulpcore-manager.
 
     Returns the service name.
     """
     service_name = str(uuid.uuid4())
-    cmd = (
+    cmd = [
         "pulpcore-manager",
         "add-signing-service",
         service_name,
@@ -1261,9 +1361,11 @@ def create_signing_service(
         fingerprint,
         "--class",
         service_class,
-        "--gnupghome",
-        str(gpg_home),
-    )
+        "--backend",
+        backend,
+        "--home",
+        str(home),
+    ]
     completed = subprocess.run(cmd, capture_output=True, text=True)
     assert completed.returncode == 0, completed.stderr
 

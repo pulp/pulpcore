@@ -1,0 +1,1 @@
+Added `--backend` option to the `add-signing-service` management command, enabling Sequoia (`sq`) as an alternative to GPG for key management. Use `--backend sq` to register signing services using Sequoia's key store.
