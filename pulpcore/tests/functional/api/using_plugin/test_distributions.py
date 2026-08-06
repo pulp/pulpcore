@@ -172,14 +172,32 @@ def test_distribution_update_task_reservations(
     file_bindings,
     monitor_task,
 ):
+    def has_shared_distributions_lock(task):
+        return any(
+            resource.startswith("shared:") and resource.endswith(":distributions")
+            for resource in task.reserved_resources_record
+        )
+
+    def has_exclusive_distributions_lock(task):
+        return any(
+            not resource.startswith("shared:") and resource.endswith(":distributions")
+            for resource in task.reserved_resources_record
+        )
+
+    def has_base_path_lock(task):
+        return any(
+            not resource.startswith("shared:") and resource.endswith(":distribution.base_path")
+            for resource in task.reserved_resources_record
+        )
+
     create_task = monitor_task(
         file_bindings.DistributionsFileApi.create(
             {"name": str(uuid4()), "base_path": str(uuid4())}
         ).task
     )
-    assert any(
-        resource.endswith(":distributions") for resource in create_task.reserved_resources_record
-    )
+    assert has_base_path_lock(create_task)
+    assert has_shared_distributions_lock(create_task)
+    assert not has_exclusive_distributions_lock(create_task)
     distribution = file_bindings.DistributionsFileApi.read(create_task.created_resources[0])
     assert distribution.prn not in create_task.reserved_resources_record
 
@@ -190,10 +208,9 @@ def test_distribution_update_task_reservations(
         ).task
     )
     assert distribution.prn in no_base_path_update_task.reserved_resources_record
-    assert not any(
-        resource.endswith(":distributions")
-        for resource in no_base_path_update_task.reserved_resources_record
-    )
+    assert not has_base_path_lock(no_base_path_update_task)
+    assert has_shared_distributions_lock(no_base_path_update_task)
+    assert not has_exclusive_distributions_lock(no_base_path_update_task)
 
     unchanged_base_path_update_task = monitor_task(
         file_bindings.DistributionsFileApi.partial_update(
@@ -202,10 +219,9 @@ def test_distribution_update_task_reservations(
         ).task
     )
     assert distribution.prn in unchanged_base_path_update_task.reserved_resources_record
-    assert not any(
-        resource.endswith(":distributions")
-        for resource in unchanged_base_path_update_task.reserved_resources_record
-    )
+    assert not has_base_path_lock(unchanged_base_path_update_task)
+    assert has_shared_distributions_lock(unchanged_base_path_update_task)
+    assert not has_exclusive_distributions_lock(unchanged_base_path_update_task)
 
     base_path_update_task = monitor_task(
         file_bindings.DistributionsFileApi.partial_update(
@@ -213,18 +229,17 @@ def test_distribution_update_task_reservations(
         ).task
     )
     assert distribution.prn in base_path_update_task.reserved_resources_record
-    assert any(
-        resource.endswith(":distributions")
-        for resource in base_path_update_task.reserved_resources_record
-    )
+    assert has_base_path_lock(base_path_update_task)
+    assert has_shared_distributions_lock(base_path_update_task)
+    assert not has_exclusive_distributions_lock(base_path_update_task)
 
     delete_task = monitor_task(
         file_bindings.DistributionsFileApi.delete(distribution.pulp_href).task
     )
     assert distribution.prn in delete_task.reserved_resources_record
-    assert any(
-        resource.endswith(":distributions") for resource in delete_task.reserved_resources_record
-    )
+    assert not has_base_path_lock(delete_task)
+    assert has_shared_distributions_lock(delete_task)
+    assert not has_exclusive_distributions_lock(delete_task)
 
 
 @pytest.mark.parallel
