@@ -20,8 +20,8 @@ from pulpcore.app.models import (
 from pulpcore.app.models.publication import CompositeContentGuard
 from pulpcore.app.response import OperationPostponedResponse
 from pulpcore.app.serializers import (
-    AsyncOperationResponseSerializer,
     ArtifactDistributionSerializer,
+    AsyncOperationResponseSerializer,
     ContentGuardSerializer,
     ContentRedirectContentGuardSerializer,
     DistributionSerializer,
