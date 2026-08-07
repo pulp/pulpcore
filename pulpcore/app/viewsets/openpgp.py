@@ -1,3 +1,5 @@
+import django_filters
+
 from pulpcore.app import models
 from pulpcore.app.serializers.openpgp import (
     OpenPGPDistributionSerializer,
@@ -11,13 +13,14 @@ from pulpcore.app.serializers.openpgp import (
 from pulpcore.app.viewsets.base import NAME_FILTER_OPTIONS, RolesMixin
 from pulpcore.app.viewsets.content import ContentFilter, ReadOnlyContentViewSet
 from pulpcore.app.viewsets.publication import DistributionFilter, DistributionViewSet
-from pulpcore.app.viewsets.repository import RepositoryViewSet
+from pulpcore.app.viewsets.repository import RepositoryVersionViewSet, RepositoryViewSet
 from pulpcore.plugin.actions import ModifyRepositoryActionMixin
 from pulpcore.plugin.viewsets import NoArtifactContentUploadViewSet
 
 
 class OpenPGPSignatureFilter(ContentFilter):
     # Wishlist: filter by expired
+    issuer = django_filters.CharFilter(lookup_expr="iexact")
 
     class Meta:
         model = models.OpenPGPSignature
@@ -37,6 +40,8 @@ class OpenPGPUserAttributeFilter(ContentFilter):
 
 
 class OpenPGPPublicSubkeyFilter(ContentFilter):
+    fingerprint = django_filters.CharFilter(lookup_expr="iexact")
+
     class Meta:
         model = models.OpenPGPPublicSubkey
         fields = ["fingerprint"]
@@ -44,6 +49,7 @@ class OpenPGPPublicSubkeyFilter(ContentFilter):
 
 class OpenPGPPublicKeyFilter(ContentFilter):
     # Wishlist: filter by user id
+    fingerprint = django_filters.CharFilter(lookup_expr="iexact")
 
     class Meta:
         model = models.OpenPGPPublicKey

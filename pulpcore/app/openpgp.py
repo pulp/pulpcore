@@ -18,7 +18,7 @@ def read_public_key(data):
                 raise ValueError("Multiple public keys found.")
             public_key = {
                 "raw_data": body,
-                "fingerprint": packet.fingerprint,
+                "fingerprint": packet.fingerprint.upper(),
                 "created": packet.key_created,
                 "user_ids": [],
                 "user_attributes": [],
@@ -32,7 +32,7 @@ def read_public_key(data):
                 raise ValueError("Not a public key.")
             public_subkey = {
                 "raw_data": body,
-                "fingerprint": packet.fingerprint,
+                "fingerprint": packet.fingerprint.upper(),
                 "created": packet.key_created,
                 "signatures": [],
             }
@@ -77,7 +77,7 @@ def read_public_key(data):
             if packet.key_validity_period is not None:
                 sig_attrs["key_expiration_time"] = packet.key_validity_period
             if packet.issuer_key_id is not None:
-                sig_attrs["issuer"] = packet.issuer_key_id
+                sig_attrs["issuer"] = packet.issuer_key_id.upper()
             if packet.signers_user_id is not None:
                 sig_attrs["signers_user_id"] = packet.signers_user_id
             signed_content["signatures"].append(sig_attrs)
