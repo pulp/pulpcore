@@ -39,7 +39,7 @@ dependencies = [
   "djangorestframework>=3.14.0,<=3.17.1",
   "djangorestframework-queryfields>=1.0,<=1.1.0",
   "drf-access-policy>=1.1.2,<1.5.1",
-  "drf-nested-routers>=0.93.4,<=0.95.0",
+  "drf-nested-routers>=0.93.4,<=0.95.3",
   "drf-spectacular>=0.27.2,<0.30",  # We monkeypatch this so we may need a very narrow requirement string.
   "dynaconf>=3.3.0,<3.4",  # Probably semver.
   "GitPython>=3.1.24,<3.2",
