@@ -28,6 +28,8 @@ def read_public_key(data):
             signed_content = public_key
 
         elif tag == Tag.PublicSubkey:
+            if public_key is None:
+                raise ValueError("Not a public key.")
             public_subkey = {
                 "raw_data": body,
                 "fingerprint": packet.fingerprint,
@@ -38,6 +40,8 @@ def read_public_key(data):
             public_key["public_subkeys"].append(public_subkey)
 
         elif tag == Tag.UserID:
+            if public_key is None:
+                raise ValueError("Not a public key.")
             user_id = {
                 "raw_data": body,
                 "user_id": packet.user_id,
@@ -47,6 +51,8 @@ def read_public_key(data):
             public_key["user_ids"].append(user_id)
 
         elif tag == Tag.UserAttribute:
+            if public_key is None:
+                raise ValueError("Not a public key.")
             user_attribute = {
                 "raw_data": body,
                 "sha256": hashlib.sha256(body).hexdigest(),
@@ -56,6 +62,8 @@ def read_public_key(data):
             public_key["user_attributes"].append(user_attribute)
 
         elif tag == Tag.Signature:
+            if signed_content is None:
+                raise ValueError("Not a public key.")
             sig_attrs = {
                 "sha256": hashlib.sha256(body).hexdigest(),
                 "signature_type": body[1],
