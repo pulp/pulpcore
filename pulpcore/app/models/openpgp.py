@@ -143,7 +143,7 @@ class OpenPGPSignature(_OpenPGPContent):
 
     @property
     def expired(self):
-        return self.expiration_time and timezone.now() > self.created + self.expiration_time
+        return bool(self.expiration_time and timezone.now() > self.created + self.expiration_time)
 
     @property
     def key_expired(self):
