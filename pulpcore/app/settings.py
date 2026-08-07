@@ -155,6 +155,7 @@ MIDDLEWARE = [
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
     "pulpcore.backends.ObjectRolePermissionBackend",
+    "pulpcore.app.workload_identity.backend.WorkloadIdentityBackend",
 ]
 
 ROOT_URLCONF = "pulpcore.app.urls"
@@ -316,6 +317,9 @@ REMOTE_USER_OPENAPI_SECURITY_SCHEME = {"type": "mutualTLS"}
 AUTHENTICATION_JSON_HEADER = ""
 AUTHENTICATION_JSON_HEADER_JQ_FILTER = ""
 AUTHENTICATION_JSON_HEADER_OPENAPI_SECURITY_SCHEME = {}
+
+# Workload identity authentication for CI clients. Off while empty.
+WORKLOAD_IDENTITY = {}
 
 ALLOWED_IMPORT_PATHS = []
 
