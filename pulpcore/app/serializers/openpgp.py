@@ -21,6 +21,7 @@ class NestedOpenPGPSignatureSerializer(NoArtifactContentSerializer):
     class Meta:
         model = models.OpenPGPSignature
         fields = (
+            "signature_type",
             "issuer",
             "created",
             "expiration_time",
