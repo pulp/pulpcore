@@ -181,10 +181,113 @@ class OpenPGPKeyringViewSet(RepositoryViewSet, ModifyRepositoryActionMixin, Role
     }
 
 
-class OpenPGPDistributionViewSet(DistributionViewSet):
+class OpenPGPKeyringVersionViewSet(RepositoryVersionViewSet):
+    parent_viewset = OpenPGPKeyringViewSet
+
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["list", "retrieve"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_repository_model_or_domain_or_obj_perms:core.view_openpgpkeyring",
+            },
+            {
+                "action": ["destroy"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": [
+                    "has_repository_model_or_domain_or_obj_perms:core.delete_openpgpkeyring",
+                    "has_repository_model_or_domain_or_obj_perms:core.view_openpgpkeyring",
+                ],
+            },
+            {
+                "action": ["repair"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": [
+                    "has_repository_model_or_domain_or_obj_perms:core.repair_openpgpkeyring",
+                    "has_repository_model_or_domain_or_obj_perms:core.view_openpgpkeyring",
+                ],
+            },
+        ],
+    }
+
+
+class OpenPGPDistributionViewSet(DistributionViewSet, RolesMixin):
     endpoint_name = "openpgp"
     queryset = models.OpenPGPDistribution.objects.all()
     serializer_class = OpenPGPDistributionSerializer
     filterset_class = OpenPGPDistributionFilter
+    queryset_filtering_required_permission = "core.view_openpgpdistribution"
 
-    # DEFAULT_ACCESS_POLICY
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["list", "my_permissions"],
+                "principal": "authenticated",
+                "effect": "allow",
+            },
+            {
+                "action": ["retrieve"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_model_or_domain_or_obj_perms:core.view_openpgpdistribution",
+            },
+            {
+                "action": ["create"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": [
+                    "has_model_or_domain_perms:core.add_openpgpdistribution",
+                    "has_repo_or_repo_ver_param_model_or_domain_or_obj_perms:"
+                    "core.view_openpgpkeyring",
+                ],
+            },
+            {
+                "action": ["update", "partial_update", "set_label", "unset_label"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": [
+                    "has_model_or_domain_or_obj_perms:core.change_openpgpdistribution",
+                    "has_model_or_domain_or_obj_perms:core.view_openpgpdistribution",
+                    "has_repo_or_repo_ver_param_model_or_domain_or_obj_perms:"
+                    "core.view_openpgpkeyring",
+                ],
+            },
+            {
+                "action": ["destroy"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": [
+                    "has_model_or_domain_or_obj_perms:core.delete_openpgpdistribution",
+                    "has_model_or_domain_or_obj_perms:core.view_openpgpdistribution",
+                ],
+            },
+            {
+                "action": ["list_roles", "add_role", "remove_role"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": [
+                    "has_model_or_domain_or_obj_perms:core.manage_roles_openpgpdistribution",
+                ],
+            },
+        ],
+        "creation_hooks": [
+            {
+                "function": "add_roles_for_object_creator",
+                "parameters": {"roles": "core.openpgpdistribution_owner"},
+            },
+        ],
+        "queryset_scoping": {"function": "scope_queryset"},
+    }
+    LOCKED_ROLES = {
+        "core.openpgpdistribution_creator": ["core.add_openpgpdistribution"],
+        "core.openpgpdistribution_owner": [
+            "core.view_openpgpdistribution",
+            "core.change_openpgpdistribution",
+            "core.delete_openpgpdistribution",
+            "core.manage_roles_openpgpdistribution",
+        ],
+        "core.openpgpdistribution_viewer": ["core.view_openpgpdistribution"],
+    }
