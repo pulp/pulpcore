@@ -26,6 +26,8 @@ from .base import (
 )
 from .fields import (
     BaseURLField,
+    ContentArtifactChecksumField,
+    ContentArtifactsField,
     ExportsIdentityFromExporterField,
     ExportRelatedField,
     ExportIdentityField,
@@ -37,6 +39,7 @@ from .fields import (
     LatestVersionField,
     PgpKeyFingerprintField,
     PulpLabelsField,
+    RelativePathField,
     SingleContentArtifactField,
     RepositoryVersionsIdentityFromRepositoryField,
     RepositoryVersionRelatedField,

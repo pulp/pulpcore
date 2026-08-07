@@ -6,12 +6,10 @@ from collections import namedtuple
 from gettext import gettext as _
 from logging import getLogger
 from typing import List, TypedDict
-from urllib.parse import urljoin
 
 from cryptography.x509 import load_pem_x509_certificate
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.validators import URLValidator
 from django.db import IntegrityError
 from django.db.models import Model
 from django.urls.exceptions import NoReverseMatch
@@ -474,37 +472,6 @@ class ModelSerializer(
         ),
         read_only=True,
     )
-
-    def _validate_relative_path(self, path):
-        """
-        Validate a relative path (eg from a url) to ensure it forms a valid url and does not begin
-        or end with slashes nor contain spaces
-
-        Args:
-            path (str): A relative path to validate
-
-        Returns:
-            str: the validated path
-
-        Raises:
-            django.core.exceptions.ValidationError: if the relative path is invalid
-
-        """
-        # in order to use django's URLValidator we need to construct a full url
-        base = "http://localhost"  # use a scheme/hostname we know are valid
-
-        if " " in path:
-            raise serializers.ValidationError(detail=_("Relative path cannot contain spaces."))
-
-        validate = URLValidator()
-        validate(urljoin(base, path))
-
-        if path != path.strip("/"):
-            raise serializers.ValidationError(
-                detail=_("Relative path cannot begin or end with slashes.")
-            )
-
-        return path
 
     def save(self, **kwargs):
         try:

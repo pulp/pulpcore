@@ -214,9 +214,45 @@ def test_pgp_key_fingerprint_field_normalize(value, expected):
 @pytest.mark.parametrize(
     ("path",),
     [
+        pytest.param("path", id="simple"),
+        pytest.param("relative/path", id="nested"),
+        pytest.param("...", id="tripple_dot"),
+        pytest.param("file.", id="doted_filename"),
+        pytest.param(".file", id="hidden_filename"),
+        pytest.param("..file", id="secret_agent_filename"),
+        pytest.param("file.ext", id="filename_extension"),
+        pytest.param("file..ext", id="weird_filename"),
+        pytest.param("path/...", id="tripple_dot_nested"),
+        pytest.param("path/file.", id="doted_filename_nested"),
+        pytest.param("path/.file", id="hidden_filename_nested"),
+        pytest.param("path/..file", id="secret_agent_filename_nested"),
+        pytest.param("path/file.ext", id="filename_extension_nested"),
+        pytest.param("path/file..ext", id="weird_filename_nested"),
+    ],
+)
+def test_relative_path_validator_accepts(path):
+    relative_path_validator(path)
+
+
+@pytest.mark.parametrize(
+    ("path",),
+    [
+        pytest.param("", id="empty"),
+        pytest.param("/", id="slash"),
+        pytest.param(".", id="dot"),
+        pytest.param("..", id="dotdot"),
         pytest.param("/absolute/path", id="absolute"),
+        pytest.param("suspicious/path/", id="trailing_slash"),
         pytest.param("../sneaky/path", id="path_traversal"),
         pytest.param("suspicious/../../sneaky/path", id="hidden_path_traversal"),
+        pytest.param("suspicious//path", id="unsanitized"),
+        pytest.param("suspicious/./path", id="unsanitized_dot"),
+        pytest.param("suspicious path", id="space"),
+        pytest.param("suspicious\tpath", id="tab"),
+        pytest.param("suspicious\rpath", id="carriage_return"),
+        pytest.param("suspicious\npath", id="linefeed"),
+        pytest.param("suspicious?path", id="questionmark"),
+        pytest.param("suspicious/path#fragment", id="urlfragment"),
     ],
 )
 def test_relative_path_validator_rejects(path):

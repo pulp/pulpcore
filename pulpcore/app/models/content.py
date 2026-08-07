@@ -26,6 +26,7 @@ from django_lifecycle import BEFORE_SAVE, BEFORE_UPDATE, hook
 
 from pulpcore.app import pulp_hashlib
 from pulpcore.app.models import BaseModel, MasterModel, fields, storage
+from pulpcore.app.models.fields import RelativePathField
 from pulpcore.app.util import get_domain_pk, gpg_verify
 from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS
 from pulpcore.exceptions import (
@@ -656,7 +657,7 @@ class ContentArtifact(BaseModel, QueryMixin):
         Artifact, on_delete=models.PROTECT, null=True, related_name="content_memberships"
     )
     content = models.ForeignKey(Content, on_delete=models.CASCADE)
-    relative_path = models.TextField()
+    relative_path = RelativePathField()
 
     objects = BulkCreateManager()
 
