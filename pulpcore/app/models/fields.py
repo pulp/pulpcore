@@ -155,6 +155,11 @@ class EncryptedJSONField(JSONField):
         return value
 
 
+class RelativePathField(TextField):
+    def db_type(self, connection):
+        return "relative_path"
+
+
 @Field.register_lookup
 class NotEqualLookup(Lookup):
     # this is copied from https://docs.djangoproject.com/en/3.2/howto/custom-lookups/

@@ -1,5 +1,4 @@
 import json
-import os
 import re
 from gettext import gettext as _
 from urllib.parse import urljoin
@@ -15,16 +14,27 @@ from pulpcore.app.serializers import DetailIdentityField, IdentityField, Related
 from pulpcore.app.util import reverse
 from pulpcore.constants import LABEL_KEY_REGEX
 
+# This ought to match the posix regex used in the relative_path domain.
+# Matches "//" "/./" and "/../" or any of the forbidden characters.
+_RELPATH_FORBIDDEN_REGEX = re.compile(r"[\n\r\s\t?#]|/(?:\.{0,2})?/")
+
 
 def relative_path_validator(relative_path):
-    if os.path.isabs(relative_path):
+    # Adding "/" front and back makes trailing and leading "/" also trigger the regex.
+    if _RELPATH_FORBIDDEN_REGEX.search(f"/{relative_path}/"):
         raise serializers.ValidationError(
-            _("Relative path can't start with '/'. {0}").format(relative_path)
+            _("Relative path is not in canonical form. {0}").format(relative_path)
         )
-    if os.path.normpath(relative_path).startswith("../"):
-        raise serializers.ValidationError(
-            _("Relative path must not reach beyond the base path. {0}").format(relative_path)
-        )
+    return relative_path
+
+
+class RelativePathField(serializers.CharField):
+    """
+    Serializer Field for the base_url field of the Distribution.
+    """
+
+    def to_internal_value(self, value):
+        return relative_path_validator(super().to_internal_value(value))
 
 
 # Prefer JSONDictField and JSONListField over JSONField:

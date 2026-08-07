@@ -13,6 +13,7 @@ from pulpcore.app.serializers import (
     DomainUniqueValidator,
     GetOrCreateSerializerMixin,
     ModelSerializer,
+    RelativePathField,
     RepositoryVersionRelatedField,
     pulp_labels_validator,
 )
@@ -203,7 +204,7 @@ class DistributionSerializer(ModelSerializer):
     pulp_href = DetailIdentityField(view_name_pattern=r"distributions(-.*/.*)-detail")
     pulp_labels = serializers.HStoreField(required=False, validators=[pulp_labels_validator])
 
-    base_path = serializers.CharField(
+    base_path = RelativePathField(
         help_text=_(
             'The base (relative) path component of the published url. Avoid paths that \
                     overlap with other distribution base paths (e.g. "foo" and "foo/bar")'
@@ -264,7 +265,7 @@ class DistributionSerializer(ModelSerializer):
             "repository_version",
         )
 
-    def _validate_path_overlap(self, path):
+    def validate_base_path(self, path):
         # look for any base paths nested in path
         search = path.split("/")[0]
         q = Q(base_path=search)
@@ -288,10 +289,6 @@ class DistributionSerializer(ModelSerializer):
             )
 
         return path
-
-    def validate_base_path(self, path):
-        self._validate_relative_path(path)
-        return self._validate_path_overlap(path)
 
     def validate(self, data):
         super().validate(data)
