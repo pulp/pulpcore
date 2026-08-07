@@ -188,6 +188,98 @@ def test_add_remove_content(
     assert latest_version.content_summary.removed == {}
 
 
+@pytest.fixture
+def file_repo_three_versions(
+    file_bindings,
+    file_repository_factory,
+    file_9_contents,
+    monitor_task,
+):
+    """Build a repo with three versions whose diffs span more than one step.
+
+    Using the content units "A" through "E", the versions end up as::
+
+        v1: add A, B, C      -> present {A, B, C}
+        v2: add D, remove A  -> present {B, C, D}
+        v3: add E, remove B  -> present {C, D, E}
+
+    So a diff between the non-adjacent versions v1 and v3 differs from the single-step diff at v3.
+    """
+    repo = file_repository_factory()
+    contents = file_9_contents
+
+    def modify(add=(), remove=()):
+        body = {
+            "add_content_units": [contents[name].pulp_href for name in add],
+            "remove_content_units": [contents[name].pulp_href for name in remove],
+        }
+        monitor_task(file_bindings.RepositoriesFileApi.modify(repo.pulp_href, body).task)
+        return file_bindings.RepositoriesFileApi.read(repo.pulp_href).latest_version_href
+
+    v1 = modify(add=["A", "B", "C"])
+    v2 = modify(add=["D"], remove=["A"])
+    v3 = modify(add=["E"], remove=["B"])
+    return repo, v1, v2, v3
+
+
+def _relative_paths(list_response):
+    return {content.relative_path for content in list_response.results}
+
+
+@pytest.mark.parallel
+def test_added_between_filter(file_bindings, file_repo_three_versions):
+    """``added_between`` returns the net content added between two arbitrary versions."""
+    _, v1, v2, v3 = file_repo_three_versions
+
+    # Single-step diff against the immediate predecessor (v2 -> v3) for reference.
+    single_step = file_bindings.ContentFilesApi.list(repository_version_added=v3)
+    assert _relative_paths(single_step) == {"E"}
+
+    # added_between=base,target => content in target (v3) but not in base (v1).
+    # {C, D, E} - {A, B, C} => {D, E}.
+    net = file_bindings.ContentFilesApi.list(added_between=[v1, v3])
+    assert _relative_paths(net) == {"D", "E"}
+
+
+@pytest.mark.parallel
+def test_removed_between_filter(file_bindings, file_repo_three_versions):
+    """``removed_between`` returns the net content removed between two arbitrary versions."""
+    _, v1, v2, v3 = file_repo_three_versions
+
+    # Single-step diff against the immediate predecessor (v2 -> v3) for reference.
+    single_step = file_bindings.ContentFilesApi.list(repository_version_removed=v3)
+    assert _relative_paths(single_step) == {"B"}
+
+    # removed_between=base,target => content in base (v1) but not in target (v3).
+    # {A, B, C} - {C, D, E} => {A, B}.
+    net = file_bindings.ContentFilesApi.list(removed_between=[v1, v3])
+    assert _relative_paths(net) == {"A", "B"}
+
+
+@pytest.mark.parallel
+def test_added_removed_between_are_symmetric(file_bindings, file_repo_three_versions):
+    """``added_between=a,b`` yields the same set as ``removed_between=b,a`` (order reversed)."""
+    _, v1, v2, v3 = file_repo_three_versions
+
+    added = file_bindings.ContentFilesApi.list(added_between=[v1, v3])
+    removed_reversed = file_bindings.ContentFilesApi.list(removed_between=[v3, v1])
+    assert _relative_paths(added) == _relative_paths(removed_reversed) == {"D", "E"}
+
+
+@pytest.mark.parallel
+def test_between_filter_requires_two_versions(file_bindings, file_repo_three_versions):
+    """``added_between`` / ``removed_between`` reject anything other than exactly two versions."""
+    _, v1, v2, v3 = file_repo_three_versions
+
+    with pytest.raises(file_bindings.ApiException) as ctx:
+        file_bindings.ContentFilesApi.list(added_between=[v1])
+    assert ctx.value.status == 400
+
+    with pytest.raises(file_bindings.ApiException) as ctx:
+        file_bindings.ContentFilesApi.list(removed_between=[v1, v2, v3])
+    assert ctx.value.status == 400
+
+
 @pytest.mark.parallel
 def test_add_remove_repo_version(
     file_bindings,
