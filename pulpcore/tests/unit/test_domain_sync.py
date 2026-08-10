@@ -56,32 +56,28 @@ class TestReplicationScoping:
     def test_domain_hosted_on_default_is_not_replicated_to_satellite(self, default_hosted_domain):
         # The post_save signal already fired once on create(); assert it never reached the
         # satellite, since this domain doesn't belong there.
-        assert not Domain.objects.using(SATELLITE_ALIAS).filter(
-            pk=default_hosted_domain.pk
-        ).exists()
+        assert (
+            not Domain.objects.using(SATELLITE_ALIAS).filter(pk=default_hosted_domain.pk).exists()
+        )
 
     def test_domain_hosted_on_satellite_is_replicated_only_there(self, satellite_hosted_domain):
-        assert Domain.objects.using(SATELLITE_ALIAS).filter(
-            pk=satellite_hosted_domain.pk
-        ).exists()
+        assert Domain.objects.using(SATELLITE_ALIAS).filter(pk=satellite_hosted_domain.pk).exists()
 
     def test_replicate_domain_delete_only_targets_current_alias(self, satellite_hosted_domain):
-        assert Domain.objects.using(SATELLITE_ALIAS).filter(
-            pk=satellite_hosted_domain.pk
-        ).exists()
+        assert Domain.objects.using(SATELLITE_ALIAS).filter(pk=satellite_hosted_domain.pk).exists()
 
         replicate_domain_delete(satellite_hosted_domain)
 
-        assert not Domain.objects.using(SATELLITE_ALIAS).filter(
-            pk=satellite_hosted_domain.pk
-        ).exists()
+        assert (
+            not Domain.objects.using(SATELLITE_ALIAS).filter(pk=satellite_hosted_domain.pk).exists()
+        )
 
 
 class TestEnsureDomainOnAlias:
     def test_seeds_row_on_alias_regardless_of_current_database_alias(self, default_hosted_domain):
-        assert not Domain.objects.using(SATELLITE_ALIAS).filter(
-            pk=default_hosted_domain.pk
-        ).exists()
+        assert (
+            not Domain.objects.using(SATELLITE_ALIAS).filter(pk=default_hosted_domain.pk).exists()
+        )
 
         ensure_domain_on_alias(default_hosted_domain, SATELLITE_ALIAS)
 
@@ -97,9 +93,9 @@ class TestReconcileDomainsToAlias:
         report = reconcile_domains_to_alias(SATELLITE_ALIAS, dry_run=True)
 
         assert default_hosted_domain.pulp_id not in report["missing"]
-        assert not Domain.objects.using(SATELLITE_ALIAS).filter(
-            pk=default_hosted_domain.pk
-        ).exists()
+        assert (
+            not Domain.objects.using(SATELLITE_ALIAS).filter(pk=default_hosted_domain.pk).exists()
+        )
 
     def test_domain_hosted_here_but_missing_is_reconciled(self, satellite_hosted_domain):
         # Simulate a replication failure: the satellite never actually got the row.
@@ -108,14 +104,10 @@ class TestReconcileDomainsToAlias:
         report = reconcile_domains_to_alias(SATELLITE_ALIAS)
 
         assert satellite_hosted_domain.pulp_id in report["missing"]
-        assert Domain.objects.using(SATELLITE_ALIAS).filter(
-            pk=satellite_hosted_domain.pk
-        ).exists()
+        assert Domain.objects.using(SATELLITE_ALIAS).filter(pk=satellite_hosted_domain.pk).exists()
 
     def test_domain_moved_away_is_pruned_as_extra(self, satellite_hosted_domain):
-        assert Domain.objects.using(SATELLITE_ALIAS).filter(
-            pk=satellite_hosted_domain.pk
-        ).exists()
+        assert Domain.objects.using(SATELLITE_ALIAS).filter(pk=satellite_hosted_domain.pk).exists()
 
         # Simulate a completed move away from the satellite (bypassing move-domain's own
         # explicit bookkeeping, since only the resulting database_alias flip matters here).
@@ -125,9 +117,9 @@ class TestReconcileDomainsToAlias:
         report = reconcile_domains_to_alias(SATELLITE_ALIAS)
 
         assert satellite_hosted_domain.pulp_id in report["extra"]
-        assert not Domain.objects.using(SATELLITE_ALIAS).filter(
-            pk=satellite_hosted_domain.pk
-        ).exists()
+        assert (
+            not Domain.objects.using(SATELLITE_ALIAS).filter(pk=satellite_hosted_domain.pk).exists()
+        )
 
     def test_dry_run_reports_extra_without_deleting(self, satellite_hosted_domain):
         satellite_hosted_domain.database_alias = "default"
@@ -136,6 +128,4 @@ class TestReconcileDomainsToAlias:
         report = reconcile_domains_to_alias(SATELLITE_ALIAS, dry_run=True)
 
         assert satellite_hosted_domain.pulp_id in report["extra"]
-        assert Domain.objects.using(SATELLITE_ALIAS).filter(
-            pk=satellite_hosted_domain.pk
-        ).exists()
+        assert Domain.objects.using(SATELLITE_ALIAS).filter(pk=satellite_hosted_domain.pk).exists()

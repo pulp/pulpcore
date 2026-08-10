@@ -91,9 +91,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         if options["strategy"] == "incremental":
             raise CommandError(
-                _(
-                    "Strategy B (incremental sync) is not implemented. Use --strategy read-only."
-                )
+                _("Strategy B (incremental sync) is not implemented. Use --strategy read-only.")
             )
 
         to_alias = options["to_alias"]
