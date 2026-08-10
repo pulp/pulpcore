@@ -45,9 +45,16 @@ jobs:
         with:
           python-version: "3.13"
 
+      - name: "Install uv"
+        uses: "astral-sh/setup-uv@v7"
+        with:
+          enable-cache: true
+      - name: "Configure uv to use system Python"
+        run: |
+          echo "UV_SYSTEM_PYTHON=1" >> "$GITHUB_ENV"
       - name: "Install python dependencies"
         run: |
-          pip install gitpython packaging toml
+          uv pip install gitpython packaging toml
 
       - name: "Configure Git with pulpbot name and email"
         run: |

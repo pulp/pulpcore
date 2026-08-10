@@ -1,0 +1,1 @@
+Run pulp-cli livetests in parallel with pytest-xdist, and use uv instead of pip in CI.

@@ -28,9 +28,16 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: "Install uv"
+        uses: "astral-sh/setup-uv@v7"
+        with:
+          enable-cache: true
+      - name: "Configure uv to use system Python"
+        run: |
+          echo "UV_SYSTEM_PYTHON=1" >> "$GITHUB_ENV"
       - name: "Install python dependencies"
         run: |
-          pip install -r lint_requirements.txt
+          uv pip install -r lint_requirements.txt
 
       - name: "Lint workflow files"
         run: |

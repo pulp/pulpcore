@@ -42,11 +42,6 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: "Install uv"
-        uses: "astral-sh/setup-uv@v7"
-        with:
-          enable-cache: true
-
       - name: "Download plugin package"
         uses: "actions/download-artifact@v8"
         with:
@@ -81,9 +76,16 @@ jobs:
           tar xvf "../../pulpcore/certguard-python-client.tar"
           popd
 
+      - name: "Install uv"
+        uses: "astral-sh/setup-uv@v7"
+        with:
+          enable-cache: true
+      - name: "Configure uv to use system Python"
+        run: |
+          echo "UV_SYSTEM_PYTHON=1" >> "$GITHUB_ENV"
       - name: "Install python dependencies"
         run: |
-          pip install build towncrier twine wheel httpie docker netaddr boto3 'ansible~=10.3.0' mkdocs jq jsonpatch bump-my-version
+          uv pip install build towncrier twine wheel httpie docker netaddr boto3 'ansible~=10.3.0' mkdocs jq jsonpatch bump-my-version
           echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/pulpcore/.ci/assets/httpie/" >> $GITHUB_ENV
 
       - name: "Set environment variables"
@@ -153,5 +155,5 @@ jobs:
           docker logs pulp || true
           docker exec pulp ls -latr /etc/yum.repos.d/ || true
           docker exec pulp cat /etc/yum.repos.d/* || true
-          docker exec pulp bash -c "pip3 list" || true
+          docker exec pulp bash -c "uv pip list" || true
 ...
