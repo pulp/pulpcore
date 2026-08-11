@@ -388,6 +388,7 @@ def release_resource_locks(
 
     except redis.RedisError as e:
         _logger.error("Error releasing locks: %s", e)
+        raise
 
 
 async def async_release_resource_locks(
@@ -439,3 +440,4 @@ async def async_release_resource_locks(
 
     except redis.RedisError as e:
         _logger.error("Error releasing locks: %s", e)
+        raise
