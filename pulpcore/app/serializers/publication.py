@@ -274,18 +274,15 @@ class DistributionSerializer(ModelSerializer):
             q |= Q(base_path=search)
 
         # look for any base paths that nest path
-        q |= Q(base_path__startswith="{}/".format(path))
+        q |= Q(base_path__startswith=f"{path}/")
         qs = models.Distribution.objects.filter(q & Q(pulp_domain=get_domain()))
 
         if self.instance is not None:
             qs = qs.exclude(pk=self.instance.pk)
 
-        match = qs.first()
-        if match:
+        if qs.exists():
             raise serializers.ValidationError(
-                detail={
-                    "base_path": _("Overlaps with existing distribution '{}'").format(match.name)
-                },
+                detail={"base_path": _("Overlaps with an existing distribution.")},
             )
 
         return path
