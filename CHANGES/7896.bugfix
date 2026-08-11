@@ -1,0 +1,1 @@
+Reduced lock contention for distribution updates that leave `base_path` unchanged.
