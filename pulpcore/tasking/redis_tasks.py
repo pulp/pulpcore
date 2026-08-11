@@ -5,8 +5,10 @@ This module contains dispatch logic specific to the Redis worker that uses
 Redis distributed locks for task coordination.
 """
 
+import asyncio
 import contextvars
 import logging
+import time
 
 import redis
 from asgiref.sync import sync_to_async
@@ -19,6 +21,7 @@ from pulpcore.tasking.redis_locks import (
     async_safe_release_task_locks,
     extract_task_resources,
     get_task_lock_key,
+    release_resource_locks,
     safe_release_task_locks,
 )
 from pulpcore.tasking.tasks import (
@@ -103,6 +106,61 @@ def clear_cancel_signal(task_id):
         _logger.error("Error clearing cancellation signal for task %s: %s", task_id, e)
 
 
+def _release_task_locks_any_owner(task):
+    redis_conn = get_redis_connection()
+    if redis_conn is None:
+        return
+    task_lock_key = get_task_lock_key(task.pk)
+    try:
+        lock_owner = redis_conn.get(task_lock_key)
+    except redis.RedisError as e:
+        _logger.error("Error reading task lock for %s: %s", task.pk, e)
+        return
+    if not lock_owner:
+        return
+    if isinstance(lock_owner, bytes):
+        lock_owner = lock_owner.decode()
+    exclusive_resources, shared_resources = extract_task_resources(task)
+    try:
+        release_resource_locks(
+            redis_conn, lock_owner, task_lock_key, exclusive_resources, shared_resources
+        )
+    except redis.RedisError as e:
+        _logger.error("Error releasing locks for canceled task %s: %s", task.pk, e)
+
+
+def _retry_safe_release_task_locks(task, lock_owner, attempts=3):
+    for attempt in range(attempts):
+        try:
+            safe_release_task_locks(task, lock_owner)
+            return
+        except redis.RedisError:
+            if attempt < attempts - 1:
+                time.sleep(0.1 * (attempt + 1))
+            else:
+                _logger.error(
+                    "Failed to release locks for task %s after %s attempts.",
+                    task.pk,
+                    attempts,
+                )
+
+
+async def _aretry_safe_release_task_locks(task, lock_owner, attempts=3):
+    for attempt in range(attempts):
+        try:
+            await async_safe_release_task_locks(task, lock_owner)
+            return
+        except redis.RedisError:
+            if attempt < attempts - 1:
+                await asyncio.sleep(0.1 * (attempt + 1))
+            else:
+                _logger.error(
+                    "Failed to release locks for task %s after %s attempts.",
+                    task.pk,
+                    attempts,
+                )
+
+
 def cancel_task(task_id):
     """
     Cancel a task using Redis-based signaling.
@@ -142,6 +200,7 @@ def cancel_task(task_id):
         Task.objects.filter(pk=task.pk).update(app_lock=AppStatus.objects.current())
         task.app_lock = AppStatus.objects.current()
         task.set_canceled()
+        _release_task_locks_any_owner(task)
     else:
         # Task is RUNNING — signal the supervising worker.
         publish_cancel_signal(task.pk)
@@ -390,7 +449,7 @@ def dispatch(
             except Exception:
                 # Release locks if using_workdir() failed before
                 # execute_task() had a chance to run and release them
-                safe_release_task_locks(task, lock_owner)
+                _retry_safe_release_task_locks(task, lock_owner)
                 raise
         elif deferred:
             # Locks not available, defer to worker
@@ -442,7 +501,7 @@ async def adispatch(
             except Exception:
                 # Release locks if using_workdir() failed before
                 # aexecute_task() had a chance to run and release them
-                await async_safe_release_task_locks(task, lock_owner)
+                await _aretry_safe_release_task_locks(task, lock_owner)
                 raise
         elif deferred:
             # Locks not available, defer to worker
