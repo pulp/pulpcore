@@ -14,7 +14,6 @@ X509_UN_URLENCODED_CLIENT_CERT_FILE_PATH = os.path.join(
     X509_CERTS_BASE_PATH, "un_urlencoded_cert.txt"
 )
 
-
 RHSM_CA_CERT_FILE_PATH = os.path.join(_CURRENT_DIR, "artifacts", "rhsm", "katello-default-ca.crt")
 
 RHSM_CLIENT_CERT_FROM_UNTRUSTED_CA = os.path.join(

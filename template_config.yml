@@ -6,6 +6,9 @@
 # After editing this file please always reapply the plugin template before committing any changes.
 
 ---
+# NOTE: the S3 runner has redis disabled, domains enabled, and hide_guarded_distributions = true
+# "weird" test failures unique to that runner may be due to those differences.
+
 check_commit_message: true
 check_manifest: true
 check_stray_pulpcore_imports: false

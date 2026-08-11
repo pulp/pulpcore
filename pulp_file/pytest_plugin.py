@@ -256,6 +256,64 @@ def file_remote_client_cert_req_factory(
 
 
 @pytest.fixture(scope="class")
+def file_fixture_server_pqc_ssl(pqc_ssl_ctx, file_fixtures_root, gen_fixture_server):
+    return gen_fixture_server(file_fixtures_root, pqc_ssl_ctx)
+
+
+@pytest.fixture(scope="class")
+def file_fixture_server_pqc_ssl_client_cert_req(
+    pqc_ssl_ctx_req_client_auth, file_fixtures_root, gen_fixture_server
+):
+    return gen_fixture_server(file_fixtures_root, pqc_ssl_ctx_req_client_auth)
+
+
+@pytest.fixture(scope="class")
+def file_remote_pqc_ssl_factory(
+    file_fixture_server_pqc_ssl,
+    file_bindings,
+    pqc_certificate_authority,
+    gen_object_with_cleanup,
+):
+    def _file_remote_pqc_ssl_factory(*, manifest_path, policy, **kwargs):
+        url = file_fixture_server_pqc_ssl.make_url(manifest_path)
+        kwargs.update(
+            {
+                "url": str(url),
+                "policy": policy,
+                "name": str(uuid.uuid4()),
+                "ca_cert": pqc_certificate_authority.ca_cert_pem,
+            }
+        )
+        return gen_object_with_cleanup(file_bindings.RemotesFileApi, kwargs)
+
+    return _file_remote_pqc_ssl_factory
+
+
+@pytest.fixture(scope="class")
+def file_remote_pqc_client_cert_req_factory(
+    file_fixture_server_pqc_ssl_client_cert_req,
+    file_bindings,
+    pqc_certificate_authority,
+    gen_object_with_cleanup,
+):
+    def _file_remote_pqc_client_cert_req_factory(*, manifest_path, policy, **kwargs):
+        url = file_fixture_server_pqc_ssl_client_cert_req.make_url(manifest_path)
+        kwargs.update(
+            {
+                "url": str(url),
+                "policy": policy,
+                "name": str(uuid.uuid4()),
+                "ca_cert": pqc_certificate_authority.ca_cert_pem,
+                "client_cert": pqc_certificate_authority.client_cert_pem,
+                "client_key": pqc_certificate_authority.client_key_pem,
+            }
+        )
+        return gen_object_with_cleanup(file_bindings.RemotesFileApi, kwargs)
+
+    return _file_remote_pqc_client_cert_req_factory
+
+
+@pytest.fixture(scope="class")
 def file_repository_factory(file_bindings, gen_object_with_cleanup):
     """A factory to generate a File Repository with auto-deletion after the test run."""
 

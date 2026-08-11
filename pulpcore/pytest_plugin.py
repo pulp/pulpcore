@@ -475,6 +475,200 @@ def ssl_ctx_req_client_auth(
     return ssl_ctx
 
 
+# PQC (Post-Quantum Cryptography) TLS Fixtures
+
+# TODO pretty much all of this can be deleted when "trustme" gets ML-DSA support
+
+
+@dataclass
+class PQCCertificateAuthority:
+    algorithm: str
+    ca_cert_pem: str
+    server_cert_path: str
+    server_key_path: str
+    client_cert_pem: str
+    client_key_pem: str
+    untrusted_client_cert_pem: str
+
+
+_PQC_KEY_CLASSES = {
+    "ML-DSA-44": "MLDSA44PrivateKey",
+    "ML-DSA-65": "MLDSA65PrivateKey",
+    "ML-DSA-87": "MLDSA87PrivateKey",
+}
+
+
+def _generate_pqc_certs(td, host, algorithm="ML-DSA-65"):
+    """Generate a PQC CA and issue server + client certs signed by it."""
+    import datetime
+    import ipaddress
+
+    from cryptography import x509
+    from cryptography.hazmat.primitives.asymmetric import mldsa
+    from cryptography.hazmat.primitives.serialization import Encoding, NoEncryption, PrivateFormat
+    from cryptography.x509.oid import ExtendedKeyUsageOID, NameOID
+
+    key_cls = getattr(mldsa, _PQC_KEY_CLASSES[algorithm])
+    now = datetime.datetime.now(datetime.timezone.utc)
+    not_before = now - datetime.timedelta(minutes=1)
+    not_after = now + datetime.timedelta(days=1)
+
+    ca_key = key_cls.generate()
+    ca_name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "PQC Test CA")])
+    ca_cert = (
+        x509.CertificateBuilder()
+        .subject_name(ca_name)
+        .issuer_name(ca_name)
+        .public_key(ca_key.public_key())
+        .serial_number(x509.random_serial_number())
+        .not_valid_before(not_before)
+        .not_valid_after(not_after)
+        .add_extension(x509.BasicConstraints(ca=True, path_length=None), critical=True)
+        .add_extension(
+            x509.KeyUsage(
+                digital_signature=True,
+                content_commitment=False,
+                key_encipherment=False,
+                data_encipherment=False,
+                key_agreement=False,
+                key_cert_sign=True,
+                crl_sign=True,
+                encipher_only=False,
+                decipher_only=False,
+            ),
+            critical=True,
+        )
+        .sign(private_key=ca_key, algorithm=None)
+    )
+
+    san = x509.SubjectAlternativeName(
+        [x509.DNSName("localhost"), x509.IPAddress(ipaddress.ip_address(host))]
+    )
+
+    def _issue_cert(name, cn, eku_oid):
+        key = key_cls.generate()
+        cert = (
+            x509.CertificateBuilder()
+            .subject_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, cn)]))
+            .issuer_name(ca_name)
+            .public_key(key.public_key())
+            .serial_number(x509.random_serial_number())
+            .not_valid_before(not_before)
+            .not_valid_after(not_after)
+            .add_extension(x509.BasicConstraints(ca=False, path_length=None), critical=True)
+            .add_extension(
+                x509.KeyUsage(
+                    digital_signature=True,
+                    content_commitment=False,
+                    key_encipherment=False,
+                    data_encipherment=False,
+                    key_agreement=False,
+                    key_cert_sign=False,
+                    crl_sign=False,
+                    encipher_only=False,
+                    decipher_only=False,
+                ),
+                critical=True,
+            )
+            .add_extension(x509.ExtendedKeyUsage([eku_oid]), critical=False)
+            .add_extension(san, critical=False)
+            .sign(private_key=ca_key, algorithm=None)
+        )
+        cert_pem = cert.public_bytes(Encoding.PEM).decode()
+        key_pem = key.private_bytes(Encoding.PEM, PrivateFormat.PKCS8, NoEncryption()).decode()
+        cert_path = str(td / f"{name}.crt")
+        key_path = str(td / f"{name}.key")
+        with open(cert_path, "w") as f:
+            f.write(cert_pem)
+        with open(key_path, "w") as f:
+            f.write(key_pem)
+        return cert_path, key_path, cert_pem, key_pem
+
+    ca_cert_pem = ca_cert.public_bytes(Encoding.PEM).decode()
+
+    server_cert_path, server_key_path, _, _ = _issue_cert(
+        "server", host, ExtendedKeyUsageOID.SERVER_AUTH
+    )
+    _, _, client_cert_pem, client_key_pem = _issue_cert(
+        "client", host, ExtendedKeyUsageOID.CLIENT_AUTH
+    )
+
+    # Untrusted client: signed by a different CA so cert-chain verification rejects it
+    untrusted_ca_key = key_cls.generate()
+    untrusted_ca_name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "PQC Untrusted CA")])
+    untrusted_key = key_cls.generate()
+    untrusted_cert = (
+        x509.CertificateBuilder()
+        .subject_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "PQC Untrusted Client")]))
+        .issuer_name(untrusted_ca_name)
+        .public_key(untrusted_key.public_key())
+        .serial_number(x509.random_serial_number())
+        .not_valid_before(not_before)
+        .not_valid_after(not_after)
+        .add_extension(x509.BasicConstraints(ca=False, path_length=None), critical=True)
+        .add_extension(
+            x509.KeyUsage(
+                digital_signature=True,
+                content_commitment=False,
+                key_encipherment=False,
+                data_encipherment=False,
+                key_agreement=False,
+                key_cert_sign=False,
+                crl_sign=False,
+                encipher_only=False,
+                decipher_only=False,
+            ),
+            critical=True,
+        )
+        .sign(private_key=untrusted_ca_key, algorithm=None)
+    )
+    untrusted_client_cert_pem = untrusted_cert.public_bytes(Encoding.PEM).decode()
+
+    return PQCCertificateAuthority(
+        algorithm=algorithm,
+        ca_cert_pem=ca_cert_pem,
+        server_cert_path=server_cert_path,
+        server_key_path=server_key_path,
+        client_cert_pem=client_cert_pem,
+        client_key_pem=client_key_pem,
+        untrusted_client_cert_pem=untrusted_client_cert_pem,
+    )
+
+
+@pytest.fixture(scope="session", params=["ML-DSA-65", "ML-DSA-87"])
+def pqc_certificate_authority(request, tmp_path_factory, fixtures_cfg):
+    """Generate a PQC Certificate Authority and related certs for each ML-DSA variant."""
+    algorithm = request.param
+    td = tmp_path_factory.mktemp(f"pqc_certs_{algorithm}")
+    return _generate_pqc_certs(td, fixtures_cfg.aiohttp_fixtures_origin, algorithm)
+
+
+@pytest.fixture(scope="session")
+def pqc_ssl_ctx(pqc_certificate_authority):
+    """Server SSL context using PQC certificates (no client auth required)."""
+    ssl_ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    ssl_ctx.load_cert_chain(
+        pqc_certificate_authority.server_cert_path,
+        pqc_certificate_authority.server_key_path,
+    )
+    return ssl_ctx
+
+
+@pytest.fixture(scope="session")
+def pqc_ssl_ctx_req_client_auth(pqc_certificate_authority):
+    """Server SSL context using PQC certificates, requiring PQC client auth."""
+    ssl_ctx = ssl.create_default_context(
+        purpose=ssl.Purpose.CLIENT_AUTH,
+        cadata=pqc_certificate_authority.ca_cert_pem,
+    )
+    ssl_ctx.verify_mode = ssl.CERT_REQUIRED
+    ssl_ctx.load_cert_chain(
+        pqc_certificate_authority.server_cert_path,
+        pqc_certificate_authority.server_key_path,
+    )
+    return ssl_ctx
+
+
 # Object factories
 
 

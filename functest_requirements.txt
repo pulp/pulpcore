@@ -4,6 +4,7 @@ pytest-xdist
 python-gnupg
 proxy.py~=2.4.10
 trustme~=1.2.1
+cryptography>=49.0
 
 # pulp_file tests
 beautifulsoup4
