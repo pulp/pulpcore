@@ -451,6 +451,14 @@ class AsyncReservedObjectMixin:
         ).format(self.__class__.__name__)
         return [instance]
 
+    def async_shared_resources(self, instance, **kwargs):
+        """
+        Return shared resources to reserve for the task created by the Async...Mixins.
+
+        This default implementation does not add any shared reservations.
+        """
+        return []
+
 
 class AsyncCreateMixin:
     """
@@ -472,6 +480,7 @@ class AsyncCreateMixin:
         task = dispatch(
             tasks.base.general_create,
             exclusive_resources=self.async_reserved_resources(None),
+            shared_resources=self.async_shared_resources(None),
             args=(app_label, serializer.__class__.__name__),
             kwargs=task_kwargs,
         )
@@ -506,6 +515,7 @@ class AsyncUpdateMixin(AsyncReservedObjectMixin):
             task = dispatch(
                 tasks.base.ageneral_update,
                 exclusive_resources=self.async_reserved_resources(instance),
+                shared_resources=self.async_shared_resources(instance),
                 args=(pk, app_label, serializer.__class__.__name__),
                 kwargs=task_kwargs,
                 immediate=self.ALLOW_NON_BLOCKING_UPDATE,
@@ -542,6 +552,7 @@ class AsyncRemoveMixin(AsyncReservedObjectMixin):
         task = dispatch(
             tasks.base.ageneral_delete,
             exclusive_resources=self.async_reserved_resources(instance),
+            shared_resources=self.async_shared_resources(instance),
             args=(pk, app_label, serializer.__class__.__name__),
             immediate=self.ALLOW_NON_BLOCKING_DELETE,
         )
