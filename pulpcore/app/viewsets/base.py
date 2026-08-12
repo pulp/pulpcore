@@ -429,27 +429,20 @@ class AsyncReservedObjectMixin:
 
         This default implementation locks the instance being worked on.
 
-        .. note::
-
-          This does not work for [pulpcore.app.viewsets.AsyncCreateMixin][]
-          (as there is no instance). Classes using [pulpcore.app.viewsets.AsyncCreateMixin][]
-          must override this method.
-
         Args:
-            instance (django.models.Model): The instance that will be worked
+            instance (django.models.Model | None): The instance that will be worked
                 on by the task.
 
         Returns:
-            list/str: The resources to put in the task's reservation
+            list[django.models.Model | str]: The resources to put in the task's reservation
 
         Raises:
             AssertionError if instance is None (which happens for creation)
 
         """
-        assert instance is not None, (
-            "'{}' must not use the default `async_reserved_resources` method when using create."
-        ).format(self.__class__.__name__)
-        return [instance]
+        if instance is not None:
+            return [instance]
+        return []
 
     def async_shared_resources(self, instance, **kwargs):
         """
@@ -460,7 +453,7 @@ class AsyncReservedObjectMixin:
         return []
 
 
-class AsyncCreateMixin:
+class AsyncCreateMixin(AsyncReservedObjectMixin):
     """
     Provides a create method that dispatches a task with reservation.
     """
