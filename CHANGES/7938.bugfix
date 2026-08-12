@@ -1,1 +1,0 @@
-Fixed the `waiting_tasks` metric to count only tasks that can run in parallel under resource locks, matching worker FIFO scheduling.

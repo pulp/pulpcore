@@ -1,1 +1,0 @@
-Fixed domain list returning all domains to authenticated users instead of only domains they can view.
