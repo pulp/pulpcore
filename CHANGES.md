@@ -8,6 +8,30 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.105.16 (2026-08-12) {: #3.105.16 }
+
+### REST API {: #3.105.16-rest-api }
+
+#### Bugfixes {: #3.105.16-rest-api-bugfix }
+
+- Reduced lock contention for distribution updates that leave `base_path` unchanged.
+  [#3322](https://github.com/pulp/pulpcore/issues/3322),
+  [#7896](https://github.com/pulp/pulpcore/issues/7896)
+
+### Plugin API {: #3.105.16-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.105.16-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.105.16-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.105.15 (2026-07-28) {: #3.105.15 }
 
 ### REST API {: #3.105.15-rest-api }
