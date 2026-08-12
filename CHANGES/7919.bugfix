@@ -1,0 +1,1 @@
+Fixed RedisWorker being blocked by its own stale locks after a same-name pod restart by releasing them at startup.
