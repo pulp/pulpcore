@@ -42,8 +42,14 @@ from pulpcore.tasking._util import (
     startup_hook,
 )
 from pulpcore.tasking.redis_locks import (
+    IMMEDIATE_OWNER_PREFIX,
+    LEGACY_OWNER_SCAN_INTERVAL,
+    LEGACY_OWNER_SCAN_KEY,
     acquire_locks,
+    cleanup_locks_for_owner,
+    collect_lock_owners,
     extract_task_resources,
+    get_owner_registry_key,
     get_task_lock_key,
     release_resource_locks,
     safe_release_task_locks,
@@ -200,6 +206,11 @@ class RedisWorker:
         except redis.RedisError:
             raise RuntimeError(f"Redis is not reachable. RedisWorker {self.name} cannot start.")
 
+        # A restarted pod can reuse this worker's name while Redis still holds locks
+        # from the dead incarnation. Release them before we start fetching tasks so we
+        # are not blocked by our own name's stale locks.
+        self.release_stale_locks_for_self()
+
         # Add a file descriptor to trigger select on signals
         self.sentinel, sentinel_w = os.pipe()
         os.set_blocking(self.sentinel, False)
@@ -297,80 +308,178 @@ class RedisWorker:
 
     def cleanup_redis_locks_for_worker(self, app_worker):
         """
-        Clean up Redis locks held by a specific worker and fail its tasks.
+        Clean up Redis locks held by a specific missing worker and fail its tasks.
 
-        This is called when a worker is detected as missing to:
-        1. Query the database for tasks held by the worker (via app_lock FK)
-        2. Release the task's Redis resource locks
-        3. Set app_lock to the current (cleaning) worker
-        4. Mark those tasks as FAILED
+        For each non-final task held by the missing worker (via app_lock FK):
+        1. Release the task's Redis resource locks (unless a live successor reuses
+           the name -- then the locks are legitimately held by the successor).
+        2. WAITING tasks: release locks but do NOT fail them (crash window between
+           acquire_locks() and app_lock assignment).
+        3. RUNNING/CANCELING tasks: reassign app_lock to us and mark FAILED.
+        Finally, sweep any remaining locks registered under the worker's name.
+
+        Each task is handled in isolation so one failure does not abort the rest.
 
         Args:
             app_worker (AppStatus): The AppStatus object of the missing worker
+
+        Returns:
+            bool: True if cleanup fully succeeded, False if any step failed (so the
+                caller can retain the AppStatus row for a later retry pass).
         """
         worker_name = app_worker.name
+        success = True
 
-        try:
-            # Primary path: query database for the task held by the missing worker.
-            # A worker runs at most one task at a time, so we expect at most one.
-            task = (
-                Task.objects.filter(app_lock=app_worker)
-                .exclude(state__in=TASK_FINAL_STATES)
-                .select_related("pulp_domain")
-                .first()
-            )
+        # If a live successor already reuses this name, its Redis locks are legitimate
+        # -- do not release by name. The successor cleared/owns them.
+        successor_online = (
+            AppStatus.objects.online().filter(name=worker_name).exclude(pk=app_worker.pk).exists()
+        )
 
-            if task:
-                # Extract resources from the task's reserved_resources_record
-                exclusive_resources, shared_resources = extract_task_resources(task)
+        tasks = (
+            Task.objects.filter(app_lock=app_worker)
+            .exclude(state__in=TASK_FINAL_STATES)
+            .select_related("pulp_domain")
+        )
+        for task in tasks:
+            try:
+                if not successor_online:
+                    exclusive_resources, shared_resources = extract_task_resources(task)
+                    release_resource_locks(
+                        self.redis_conn,
+                        worker_name,
+                        get_task_lock_key(task.pk),
+                        exclusive_resources,
+                        shared_resources,
+                    )
 
-                # Release Redis locks using the missing worker's name as the lock owner
-                task_lock_key = get_task_lock_key(task.pk)
-                release_resource_locks(
-                    self.redis_conn,
-                    worker_name,
-                    task_lock_key,
-                    exclusive_resources,
-                    shared_resources,
-                )
-                _logger.info(
-                    "Released task lock + %d exclusive + %d shared resource locks "
-                    "for task %s from missing worker %s",
-                    len(exclusive_resources),
-                    len(shared_resources),
-                    task.pk,
-                    worker_name,
-                )
+                if task.state == TASK_STATES.WAITING:
+                    # Crash window: locks were acquired but the task never ran.
+                    # Release the locks (done above) but leave it WAITING to be
+                    # re-fetched; just detach the stale app_lock.
+                    Task.objects.filter(pk=task.pk).update(app_lock=None)
+                    continue
 
-                # Set app_lock to the current (cleaning) worker so set_failed()
-                # ownership check passes
+                # Running/canceling task -> reassign app_lock to us and fail it.
                 Task.objects.filter(pk=task.pk).update(app_lock=self.app_status)
                 task.app_lock = self.app_status
-
-                # Set to canceling first
                 task.set_canceling()
-                error_msg = "Worker has gone missing."
-                task.set_canceled(final_state=TASK_STATES.FAILED, reason=error_msg)
+                task.set_canceled(final_state=TASK_STATES.FAILED, reason="Worker has gone missing.")
                 _logger.warning(
                     "Marked task %s as FAILED (was being executed by missing worker %s)",
                     task.pk,
                     worker_name,
                 )
-        except Exception as e:
-            _logger.error("Error cleaning up locks for worker %s: %s", worker_name, e)
+            except Exception as e:
+                _logger.error(
+                    "Error cleaning up task %s of missing worker %s: %s",
+                    task.pk,
+                    worker_name,
+                    e,
+                )
+                success = False
+
+        # Registry-driven sweep of any other locks still held under this name.
+        if not successor_online:
+            if not cleanup_locks_for_owner(self.redis_conn, worker_name, allow_legacy_scan=False):
+                success = False
+
+        return success
+
+    def release_stale_locks_for_self(self):
+        """
+        Release Redis locks lingering under our own worker name at startup.
+
+        A restarted pod can reuse the same name while Redis still holds locks from
+        the dead process. Skips if a live successor already owns the name, and skips
+        entirely for a brand-new worker (no registry, no prior AppStatus row).
+
+        Returns:
+            bool: True if handled (including no-op), False on cleanup error.
+        """
+        # Another live worker already owns this name -> it manages its own locks.
+        if (
+            AppStatus.objects.online()
+            .filter(name=self.name)
+            .exclude(pk=self.app_status.pk)
+            .exists()
+        ):
+            return True
+
+        registry_exists = bool(self.redis_conn.exists(get_owner_registry_key(self.name)))
+        prior_status = (
+            AppStatus.objects.filter(name=self.name).exclude(pk=self.app_status.pk).exists()
+        )
+
+        # Brand-new worker -> nothing could exist under our name; skip any SCAN.
+        if not registry_exists and not prior_status:
+            return True
+
+        # Rolling upgrade: a prior incarnation left locks but no registry -> allow the
+        # legacy SCAN for our own name only.
+        allow_legacy = prior_status and not registry_exists
+        return cleanup_locks_for_owner(self.redis_conn, self.name, allow_legacy_scan=allow_legacy)
+
+    def _immediate_owner_is_finished(self, owner):
+        """Return True if an ``immediate-{pk}`` owner's task is gone or finished."""
+        task_pk = owner[len(IMMEDIATE_OWNER_PREFIX) :]
+        return not Task.objects.filter(pk=task_pk, state__in=TASK_INCOMPLETE_STATES).exists()
+
+    def reconcile_orphan_redis_locks(self):
+        """
+        Release Redis locks whose owner has no AppStatus row at all.
+
+        The missing-worker path only handles owners with a (stale) AppStatus row.
+        This reconciles owners whose AppStatus was already deleted (graceful
+        shutdown, prior cleanup, kill -9), leaving locks with no DB record.
+
+        Only owners with ZERO AppStatus rows are cleaned; a stale heartbeat still
+        counts as "has a row" and is left to the missing-worker path. Each owner is
+        handled in isolation. The expensive legacy keyspace SCAN is throttled
+        fleet-wide via a Redis key.
+        """
+        # Winner of the throttle key runs the expensive legacy scan this pass.
+        allow_legacy = bool(
+            self.redis_conn.set(
+                LEGACY_OWNER_SCAN_KEY, self.name, nx=True, ex=LEGACY_OWNER_SCAN_INTERVAL
+            )
+        )
+
+        owners = collect_lock_owners(self.redis_conn, allow_legacy_scan=allow_legacy)
+        if not owners:
+            return
+
+        # An owner is orphaned only if it has NO AppStatus row (stale != orphaned).
+        existing = set(AppStatus.objects.filter(name__in=owners).values_list("name", flat=True))
+        for owner in owners - existing:
+            try:
+                if owner.startswith(
+                    IMMEDIATE_OWNER_PREFIX
+                ) and not self._immediate_owner_is_finished(owner):
+                    # Immediate task still running in another process; keep its locks.
+                    continue
+                cleanup_locks_for_owner(self.redis_conn, owner, allow_legacy_scan=allow_legacy)
+            except Exception:
+                _logger.exception("Failed reconciling orphan lock owner %s", owner)
 
     @exclusive(WORKER_CLEANUP_LOCK)
     def app_worker_cleanup(self):
         """Cleanup records of missing app processes and their Redis locks."""
-        qs = AppStatus.objects.missing()
-        for app_worker in qs:
+        for app_worker in list(AppStatus.objects.missing()):
             _logger.warning(
                 "Cleanup record of missing %s process %s.", app_worker.app_type, app_worker.name
             )
-            # Clean up any Redis locks held by this missing process
-            # This includes workers and API processes (which can hold locks for immediate tasks)
-            self.cleanup_redis_locks_for_worker(app_worker)
-        qs.delete()
+            # Clean up any Redis locks held by this missing process. This includes
+            # workers and API processes (which can hold locks for immediate tasks).
+            # Only delete the record if cleanup fully succeeded, otherwise retain it
+            # for a later retry pass.
+            if self.cleanup_redis_locks_for_worker(app_worker):
+                app_worker.delete()
+            else:
+                _logger.warning("Retaining AppStatus %s for a later cleanup pass.", app_worker.name)
+
+        # Reconcile locks whose owner has no AppStatus row at all.
+        self.reconcile_orphan_redis_locks()
 
     @exclusive(TASK_SCHEDULING_LOCK)
     def dispatch_scheduled_tasks(self):
