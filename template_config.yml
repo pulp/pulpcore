@@ -6,9 +6,6 @@
 # After editing this file please always reapply the plugin template before committing any changes.
 
 ---
-# NOTE: the S3 runner has redis disabled, domains enabled, and hide_guarded_distributions = true
-# "weird" test failures unique to that runner may be due to those differences.
-
 check_commit_message: true
 check_manifest: true
 check_stray_pulpcore_imports: false
@@ -28,7 +25,7 @@ extra_files:
   - destination: "/etc/nginx/pulp/api_root_rewrite.conf"
     origin: "pulpcore/pulpcore/tests/functional/assets/api_root_rewrite.conf"
 github_org: "pulp"
-latest_release_branch: "3.115"
+latest_release_branch: "3.116"
 lint_ignore:
   - "./pulpcore/app/protobuf/*"
 lint_requirements: true
