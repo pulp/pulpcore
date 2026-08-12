@@ -82,7 +82,9 @@ some/path/bar
 !!! note
     The `pulpcore-content` app typically serves `Distribution.base_path` at a url starting with
     `/pulp/content/`. When performing path checking only the `Distribution.base_path` portion of
-    the URL is checked.
+    the URL is checked. When domains are enabled the leading `/{domain}/` segment is likewise
+    excluded, so entitlement paths are matched against `Distribution.base_path` alone regardless
+    of the domain.
 
 `Distribution.base_bath` uses partial paths so it does *not* start with slash or end with one.
 The Authorized URLs on the other hand do start with a slash. The RHSM path authorization check

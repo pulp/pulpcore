@@ -155,6 +155,21 @@ class RHSMCertGuard(BaseCertGuard):
         content_path_prefix_without_trail_slash = settings.CONTENT_PATH_PREFIX.rstrip("/")
         len_prefix_to_remove = len(content_path_prefix_without_trail_slash)
         path_without_content_path_prefix = request.path[len_prefix_to_remove:]
+        if settings.DOMAIN_ENABLED:
+            # We strip the leading /{domain} segment before matching: /domain/rest... -> /rest...
+            #
+            # This is safe because domain isolation is enforced by the content guard's CA trust
+            # boundary, not by the path: a distribution only consults its own content guard
+            # (also in the current domain), and we only reach the path check once we have already
+            # verified the issuer is trusted. The path check then scopes *which content* is
+            # allowed.
+            #
+            # Limitation: the domain cannot be used to scope an entitlement to a specific domain
+            # via the path. If the same issuer CA is trusted by content guards in two domains, an
+            # entitlement cert is honored in both. For per-domain isolation, use a distinct issuer
+            # (CA) per domain rather than relying on domain-specific entitlement certificates.
+            segments = path_without_content_path_prefix.lstrip("/").split("/", 1)
+            path_without_content_path_prefix = "/" + (segments[1] if len(segments) > 1 else "")
         self._check_paths(cert, path_without_content_path_prefix)
 
     @staticmethod
