@@ -1,1 +1,0 @@
-Fix temp file leak in pull-through metadata streaming.
