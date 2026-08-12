@@ -206,10 +206,15 @@ class RedisWorker:
         except redis.RedisError:
             raise RuntimeError(f"Redis is not reachable. RedisWorker {self.name} cannot start.")
 
-        # A restarted pod can reuse this worker's name while Redis still holds locks
-        # from the dead incarnation. Release them before we start fetching tasks so we
-        # are not blocked by our own name's stale locks.
-        self.release_stale_locks_for_self()
+        # A restarted worker can reuse its name while Redis still holds the dead
+        # incarnation's locks. Release them before fetching tasks so we are not
+        # blocked by our own stale locks.
+        if not self.release_stale_locks_for_self():
+            _logger.warning(
+                "Startup lock cleanup for %s failed; the worker may be blocked by its "
+                "own stale locks until the periodic reconcile runs.",
+                self.name,
+            )
 
         # Add a file descriptor to trigger select on signals
         self.sentinel, sentinel_w = os.pipe()
@@ -390,7 +395,7 @@ class RedisWorker:
         """
         Release Redis locks lingering under our own worker name at startup.
 
-        A restarted pod can reuse the same name while Redis still holds locks from
+        A restarted worker can reuse the same name while Redis still holds locks from
         the dead process. Skips if a live successor already owns the name, and skips
         entirely for a brand-new worker (no registry, no prior AppStatus row).
 
@@ -451,7 +456,10 @@ class RedisWorker:
 
         # An owner is orphaned only if it has NO AppStatus row (stale != orphaned).
         existing = set(AppStatus.objects.filter(name__in=owners).values_list("name", flat=True))
-        for owner in owners - existing:
+        orphans = owners - existing
+        if orphans:
+            _logger.info("Reconciling Redis locks for %d orphan owner(s).", len(orphans))
+        for owner in orphans:
             try:
                 if owner.startswith(
                     IMMEDIATE_OWNER_PREFIX

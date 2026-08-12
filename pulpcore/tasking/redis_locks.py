@@ -21,6 +21,12 @@ REDIS_LOCK_PREFIX = "pulp:resource_lock:"
 # lock keys it currently holds so cleanup is O(locks held by owner), not O(all locks).
 REDIS_OWNER_REGISTRY_PREFIX = "pulp:owner_locks:"
 
+# Redis SET of owner names that currently hold at least one lock. Enumerating owners
+# via SMEMBERS on this key is O(#owners); it avoids a full-keyspace SCAN (a SCAN with
+# MATCH still walks every key). Kept in sync inside the acquire/release/cleanup Lua
+# scripts, which hardcode this literal -- keep them matching this constant.
+ACTIVE_OWNERS_KEY = "pulp:active_owners"
+
 # Throttle key + interval (seconds) for the legacy full-keyspace SCAN fallback used
 # during rolling upgrades (locks acquired before the registry existed).
 LEGACY_OWNER_SCAN_KEY = "pulp:last_legacy_owner_scan"
@@ -105,10 +111,12 @@ end
 
 -- Register every held lock key under the owner registry (atomic with acquisition).
 -- This lets cleanup enumerate an owner's locks without scanning the whole keyspace.
-redis.call("sadd", owner_registry_key, task_lock_key)
-for i = 1, #KEYS - 1 do
-    redis.call("sadd", owner_registry_key, KEYS[1 + i])
-end
+-- One variadic SADD: all of KEYS are held lock keys (task lock + resource locks).
+redis.call("sadd", owner_registry_key, unpack(KEYS))
+
+-- Track this owner in the global active-owners set so reconcile can enumerate
+-- lock owners with SMEMBERS instead of a full-keyspace SCAN.
+redis.call("sadd", "pulp:active_owners", lock_owner)
 
 -- Return empty table to indicate success
 return {}
@@ -150,6 +158,10 @@ end
 
 -- Release shared locks
 -- Shared keys start at KEYS[2 + num_exclusive]
+-- INVARIANT: an owner runs one task at a time (see RedisWorker.handle_tasks), so it
+-- never holds the same shared resource for two concurrent tasks. That lets us drop
+-- the registry entry on release unconditionally. If workers ever become concurrent,
+-- this must become reference-counted or the shared lock could be released early.
 for i = num_exclusive + 1, #KEYS - 1 do
     local key = KEYS[1 + i]
     local resource_name = ARGV[2 + i]
@@ -172,6 +184,12 @@ if task_lock_owner == lock_owner then
 elseif task_lock_owner ~= false then
     -- Task lock exists but we don't own it
     task_lock_not_owned = true
+end
+
+-- If this owner no longer holds any locks, drop it from the active-owners set
+-- (the registry key auto-deletes once empty, so scard == 0 means "no locks left").
+if redis.call("scard", owner_registry_key) == 0 then
+    redis.call("srem", "pulp:active_owners", lock_owner)
 end
 
 return {not_owned_exclusive, not_in_shared, task_lock_not_owned}
@@ -203,6 +221,7 @@ for _, key in ipairs(keys) do
 end
 
 redis.call("del", owner_registry_key)
+redis.call("srem", "pulp:active_owners", lock_owner)
 return released
 """
 
@@ -275,23 +294,29 @@ def _legacy_scan_cleanup_for_owner(redis_conn, owner):
     Used only for locks acquired before the per-owner registry existed (rolling
     upgrade). Uses SCAN (never KEYS) and atomic per-key Lua so a concurrent worker
     that re-took a key by the same name is not clobbered.
+
+    Returns:
+        int: Number of locks released (best effort).
     """
     registry_key = get_owner_registry_key(owner)
     delete_if_owner = redis_conn.register_script(REDIS_DELETE_STRING_IF_OWNER_SCRIPT)
     srem_owner = redis_conn.register_script(REDIS_SREM_OWNER_SCRIPT)
+    released = 0
 
     for key in redis_conn.scan_iter(match="task:*", count=500):
         if _decode(redis_conn.get(key)) == owner:
-            delete_if_owner(keys=[key], args=[owner, registry_key])
+            released += delete_if_owner(keys=[key], args=[owner, registry_key])
 
     for key in redis_conn.scan_iter(match=f"{REDIS_LOCK_PREFIX}*", count=500):
         if _decode(redis_conn.type(key)) == "string":
             if _decode(redis_conn.get(key)) == owner:
-                delete_if_owner(keys=[key], args=[owner, registry_key])
+                released += delete_if_owner(keys=[key], args=[owner, registry_key])
         else:
-            srem_owner(keys=[key], args=[owner, registry_key])
+            released += srem_owner(keys=[key], args=[owner, registry_key])
 
     redis_conn.delete(registry_key)
+    redis_conn.srem(ACTIVE_OWNERS_KEY, owner)
+    return released
 
 
 def cleanup_locks_for_owner(redis_conn, owner, allow_legacy_scan=False):
@@ -312,12 +337,18 @@ def cleanup_locks_for_owner(redis_conn, owner, allow_legacy_scan=False):
     """
     registry_key = get_owner_registry_key(owner)
     try:
+        released = 0
         if redis_conn.exists(registry_key):
             cleanup_script = redis_conn.register_script(REDIS_CLEANUP_OWNER_LOCKS_SCRIPT)
-            cleanup_script(keys=[], args=[owner])
+            released = cleanup_script(keys=[], args=[owner])
         elif allow_legacy_scan:
-            _legacy_scan_cleanup_for_owner(redis_conn, owner)
-        # else: no registry and legacy scan not permitted -> nothing to do.
+            released = _legacy_scan_cleanup_for_owner(redis_conn, owner)
+        else:
+            # No registry and no scan: nothing to release, but drop any stale
+            # active-owners marker so reconcile stops re-visiting this owner.
+            redis_conn.srem(ACTIVE_OWNERS_KEY, owner)
+        if released:
+            _logger.info("Reclaimed %d Redis lock(s) held by owner %s", released, owner)
         return True
     except Exception as e:
         _logger.error("Error cleaning up Redis locks for owner %s: %s", owner, e)
@@ -328,9 +359,11 @@ def collect_lock_owners(redis_conn, allow_legacy_scan=False):
     """
     Return the set of owner names that currently hold Redis locks.
 
-    The registry SCAN is cheap (one key per active owner). The legacy SCAN of the
-    full ``task:*`` / ``pulp:resource_lock:*`` keyspace is expensive and is only run
-    when ``allow_legacy_scan`` is set (throttled by the caller).
+    Owners are read from the global active-owners SET via SMEMBERS -- O(#owners) and
+    scan-free (a SCAN with MATCH still walks the whole keyspace, so scanning for
+    registry keys would be O(all locks)). The legacy SCAN of the full ``task:*`` /
+    ``pulp:resource_lock:*`` keyspace is expensive and is only run when
+    ``allow_legacy_scan`` is set (throttled by the caller) to catch pre-registry locks.
 
     Args:
         redis_conn: Redis connection
@@ -339,10 +372,7 @@ def collect_lock_owners(redis_conn, allow_legacy_scan=False):
     Returns:
         set: Owner names holding at least one lock.
     """
-    owners = set()
-    prefix_len = len(REDIS_OWNER_REGISTRY_PREFIX)
-    for key in redis_conn.scan_iter(match=f"{REDIS_OWNER_REGISTRY_PREFIX}*", count=500):
-        owners.add(_decode(key)[prefix_len:])
+    owners = {_decode(member) for member in redis_conn.smembers(ACTIVE_OWNERS_KEY)}
 
     if allow_legacy_scan:
         for key in redis_conn.scan_iter(match="task:*", count=500):
