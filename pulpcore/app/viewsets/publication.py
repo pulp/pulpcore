@@ -25,7 +25,6 @@ from pulpcore.app.serializers import (
     RBACContentGuardSerializer,
 )
 from pulpcore.app.serializers.publication import CompositeContentGuardSerializer
-from pulpcore.app.util import get_domain
 from pulpcore.app.viewsets import (
     AsyncCreateMixin,
     AsyncRemoveMixin,
@@ -525,34 +524,6 @@ class BaseDistributionViewSet(NamedModelViewSet):
                 "publication__pulp_type",
             )
         return qs
-
-    def async_reserved_resources(self, instance):
-        """
-        Reserve safe distribution locks for async operations.
-
-        The explicit distribution.base_path lock protects the domain-wide base_path invariant.
-        The older domain-scoped distributions lock remains shared so tasks queued before an upgrade
-        still overlap safely with new tasks.
-        """
-        distribution_base_path = f"pdrn:{get_domain().pulp_id}:distribution.base_path"
-        if instance is None:
-            return [distribution_base_path]
-
-        if getattr(self, "action", "") == "destroy":
-            return [instance]
-
-        request_data = getattr(getattr(self, "request", None), "data", {})
-        requested_base_path = request_data.get("base_path", instance.base_path)
-        if requested_base_path == instance.base_path:
-            return [instance]
-
-        return [instance, distribution_base_path]
-
-    def async_shared_resources(self, instance):
-        """
-        Keep the legacy domain-scoped distribution lock shared for upgrade compatibility.
-        """
-        return [f"pdrn:{get_domain().pulp_id}:distributions"]
 
 
 class ListDistributionViewSet(BaseDistributionViewSet, mixins.ListModelMixin):
