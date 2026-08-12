@@ -16,6 +16,8 @@ from pulpcore.app.models import AppStatus, Task
 from pulpcore.constants import TASK_STATES
 from pulpcore.tasking import redis_locks, redis_worker
 from pulpcore.tasking.redis_locks import (
+    LEGACY_OWNER_SCAN_INTERVAL,
+    LEGACY_OWNER_SCAN_KEY,
     acquire_locks,
     cleanup_locks_for_owner,
     collect_lock_owners,
@@ -109,6 +111,34 @@ def test_release_unregisters_owner_locks(pulp_redisdb):
     assert conn.exists(get_owner_registry_key("owner-a")) == 0
 
 
+def test_shared_lock_release_preserves_other_owners(pulp_redisdb):
+    """Given two owners share a resource, When one releases, Then the other keeps the
+    shared lock and only the releasing owner's registry entry is cleared.
+
+    Guards the single-task-per-owner invariant that REDIS_RELEASE_LOCKS_SCRIPT relies
+    on: a release removes only the releasing owner from the shared set/registry.
+    """
+    conn = pulp_redisdb
+    shared_key = resource_to_lock_key("res-shared")
+
+    lock_a = seed_locks_via_acquire(conn, "owner-a", "t1", shared=["res-shared"])
+    lock_b = seed_locks_via_acquire(conn, "owner-b", "t2", shared=["res-shared"])
+
+    # Both owners are members of the shared set.
+    assert _smembers(conn, shared_key) == {"owner-a", "owner-b"}
+
+    # owner-a releases its task; only owner-a leaves the shared set.
+    redis_locks.release_resource_locks(conn, "owner-a", lock_a, [], ["res-shared"])
+    assert _smembers(conn, shared_key) == {"owner-b"}
+    assert conn.exists(get_owner_registry_key("owner-a")) == 0
+    assert shared_key in _smembers(conn, get_owner_registry_key("owner-b"))
+
+    # owner-b releases; the shared set auto-deletes once its last member leaves.
+    redis_locks.release_resource_locks(conn, "owner-b", lock_b, [], ["res-shared"])
+    assert conn.exists(shared_key) == 0
+    assert conn.exists(get_owner_registry_key("owner-b")) == 0
+
+
 # --------------------------------------------------------------------------- #
 # cleanup_locks_for_owner / collect_lock_owners
 # --------------------------------------------------------------------------- #
@@ -180,10 +210,10 @@ def test_release_stale_locks_for_self_releases_prior_locks(pulp_redisdb, reset_s
     """Given prior locks under our worker name, When a new incarnation runs
     startup self-cleanup, Then those locks are released."""
     conn = pulp_redisdb
-    seed_locks_via_acquire(conn, "1@pod-abc", "old", exclusive=["res"])
+    seed_locks_via_acquire(conn, "1@host-abc", "old", exclusive=["res"])
 
-    app_status = AppStatus.objects.create(app_type="worker", name="1@pod-abc")
-    w = make_worker(conn, "1@pod-abc", app_status)
+    app_status = AppStatus.objects.create(app_type="worker", name="1@host-abc")
+    w = make_worker(conn, "1@host-abc", app_status)
 
     assert w.release_stale_locks_for_self() is True
     assert conn.exists(get_task_lock_key("old")) == 0
@@ -212,11 +242,11 @@ def test_release_stale_locks_for_self_skips_when_successor_online(pulp_redisdb, 
     """Given another live AppStatus already owns our name, When startup
     self-cleanup runs, Then we skip and leave its locks alone."""
     conn = pulp_redisdb
-    seed_locks_via_acquire(conn, "1@pod-abc", "held", exclusive=["res"])
+    seed_locks_via_acquire(conn, "1@host-abc", "held", exclusive=["res"])
 
-    app_status = AppStatus.objects.create(app_type="worker", name="1@pod-abc")
-    make_app_status("1@pod-abc", online=True)  # live successor with same name
-    w = make_worker(conn, "1@pod-abc", app_status)
+    app_status = AppStatus.objects.create(app_type="worker", name="1@host-abc")
+    make_app_status("1@host-abc", online=True)  # live successor with same name
+    w = make_worker(conn, "1@host-abc", app_status)
 
     assert w.release_stale_locks_for_self() is True
     # Locks untouched -- the live peer manages them.
@@ -438,3 +468,148 @@ def test_cleanup_worker_skips_release_when_successor_online(pulp_redisdb, reset_
     w.cleanup_redis_locks_for_worker(missing)
     # Successor's locks left intact.
     assert conn.exists(resource_to_lock_key("kres")) == 1
+
+
+# --------------------------------------------------------------------------- #
+# Scale / Redis-pressure proof: cleanup cost must not grow with the keyspace.
+#
+# The reviewer's concern was "each SCAN touches every key" x "150 workers" =
+# O(total_keys) x concurrency of Redis pressure. These tests prove the O(total_keys)
+# factor is gone from all three hot paths (measured by counting the Redis commands
+# the client issues), with a control proving the legacy SCAN path *did* grow.
+# --------------------------------------------------------------------------- #
+def _command_log(conn, monkeypatch):
+    """Record every Redis command issued via this connection as a tuple of str args."""
+    log = []
+    orig = conn.execute_command
+
+    def spy(*args, **kwargs):
+        if args:
+            log.append(tuple(str(a) for a in args))
+        return orig(*args, **kwargs)
+
+    monkeypatch.setattr(conn, "execute_command", spy)
+    return log
+
+
+def _scans(log):
+    """Return the recorded SCAN commands."""
+    return [cmd for cmd in log if cmd and cmd[0].upper() == "SCAN"]
+
+
+def _seed_noise_locks(conn, n):
+    """Grow the keyspace with n unrelated task locks (no owner registries)."""
+    pipe = conn.pipeline()
+    for i in range(n):
+        pipe.set(get_task_lock_key(f"noise-{i}"), f"other-{i}")
+    pipe.execute()
+
+
+@pytest.mark.django_db
+def test_startup_cleanup_no_keyspace_scan_and_flat(pulp_redisdb, reset_singleton, monkeypatch):
+    """release_stale_locks_for_self must never SCAN the keyspace and its Redis cost
+    must not grow with total locks -- so 150 concurrent restarts stay cheap."""
+    conn = pulp_redisdb
+    worker = make_worker(conn, "restarter", make_app_status("restarter", online=True))
+    log = _command_log(conn, monkeypatch)
+
+    # Warm the Lua script so EVALSHA caching does not skew the measured counts.
+    seed_locks_via_acquire(conn, "restarter", "warm", exclusive=["w"])
+    worker.release_stale_locks_for_self()
+
+    counts = {}
+    for total in (100, 50_000):
+        conn.flushdb()
+        _seed_noise_locks(conn, total)
+        seed_locks_via_acquire(conn, "restarter", "rt", exclusive=["e1", "e2"], shared=["s1"])
+        log.clear()
+        assert worker.release_stale_locks_for_self() is True
+        measured = list(log)
+        assert _scans(measured) == [], f"startup cleanup must not SCAN (total={total})"
+        counts[total] = len(measured)
+        assert conn.exists(get_owner_registry_key("restarter")) == 0  # locks reclaimed
+    assert counts[100] == counts[50_000], counts
+
+
+@pytest.mark.django_db
+def test_reconcile_no_keyspace_scan_and_flat(pulp_redisdb, reset_singleton, monkeypatch):
+    """reconcile_orphan_redis_locks enumerates owners via SMEMBERS -- no keyspace
+    SCAN -- so its cost is independent of the number of locks in Redis, and the
+    orphan owner's locks are reclaimed."""
+    conn = pulp_redisdb
+    worker = make_worker(conn, "reconciler", make_app_status("reconciler", online=True))
+    log = _command_log(conn, monkeypatch)
+
+    # Warm the cleanup script (steady state: legacy-scan throttle already taken).
+    seed_locks_via_acquire(conn, "dead-warm", "dw", exclusive=["dw"])
+    conn.set(LEGACY_OWNER_SCAN_KEY, "other", nx=True, ex=LEGACY_OWNER_SCAN_INTERVAL)
+    worker.reconcile_orphan_redis_locks()
+
+    counts = {}
+    for total in (100, 50_000):
+        conn.flushdb()
+        _seed_noise_locks(conn, total)
+        # Orphan owner: holds a contended resource, has NO AppStatus row.
+        seed_locks_via_acquire(conn, "dead", "dt", exclusive=["contended"])
+        conn.set(LEGACY_OWNER_SCAN_KEY, "other", nx=True, ex=LEGACY_OWNER_SCAN_INTERVAL)
+        # Precondition: the resource is currently blocked by the dead owner.
+        assert acquire_locks(conn, "probe", get_task_lock_key("pt"), ["contended"], []) != []
+        log.clear()
+        worker.reconcile_orphan_redis_locks()
+        measured = list(log)
+
+        assert _scans(measured) == [], f"reconcile must not SCAN the keyspace (total={total})"
+        counts[total] = len(measured)
+
+        # Correctness: the orphan's lock is gone and the resource is re-acquirable.
+        assert conn.exists(get_owner_registry_key("dead")) == 0
+        assert acquire_locks(conn, "probe", get_task_lock_key("pt"), ["contended"], []) == []
+    assert counts[100] == counts[50_000], counts
+
+
+@pytest.mark.django_db
+def test_missing_worker_cleanup_no_keyspace_scan_and_flat(
+    pulp_redisdb, reset_singleton, monkeypatch
+):
+    """cleanup_redis_locks_for_worker sweeps a missing worker's locks via the
+    registry -- never a keyspace SCAN -- at constant Redis cost."""
+    conn = pulp_redisdb
+    cleaner = make_worker(conn, "cleaner", make_app_status("cleaner", online=True))
+    log = _command_log(conn, monkeypatch)
+
+    # Warm the cleanup script.
+    warm = make_app_status("gone-warm", online=False)
+    seed_locks_via_acquire(conn, "gone-warm", "gw", exclusive=["gw"])
+    cleaner.cleanup_redis_locks_for_worker(warm)
+
+    counts = {}
+    for total in (100, 50_000):
+        conn.flushdb()
+        _seed_noise_locks(conn, total)
+        gone = make_app_status(f"gone-{total}", online=False)
+        seed_locks_via_acquire(conn, f"gone-{total}", f"gt-{total}", exclusive=["contended"])
+        log.clear()
+        assert cleaner.cleanup_redis_locks_for_worker(gone) is True
+        measured = list(log)
+        assert _scans(measured) == [], f"missing-worker cleanup must not SCAN (total={total})"
+        counts[total] = len(measured)
+        assert conn.exists(get_owner_registry_key(f"gone-{total}")) == 0  # locks reclaimed
+    assert counts[100] == counts[50_000], counts
+
+
+def test_legacy_scan_control_scales_with_keyspace(pulp_redisdb, monkeypatch):
+    """Control: the legacy SCAN fallback DOES walk the keyspace, so its SCAN count
+    grows with total locks. Proves the harness detects the behavior the registry
+    path removes -- otherwise the "no SCAN" assertions above would be vacuous."""
+    conn = pulp_redisdb
+    log = _command_log(conn, monkeypatch)
+    scans = {}
+    for total in (100, 10_000):
+        conn.flushdb()
+        _seed_noise_locks(conn, total)
+        conn.set(get_task_lock_key("legacy"), "legacy-owner")  # legacy lock, no registry
+        log.clear()
+        assert cleanup_locks_for_owner(conn, "legacy-owner", allow_legacy_scan=True) is True
+        scans[total] = len(_scans(log))
+    assert scans[100] > 0, scans
+    assert scans[10_000] > scans[100], scans
