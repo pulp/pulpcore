@@ -26,8 +26,8 @@ A token that matches no rule is rejected with a 401.
 
 ## Enabling
 
-Add the authentication class to `DEFAULT_AUTHENTICATION_CLASSES`,
-then populate `WORKLOAD_IDENTITY`:
+Add the authentication class to `DEFAULT_AUTHENTICATION_CLASSES`, add the backend to
+`AUTHENTICATION_BACKENDS`, then populate `WORKLOAD_IDENTITY`:
 
 ```python title="settings.py"
 REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"] = [
@@ -35,11 +35,16 @@ REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"] = [
     "pulpcore.app.authentication.BasicAuthentication",
     "rest_framework.authentication.SessionAuthentication",
 ]
+
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "pulpcore.backends.ObjectRolePermissionBackend",
+    "pulpcore.app.workload_identity.backend.WorkloadIdentityBackend",
+]
 ```
 
-No change to `AUTHENTICATION_BACKENDS` is needed.
-The feature stays off while `WORKLOAD_IDENTITY` is empty,
-so adding the class alone changes nothing.
+The backend answers the permission checks for a workload identity request, so it must be present
+for the feature to grant anything. Nothing is active until all three pieces are configured.
 
 With the example below,
 a push from the `main` branch of `my-org/app` is granted the `file.filerepository_owner` role on the repository named `prod`,

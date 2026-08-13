@@ -173,23 +173,27 @@ def get_objects_for_user(
     accept_domain_perms=True,
     accept_global_perms=True,
 ):
-    from pulpcore.app.workload_identity.principal import WorkloadIdentityPrincipal
+    if (
+        "pulpcore.app.workload_identity.backend.WorkloadIdentityBackend"
+        in settings.AUTHENTICATION_BACKENDS
+    ):
+        from pulpcore.app.workload_identity.principal import WorkloadIdentityPrincipal
 
-    if isinstance(user, WorkloadIdentityPrincipal):
-        from pulpcore.app.workload_identity.authz import grants_queryset
+        if isinstance(user, WorkloadIdentityPrincipal):
+            from pulpcore.app.workload_identity.authz import grants_queryset
 
-        grants = user.grants
-        if isinstance(perms, str):
-            return grants_queryset(grants, perms, qs)
-        if any_perm:
-            result = qs.none()
+            grants = user.grants
+            if isinstance(perms, str):
+                return grants_queryset(grants, perms, qs)
+            if any_perm:
+                result = qs.none()
+                for permission_name in perms:
+                    result |= grants_queryset(grants, permission_name, qs)
+                return result
+            result = qs.all()
             for permission_name in perms:
-                result |= grants_queryset(grants, permission_name, qs)
+                result &= grants_queryset(grants, permission_name, qs)
             return result
-        result = qs.all()
-        for permission_name in perms:
-            result &= grants_queryset(grants, permission_name, qs)
-        return result
 
     new_qs = qs.none()
     replace = False
