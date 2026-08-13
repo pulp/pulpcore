@@ -1,6 +1,7 @@
 * Authentication
     * [Using Basic Auth](auth/basic.md)
     * [Using external service](auth/external.md)
+    * [Using SAML2](auth/saml2.md)
     * [Using Keycloak](auth/keycloak.md)
     * [Using JSON Header](auth/json_header.md)
     * auth/*.md
