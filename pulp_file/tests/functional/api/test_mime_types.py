@@ -13,26 +13,43 @@ def test_content_types(
     file_bindings,
     distribution_base_url,
     file_repo_with_auto_publish,
-    file_content_unit_with_name_factory,
     gen_object_with_cleanup,
     monitor_task,
+    random_artifact_factory,
 ):
     """Test if content-app correctly returns mime-types based on filenames."""
+    relative_paths = {
+        "tar.gz": f"{uuid.uuid4()}.tar.gz",
+        "xml.gz": f"{uuid.uuid4()}.xml.gz",
+        "xml.bz2": f"{uuid.uuid4()}.xml.bz2",
+        "xml.zstd": f"{uuid.uuid4()}.xml.zstd",
+        "xml.xz": f"{uuid.uuid4()}.xml.xz",
+        "json.zstd": f"{uuid.uuid4()}.json.zstd",
+        "json": f"{uuid.uuid4()}.json",
+        "txt": f"{uuid.uuid4()}.txt",
+        "xml": f"{uuid.uuid4()}.xml",
+        "jpg": f"{uuid.uuid4()}.jpg",
+        "JPG": f"{uuid.uuid4()}.JPG",
+        "halabala": f"{uuid.uuid4()}.halabala",
+        "noextension1": f"{uuid.uuid4()}.asd/.asd/a",
+        "noextension2": f"{uuid.uuid4()}.....f",
+    }
+
+    # Dispatch creates first so tasks can overlap before we wait on them.
+    create_tasks = []
+    for relative_path in relative_paths.values():
+        artifact = random_artifact_factory()
+        create_tasks.append(
+            file_bindings.ContentFilesApi.create(
+                artifact=artifact.pulp_href, relative_path=relative_path
+            ).task
+        )
+    content_hrefs = [
+        monitor_task(task_href).created_resources[0] for task_href in create_tasks
+    ]
     files = {
-        "tar.gz": file_content_unit_with_name_factory(f"{str(uuid.uuid4())}.tar.gz"),
-        "xml.gz": file_content_unit_with_name_factory(f"{str(uuid.uuid4())}.xml.gz"),
-        "xml.bz2": file_content_unit_with_name_factory(f"{str(uuid.uuid4())}.xml.bz2"),
-        "xml.zstd": file_content_unit_with_name_factory(f"{str(uuid.uuid4())}.xml.zstd"),
-        "xml.xz": file_content_unit_with_name_factory(f"{str(uuid.uuid4())}.xml.xz"),
-        "json.zstd": file_content_unit_with_name_factory(f"{str(uuid.uuid4())}.json.zstd"),
-        "json": file_content_unit_with_name_factory(f"{str(uuid.uuid4())}.json"),
-        "txt": file_content_unit_with_name_factory(f"{str(uuid.uuid4())}.txt"),
-        "xml": file_content_unit_with_name_factory(f"{str(uuid.uuid4())}.xml"),
-        "jpg": file_content_unit_with_name_factory(f"{str(uuid.uuid4())}.jpg"),
-        "JPG": file_content_unit_with_name_factory(f"{str(uuid.uuid4())}.JPG"),
-        "halabala": file_content_unit_with_name_factory(f"{str(uuid.uuid4())}.halabala"),
-        "noextension1": file_content_unit_with_name_factory(f"{str(uuid.uuid4())}.asd/.asd/a"),
-        "noextension2": file_content_unit_with_name_factory(f"{str(uuid.uuid4())}.....f"),
+        extension: file_bindings.ContentFilesApi.read(content_href)
+        for extension, content_href in zip(relative_paths, content_hrefs)
     }
 
     units_to_add = list(map(lambda f: f.pulp_href, files.values()))
