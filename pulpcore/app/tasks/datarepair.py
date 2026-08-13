@@ -9,7 +9,7 @@ from pulpcore.app.util import get_domain
 log = getLogger(__name__)
 
 
-def repair_7272(dry_run=False):
+def repair_7272(dry_run=False, **kwargs):
     """
     Repair repository version content_ids cache and content count mismatches (Issue #7272).
 

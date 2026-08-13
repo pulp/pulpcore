@@ -1,10 +1,10 @@
 from copy import deepcopy
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from rest_access_policy import AccessPolicy
 from rest_framework.exceptions import APIException
 
-from pulpcore.app import settings
 from pulpcore.app.models import AccessPolicy as AccessPolicyModel
 from pulpcore.app.util import get_view_urlpattern, get_viewset_for_model
 

@@ -49,6 +49,7 @@ class DomainViewSet(
     serializer_class = DomainSerializer
     endpoint_name = "domains"
     filterset_class = DomainFilter
+    queryset_filtering_required_permission = "core.view_domain"
     DEFAULT_ACCESS_POLICY = {
         "statements": [
             {
@@ -159,7 +160,6 @@ class DomainViewSet(
             raise ValidationError(_("Default domain can not be migrated."))
         serializer = DomainBackendMigratorSerializer(data=data)
         serializer.is_valid(raise_exception=True)
-
         task = dispatch(
             migrate_backend,
             args=(data,),

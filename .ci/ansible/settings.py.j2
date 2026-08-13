@@ -1,3 +1,4 @@
+SECRET_KEY = "{{ django_secret }}"
 CONTENT_ORIGIN = "{{ pulp_scheme }}://pulp:{{ 443 if pulp_scheme == 'https' else 80 }}"
 ANSIBLE_API_HOSTNAME = "{{ pulp_scheme }}://pulp:{{ 443 if pulp_scheme == 'https' else 80 }}"
 ANSIBLE_CONTENT_HOSTNAME = "{{ pulp_scheme }}://pulp:{{ 443 if pulp_scheme == 'https' else 80 }}/pulp/content"

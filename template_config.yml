@@ -9,7 +9,7 @@
 check_commit_message: true
 check_manifest: true
 check_stray_pulpcore_imports: false
-ci_base_image: "ghcr.io/pulp/pulp-ci-centos9"
+ci_base_image: "ghcr.io/pulp/pulp-ci-centos10"
 ci_env: {}
 ci_trigger: "{pull_request: {branches: ['*']}}"
 cli_package: "pulp-cli"
@@ -25,7 +25,7 @@ extra_files:
   - destination: "/etc/nginx/pulp/api_root_rewrite.conf"
     origin: "pulpcore/pulpcore/tests/functional/assets/api_root_rewrite.conf"
 github_org: "pulp"
-latest_release_branch: "3.114"
+latest_release_branch: "3.116"
 lint_ignore:
   - "./pulpcore/app/protobuf/*"
 lint_requirements: true

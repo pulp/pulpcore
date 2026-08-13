@@ -18,6 +18,8 @@
       ansible.builtin.template:
         src: "settings.py.j2"
         dest: "settings/settings.py"
+      vars:
+        django_secret: "lookup('community.general.random_string', length=50, overwrite_all='abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)')"
 
     - name: "Setup docker networking"
       community.docker.docker_network:

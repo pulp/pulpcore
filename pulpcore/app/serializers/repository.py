@@ -2,10 +2,11 @@ import os
 from gettext import gettext as _
 from urllib.parse import urlparse
 
+from django.conf import settings
 from rest_framework import fields, serializers
 from rest_framework_nested.serializers import NestedHyperlinkedModelSerializer
 
-from pulpcore.app import models, settings
+from pulpcore.app import models
 from pulpcore.app.serializers import (
     DetailIdentityField,
     DetailRelatedField,

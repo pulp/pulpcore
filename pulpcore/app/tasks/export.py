@@ -30,7 +30,7 @@ from pulpcore.app.models import (
     Task,
 )
 from pulpcore.app.models.content import ContentArtifact, RemoteArtifact
-from pulpcore.app.serializers import PulpExportSerializer
+from pulpcore.app.serializers import PulpExportSerializer, relative_path_validator
 from pulpcore.app.util import Crc32Hasher, HashingFileWriter, compute_file_hash
 from pulpcore.constants import FS_EXPORT_METHODS
 
@@ -135,6 +135,7 @@ def _export_local_to_file_system(
         method: FS_EXPORT_METHODS constant (WRITE, SYMLINK, or HARDLINK).
     """
     for relative_path, src_path in relative_paths_to_local_paths.items():
+        relative_path_validator(relative_path)
         dest = os.path.join(path, relative_path)
         os.makedirs(os.path.split(dest)[0], exist_ok=True)
 
@@ -182,6 +183,7 @@ def _export_to_file_system(path, relative_paths_to_artifacts, method=FS_EXPORT_M
         method = FS_EXPORT_METHODS.WRITE
 
     for relative_path, artifact in relative_paths_to_artifacts.items():
+        relative_path_validator(relative_path)
         dest = os.path.join(path, relative_path)
         os.makedirs(os.path.split(dest)[0], exist_ok=True)
 
@@ -291,7 +293,7 @@ def _export_location_is_clean(path):
     return True
 
 
-def fs_publication_export(exporter_pk, publication_pk, start_repo_version_pk=None):
+def fs_publication_export(exporter_pk, publication_pk, start_repo_version_pk=None, **kwargs):
     """
     Export a publication to the file system using an exporter.
 
@@ -335,7 +337,7 @@ def fs_publication_export(exporter_pk, publication_pk, start_repo_version_pk=Non
     )
 
 
-def fs_repo_version_export(exporter_pk, repo_version_pk, start_repo_version_pk=None):
+def fs_repo_version_export(exporter_pk, repo_version_pk, start_repo_version_pk=None, **kwargs):
     """
     Export a repository version to the file system using an exporter.
 
@@ -474,7 +476,7 @@ def _incremental_requested(the_export):
     return (starting_versions_provided or last_exists) and not full
 
 
-def pulp_export(exporter_pk, params):
+def pulp_export(exporter_pk, params, **kwargs):
     """
     Create a PulpExport to export pulp_exporter.repositories.
 

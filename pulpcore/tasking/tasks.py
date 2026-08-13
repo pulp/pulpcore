@@ -19,7 +19,12 @@ from django_guid import get_guid
 from rest_framework.exceptions import APIException
 
 from pulpcore.app.apps import MODULE_PLUGIN_VERSIONS
-from pulpcore.app.contexts import awith_task_context, with_task_context, x_task_diagnostics_var
+from pulpcore.app.contexts import (
+    awith_task_context,
+    current_pulp_api_version,
+    with_task_context,
+    x_task_diagnostics_var,
+)
 from pulpcore.app.loggers import deprecation_logger
 from pulpcore.app.models import AppStatus, Task, TaskGroup
 from pulpcore.app.util import (
@@ -421,6 +426,7 @@ def get_task_payload(
         "deferred": deferred,
         "profile_options": x_task_diagnostics_var.get(None),
         "app_lock": app_lock,
+        "pulp_api_version": current_pulp_api_version.get(),
     }
     return payload
 

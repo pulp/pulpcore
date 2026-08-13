@@ -218,6 +218,52 @@ def test_http_sync_ssl_with_client_cert_req(
 
 
 @pytest.mark.parallel
+def test_http_sync_pqc_ssl_tls_validation_on(
+    file_bindings,
+    file_remote_pqc_ssl_factory,
+    file_repo,
+    basic_manifest_path,
+    monitor_task,
+):
+    """
+    Test file on_demand sync with https:// using PQC (ML-DSA-65) server certificate.
+    """
+    remote_on_demand = file_remote_pqc_ssl_factory(
+        manifest_path=basic_manifest_path, policy="on_demand", tls_validation=True
+    )
+
+    _run_basic_sync_and_assert(
+        file_bindings,
+        remote_on_demand,
+        file_repo,
+        monitor_task,
+    )
+
+
+@pytest.mark.parallel
+def test_http_sync_pqc_ssl_with_client_cert_req(
+    file_bindings,
+    file_remote_pqc_client_cert_req_factory,
+    file_repo,
+    basic_manifest_path,
+    monitor_task,
+):
+    """
+    Test file on_demand sync with https:// using PQC (ML-DSA-65) mutual TLS authentication.
+    """
+    remote_on_demand = file_remote_pqc_client_cert_req_factory(
+        manifest_path=basic_manifest_path, policy="on_demand"
+    )
+
+    _run_basic_sync_and_assert(
+        file_bindings,
+        remote_on_demand,
+        file_repo,
+        monitor_task,
+    )
+
+
+@pytest.mark.parallel
 def test_ondemand_to_immediate_sync(
     file_bindings,
     file_remote_ssl_factory,

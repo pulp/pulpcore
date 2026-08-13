@@ -55,7 +55,7 @@ pulp_scheme: "https"
 image:
   name: "pulp"
   tag: "ci_build"
-  ci_base: "ghcr.io/pulp/pulp-ci-centos9:latest"
+  ci_base: "ghcr.io/pulp/pulp-ci-centos10:latest"
   source: "${COMPONENT_SOURCE}"
   ci_requirements: $(test -f ci_requirements.txt && echo -n true || echo -n false)
   upperbounds: $(test "${TEST}" = "pulp" && echo -n true || echo -n false)

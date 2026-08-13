@@ -8,6 +8,257 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.116.0 (2026-08-12) {: #3.116.0 }
+
+### REST API {: #3.116.0-rest-api }
+
+#### Features {: #3.116.0-rest-api-feature }
+
+- Added `--backend` option to the `add-signing-service` management command, enabling Sequoia (`sq`) as an alternative to GPG for key management. Use `--backend sq` to register signing services using Sequoia's key store.
+  [#7479](https://github.com/pulp/pulpcore/issues/7479)
+
+#### Bugfixes {: #3.116.0-rest-api-bugfix }
+
+- Reduced lock contention for distribution updates that leave `base_path` unchanged.
+  [#3322](https://github.com/pulp/pulpcore/issues/3322),
+  [#7896](https://github.com/pulp/pulpcore/issues/7896)
+- Fix temp file leak in pull-through metadata streaming.
+  [#7846](https://github.com/pulp/pulpcore/issues/7846)
+- Fixed domain list returning all domains to authenticated users instead of only domains they can view.
+  [#7898](https://github.com/pulp/pulpcore/issues/7898)
+- Fixed RedisWorker leaking Redis locks when task acquire, abort, cancel, or immediate dispatch cleanup failed.
+  [#7902](https://github.com/pulp/pulpcore/issues/7902)
+- Fixed the `waiting_tasks` metric to count only tasks that can run in parallel under resource locks, matching worker FIFO scheduling.
+  [#7938](https://github.com/pulp/pulpcore/issues/7938)
+- Fixed Redis workers polling the database at the single-worker rate during startup by learning the online worker count before the first heartbeat.
+- Increased the content app's maximum HTTP header field size from 8190 to 16384 bytes to support PQC (post-quantum) X.509 certificates forwarded via the `X-CLIENT-CERT` header.
+
+### Plugin API {: #3.116.0-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.116.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.116.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.115.4 (2026-08-12) {: #3.115.4 }
+
+### REST API {: #3.115.4-rest-api }
+
+#### Bugfixes {: #3.115.4-rest-api-bugfix }
+
+- Reduced lock contention for distribution updates that leave `base_path` unchanged.
+  [#3322](https://github.com/pulp/pulpcore/issues/3322),
+  [#7896](https://github.com/pulp/pulpcore/issues/7896)
+- Fixed the `waiting_tasks` metric to count only tasks that can run in parallel under resource locks, matching worker FIFO scheduling.
+  [#7938](https://github.com/pulp/pulpcore/issues/7938)
+- Fixed Redis workers polling the database at the single-worker rate during startup by learning the online worker count before the first heartbeat.
+
+### Plugin API {: #3.115.4-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.115.4-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.115.4-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.115.3 (2026-07-28) {: #3.115.3 }
+
+### REST API {: #3.115.3-rest-api }
+
+#### Bugfixes {: #3.115.3-rest-api-bugfix }
+
+- Fixed domain list returning all domains to authenticated users instead of only domains they can view.
+  [#7898](https://github.com/pulp/pulpcore/issues/7898)
+
+### Plugin API {: #3.115.3-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.115.3-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.115.3-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.115.2 (2026-07-22) {: #3.115.2 }
+
+### REST API {: #3.115.2-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.115.2-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.115.2-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.115.2-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## YANKED 3.115.1 (2026-07-21) {: #3.115.1 }
+
+Yank reason: Broken settings-setup - fixed in .115.2
+
+### REST API {: #3.115.1-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.115.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.115.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.115.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.115.0 (2026-07-21) {: #3.115.0 }
+
+### REST API {: #3.115.0-rest-api }
+
+#### Features {: #3.115.0-rest-api-feature }
+
+- Add `/v4/` API to Pulp.
+
+  This adds a `/v4/` API path to Pulp, in parallel to the existing `/v3/` path. The two
+  are currently (nearly) identical APIs - see the `/pulp/api/v4/status/` ouput for the
+  only (current) end-user-visible impact.
+
+  This change is primarily setting the stage to allow for future API changes and growth.
+  It is in TECH PREVIEW, and is likely to have significant changes happening to it as we
+  continue integrating into the rest of the Pulp architecture.
+  [#6462](https://github.com/pulp/pulpcore/issues/6462)
+- Allow commas in `pulp_labels` values. To filter for labels containing commas, escape them
+  with a backslash (e.g. `?pulp_label_select=key=val\,ue`).
+  [#7789](https://github.com/pulp/pulpcore/issues/7789)
+- Optimized response time when filtering repository versions by content.
+  [#7799](https://github.com/pulp/pulpcore/issues/7799)
+- Added `saml2` as a dependency option accompanied by the `SAML_CONFIG` setting.
+
+#### Bugfixes {: #3.115.0-rest-api-bugfix }
+
+- Fixed content app directory listing generating broken links when distribution base paths contain colons.
+  [#6955](https://github.com/pulp/pulpcore/issues/6955)
+- Fixed `RelatedField` rendering wrong domain in hrefs when `DOMAIN_ENABLED=True`.
+  [#7835](https://github.com/pulp/pulpcore/issues/7835)
+- Fixed `RepositoryVersion.remove_content` failing when the queryset is derived from `self.content` and the repository version contains >= 65,535 content items. The lazy queryset was re-evaluated after `content_ids` was already updated, causing `RepositoryContent` entries to be left orphaned.
+  [#7851](https://github.com/pulp/pulpcore/issues/7851)
+- Fixed a race condition when creating content with `file_url` or `upload` that could result in a duplicate artifact error.
+- Fixed delete timeouts when removing repositories or repository versions with large numbers of PublishedArtifacts by batching bulk deletes and avoiding nested subqueries that produce poor PostgreSQL execution plans.
+- Improved validation of relative paths to prevent a path traversal attack in filesystem exports. (CVE-2026-12701)
+- Stopped shipping an insecure default as DJANGO_SECRET.
+
+#### Improved Documentation {: #3.115.0-rest-api-doc }
+
+- Reformatted and partially rewrote the Pull-Request Walkthrough.
+
+#### Removals {: #3.115.0-rest-api-removal }
+
+- Drop support for running with Django 4.
+  [#7343](https://github.com/pulp/pulpcore/issues/7343)
+
+### Plugin API {: #3.115.0-plugin-api }
+
+#### Features {: #3.115.0-plugin-api-feature }
+
+- Added `pulp_domain` to `TaskSchedule` so scheduled tasks dispatch in the correct domain. Name uniqueness is now per domain.
+  [#7829](https://github.com/pulp/pulpcore/issues/7829)
+
+#### Removals {: #3.115.0-plugin-api-removal }
+
+- Made `content_ids` cache required with forceful migration and removed the `/pulp/api/v3/datarepair/7465/` endpoint. This **will** run a migration that could take a while if you haven't already run the datarepair endpoint.
+  [#7466](https://github.com/pulp/pulpcore/issues/7466)
+- Deactivated dynaconf boxify. This can affect plugins that access nested settings via dot instead of subscribing.
+
+### Pulp File {: #3.115.0-pulp-file }
+
+#### Features {: #3.115.0-pulp-file-feature }
+
+- Added sync optimization that skips re-syncing when the remote manifest has not changed. An `optimize` flag on the sync endpoint (default `True`) allows forcing a full sync when needed.
+
+### Pulp Cert Guard {: #3.115.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.114.2 (2026-07-20) {: #3.114.2 }
+
+### REST API {: #3.114.2-rest-api }
+
+#### Bugfixes {: #3.114.2-rest-api-bugfix }
+
+- Improved validation of relative paths to prevent a path traversal attack in filesystem exports. (CVE-2026-12701)
+
+### Plugin API {: #3.114.2-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.114.2-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.114.2-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.114.1 (2026-07-14) {: #3.114.1 }
+
+### REST API {: #3.114.1-rest-api }
+
+#### Bugfixes {: #3.114.1-rest-api-bugfix }
+
+- Fixed content app directory listing generating broken links when distribution base paths contain colons.
+  [#6955](https://github.com/pulp/pulpcore/issues/6955)
+- Fixed `RelatedField` rendering wrong domain in hrefs when `DOMAIN_ENABLED=True`.
+  [#7835](https://github.com/pulp/pulpcore/issues/7835)
+- Fixed `RepositoryVersion.remove_content` failing when the queryset is derived from `self.content` and the repository version contains >= 65,535 content items. The lazy queryset was re-evaluated after `content_ids` was already updated, causing `RepositoryContent` entries to be left orphaned.
+  [#7851](https://github.com/pulp/pulpcore/issues/7851)
+- Fixed a race condition when creating content with `file_url` or `upload` that could result in a duplicate artifact error.
+
+### Plugin API {: #3.114.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.114.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.114.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.114.0 (2026-06-09) {: #3.114.0 }
 
 ### REST API {: #3.114.0-rest-api }
@@ -647,6 +898,165 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.106.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.105.16 (2026-08-12) {: #3.105.16 }
+
+### REST API {: #3.105.16-rest-api }
+
+#### Bugfixes {: #3.105.16-rest-api-bugfix }
+
+- Reduced lock contention for distribution updates that leave `base_path` unchanged.
+  [#3322](https://github.com/pulp/pulpcore/issues/3322),
+  [#7896](https://github.com/pulp/pulpcore/issues/7896)
+
+### Plugin API {: #3.105.16-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.105.16-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.105.16-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.105.15 (2026-07-28) {: #3.105.15 }
+
+### REST API {: #3.105.15-rest-api }
+
+#### Bugfixes {: #3.105.15-rest-api-bugfix }
+
+- Fixed domain list returning all domains to authenticated users instead of only domains they can view.
+  [#7898](https://github.com/pulp/pulpcore/issues/7898)
+
+### Plugin API {: #3.105.15-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.105.15-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.105.15-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.105.14 (2026-07-28) {: #3.105.14 }
+
+### REST API {: #3.105.14-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.105.14-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.105.14-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.105.14-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.105.13 (2026-07-27) {: #3.105.13 }
+
+### REST API {: #3.105.13-rest-api }
+
+#### Bugfixes {: #3.105.13-rest-api-bugfix }
+
+- Stopped shipping an insecure default as DJANGO_SECRET.
+
+### Plugin API {: #3.105.13-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.105.13-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.105.13-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.105.12 (2026-07-20) {: #3.105.12 }
+
+### REST API {: #3.105.12-rest-api }
+
+#### Bugfixes {: #3.105.12-rest-api-bugfix }
+
+- Improved validation of relative paths to prevent a path traversal attack in filesystem exports. (CVE-2026-12701)
+
+### Plugin API {: #3.105.12-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.105.12-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.105.12-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.105.11 (2026-07-16) {: #3.105.11 }
+
+### REST API {: #3.105.11-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.105.11-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.105.11-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.105.11-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.105.10 (2026-07-14) {: #3.105.10 }
+
+### REST API {: #3.105.10-rest-api }
+
+#### Bugfixes {: #3.105.10-rest-api-bugfix }
+
+- Fixed content app directory listing generating broken links when distribution base paths contain colons.
+  [#6955](https://github.com/pulp/pulpcore/issues/6955)
+- Fixed `RelatedField` rendering wrong domain in hrefs when `DOMAIN_ENABLED=True`.
+  [#7835](https://github.com/pulp/pulpcore/issues/7835)
+- Fixed `RepositoryVersion.remove_content` failing when the queryset is derived from `self.content` and the repository version contains >= 65,535 content items. The lazy queryset was re-evaluated after `content_ids` was already updated, causing `RepositoryContent` entries to be left orphaned.
+  [#7851](https://github.com/pulp/pulpcore/issues/7851)
+- Fixed a race condition when creating content with `file_url` or `upload` that could result in a duplicate artifact error.
+
+### Plugin API {: #3.105.10-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.105.10-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.105.10-pulp-cert-guard }
 
 No significant changes.
 
@@ -1853,6 +2263,142 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.86.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.85.29 (2026-08-12) {: #3.85.29 }
+
+### REST API {: #3.85.29-rest-api }
+
+#### Bugfixes {: #3.85.29-rest-api-bugfix }
+
+- Reduced lock contention for distribution updates that leave `base_path` unchanged.
+  [#3322](https://github.com/pulp/pulpcore/issues/3322),
+  [#7896](https://github.com/pulp/pulpcore/issues/7896)
+
+### Plugin API {: #3.85.29-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.85.29-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.29-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.85.28 (2026-07-29) {: #3.85.28 }
+
+### REST API {: #3.85.28-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.85.28-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.85.28-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.28-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.85.27 (2026-07-28) {: #3.85.27 }
+
+### REST API {: #3.85.27-rest-api }
+
+#### Bugfixes {: #3.85.27-rest-api-bugfix }
+
+- Fixed domain list returning all domains to authenticated users instead of only domains they can view.
+  [#7898](https://github.com/pulp/pulpcore/issues/7898)
+- Stopped shipping an insecure default as DJANGO_SECRET.
+
+### Plugin API {: #3.85.27-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.85.27-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.27-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.85.26 (2026-07-20) {: #3.85.26 }
+
+### REST API {: #3.85.26-rest-api }
+
+#### Bugfixes {: #3.85.26-rest-api-bugfix }
+
+- Improved validation of relative paths to prevent a path traversal attack in filesystem exports. (CVE-2026-12701)
+
+### Plugin API {: #3.85.26-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.85.26-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.26-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.85.25 (2026-07-16) {: #3.85.25 }
+
+### REST API {: #3.85.25-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.85.25-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.85.25-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.25-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.85.24 (2026-07-14) {: #3.85.24 }
+
+### REST API {: #3.85.24-rest-api }
+
+#### Bugfixes {: #3.85.24-rest-api-bugfix }
+
+- Fixed `RelatedField` rendering wrong domain in hrefs when `DOMAIN_ENABLED=True`.
+  [#7835](https://github.com/pulp/pulpcore/issues/7835)
+- Fixed `RepositoryVersion.remove_content` failing when the queryset is derived from `self.content` and the repository version contains >= 65,535 content items. The lazy queryset was re-evaluated after `content_ids` was already updated, causing `RepositoryContent` entries to be left orphaned.
+  [#7851](https://github.com/pulp/pulpcore/issues/7851)
+- Fixed a race condition when creating content with `file_url` or `upload` that could result in a duplicate artifact error.
+
+### Plugin API {: #3.85.24-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.85.24-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.24-pulp-cert-guard }
 
 No significant changes.
 
@@ -3160,6 +3706,116 @@ No significant changes.
   [#6244](https://github.com/pulp/pulpcore/issues/6244)
 
 ### Pulp Cert Guard {: #3.74.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.73.42 (2026-07-29) {: #3.73.42 }
+
+### REST API {: #3.73.42-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.73.42-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.73.42-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.42-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.73.41 (2026-07-28) {: #3.73.41 }
+
+### REST API {: #3.73.41-rest-api }
+
+#### Bugfixes {: #3.73.41-rest-api-bugfix }
+
+- Fixed domain list returning all domains to authenticated users instead of only domains they can view.
+  [#7898](https://github.com/pulp/pulpcore/issues/7898)
+- Stopped shipping an insecure default as DJANGO_SECRET.
+
+### Plugin API {: #3.73.41-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.73.41-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.41-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.73.40 (2026-07-20) {: #3.73.40 }
+
+### REST API {: #3.73.40-rest-api }
+
+#### Bugfixes {: #3.73.40-rest-api-bugfix }
+
+- Improved validation of relative paths to prevent a path traversal attack in filesystem exports. (CVE-2026-12701)
+
+### Plugin API {: #3.73.40-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.73.40-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.40-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.73.39 (2026-07-16) {: #3.73.39 }
+
+### REST API {: #3.73.39-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.73.39-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.73.39-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.39-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.73.38 (2026-07-14) {: #3.73.38 }
+
+### REST API {: #3.73.38-rest-api }
+
+#### Bugfixes {: #3.73.38-rest-api-bugfix }
+
+- Fixed `RelatedField` rendering wrong domain in hrefs when `DOMAIN_ENABLED=True`.
+  [#7835](https://github.com/pulp/pulpcore/issues/7835)
+- Fixed a race condition when creating content with `file_url` or `upload` that could result in a duplicate artifact error.
+
+### Plugin API {: #3.73.38-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.73.38-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.38-pulp-cert-guard }
 
 No significant changes.
 
@@ -4717,6 +5373,115 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.64.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.63.45 (2026-07-29) {: #3.63.45 }
+
+### REST API {: #3.63.45-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.63.45-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.45-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.45-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.63.44 (2026-07-28) {: #3.63.44 }
+
+### REST API {: #3.63.44-rest-api }
+
+#### Bugfixes {: #3.63.44-rest-api-bugfix }
+
+- Fixed domain list returning all domains to authenticated users instead of only domains they can view.
+  [#7898](https://github.com/pulp/pulpcore/issues/7898)
+
+### Plugin API {: #3.63.44-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.44-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.44-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.63.43 (2026-07-20) {: #3.63.43 }
+
+### REST API {: #3.63.43-rest-api }
+
+#### Bugfixes {: #3.63.43-rest-api-bugfix }
+
+- Improved validation of relative paths to prevent a path traversal attack in filesystem exports. (CVE-2026-12701)
+
+### Plugin API {: #3.63.43-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.43-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.43-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.63.42 (2026-07-16) {: #3.63.42 }
+
+### REST API {: #3.63.42-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.63.42-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.42-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.42-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.63.41 (2026-07-14) {: #3.63.41 }
+
+### REST API {: #3.63.41-rest-api }
+
+#### Bugfixes {: #3.63.41-rest-api-bugfix }
+
+- Fixed `RelatedField` rendering wrong domain in hrefs when `DOMAIN_ENABLED=True`.
+  [#7835](https://github.com/pulp/pulpcore/issues/7835)
+- Fixed a race condition when creating content with `file_url` or `upload` that could result in a duplicate artifact error.
+
+### Plugin API {: #3.63.41-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.41-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.41-pulp-cert-guard }
 
 No significant changes.
 
@@ -6493,6 +7258,115 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard
+
+No significant changes.
+
+---
+
+## 3.49.68 (2026-07-29) {: #3.49.68 }
+
+### REST API {: #3.49.68-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.49.68-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.68-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.68-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.49.67 (2026-07-28) {: #3.49.67 }
+
+### REST API {: #3.49.67-rest-api }
+
+#### Bugfixes {: #3.49.67-rest-api-bugfix }
+
+- Fixed domain list returning all domains to authenticated users instead of only domains they can view.
+  [#7898](https://github.com/pulp/pulpcore/issues/7898)
+
+### Plugin API {: #3.49.67-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.67-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.67-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.49.66 (2026-07-20) {: #3.49.66 }
+
+### REST API {: #3.49.66-rest-api }
+
+#### Bugfixes {: #3.49.66-rest-api-bugfix }
+
+- Improved validation of relative paths to prevent a path traversal attack in filesystem exports. (CVE-2026-12701)
+
+### Plugin API {: #3.49.66-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.66-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.66-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.49.65 (2026-07-16) {: #3.49.65 }
+
+### REST API {: #3.49.65-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.49.65-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.65-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.65-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.49.64 (2026-07-14) {: #3.49.64 }
+
+### REST API {: #3.49.64-rest-api }
+
+#### Bugfixes {: #3.49.64-rest-api-bugfix }
+
+- Fixed `RelatedField` rendering wrong domain in hrefs when `DOMAIN_ENABLED=True`.
+  [#7835](https://github.com/pulp/pulpcore/issues/7835)
+- Fixed a race condition when creating content with `file_url` or `upload` that could result in a duplicate artifact error.
+
+### Plugin API {: #3.49.64-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.64-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.64-pulp-cert-guard }
 
 No significant changes.
 

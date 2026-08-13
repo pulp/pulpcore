@@ -36,7 +36,7 @@ class NoArtifactContentViewSet(DefaultDeferredContextMixin, ContentViewSet):
         "optionally create new repository version.",
         responses={202: AsyncOperationResponseSerializer},
     )
-    def create(self, request):
+    def create(self, request, **kwargs):
         """Create a content unit."""
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -65,7 +65,7 @@ class NoArtifactContentUploadViewSet(DefaultDeferredContextMixin, ContentViewSet
         "optionally create new repository version.",
         responses={202: AsyncOperationResponseSerializer},
     )
-    def create(self, request):
+    def create(self, request, **kwargs):
         """Create a content unit."""
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -100,7 +100,7 @@ class SingleArtifactContentUploadViewSet(DefaultDeferredContextMixin, ContentVie
         "optionally create new repository version.",
         responses={202: AsyncOperationResponseSerializer},
     )
-    def create(self, request):
+    def create(self, request, **kwargs):
         """Create a content unit."""
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)

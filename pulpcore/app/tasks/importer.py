@@ -321,7 +321,14 @@ def _check_versions(version_json):
 
 
 def import_repository_version(
-    importer_pk, src_repo_name, src_repo_type, dest_repo_name, dest_repo_pk, tar_path, toc_path=None
+    importer_pk,
+    src_repo_name,
+    src_repo_type,
+    dest_repo_name,
+    dest_repo_pk,
+    tar_path,
+    toc_path=None,
+    **kwargs,
 ):
     """
     Import a repository version from a Pulp export.
@@ -431,7 +438,7 @@ def import_repository_version(
     gpr.update(done=F("done") + 1)
 
 
-def pulp_import(importer_pk, path, toc, create_repositories):
+def pulp_import(importer_pk, path, toc, create_repositories, **kwargs):
     """
     Import a Pulp export into Pulp.
 
@@ -542,7 +549,7 @@ def pulp_import(importer_pk, path, toc, create_repositories):
         #
         # By default (setting is not-set), import will continue to use 100% of the available
         # workers.
-        import_workers_percent = int(settings.get("IMPORT_WORKERS_PERCENT", 100))
+        import_workers_percent = int(getattr(settings, "IMPORT_WORKERS_PERCENT", 100))
         total_workers = AppStatus.objects.online().filter(app_type="worker").count()
         import_workers = max(1, int(total_workers * (import_workers_percent / 100.0)))
 

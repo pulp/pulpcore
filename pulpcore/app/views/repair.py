@@ -17,7 +17,7 @@ class RepairView(APIView):
         request=RepairSerializer,
         responses={202: AsyncOperationResponseSerializer},
     )
-    def post(self, request):
+    def post(self, request, **kwargs):
         """
         Repair artifacts.
         """

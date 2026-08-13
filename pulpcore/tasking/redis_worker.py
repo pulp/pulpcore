@@ -93,6 +93,57 @@ def exclusive(lock):
     return _decorator
 
 
+def count_waiting_tasks_for_metric():
+    """
+    Count WAITING/RUNNING tasks older than five seconds that can run at the same
+    time given exclusive/shared resource reservations (FIFO-aware).
+
+    Returns:
+        int: Parallelizable unfinished-task count. Callers subtract online workers
+            when publishing the OpenTelemetry `waiting_tasks` gauge.
+    """
+    cutoff_time = timezone.now() - timedelta(seconds=5)
+
+    incomplete_tasks = (
+        Task.objects.filter(
+            state__in=[TASK_STATES.RUNNING, TASK_STATES.WAITING],
+            pulp_created__lt=cutoff_time,
+        )
+        .order_by("pulp_created")
+        .only("reserved_resources_record")
+    )
+
+    taken_exclusive = set()
+    taken_shared = set()
+    parallel_count = 0
+
+    for task in incomplete_tasks:
+        exclusive_resources, shared_resources = extract_task_resources(task)
+        conflicts = False
+
+        for resource in exclusive_resources:
+            if resource in taken_exclusive or resource in taken_shared:
+                conflicts = True
+                break
+
+        if not conflicts:
+            for resource in shared_resources:
+                if resource in taken_exclusive:
+                    conflicts = True
+                    break
+
+        # Always reserve (even on conflict) so FIFO can't be bypassed; see fetch_task.
+        # e.g. T1(A,B), T2(B,C), T3(C): without reserving C for T2, T3 counts as +1.
+        taken_exclusive.update(exclusive_resources)
+        taken_shared.update(shared_resources)
+        if conflicts:
+            continue
+
+        parallel_count += 1
+
+    return parallel_count
+
+
 class RedisWorker:
     """
     Worker implementation using Redis distributed lock-based resource acquisition.
@@ -133,8 +184,10 @@ class RedisWorker:
         # Metric recording interval
         self.metric_heartbeat_countdown = METRIC_HEARTBEAT_INTERVAL
 
-        # Cache worker count for sleep calculation (updated during beat)
-        self.num_workers = 1
+        # Cache worker count for sleep calculation. Learn the real fleet size at
+        # startup so new workers do not poll at the single-worker rate until the
+        # first heartbeat (~WORKER_TTL/3). Refreshed on each heartbeat in beat().
+        self.num_workers = max(1, AppStatus.objects.online().filter(app_type="worker").count())
 
         # Redis connection for distributed locks
         self.redis_conn = get_redis_connection()
@@ -157,7 +210,10 @@ class RedisWorker:
 
         startup_hook()
 
-        _logger.info("Initialized RedisWorker with Redis lock-based algorithm")
+        _logger.info(
+            "Initialized RedisWorker with Redis lock-based algorithm (online workers=%d)",
+            self.num_workers,
+        )
 
     def _init_instrumentation(self):
         """Initialize OpenTelemetry instrumentation if enabled."""
@@ -210,7 +266,11 @@ class RedisWorker:
             self.app_status.save_heartbeat()
             _logger.debug(msg)
         except (IntegrityError, DatabaseError):
-            _logger.error(f"Updating the heartbeat of worker {self.name} failed.")
+            _logger.error(
+                "Updating the heartbeat of worker %s failed.",
+                self.name,
+                exc_info=True,
+            )
             self.shutdown_requested = True
 
     def handle_redis_heartbeat(self):
@@ -322,19 +382,10 @@ class RedisWorker:
         """
         Record metrics for waiting tasks in the queue.
 
-        This method counts all tasks in RUNNING or WAITING state that are older
-        than 5 seconds, then subtracts the number of active workers to get the
-        number of tasks waiting to be picked up by workers.
+        Publishes `count_waiting_tasks_for_metric() - num_workers` as the
+        OpenTelemetry `waiting_tasks` gauge.
         """
-        cutoff_time = timezone.now() - timedelta(seconds=5)
-
-        task_count = Task.objects.filter(
-            state__in=[TASK_STATES.RUNNING, TASK_STATES.WAITING], pulp_created__lt=cutoff_time
-        ).count()
-
-        waiting_tasks = task_count - self.num_workers
-
-        self.waiting_tasks_meter.set(waiting_tasks)
+        self.waiting_tasks_meter.set(count_waiting_tasks_for_metric() - self.num_workers)
 
     def beat(self):
         """Periodic worker maintenance tasks (heartbeat, cleanup, etc.)."""
@@ -363,7 +414,7 @@ class RedisWorker:
                     self.record_waiting_tasks_metric()
 
             # Update cached worker count for sleep calculation
-            self.num_workers = AppStatus.objects.online().filter(app_type="worker").count()
+            self.num_workers = max(1, AppStatus.objects.online().filter(app_type="worker").count())
 
     def _maybe_release_locks(self, task, mark_released=True):
         """
@@ -500,6 +551,10 @@ class RedisWorker:
 
                 except Exception as e:
                     _logger.error("Error processing task %s: %s", task.pk, e)
+                    try:
+                        safe_release_task_locks(task, lock_owner=self.name)
+                    except Exception:
+                        pass
                     continue
 
             if len(waiting_tasks) < fetch_limit:
@@ -617,24 +672,29 @@ class RedisWorker:
         if cancel_state:
             from pulpcore.tasking._util import delete_incomplete_resources
 
-            # Reload task from database to get current state
-            task.refresh_from_db()
-            # Only clean up if task is not already in a final state
-            # (subprocess may have already handled cancellation)
-            if task.state not in TASK_FINAL_STATES:
-                # Release locks BEFORE setting canceled state
-                # Atomically release task lock + resource locks in a single operation
-                self._maybe_release_locks(task)
-
-                task.set_canceling()
-                _logger.info(
-                    "Cleaning up task %s in domain: %s and marking as %s.",
-                    task.pk,
-                    domain.name,
-                    cancel_state,
-                )
-                delete_incomplete_resources(task)
-                task.set_canceled(final_state=cancel_state, reason=cancel_reason)
+            try:
+                # Reload task from database to get current state
+                task.refresh_from_db()
+                # Only clean up if task is not already in a final state
+                # (subprocess may have already handled cancellation)
+                if task.state not in TASK_FINAL_STATES:
+                    # Release locks BEFORE setting canceled state
+                    self._maybe_release_locks(task)
+                    task.set_canceling()
+                    _logger.info(
+                        "Cleaning up task %s in domain: %s and marking as %s.",
+                        task.pk,
+                        domain.name,
+                        cancel_state,
+                    )
+                    delete_incomplete_resources(task)
+                    task.set_canceled(final_state=cancel_state, reason=cancel_reason)
+            except Exception:
+                _logger.exception("Error in cancel path for task %s", task.pk)
+                try:
+                    self._maybe_release_locks(task)
+                except Exception:
+                    _logger.exception("Failed to release locks for task %s", task.pk)
 
         self.task = None
 

@@ -19,7 +19,7 @@ log = getLogger(__name__)
 CHUNK_SIZE = 1024 * 1024  # 1 Mb
 
 
-def delete_version(pk):
+def delete_version(pk, **kwargs):
     """
     Delete a repository version by squashing its changes with the next newer version. This ensures
     that the content set for each version stays the same.
@@ -156,7 +156,7 @@ async def _repair_artifacts_for_content(subset=None, verify_checksums=True):
         await asyncio.gather(*pending)
 
 
-def repair_version(repository_version_pk, verify_checksums):
+def repair_version(repository_version_pk, verify_checksums, **kwargs):
     """
     Repair the artifacts associated with this repository version.
 
@@ -182,7 +182,7 @@ def repair_version(repository_version_pk, verify_checksums):
     )
 
 
-def repair_all_artifacts(verify_checksums):
+def repair_all_artifacts(verify_checksums, **kwargs):
     """
     Repair all artifacts, globally.
 
@@ -199,7 +199,12 @@ def repair_all_artifacts(verify_checksums):
 
 
 def add_and_remove(
-    repository_pk, add_content_units, remove_content_units, base_version_pk=None, overwrite=True
+    repository_pk,
+    add_content_units,
+    remove_content_units,
+    base_version_pk=None,
+    overwrite=True,
+    **kwargs,
 ):
     """
     Create a new repository version by adding and then removing content units.
@@ -244,7 +249,7 @@ def add_and_remove(
 
 
 async def aadd_and_remove(
-    repository_pk, add_content_units, remove_content_units, base_version_pk=None
+    repository_pk, add_content_units, remove_content_units, base_version_pk=None, **kwargs
 ):
     """Aynsc version of add_and_remove."""
     repository = await models.Repository.objects.aget(pk=repository_pk)

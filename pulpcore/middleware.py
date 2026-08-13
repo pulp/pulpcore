@@ -6,7 +6,7 @@ from django.conf import settings
 from django.core.exceptions import MiddlewareNotUsed
 from django.http.response import Http404
 
-from pulpcore.app.contexts import x_task_diagnostics_var
+from pulpcore.app.contexts import current_pulp_api_version, x_task_diagnostics_var
 from pulpcore.app.models import Domain
 from pulpcore.app.util import (
     get_worker_name,
@@ -168,6 +168,31 @@ class DjangoMetricsMiddleware:
         match = getattr(request, "resolver_match", "")
         route = getattr(match, "route", "")
         return route
+
+
+class ApiVersionMiddleware:
+    """
+    Middleware that captures the API version from URL kwargs and sets it on the
+    _current_pulp_api_version ContextVar, so that task dispatch can read it without
+    every viewset having to pass it explicitly.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        default_vers = settings.REST_FRAMEWORK.get("DEFAULT_VERSION", "v3")
+        token = current_pulp_api_version.set(default_vers)
+        try:
+            return self.get_response(request)
+        finally:
+            current_pulp_api_version.reset(token)
+
+    def process_view(self, request, view_func, view_args, view_kwargs):
+        version = view_kwargs.get("version")
+        if version:
+            current_pulp_api_version.set(version)
+        return None
 
 
 class TaskProfilerMiddleware:

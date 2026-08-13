@@ -15,7 +15,7 @@ class OrphansCleanupViewset(ViewSet):
         description="Trigger an asynchronous orphan cleanup operation.",
         responses={202: AsyncOperationResponseSerializer},
     )
-    def cleanup(self, request):
+    def cleanup(self, request, **kwargs):
         """
         Triggers an asynchronous orphan cleanup operation.
         """
@@ -27,11 +27,11 @@ class OrphansCleanupViewset(ViewSet):
             "orphan_protection_time", settings.ORPHAN_PROTECTION_TIME
         )
         exclusive_resources = [f"pdrn:{request.pulp_domain.pulp_id}:orphans"]
-
+        task_kwargs = {"content_pks": content_pks, "orphan_protection_time": orphan_protection_time}
         task = dispatch(
             orphan_cleanup,
             exclusive_resources=exclusive_resources,
-            kwargs={"content_pks": content_pks, "orphan_protection_time": orphan_protection_time},
+            kwargs=task_kwargs,
         )
 
         return OperationPostponedResponse(task, request)

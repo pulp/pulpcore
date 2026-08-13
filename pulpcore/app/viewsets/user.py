@@ -183,7 +183,7 @@ class GroupUserViewSet(NamedModelViewSet):
         "creation_hooks": [],
     }
 
-    def list(self, request, group_pk):
+    def list(self, request, group_pk, **kwargs):
         """
         List group users.
         """
@@ -198,7 +198,7 @@ class GroupUserViewSet(NamedModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
-    def create(self, request, group_pk):
+    def create(self, request, group_pk, **kwargs):
         """
         Add a user to a group.
         """
@@ -218,7 +218,7 @@ class GroupUserViewSet(NamedModelViewSet):
         serializer = GroupUserSerializer(user, context={"request": request})
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    def destroy(self, request, group_pk, pk):
+    def destroy(self, request, group_pk, pk, **kwargs):
         """
         Remove a user from a group.
         """
@@ -444,11 +444,11 @@ class LoginViewSet(generics.CreateAPIView):
         return "login"
 
     @extend_schema(operation_id="login_read")
-    def get(self, request):
+    def get(self, request, **kwargs):
         return Response(self.get_serializer(request.user).data)
 
     @extend_schema(operation_id="logout")
-    def delete(self, request):
+    def delete(self, request, **kwargs):
         auth_logout(request)
         return Response(status=204)
 
@@ -457,7 +457,7 @@ class LoginViewSet(generics.CreateAPIView):
         request=LoginUpdateSerializer,
         responses={200: LoginUpdateSerializer},
     )
-    def patch(self, request):
+    def patch(self, request, **kwargs):
         instance = request.user
         serializer = LoginUpdateSerializer(
             instance, data=request.data, context={"request": request}, partial=True

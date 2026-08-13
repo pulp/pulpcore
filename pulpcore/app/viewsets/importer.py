@@ -82,7 +82,7 @@ class PulpImportViewSet(ImportViewSet):
         description="Trigger an asynchronous task to import a Pulp export.",
         responses={202: TaskGroupOperationResponseSerializer},
     )
-    def create(self, request, importer_pk):
+    def create(self, request, importer_pk, **kwargs):
         """Import a Pulp export into Pulp."""
         try:
             importer = PulpImporter.objects.get(pk=importer_pk)
@@ -100,16 +100,16 @@ class PulpImportViewSet(ImportViewSet):
         task_group = TaskGroup.objects.create(
             description="Import of {path}".format(path=path or toc)
         )
-
+        task_kwargs = {
+            "importer_pk": importer.pk,
+            "path": path,
+            "toc": toc,
+            "create_repositories": create_repositories,
+        }
         dispatch(
             pulp_import,
             exclusive_resources=[importer],
             task_group=task_group,
-            kwargs={
-                "importer_pk": importer.pk,
-                "path": path,
-                "toc": toc,
-                "create_repositories": create_repositories,
-            },
+            kwargs=task_kwargs,
         )
         return TaskGroupOperationResponse(task_group, request)

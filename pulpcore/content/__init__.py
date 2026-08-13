@@ -29,12 +29,18 @@ from .handler import Handler  # noqa: E402
 
 log = logging.getLogger(__name__)
 
+# PQC (post-quantum) X.509 certificates can exceed aiohttp's default 8190-byte header
+# limit when forwarded via X-CLIENT-CERT by a reverse proxy.
+_HANDLER_ARGS = {"max_field_size": 16 * 1024}
+
 if settings.OTEL_ENABLED:
     from .instrumentation import instrumentation  # noqa: E402
 
-    app = web.Application(middlewares=[guid, authenticate, instrumentation()])
+    app = web.Application(
+        middlewares=[guid, authenticate, instrumentation()], handler_args=_HANDLER_ARGS
+    )
 else:
-    app = web.Application(middlewares=[guid, authenticate])
+    app = web.Application(middlewares=[guid, authenticate], handler_args=_HANDLER_ARGS)
 
 
 if settings.UVLOOP_ENABLED:

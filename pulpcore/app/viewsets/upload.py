@@ -125,7 +125,7 @@ class UploadViewSet(
         parameters=[content_range_parameter],
         responses={200: UploadSerializer},
     )
-    def update(self, request, pk=None):
+    def update(self, request, pk=None, **kwargs):
         """
         Upload a chunk for an upload.
         """
@@ -148,7 +148,7 @@ class UploadViewSet(
         responses={202: AsyncOperationResponseSerializer},
     )
     @action(detail=True, methods=["post"])
-    def commit(self, request, pk):
+    def commit(self, request, pk, **kwargs):
         """
         Queues a Task that creates an Artifact, and the Upload gets deleted and cannot be re-used.
         """

@@ -11,7 +11,7 @@ from pulpcore.app.util import get_domain
 _logger = logging.getLogger(__name__)
 
 
-def migrate_backend(data):
+def migrate_backend(data, **kwargs):
     """
     Copy the artifacts from the current storage backend to a new one. Then update backend settings.
 

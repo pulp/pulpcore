@@ -6,6 +6,7 @@ import logging
 import traceback
 from gettext import gettext as _
 
+from django.conf import settings
 from django.contrib.postgres.fields import ArrayField, HStoreField
 from django.contrib.postgres.indexes import GinIndex
 from django.core.serializers.json import DjangoJSONEncoder
@@ -142,6 +143,10 @@ class Task(BaseModel, AutoAddObjPermsMixin):
     deferred = models.BooleanField(default=True, null=True)
 
     result = models.JSONField(default=None, null=True, encoder=DjangoJSONEncoder)
+
+    pulp_api_version = models.TextField(
+        default=settings.REST_FRAMEWORK.get("DEFAULT_VERSION", "v3")
+    )
 
     @property
     def user(self):

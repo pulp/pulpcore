@@ -9,8 +9,8 @@ from uuid import uuid4
 
 import pytest
 from aiohttp import BasicAuth
+from django.conf import settings
 
-from pulpcore.app import settings
 from pulpcore.client.pulpcore import ApiException
 from pulpcore.constants import IMMEDIATE_TIMEOUT
 from pulpcore.tests.functional.utils import PulpTaskError, download_file

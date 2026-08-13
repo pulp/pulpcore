@@ -28,7 +28,7 @@ def user_agent():
     return f"pulpcore/{pulp_version} ({python}, {system}) (pulp-glue {pulp_glue_version})"
 
 
-def replicate_distributions(server_pk, q_select=None):
+def replicate_distributions(server_pk, q_select=None, **kwargs):
     server = UpstreamPulp.objects.get(pk=server_pk)
 
     # Write out temporary files related to SSL
@@ -43,22 +43,19 @@ def replicate_distributions(server_pk, q_select=None):
     if "ca_cert" in ssl_files:
         os.environ["PULP_CA_BUNDLE"] = ssl_files["ca_cert"]
 
-    api_kwargs = dict(
-        base_url=server.base_url,
-        username=server.username,
-        password=server.password,
-        user_agent=user_agent(),
-        validate_certs=server.tls_validation,
-        cert=ssl_files.get("client_cert"),
-        key=ssl_files.get("client_key"),
-    )
-
-    ctx = ReplicaContext(
-        api_root=server.api_root,
-        api_kwargs=api_kwargs,
-        background_tasks=True,
-        timeout=0,
-        domain=server.domain,
+    ctx = ReplicaContext.from_config(
+        {
+            "base_url": server.base_url,
+            "api_root": server.api_root,
+            "domain": server.domain,
+            "username": server.username,
+            "password": server.password,
+            "cert": ssl_files.get("client_cert"),
+            "key": ssl_files.get("client_key"),
+            "user_agent": user_agent(),
+            "verify_ssl": server.tls_validation,
+            "dry_run": True,  # We only want to read from upstream anyway.
+        }
     )
 
     remote_settings = {
@@ -142,7 +139,7 @@ def replicate_distributions(server_pk, q_select=None):
     )
 
 
-def finalize_replication(server_pk, distro_repo_pairs):
+def finalize_replication(server_pk, distro_repo_pairs, **kwargs):
     task = Task.current()
     task_group = TaskGroup.current()
     server = UpstreamPulp.objects.get(pk=server_pk)

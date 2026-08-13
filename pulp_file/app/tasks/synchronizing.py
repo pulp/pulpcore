@@ -111,6 +111,7 @@ def synchronize(remote_pk, repository_pk, mirror, optimize=False, url=None, **kw
         ValueError: If the remote does not specify a URL to sync.
 
     """
+
     remote = Remote.objects.get(pk=remote_pk).cast()
     repository = FileRepository.objects.get(pk=repository_pk)
 

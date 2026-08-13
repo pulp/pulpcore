@@ -26,7 +26,7 @@ class AccessPolicyViewSet(
 
     @extend_schema(request=None)
     @action(detail=True, methods=["post"])
-    def reset(self, request, pk=None):
+    def reset(self, request, pk=None, **kwargs):
         """
         Reset the access policy to its uncustomized default value.
         """

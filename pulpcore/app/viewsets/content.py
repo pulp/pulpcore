@@ -89,7 +89,7 @@ class ArtifactViewSet(
     # Deleting artifacts is a risky operation and will be removed in a future release.
     # However, for compatibility reasons, it is still possible to execute the DELETE
     # request by overriding the DEFAULT_ACCESS_POLICY.
-    def destroy(self, request, pk):
+    def destroy(self, request, pk, **kwargs):
         """
         Remove Artifact only if it is not associated with any Content.
         """

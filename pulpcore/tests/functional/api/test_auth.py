@@ -8,8 +8,7 @@ import json
 from base64 import b64encode
 
 import pytest
-
-from pulpcore.app import settings
+from django.conf import settings
 
 
 @pytest.mark.parallel

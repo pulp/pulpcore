@@ -567,7 +567,7 @@ class Handler:
 {% else -%}
 {% set size = "" -%}
 {% endif -%}
-<a href="{{ name|e }}">{{ name|e }}</a>{% for number in range(100 - name|e|length) %} """
+<a href="./{{ name|e }}">{{ name|e }}</a>{% for number in range(100 - name|e|length) %} """
             """{% endfor %}{{ date }}  {{ size }}
 {% endfor -%}
 </pre><hr></body>
@@ -904,6 +904,7 @@ class Handler:
                     # Try to stream the RemoteArtifact and potentially save it as a new Content unit
                     save_artifact = (
                         remote.get_remote_artifact_content_type(original_rel_path) is not None
+                        and remote.policy != Remote.STREAMED
                     )
                     ca = ContentArtifact(relative_path=original_rel_path)
                     ra = RemoteArtifact(remote=remote, url=url, content_artifact=ca)
@@ -972,7 +973,10 @@ class Handler:
         )
         async for remote_artifact in remote_artifacts:
             try:
-                response = await self._stream_remote_artifact(request, response, remote_artifact)
+                save_artifact = remote_artifact.remote.policy != Remote.STREAMED
+                response = await self._stream_remote_artifact(
+                    request, response, remote_artifact, save_artifact=save_artifact
+                )
                 return response
             except SKIPPABLE_EXCEPTIONS as e:
                 log.warning(
@@ -1179,7 +1183,7 @@ class Handler:
             return response
 
     async def _stream_remote_artifact(
-        self, request, response, remote_artifact, save_artifact=True, repository=None
+        self, request, response, remote_artifact, save_artifact, repository=None
     ):
         """
         Stream and save a RemoteArtifact.
@@ -1289,12 +1293,12 @@ class Handler:
                     data_size_handled = data_size_handled + len(data)
                 else:
                     await response.write(data)
-            if remote.policy != Remote.STREAMED:
+            if save_artifact:
                 await original_handle_data(data)
 
         async def finalize():
             nonlocal failed_download
-            if save_artifact and remote.policy != Remote.STREAMED:
+            if save_artifact:
                 await original_finalize()
             failed_download = False
 
@@ -1342,7 +1346,7 @@ class Handler:
             if hasattr(downloader, "session"):
                 await downloader.session.close()
 
-        if save_artifact and remote.policy != Remote.STREAMED:
+        if save_artifact:
             content_artifacts = await asyncio.shield(
                 sync_to_async(self._save_artifact)(download_result, remote_artifact, request)
             )

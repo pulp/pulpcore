@@ -37,18 +37,36 @@ from pulpcore.app.loggers import deprecation_logger
 from pulpcore.plugin.find_url import find_api_root
 
 # Get the API-ROOT for this installation
-_unused, FULL_API_PATH_NOFRONT = find_api_root(lstrip=True)
+# We handle V3 seperately, since it existed before the "we can support multiple versions" work
+
+if settings.ENABLE_V4_API:
+    _unused, FULL_API_PATH_NOFRONT = find_api_root(lstrip=True, version="<str:version>")
+    _unused, V3_PATH_NOFRONT = find_api_root(lstrip=True, version="v3")
+else:
+    # "Hardcoded" 'v3' for version, everywhere
+    _unused, FULL_API_PATH_NOFRONT = find_api_root(lstrip=True, version="v3")
+    _unused, V3_PATH_NOFRONT = find_api_root(lstrip=True, version="v3")
+
 
 # Massage some api-affecting vars to "genericize" them for the spec
 if settings.DOMAIN_ENABLED:
     FULL_API_PATH_NOFRONT = FULL_API_PATH_NOFRONT.replace("slug:", "")
+    V3_PATH_NOFRONT = V3_PATH_NOFRONT.replace("slug:", "")
+
 if settings.API_ROOT_REWRITE_HEADER:
     FULL_API_PATH_NOFRONT = FULL_API_PATH_NOFRONT.replace(
         "<path:api_root>", settings.API_ROOT.strip("/")
     )
+    V3_PATH_NOFRONT = V3_PATH_NOFRONT.replace("<path:api_root>", settings.API_ROOT.strip("/"))
 
 # Final massage to make api-root "openapi compatible"
 FULL_API_PATH_NOFRONT = FULL_API_PATH_NOFRONT.replace("<", "{").replace(">", "}")
+V3_PATH_NOFRONT = V3_PATH_NOFRONT.replace("<", "{").replace(">", "}")
+
+DOMAIN_STRIPPED_PREFIX = FULL_API_PATH_NOFRONT.replace("{pulp_domain}/", "")
+V3_DOMAIN_STRIPPED_PREFIX = V3_PATH_NOFRONT.replace("{pulp_domain}/", "")
+V4_DOMAIN_STRIPPED_PREFIX = V3_DOMAIN_STRIPPED_PREFIX.replace("v3", "v4")
+
 
 # Python does not distinguish integer sizes. The safest assumption is that they are large.
 extend_schema_field(OpenApiTypes.INT64)(serializers.IntegerField)
@@ -68,7 +86,6 @@ class PulpAutoSchema(AutoSchema):
         "patch": "partial_update",
         "delete": "delete",
     }
-    V3_API = FULL_API_PATH_NOFRONT.replace("{pulp_domain}/", "")
 
     def _tokenize_path(self):
         """
@@ -96,8 +113,17 @@ class PulpAutoSchema(AutoSchema):
             if not tokenized_path and getattr(self.view, "get_view_name", None):
                 tokenized_path.extend(self.view.get_view_name().split())
 
-        path = "/".join(tokenized_path).replace(self.V3_API, "")
-        tokenized_path = path.split("/")
+        # We want to drop {pulp_domain} here.
+        # In addition, we want to drop V3 from the operationId here - but *only* if we find V3!
+        if "v3" in tokenized_path:
+            path = "/".join(tokenized_path).replace(V3_DOMAIN_STRIPPED_PREFIX, "")
+            tokenized_path = path.split("/")
+        elif "v4" in tokenized_path:
+            path = "/".join(tokenized_path).replace(V4_DOMAIN_STRIPPED_PREFIX, "")
+            tokenized_path = path.split("/")
+        else:
+            path = "/".join(tokenized_path).replace(DOMAIN_STRIPPED_PREFIX, "")
+            tokenized_path = path.split("/")
 
         return tokenized_path
 
@@ -119,13 +145,19 @@ class PulpAutoSchema(AutoSchema):
 
         """
         pulp_tag_name = getattr(self.view, "pulp_tag_name", False)
+
         if pulp_tag_name:
             return [pulp_tag_name]
 
         tokenized_path = self._tokenize_path()
 
         subpath = "/".join(tokenized_path)
-        operation_keys = subpath.replace(self.V3_API, "").split("/")
+        if "v3" in subpath:
+            operation_keys = subpath.replace(V3_DOMAIN_STRIPPED_PREFIX, "").split("/")
+        elif "v4" in subpath:
+            operation_keys = subpath.replace(V4_DOMAIN_STRIPPED_PREFIX, "").split("/")
+        else:
+            operation_keys = subpath.replace(DOMAIN_STRIPPED_PREFIX, "").split("/")
         operation_keys = [i.title() for i in operation_keys]
         if len(operation_keys) > 2:
             del operation_keys[1]
@@ -352,6 +384,8 @@ class PulpSchemaGenerator(SchemaGenerator):
 
     def parse(self, input_request, public):
         """Iterate endpoints generating per method path operations."""
+        if settings.ENABLE_V4_API:
+            in_version = input_request.version if hasattr(input_request, "version") else "v3"
         result = {}
         self._initialise_endpoints()
         endpoints = self._get_paths_and_endpoints()
@@ -386,6 +420,9 @@ class PulpSchemaGenerator(SchemaGenerator):
             if settings.API_ROOT_REWRITE_HEADER:
                 path = path.replace("{api_root}", settings.API_ROOT.strip("/"))
 
+            if settings.ENABLE_V4_API:
+                path = path.replace("{version}", in_version)
+
             if input_request is None or "pk_path" not in query_params:
                 path = self.convert_endpoint_path_params(path, view, schema)
 
@@ -407,7 +444,9 @@ class PulpSchemaGenerator(SchemaGenerator):
                 tokenized_path = "_".join(
                     [t.replace("-", "_").replace("/", "_").lower() for t in tokenized_path]
                 )
+
                 action = schema.get_operation_id_action()
+
                 if f"{tokenized_path}_{action}" == operation["operationId"]:
                     operation["operationId"] = action
 

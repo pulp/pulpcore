@@ -272,7 +272,7 @@ class RepositoryVersionViewSet(
         description="Trigger an asynchronous task to delete a repository version.",
         responses={202: AsyncOperationResponseSerializer},
     )
-    def destroy(self, request, repository_pk, number):
+    def destroy(self, request, repository_pk, number, **kwargs):
         """
         Queues a task to handle deletion of a RepositoryVersion
         """
@@ -280,11 +280,11 @@ class RepositoryVersionViewSet(
 
         if version in version.repository.protected_versions():
             raise serializers.ValidationError(PROTECTED_REPO_VERSION_MESSAGE)
-
+        task_kwargs = {"pk": version.pk}
         task = dispatch(
             tasks.repository.delete_version,
             exclusive_resources=[version.repository],
-            kwargs={"pk": version.pk},
+            kwargs=task_kwargs,
         )
         return OperationPostponedResponse(task, request)
 
@@ -293,7 +293,7 @@ class RepositoryVersionViewSet(
         responses={202: AsyncOperationResponseSerializer},
     )
     @action(detail=True, methods=["post"], serializer_class=RepairSerializer)
-    def repair(self, request, repository_pk, number):
+    def repair(self, request, repository_pk, number, **kwargs):
         """
         Queues a task to repair corrupted artifacts corresponding to a RepositoryVersion
         """
@@ -307,6 +307,7 @@ class RepositoryVersionViewSet(
             tasks.repository.repair_version,
             shared_resources=[version.repository],
             args=[version.pk, verify_checksums],
+            kwargs=kwargs,
         )
         return OperationPostponedResponse(task, request)
 

@@ -27,7 +27,7 @@ class ModifyRepositoryActionMixin:
         responses={202: AsyncOperationResponseSerializer},
     )
     @action(detail=True, methods=["post"], serializer_class=RepositoryAddRemoveContentSerializer)
-    def modify(self, request, pk):
+    def modify(self, request, pk, **kwargs):
         """
         Queues a task that creates a new RepositoryVersion by adding and removing content units
         """

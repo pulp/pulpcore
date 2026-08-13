@@ -574,6 +574,18 @@ async def test_app_status_fixture_is_reusable(app_status, repeat):
     assert app_status
 
 
+def test_render_html_colon_in_name():
+    """Links with colons in the name should use './' prefix to avoid being treated as a scheme."""
+    html = Handler.render_html(["copr-pull-requests:pr:3825/"])
+    assert '<a href="./copr-pull-requests:pr:3825/">copr-pull-requests:pr:3825/</a>' in html
+
+
+def test_render_html_normal_name():
+    """Normal directory names should also get the './' prefix."""
+    html = Handler.render_html(["simple-dir/"])
+    assert '<a href="./simple-dir/">simple-dir/</a>' in html
+
+
 @pytest.mark.asyncio
 @pytest.mark.django_db
 async def test_async_pull_through_add(ca1, monkeypatch, app_status):

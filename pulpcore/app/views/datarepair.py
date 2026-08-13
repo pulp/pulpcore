@@ -23,7 +23,7 @@ class DataRepair7272View(APIView):
         request=DataRepair7272Serializer,
         responses={202: AsyncOperationResponseSerializer},
     )
-    def post(self, request):
+    def post(self, request, **kwargs):
         """
         Repair repository version data issues (Issue #7272).
         """
