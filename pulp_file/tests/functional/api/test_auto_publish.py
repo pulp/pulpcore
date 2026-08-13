@@ -1,5 +1,7 @@
 """Tests that sync file plugin repositories."""
 
+from uuid import uuid4
+
 import pytest
 
 from pulpcore.client.pulp_file import (
@@ -24,8 +26,10 @@ def test_auto_publish_and_distribution(
     file_random_content_unit,
     monitor_task,
     has_pulp_plugin,
+    random_artifact_factory,
 ):
     """Tests auto-publish and auto-distribution"""
+    # Remote is only needed to assert mirror=True is rejected with autopublish.
     remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="on_demand")
     repo = file_bindings.RepositoriesFileApi.read(file_repo_with_auto_publish.pulp_href)
     distribution = gen_object_with_cleanup(
@@ -44,12 +48,18 @@ def test_auto_publish_and_distribution(
     )
     assert distribution.publication is None
 
-    # Check what content and artifacts are in the fixture repository
-    expected_files = get_files_in_manifest(remote.url)
-
-    # Sync from the remote
-    body = FileRepositorySyncURL(remote=remote.pulp_href)
-    monitor_task(file_bindings.RepositoriesFileApi.sync(repo.pulp_href, body).task)
+    # One content unit is enough for version 1; attaching it triggers autopublish.
+    artifact = random_artifact_factory()
+    relative_path = f"{uuid4()}.iso"
+    created = monitor_task(
+        file_bindings.ContentFilesApi.create(
+            artifact=artifact.pulp_href,
+            relative_path=relative_path,
+            repository=repo.pulp_href,
+        ).task
+    ).created_resources
+    content = file_bindings.ContentFilesApi.read(created[1] if len(created) > 1 else created[0])
+    expected_files = {(relative_path, content.sha256, str(artifact.size))}
     repo = file_bindings.RepositoriesFileApi.read(repo.pulp_href)
 
     # Assert that a new repository version was created and a publication was created
