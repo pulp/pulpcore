@@ -2,7 +2,7 @@
 
 import re
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from time import sleep
 from urllib.parse import urlparse
 
@@ -11,6 +11,17 @@ from aiohttp import ClientResponseError
 
 from pulpcore.client.pulp_file import exceptions
 from pulpcore.content.handler import Handler
+
+
+def _wait_until_checkpoint_ts_advances(previous_created):
+    """Block until wall-clock formats to a later checkpoint timestamp than previous_created.
+
+    Checkpoint URLs are second-resolution, so consecutive publications need distinct
+    seconds. Fixed sleep(1) is wasteful when create/publish already crossed a second.
+    """
+    previous_ts = Handler._format_checkpoint_timestamp(previous_created)
+    while Handler._format_checkpoint_timestamp(datetime.now(timezone.utc)) == previous_ts:
+        sleep(0.05)
 
 
 @pytest.fixture(scope="class")
@@ -22,16 +33,37 @@ def content_factory(tmp_path_factory, file_bindings, monitor_task):
             file_bindings.ContentFilesApi.create(relative_path=name, file=str(file)).task
         ).created_resources[0]
 
+    def _precreate(names):
+        """Create many content units, dispatching tasks before waiting."""
+        create_tasks = []
+        for name in names:
+            file = tmp_path_factory.mktemp("content") / name
+            file.write_text(str(uuid.uuid4()))
+            create_tasks.append(
+                file_bindings.ContentFilesApi.create(relative_path=name, file=str(file)).task
+            )
+        return [monitor_task(task_href).created_resources[0] for task_href in create_tasks]
+
+    _content_factory.precreate = _precreate
     return _content_factory
 
 
 @pytest.fixture(scope="class")
 def create_publication(content_factory, file_bindings, monitor_task):
     counter = [0]
+    content_queue = []
+
+    def precreate(n):
+        names = []
+        for _ in range(n):
+            names.append(str(counter[0]))
+            counter[0] += 1
+        content_queue.extend(content_factory.precreate(names))
 
     def _create_publication(repo, checkpoint):
-        content_href = content_factory(f"{counter[0]}")
-        counter[0] += 1
+        if not content_queue:
+            precreate(1)
+        content_href = content_queue.pop(0)
 
         monitor_task(
             file_bindings.RepositoriesFileApi.modify(
@@ -46,6 +78,7 @@ def create_publication(content_factory, file_bindings, monitor_task):
         )
         return file_bindings.PublicationsFileApi.read(response.created_resources[0])
 
+    _create_publication.precreate = precreate
     return _create_publication
 
 
@@ -58,16 +91,14 @@ def setup(
     repo = file_repository_factory()
     distribution = file_distribution_factory(repository=repo.pulp_href, checkpoint=True)
 
+    # Five publications: content creates overlap; only wait between pubs when needed
+    # for distinct second-resolution checkpoint timestamps.
+    create_publication.precreate(5)
     pubs = []
-    pubs.append(create_publication(repo, False))
-    sleep(1)
-    pubs.append(create_publication(repo, True))
-    sleep(1)
-    pubs.append(create_publication(repo, False))
-    sleep(1)
-    pubs.append(create_publication(repo, True))
-    sleep(1)
-    pubs.append(create_publication(repo, False))
+    for checkpoint in (False, True, False, True, False):
+        if pubs:
+            _wait_until_checkpoint_ts_advances(pubs[-1].pulp_created)
+        pubs.append(create_publication(repo, checkpoint))
 
     return pubs, distribution
 
@@ -252,7 +283,8 @@ def test_checkpoint_retention(
     repo = file_repository_factory()
     file_distribution_factory(repository=repo.pulp_href, checkpoint=True)
 
-    # Create 4 checkpoint publications
+    # Create 4 checkpoint publications (content creates overlap up front).
+    create_publication.precreate(5)
     checkpoint_pubs = []
     for _ in range(4):
         checkpoint_pubs.append(create_publication(repo, True))
