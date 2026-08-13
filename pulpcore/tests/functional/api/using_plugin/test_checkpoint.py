@@ -113,7 +113,8 @@ def checkpoint_url(distribution_base_url):
 
 
 class TestCheckpointDistribution:
-    @pytest.mark.parallel
+    """Don't mark parallel, tests are shorter than setup."""
+
     def test_base_path_lists_checkpoints(self, setup, http_get, distribution_base_url):
         pubs, distribution = setup
 
@@ -124,7 +125,6 @@ class TestCheckpointDistribution:
         assert Handler._format_checkpoint_timestamp(pubs[1].pulp_created) in checkpoints_ts
         assert Handler._format_checkpoint_timestamp(pubs[3].pulp_created) in checkpoints_ts
 
-    @pytest.mark.parallel
     def test_distro_root_no_trailing_slash_is_redirected(
         self,
         setup,
@@ -143,7 +143,6 @@ class TestCheckpointDistribution:
         assert Handler._format_checkpoint_timestamp(pubs[1].pulp_created) in checkpoints_ts
         assert Handler._format_checkpoint_timestamp(pubs[3].pulp_created) in checkpoints_ts
 
-    @pytest.mark.parallel
     def test_timestamped_checkpoint_no_trailing_slash_is_redirected(
         self,
         setup,
@@ -159,7 +158,6 @@ class TestCheckpointDistribution:
 
         assert f"<h1>Index of {urlparse(pub_1_url).path}</h1>" in response
 
-    @pytest.mark.parallel
     def test_exact_timestamp_is_served(self, setup, http_get, checkpoint_url):
         pubs, distribution = setup
 
@@ -168,7 +166,6 @@ class TestCheckpointDistribution:
 
         assert f"<h1>Index of {urlparse(pub_1_url).path}</h1>" in response
 
-    @pytest.mark.parallel
     def test_invalid_timestamp_returns_404(self, setup, http_get, distribution_base_url):
         _, distribution = setup
         with pytest.raises(ClientResponseError) as exc:
@@ -181,7 +178,6 @@ class TestCheckpointDistribution:
 
         assert exc.value.status == 404
 
-    @pytest.mark.parallel
     def test_checkpoint_artifact_is_served(self, setup, http_get, checkpoint_url):
         pubs, distribution = setup
         pub_1_url = checkpoint_url(distribution, pubs[1].pulp_created)
@@ -195,7 +191,6 @@ class TestCheckpointDistribution:
         artifact_names = {line.split(",")[0] for line in lines}
         assert artifact_names == {"0", "1"}
 
-    @pytest.mark.parallel
     def test_non_checkpoint_timestamp_is_redirected(self, setup, http_get, checkpoint_url):
         pubs, distribution = setup
         # Using a non-checkpoint publication timestamp
@@ -209,7 +204,6 @@ class TestCheckpointDistribution:
         response = http_get(pub_4_url[:-1]).decode("utf-8")
         assert f"<h1>Index of {urlparse(pub_3_url).path}</h1>" in response
 
-    @pytest.mark.parallel
     def test_arbitrary_timestamp_is_redirected(self, setup, http_get, checkpoint_url):
         pubs, distribution = setup
         pub_1_url = checkpoint_url(distribution, pubs[1].pulp_created)
@@ -222,7 +216,6 @@ class TestCheckpointDistribution:
         response = http_get(arbitrary_url[:-1]).decode("utf-8")
         assert f"<h1>Index of {urlparse(pub_1_url).path}</h1>" in response
 
-    @pytest.mark.parallel
     def test_current_timestamp_serves_latest_checkpoint(self, setup, http_get, checkpoint_url):
         pubs, distribution = setup
         pub_3_url = checkpoint_url(distribution, pubs[3].pulp_created)
@@ -232,7 +225,6 @@ class TestCheckpointDistribution:
 
         assert f"<h1>Index of {urlparse(pub_3_url).path}</h1>" in response
 
-    @pytest.mark.parallel
     def test_before_first_timestamp_returns_404(self, setup, http_get, checkpoint_url):
         pubs, distribution = setup
         pub_0_url = checkpoint_url(distribution, pubs[0].pulp_created)
@@ -242,7 +234,6 @@ class TestCheckpointDistribution:
 
         assert exc.value.status == 404
 
-    @pytest.mark.parallel
     def test_future_timestamp_returns_404(self, setup, http_get, checkpoint_url):
         _, distribution = setup
         url = checkpoint_url(distribution, datetime.now() + timedelta(days=1))
