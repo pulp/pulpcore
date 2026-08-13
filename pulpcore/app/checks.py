@@ -125,8 +125,14 @@ def check_artifact_checksums(app_configs, **kwargs):
     return messages
 
 
+_WORKLOAD_IDENTITY_BACKEND = "pulpcore.app.workload_identity.backend.WorkloadIdentityBackend"
+
+
 @register(deploy=True)
 def workload_identity_reserved_username(app_configs, **kwargs):
+    if _WORKLOAD_IDENTITY_BACKEND not in settings.AUTHENTICATION_BACKENDS:
+        return []
+
     from pulpcore.app.workload_identity import config
 
     messages = []
@@ -157,6 +163,9 @@ def workload_identity_reserved_username(app_configs, **kwargs):
 
 @register(deploy=True)
 def workload_identity_domain_scopes(app_configs, **kwargs):
+    if _WORKLOAD_IDENTITY_BACKEND not in settings.AUTHENTICATION_BACKENDS:
+        return []
+
     from pulpcore.app.workload_identity import config
 
     messages = []
@@ -183,6 +192,9 @@ def workload_identity_domain_scopes(app_configs, **kwargs):
 
 @register(deploy=True)
 def workload_identity_unqualified_name_scopes(app_configs, **kwargs):
+    if _WORKLOAD_IDENTITY_BACKEND not in settings.AUTHENTICATION_BACKENDS:
+        return []
+
     from pulpcore.app.workload_identity import config
 
     messages = []

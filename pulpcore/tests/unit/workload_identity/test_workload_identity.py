@@ -32,6 +32,19 @@ from pulpcore.app.workload_identity.authz import (
 from pulpcore.app.workload_identity.principal import WorkloadIdentityPrincipal
 from pulpcore.app.workload_identity.rules import grants_for
 
+WI_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "pulpcore.backends.ObjectRolePermissionBackend",
+    "pulpcore.app.workload_identity.backend.WorkloadIdentityBackend",
+]
+
+
+@pytest.fixture(autouse=True)
+def _wi_backend_enabled(settings):
+    # The backend is an opt-in addon, so enable it for the tests that exercise it.
+    settings.AUTHENTICATION_BACKENDS = WI_BACKENDS
+
+
 PROVIDER = {
     "issuer": "https://issuer",
     "rules": [
@@ -622,3 +635,22 @@ def test_authenticate_not_a_jwt_returns_none():
 @override_settings(WORKLOAD_IDENTITY=WI_AUTH)
 def test_authenticate_no_token_returns_none():
     assert WorkloadIdentityAuthentication().authenticate(_FakeRequest("")) is None
+
+
+# --- checks are silent when the backend is not configured ---
+
+
+@override_settings(
+    AUTHENTICATION_BACKENDS=["django.contrib.auth.backends.ModelBackend"],
+    DOMAIN_ENABLED=True,
+    WORKLOAD_IDENTITY={
+        "basic_auth_username": "ci-bot",
+        "providers": {
+            "p": {"rules": [{"grants": [{"role": "r", "scope": {"type": "object", "name": "x"}}]}]}
+        },
+    },
+)
+def test_checks_silent_when_backend_not_configured():
+    assert workload_identity_reserved_username(None) == []
+    assert workload_identity_domain_scopes(None) == []
+    assert workload_identity_unqualified_name_scopes(None) == []
