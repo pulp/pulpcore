@@ -8,6 +8,72 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.116.0 (2026-08-12) {: #3.116.0 }
+
+### REST API {: #3.116.0-rest-api }
+
+#### Features {: #3.116.0-rest-api-feature }
+
+- Added `--backend` option to the `add-signing-service` management command, enabling Sequoia (`sq`) as an alternative to GPG for key management. Use `--backend sq` to register signing services using Sequoia's key store.
+  [#7479](https://github.com/pulp/pulpcore/issues/7479)
+
+#### Bugfixes {: #3.116.0-rest-api-bugfix }
+
+- Reduced lock contention for distribution updates that leave `base_path` unchanged.
+  [#3322](https://github.com/pulp/pulpcore/issues/3322),
+  [#7896](https://github.com/pulp/pulpcore/issues/7896)
+- Fix temp file leak in pull-through metadata streaming.
+  [#7846](https://github.com/pulp/pulpcore/issues/7846)
+- Fixed domain list returning all domains to authenticated users instead of only domains they can view.
+  [#7898](https://github.com/pulp/pulpcore/issues/7898)
+- Fixed RedisWorker leaking Redis locks when task acquire, abort, cancel, or immediate dispatch cleanup failed.
+  [#7902](https://github.com/pulp/pulpcore/issues/7902)
+- Fixed the `waiting_tasks` metric to count only tasks that can run in parallel under resource locks, matching worker FIFO scheduling.
+  [#7938](https://github.com/pulp/pulpcore/issues/7938)
+- Fixed Redis workers polling the database at the single-worker rate during startup by learning the online worker count before the first heartbeat.
+- Increased the content app's maximum HTTP header field size from 8190 to 16384 bytes to support PQC (post-quantum) X.509 certificates forwarded via the `X-CLIENT-CERT` header.
+
+### Plugin API {: #3.116.0-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.116.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.116.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.115.4 (2026-08-12) {: #3.115.4 }
+
+### REST API {: #3.115.4-rest-api }
+
+#### Bugfixes {: #3.115.4-rest-api-bugfix }
+
+- Reduced lock contention for distribution updates that leave `base_path` unchanged.
+  [#3322](https://github.com/pulp/pulpcore/issues/3322),
+  [#7896](https://github.com/pulp/pulpcore/issues/7896)
+- Fixed the `waiting_tasks` metric to count only tasks that can run in parallel under resource locks, matching worker FIFO scheduling.
+  [#7938](https://github.com/pulp/pulpcore/issues/7938)
+- Fixed Redis workers polling the database at the single-worker rate during startup by learning the online worker count before the first heartbeat.
+
+### Plugin API {: #3.115.4-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.115.4-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.115.4-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.115.3 (2026-07-28) {: #3.115.3 }
 
 ### REST API {: #3.115.3-rest-api }
@@ -832,6 +898,30 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.106.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.105.16 (2026-08-12) {: #3.105.16 }
+
+### REST API {: #3.105.16-rest-api }
+
+#### Bugfixes {: #3.105.16-rest-api-bugfix }
+
+- Reduced lock contention for distribution updates that leave `base_path` unchanged.
+  [#3322](https://github.com/pulp/pulpcore/issues/3322),
+  [#7896](https://github.com/pulp/pulpcore/issues/7896)
+
+### Plugin API {: #3.105.16-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.105.16-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.105.16-pulp-cert-guard }
 
 No significant changes.
 
@@ -2173,6 +2263,30 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.86.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.85.29 (2026-08-12) {: #3.85.29 }
+
+### REST API {: #3.85.29-rest-api }
+
+#### Bugfixes {: #3.85.29-rest-api-bugfix }
+
+- Reduced lock contention for distribution updates that leave `base_path` unchanged.
+  [#3322](https://github.com/pulp/pulpcore/issues/3322),
+  [#7896](https://github.com/pulp/pulpcore/issues/7896)
+
+### Plugin API {: #3.85.29-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.85.29-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.29-pulp-cert-guard }
 
 No significant changes.
 
