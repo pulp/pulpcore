@@ -245,28 +245,38 @@ def test_distribution_update_task_reservations(
 @pytest.mark.parallel
 def test_distribution_filtering(
     file_bindings,
-    file_remote_factory,
     file_random_content_unit,
     file_repository_factory,
     gen_object_with_cleanup,
-    write_3_iso_file_fixture_data_factory,
     monitor_task,
+    random_artifact_factory,
 ):
     """Test distribution filtering based on the content exposed from the distribution."""
 
-    def generate_repo_with_content():
+    # Two content units are enough for with_content filtering; create them concurrently.
+    create_tasks = []
+    for _ in range(2):
+        artifact = random_artifact_factory()
+        create_tasks.append(
+            file_bindings.ContentFilesApi.create(
+                artifact=artifact.pulp_href, relative_path=f"{uuid4()}.iso"
+            ).task
+        )
+    content1, content2 = [
+        file_bindings.ContentFilesApi.read(monitor_task(task_href).created_resources[0])
+        for task_href in create_tasks
+    ]
+
+    def generate_repo_with_content(content):
         repo = file_repository_factory()
-        repo_manifest_path = write_3_iso_file_fixture_data_factory(str(uuid4()))
-        remote = file_remote_factory(manifest_path=repo_manifest_path, policy="on_demand")
-        body = file_bindings.FileRepositorySyncURL(remote=remote.pulp_href)
-        task_response = file_bindings.RepositoriesFileApi.sync(repo.pulp_href, body).task
-        version_href = monitor_task(task_response).created_resources[0]
-        content = file_bindings.ContentFilesApi.list(repository_version_added=version_href).results[
-            0
-        ]
+        monitor_task(
+            file_bindings.RepositoriesFileApi.modify(
+                repo.pulp_href, {"add_content_units": [content.pulp_href]}
+            ).task
+        )
         return repo, content
 
-    repo1, content1 = generate_repo_with_content()
+    repo1, content1 = generate_repo_with_content(content1)
 
     publish_data = file_bindings.FileFilePublication(repository=repo1.pulp_href)
     publication = gen_object_with_cleanup(file_bindings.PublicationsFileApi, publish_data)
@@ -303,7 +313,7 @@ def test_distribution_filtering(
     )
     assert {distribution_pub1.pulp_href, distribution_repopub.pulp_href} == results
 
-    repo2, content2 = generate_repo_with_content()
+    repo2, content2 = generate_repo_with_content(content2)
 
     # add new content to the first repository to see whether the distribution filtering correctly
     # traverses to the latest publication concerning the repository under the question that should
