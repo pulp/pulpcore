@@ -2,7 +2,6 @@
 
 import uuid
 from random import choice
-from tempfile import NamedTemporaryFile
 from uuid import uuid4
 
 import pytest
@@ -11,26 +10,27 @@ from pulpcore.tests.functional.utils import PulpTaskError, get_files_in_manifest
 
 
 @pytest.fixture
-def file_9_contents(
-    file_bindings,
-    file_repository_factory,
-    monitor_task,
-):
+def file_9_contents(file_bindings, monitor_task, tmp_path):
     """Create 9 content units with relative paths "A" through "I"."""
-    bucket_repo = file_repository_factory()
+    names = ["A", "B", "C", "D", "E", "F", "G", "H", "I"]
+    create_tasks = []
+    for name in names:
+        path = tmp_path / name
+        path.write_bytes(name.encode())
+        create_tasks.append(
+            (
+                name,
+                file_bindings.ContentFilesApi.create(relative_path=name, file=str(path)).task,
+            )
+        )
+
     content_units = {}
-    for name in ["A", "B", "C", "D", "E", "F", "G", "H", "I"]:
-        with NamedTemporaryFile() as tf:
-            tf.write(name.encode())
-            tf.flush()
-            response = file_bindings.ContentFilesApi.create(
-                relative_path=name, file=tf.name, repository=bucket_repo.pulp_href
-            )
-            result = monitor_task(response.task)
-            content_href = next(
-                (item for item in result.created_resources if "content/file/files/" in item)
-            )
-            content_units[name] = file_bindings.ContentFilesApi.read(content_href)
+    for name, task_href in create_tasks:
+        result = monitor_task(task_href)
+        content_href = next(
+            item for item in result.created_resources if "content/file/files/" in item
+        )
+        content_units[name] = file_bindings.ContentFilesApi.read(content_href)
     return content_units
 
 
