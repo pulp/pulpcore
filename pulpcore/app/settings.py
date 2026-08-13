@@ -310,6 +310,24 @@ UPLOAD_PROTECTION_TIME = 0
 TASK_PROTECTION_TIME = 0
 TMPFILE_PROTECTION_TIME = 0
 
+# KI-11: how long to wait, in minutes, after a cross-plane GenericForeignKey row
+# (CreatedResource/ExportedResource/UserRole/GroupRole with `content_object_domain` set) is
+# created/updated before the reconciliation sweep will flag an unresolvable `content_object` as
+# an orphan. Guards against false positives from ordinary in-flight replication/task lag rather
+# than an actual orphan (e.g. Domain replication hasn't caught up yet, or the referenced object's
+# own creating transaction hasn't committed on its alias yet).
+CROSS_PLANE_RECONCILIATION_GRACE_MINUTES = 60
+
+# KI-11: how long, in days, a confirmed-orphaned cross-plane row is kept (logged/alerted on every
+# sweep) before the reconciliation sweep deletes it outright. 0 disables purging entirely --
+# orphans are only ever logged, never deleted, which is the safe default.
+CROSS_PLANE_RECONCILIATION_PURGE_AFTER_DAYS = 0
+
+# KI-11: how often, in minutes, the reconciliation sweep itself is dispatched as a scheduled
+# task. 0 disables the periodic schedule entirely (the 'reconcile-cross-plane-references'
+# management command remains available for on-demand/manual runs either way).
+CROSS_PLANE_RECONCILIATION_INTERVAL_MINUTES = 24 * 60
+
 REMOTE_USER_ENVIRON_NAME = "REMOTE_USER"
 REMOTE_USER_OPENAPI_SECURITY_SCHEME = {"type": "mutualTLS"}
 
@@ -705,5 +723,15 @@ settings = DjangoDynaconf(
     ),
     dynaboxify=False,
 )
+
+# Domain-aware database routing is not auto-registered here. A deployment that wants
+# `PulpDomainRouter` active must set it itself, the normal Django way:
+#
+#     DATABASE_ROUTERS = ["pulpcore.app.db_router.PulpDomainRouter"]
+#
+# (or the dynaconf-env-var equivalent, e.g. `PULP_DATABASE_ROUTERS='["pulpcore.app.db_router.
+# PulpDomainRouter"]'`). Single-database deployments are unaffected either way -- an empty/unset
+# `DATABASE_ROUTERS` is Django's own default, and `ConnectionRouter` never consults an empty
+# `routers` list, so `PulpDomainRouter` still costs nothing unless explicitly configured.
 
 # HERE ENDS DYNACONF EXTENSION LOAD (No more code below this line)

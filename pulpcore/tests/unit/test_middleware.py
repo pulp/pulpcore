@@ -29,6 +29,11 @@ class TestDomainMiddlewareSkip(TestCase):
         view_class = type("NormalView", (), {})
         view_func = MagicMock(view_class=view_class)
         view_kwargs = {"pulp_domain": "default"}
+        # database_alias/moving must be set explicitly: an unconfigured MagicMock() would make
+        # `_degraded_response`'s `alias != "default"` check true, sending it into a real
+        # `connections[alias]` lookup with a MagicMock alias, which isn't what this test is
+        # about (it only cares whether the DB lookup/skip-flag behavior is exercised).
+        mock_domain_objects.get.return_value = MagicMock(database_alias="default", moving=False)
 
         self.middleware.process_view(self.request, view_func, [], view_kwargs)
 

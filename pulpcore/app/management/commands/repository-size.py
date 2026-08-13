@@ -7,8 +7,8 @@ from gettext import gettext as _
 from django.conf import settings
 from django.core.management import BaseCommand, CommandError
 
-from pulpcore.app.models import Repository
-from pulpcore.app.util import extract_pk, get_url
+from pulpcore.app.models import Domain, Repository
+from pulpcore.app.util import extract_pk, for_each_domain, get_url
 
 
 def gather_repository_sizes(repositories, include_versions=False, include_on_demand=False):
@@ -106,22 +106,58 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         """Implement the command."""
-        domain = options.get("domain")
+        domain_name = options.get("domain")
         repository_hrefs = options.get("repositories")
-        if domain and repository_hrefs:
+        if domain_name and repository_hrefs:
             raise CommandError(_("--domain and --repositories are mutually exclusive"))
 
-        repositories = Repository.objects.all()
+        # KI-08: `Repository` is data-plane, so an unqualified `Repository.objects.all()` (the
+        # original shape of this command) -- or a `--domain` filter that only ever adds
+        # `.filter(pulp_domain__name=...)` without also switching `.using(alias)` -- would only
+        # ever see repositories that happen to live on `default`, even though the `--domain`
+        # flag's own help text implies otherwise. All three call shapes below resolve the
+        # relevant `Domain`/alias(es) explicitly and query with `.using(alias)`.
+        report = []
         if repository_hrefs:
             repos_ids = [extract_pk(r) for r in repository_hrefs]
-            repositories = repositories.filter(pk__in=repos_ids)
-        elif domain:
-            repositories = repositories.filter(pulp_domain__name=domain)
+            # An href doesn't self-identify which alias its repository lives on, so check every
+            # configured alias -- a given pk only ever matches on the one alias its domain
+            # actually resides on; every other alias contributes an empty queryset.
+            for alias in settings.DATABASES:
+                repositories = Repository.objects.using(alias).filter(pk__in=repos_ids)
+                report.extend(
+                    gather_repository_sizes(
+                        repositories,
+                        include_versions=options["include_versions"],
+                        include_on_demand=options["include_on_demand"],
+                    )
+                )
+        elif domain_name:
+            try:
+                domain = Domain.objects.get(name=domain_name)
+            except Domain.DoesNotExist:
+                raise CommandError(_("Domain '{name}' does not exist.").format(name=domain_name))
+            repositories = Repository.objects.using(domain.database_alias).filter(
+                pulp_domain=domain
+            )
+            report = gather_repository_sizes(
+                repositories,
+                include_versions=options["include_versions"],
+                include_on_demand=options["include_on_demand"],
+            )
+        else:
 
-        report = gather_repository_sizes(
-            repositories,
-            include_versions=options["include_versions"],
-            include_on_demand=options["include_on_demand"],
-        )
+            def _gather_for_domain(domain, alias):
+                repositories = Repository.objects.using(alias).filter(pulp_domain=domain)
+                report.extend(
+                    gather_repository_sizes(
+                        repositories,
+                        include_versions=options["include_versions"],
+                        include_on_demand=options["include_on_demand"],
+                    )
+                )
+
+            for_each_domain(_gather_for_domain)
+
         json.dump(report, sys.stdout, indent=4)
         print()

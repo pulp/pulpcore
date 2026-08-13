@@ -26,6 +26,7 @@ from django_lifecycle import BEFORE_SAVE, BEFORE_UPDATE, hook
 
 from pulpcore.app import pulp_hashlib
 from pulpcore.app.models import BaseModel, MasterModel, fields, storage
+from pulpcore.app.queryset import CrossDBQuerySetMixin
 from pulpcore.app.util import get_domain_pk, gpg_verify
 from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS
 from pulpcore.exceptions import (
@@ -97,7 +98,7 @@ class BulkCreateManager(models.Manager):
         return objs
 
 
-class BulkTouchQuerySet(models.QuerySet):
+class BulkTouchQuerySet(CrossDBQuerySetMixin, models.QuerySet):
     """
     A query set that provides ``touch()``.
     """
@@ -694,7 +695,7 @@ class ContentArtifact(BaseModel, QueryMixin):
         return c_key, a_key
 
 
-class RemoteArtifactQuerySet(models.QuerySet):
+class RemoteArtifactQuerySet(CrossDBQuerySetMixin, models.QuerySet):
     """QuerySet that provides methods for querying RemoteArtifact."""
 
     def acs(self):

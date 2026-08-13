@@ -3,7 +3,7 @@ from gettext import gettext as _
 from django.core.management import BaseCommand, CommandError
 from django.urls import reverse
 
-from pulpcore.app.models import Artifact, Distribution, Publication
+from pulpcore.app.models import Artifact, Distribution, Domain, Publication
 from pulpcore.app.util import get_view_name_for_model
 
 
@@ -19,6 +19,18 @@ class Command(BaseCommand):
             "--distribution-base-path", required=False, help=_("A base_path of a distribution.")
         )
         parser.add_argument("--tabular", action="store_true", help=_("Display as a table"))
+        # management-command-audit.md "single-object commands" finding: a bare
+        # `Publication.objects.get(pk=...)`/`Distribution.objects.get(base_path=...)` (this
+        # command's original shape) only ever finds the object if it happens to live on
+        # `default`; a satellite-hosted object would raise `DoesNotExist` with no hint that it
+        # actually exists on a different alias. Mirrors `repository-size.py`'s existing
+        # `--domain` convention.
+        parser.add_argument(
+            "--domain",
+            default="default",
+            required=False,
+            help=_("The pulp domain the publication/distribution belongs to."),
+        )
 
     def handle(self, *args, **options):
         """Implement the command."""
@@ -33,17 +45,28 @@ class Command(BaseCommand):
             raise CommandError("Must provide either --publication or --distribution-base-path")
         elif options["publication"] and options["distribution_base_path"]:
             raise CommandError("Cannot provide both --publication and --distribution-base-path")
-        elif options["publication"]:
-            publication = Publication.objects.get(pk=options["publication"])
+
+        try:
+            domain = Domain.objects.get(name=options["domain"])
+        except Domain.DoesNotExist:
+            raise CommandError(_("Domain '{name}' does not exist.").format(name=options["domain"]))
+        alias = domain.database_alias
+
+        if options["publication"]:
+            publication = Publication.objects.using(alias).get(pk=options["publication"])
         else:
-            distribution = Distribution.objects.get(base_path=options["distribution_base_path"])
+            distribution = Distribution.objects.using(alias).get(
+                base_path=options["distribution_base_path"]
+            )
             if distribution.publication:
                 publication = distribution.publication
             elif distribution.repository:
                 repository = distribution.repository
-                publication = Publication.objects.filter(
-                    repository_version__in=repository.versions.all(), complete=True
-                ).latest("repository_version", "pulp_created")
+                publication = (
+                    Publication.objects.using(alias)
+                    .filter(repository_version__in=repository.versions.all(), complete=True)
+                    .latest("repository_version", "pulp_created")
+                )
 
         published_artifacts = publication.published_artifact.select_related(
             "content_artifact__artifact"

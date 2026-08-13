@@ -47,6 +47,27 @@ class DatabaseConnectionSerializer(serializers.Serializer):
     )
 
 
+class DatabaseStatusSerializer(serializers.Serializer):
+    """
+    Serializer for the per-alias connectivity + migration-completeness status of a single
+    `settings.DATABASES` entry (phase1-status-endpoint).
+    """
+
+    alias = serializers.CharField(help_text=_("The settings.DATABASES alias this entry reports on"))
+
+    connected = serializers.BooleanField(
+        help_text=_("Info about whether the app can connect to this database alias")
+    )
+
+    migrations_complete = serializers.BooleanField(
+        help_text=_(
+            "Whether this database alias has no pending migrations. Null if connectivity "
+            "could not be established, since migration status can't be determined in that case."
+        ),
+        allow_null=True,
+    )
+
+
 class RedisConnectionSerializer(serializers.Serializer):
     """
     Serializer for information about the Redis connection
@@ -124,6 +145,14 @@ class StatusSerializer(serializers.Serializer):
 
     database_connection = DatabaseConnectionSerializer(
         help_text=_("Database connection information")
+    )
+
+    databases = DatabaseStatusSerializer(
+        help_text=_(
+            "Per-alias connectivity and migration-completeness status for every configured "
+            "settings.DATABASES alias (one entry per alias, including 'default')."
+        ),
+        many=True,
     )
 
     redis_connection = RedisConnectionSerializer(

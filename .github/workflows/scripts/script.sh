@@ -129,7 +129,22 @@ cmd_user_prefix bash -c "django-admin makemigrations file --check --dry-run"
 cmd_user_prefix bash -c "django-admin makemigrations certguard --check --dry-run"
 
 # Run unit tests.
-cmd_user_prefix bash -c "PULP_DATABASES__default__USER=postgres pytest -v -r sx --color=yes --suppress-no-test-exit-code -p no:pulpcore --durations=20 --pyargs pulpcore.tests.unit"
+# For the "multi_db" scenario, also point the "data_1" alias at the standalone
+# postgres-satellite service container (see before_install.sh) so
+# pulpcore.tests.unit's domain-aware multi-database routing tests actually exercise a second,
+# real database instead of being skipped. Every other scenario leaves MULTI_DB_ENV empty, so this
+# is a no-op for the existing single-DB matrix entries.
+#
+# PULP_DATABASE_ROUTERS must be set explicitly here: pulpcore does not auto-register
+# PulpDomainRouter just because a second DATABASES alias is configured. Without this, "data_1"
+# would exist but nothing would route to it, and every test in test_multi_database_routing.py
+# asserting real satellite-alias behavior (e.g. test_data_plane_object_routes_to_satellite_alias)
+# would fail rather than being meaningfully skipped.
+MULTI_DB_ENV=""
+if [[ "$TEST" == "multi_db" ]]; then
+  MULTI_DB_ENV="PULP_DATABASES__data_1__ENGINE=django.db.backends.postgresql PULP_DATABASES__data_1__NAME=pulp PULP_DATABASES__data_1__USER=postgres PULP_DATABASES__data_1__PASSWORD=postgres PULP_DATABASES__data_1__HOST=postgres-satellite PULP_DATABASES__data_1__PORT=5432 PULP_DATABASE_ROUTERS='[\"pulpcore.app.db_router.PulpDomainRouter\"]'"
+fi
+cmd_user_prefix bash -c "PULP_DATABASES__default__USER=postgres $MULTI_DB_ENV pytest -v -r sx --color=yes --suppress-no-test-exit-code -p no:pulpcore --durations=20 --pyargs pulpcore.tests.unit"
 cmd_user_prefix bash -c "PULP_DATABASES__default__USER=postgres pytest -v -r sx --color=yes --suppress-no-test-exit-code -p no:pulpcore --durations=20 --pyargs pulp_file.tests.unit"
 cmd_user_prefix bash -c "PULP_DATABASES__default__USER=postgres pytest -v -r sx --color=yes --suppress-no-test-exit-code -p no:pulpcore --durations=20 --pyargs pulp_certguard.tests.unit"
 # Run functional tests

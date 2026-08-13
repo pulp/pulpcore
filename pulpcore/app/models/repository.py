@@ -18,6 +18,7 @@ from django.db.models import F, Func, Q, Value
 from django_lifecycle import AFTER_UPDATE, BEFORE_CREATE, BEFORE_DELETE, hook
 from rest_framework.exceptions import APIException
 
+from pulpcore.app.queryset import CrossDBQuerySetMixin
 from pulpcore.app.util import (
     batch_qs,
     cache_key,
@@ -882,7 +883,7 @@ class RepositoryContent(BaseModel):
         )
 
 
-class RepositoryVersionQuerySet(models.QuerySet):
+class RepositoryVersionQuerySet(CrossDBQuerySetMixin, models.QuerySet):
     """A queryset that provides repository version filtering methods."""
 
     def complete(self):
