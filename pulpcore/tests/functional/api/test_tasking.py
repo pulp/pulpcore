@@ -93,6 +93,10 @@ def test_worker_cleanup_on_missing_worker(dispatch_task, monitor_task, pulpcore_
     Test that when a worker dies unexpectedly while executing a task,
     the worker cleanup process marks the task as failed and releases its locks,
     allowing subsequent tasks requiring the same resource to execute.
+
+    Prefer the unit test pulpcore.tests.unit.tasking.test_missing_worker_cleanup
+    for routine coverage of the cleanup path. This e2e test is long_running
+    (skipped when --timeout < 600) but still runs in nightly CI.
     """
     # Use a unique resource identifier to avoid conflicts with other tests
     resource = str(uuid4())
