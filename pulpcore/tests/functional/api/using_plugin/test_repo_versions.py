@@ -873,18 +873,17 @@ def test_repo_version_retention(
 @pytest.mark.parallel
 def test_repo_versions_protected_from_cleanup(
     file_bindings,
-    file_content_unit_with_name_factory,
     file_repository_factory,
     file_distribution_factory,
     gen_object_with_cleanup,
     monitor_task,
+    random_artifact_factory,
 ):
     """Test that distributed repo versions are protected from retain_repo_versions."""
 
-    def _modify_and_validate(repo, expected_version, expected_total):
-        content = file_content_unit_with_name_factory(str(uuid.uuid4()))
+    def _modify_and_validate(repo, content_href, expected_version, expected_total):
         task = file_bindings.RepositoriesFileApi.modify(
-            repo.pulp_href, {"add_content_units": [content.pulp_href]}
+            repo.pulp_href, {"add_content_units": [content_href]}
         ).task
         monitor_task(task)
 
@@ -896,6 +895,22 @@ def test_repo_versions_protected_from_cleanup(
 
         return repo
 
+    # Create content up front so create tasks can overlap before serial modifies.
+    create_tasks = []
+    for i in range(6):
+        artifact = random_artifact_factory()
+        create_tasks.append(
+            file_bindings.ContentFilesApi.create(
+                artifact=artifact.pulp_href, relative_path=f"{uuid.uuid4()}.iso"
+            ).task
+        )
+    content_hrefs = iter(
+        [
+            monitor_task(task_href).created_resources[0]
+            for task_href in create_tasks
+        ]
+    )
+
     # Setup
     repo = file_repository_factory(retain_repo_versions=1)
 
@@ -906,7 +921,7 @@ def test_repo_versions_protected_from_cleanup(
     file_distribution_factory(publication=publication.pulp_href)
 
     # Version 0 is protected since it's distributed
-    repo = _modify_and_validate(repo, "1", 2)
+    repo = _modify_and_validate(repo, next(content_hrefs), "1", 2)
 
     # Create a new publication and distribution which protects version 1 from deletion
     file_distribution_factory(repository=repo.pulp_href)
@@ -916,10 +931,10 @@ def test_repo_versions_protected_from_cleanup(
     file_distribution_factory(publication=publication.pulp_href)
 
     # Create version 2 and there should be 3 versions now (2 protected)
-    repo = _modify_and_validate(repo, "2", 3)
+    repo = _modify_and_validate(repo, next(content_hrefs), "2", 3)
 
     # Version 2 will be removed since we're creating version 3 and it's not protected
-    repo = _modify_and_validate(repo, "3", 3)
+    repo = _modify_and_validate(repo, next(content_hrefs), "3", 3)
 
     # Publish version 3 as a checkpoint and distribute it
     gen_object_with_cleanup(
@@ -929,7 +944,7 @@ def test_repo_versions_protected_from_cleanup(
     file_distribution_factory(repository=repo.pulp_href, checkpoint=True)
 
     # Version 3 is protected since it's distributed by the checkpoint distribution
-    repo = _modify_and_validate(repo, "4", 4)
+    repo = _modify_and_validate(repo, next(content_hrefs), "4", 4)
 
     # Publish version 4 as a checkpoint (it's already distributed)
     gen_object_with_cleanup(
@@ -938,10 +953,10 @@ def test_repo_versions_protected_from_cleanup(
     )
 
     # Version 4 is protected since it's distributed by the checkpoint distribution
-    repo = _modify_and_validate(repo, "5", 5)
+    repo = _modify_and_validate(repo, next(content_hrefs), "5", 5)
 
     # Version 5 will be removed since it's not protected and we're creating version 6
-    _modify_and_validate(repo, "6", 5)
+    _modify_and_validate(repo, next(content_hrefs), "6", 5)
 
 
 @pytest.mark.parallel
