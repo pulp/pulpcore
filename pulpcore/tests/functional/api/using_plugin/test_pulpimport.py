@@ -46,9 +46,7 @@ def _create_import_export_repositories(
         remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="immediate")
         repository_sync_data = FileRepositorySyncURL(remote=remote.pulp_href)
         sync_tasks.append(
-            file_bindings.RepositoriesFileApi.sync(
-                export_repo.pulp_href, repository_sync_data
-            ).task
+            file_bindings.RepositoriesFileApi.sync(export_repo.pulp_href, repository_sync_data).task
         )
         export_repos.append(export_repo)
         import_repos.append(import_repo)
@@ -56,9 +54,7 @@ def _create_import_export_repositories(
     for task in sync_tasks:
         monitor_task(task)
 
-    export_repos = [
-        file_bindings.RepositoriesFileApi.read(repo.pulp_href) for repo in export_repos
-    ]
+    export_repos = [file_bindings.RepositoriesFileApi.read(repo.pulp_href) for repo in export_repos]
     return import_repos, export_repos
 
 
