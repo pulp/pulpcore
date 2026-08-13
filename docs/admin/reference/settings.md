@@ -36,7 +36,7 @@ See the [Django authentication documentation] for more information.
 When installed with the `[saml2]` option, and the `SAML_CONFIG` is set,
 SSO authentification according to the SAML2 protocols is available.
 
-See [django] and [pysaml2] for details.
+See [SAML2], [djangosaml2] and [pysaml2] for details.
 
 !!! warning
     This is in feature-preview.
@@ -648,6 +648,7 @@ Defaults to `pulpcore.tasking.status`.
 [on-demand and streaming limitations]: site:pulpcore/docs/user/learn/on-demand-downloading/#on-demand-and-streamed-limitations
 [pysaml2]: https://pysaml2.readthedocs.io
 [recommended by aiohttp]: https://docs.aiohttp.org/en/stable/third_party.html#approved-third-party-libraries
-[task diagnostics documentation]: site:pulpcore/docs/dev/learn/tasks/diagnostics.md
+[SAML2]: site:pulpcore/docs/admin/guides/auth/saml2/
+[task diagnostics documentation]: site:pulpcore/docs/dev/learn/tasks/diagnostics/
 [uvloop]: https://github.com/MagicStack/uvloop
 [Webserver Auth with Reverse Proxy]: site:pulpcore/docs/admin/guides/auth/external/#webserver-auth-with-reverse-proxy
