@@ -905,10 +905,7 @@ def test_repo_versions_protected_from_cleanup(
             ).task
         )
     content_hrefs = iter(
-        [
-            monitor_task(task_href).created_resources[0]
-            for task_href in create_tasks
-        ]
+        [monitor_task(task_href).created_resources[0] for task_href in create_tasks]
     )
 
     # Setup

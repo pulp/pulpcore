@@ -24,9 +24,7 @@ def test_repo_version_pagination(
                 artifact=artifact.pulp_href, relative_path=f"{i}.iso"
             ).task
         )
-    content_hrefs = [
-        monitor_task(task_href).created_resources[0] for task_href in create_tasks
-    ]
+    content_hrefs = [monitor_task(task_href).created_resources[0] for task_href in create_tasks]
 
     for content_href in content_hrefs:
         monitor_task(

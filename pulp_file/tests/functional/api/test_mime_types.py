@@ -44,9 +44,7 @@ def test_content_types(
                 artifact=artifact.pulp_href, relative_path=relative_path
             ).task
         )
-    content_hrefs = [
-        monitor_task(task_href).created_resources[0] for task_href in create_tasks
-    ]
+    content_hrefs = [monitor_task(task_href).created_resources[0] for task_href in create_tasks]
     files = {
         extension: file_bindings.ContentFilesApi.read(content_href)
         for extension, content_href in zip(relative_paths, content_hrefs)

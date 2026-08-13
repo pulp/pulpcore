@@ -410,9 +410,7 @@ def test_distribution_serves_publication_content(
                 artifact=artifact.pulp_href, relative_path=f"{uuid4()}.iso"
             ).task
         )
-    content_hrefs = [
-        monitor_task(task_href).created_resources[0] for task_href in create_tasks
-    ]
+    content_hrefs = [monitor_task(task_href).created_resources[0] for task_href in create_tasks]
     monitor_task(
         file_bindings.RepositoriesFileApi.modify(
             file_repo.pulp_href, {"add_content_units": content_hrefs}
