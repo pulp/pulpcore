@@ -386,12 +386,11 @@ def _get_manifest_from_distribution(distribution, distribution_base_url):
 def test_distribution_serves_publication_content(
     file_bindings,
     file_repo,
-    file_remote_ssl_factory,
-    basic_manifest_path,
     gen_object_with_cleanup,
     file_distribution_factory,
     distribution_base_url,
     monitor_task,
+    random_artifact_factory,
 ):
     """Test that publication, repository, and repository_version distributions serve
     correct content.
@@ -402,18 +401,30 @@ def test_distribution_serves_publication_content(
     - A distribution with ``repository`` serves the latest publication (for the latest version).
     - A distribution with ``repository_version`` serves the latest publication for that version.
     """
-    # Sync to create version 1 (3 files)
-    remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="immediate")
-    body = file_bindings.FileRepositorySyncURL(remote=remote.pulp_href)
-    monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task)
+    # Create three content units concurrently, then add them for version 1
+    create_tasks = []
+    for _ in range(3):
+        artifact = random_artifact_factory()
+        create_tasks.append(
+            file_bindings.ContentFilesApi.create(
+                artifact=artifact.pulp_href, relative_path=f"{uuid4()}.iso"
+            ).task
+        )
+    content_hrefs = [
+        monitor_task(task_href).created_resources[0] for task_href in create_tasks
+    ]
+    monitor_task(
+        file_bindings.RepositoriesFileApi.modify(
+            file_repo.pulp_href, {"add_content_units": content_hrefs}
+        ).task
+    )
     file_repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
     v1_href = file_repo.latest_version_href
 
     # Remove one content unit to create version 2 (2 files)
-    v1_content = file_bindings.ContentFilesApi.list(repository_version=v1_href).results
     monitor_task(
         file_bindings.RepositoriesFileApi.modify(
-            file_repo.pulp_href, {"remove_content_units": [v1_content[0].pulp_href]}
+            file_repo.pulp_href, {"remove_content_units": [content_hrefs[0]]}
         ).task
     )
     file_repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
