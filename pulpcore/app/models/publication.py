@@ -13,6 +13,7 @@ import jq
 from aiohttp.web_exceptions import HTTPNotFound
 from django.conf import settings
 from django.contrib.postgres.fields import HStoreField
+from django.contrib.postgres.indexes import OpClass, SpGistIndex
 from django.db import DatabaseError, IntegrityError, models, transaction
 from django.utils import timezone
 from django_lifecycle import AFTER_CREATE, AFTER_UPDATE, BEFORE_DELETE, hook
@@ -21,6 +22,7 @@ from url_normalize import url_normalize
 
 from pulpcore.app.files import PulpTemporaryUploadedFile
 from pulpcore.app.models import AutoAddObjPermsMixin
+from pulpcore.app.models.fields import RelativePathField
 from pulpcore.app.util import cache_key, get_domain_pk, get_url, retain_distributed_pub_enabled
 from pulpcore.cache import Cache
 from pulpcore.responses import ArtifactResponse
@@ -270,7 +272,7 @@ class PublishedArtifact(BaseModel):
         publication (models.ForeignKey): The publication in which the artifact is included.
     """
 
-    relative_path = models.TextField()
+    relative_path = RelativePathField()
 
     content_artifact = models.ForeignKey("ContentArtifact", on_delete=models.CASCADE)
     publication = models.ForeignKey(Publication, on_delete=models.CASCADE)
@@ -293,7 +295,7 @@ class PublishedMetadata(Content):
 
     TYPE = "publishedmetadata"
 
-    relative_path = models.TextField()
+    relative_path = RelativePathField()
 
     publication = models.ForeignKey(Publication, on_delete=models.CASCADE)
 
@@ -642,7 +644,7 @@ class Distribution(MasterModel):
 
     name = models.TextField(db_index=True)
     pulp_labels = HStoreField(default=dict)
-    base_path = models.TextField()
+    base_path = RelativePathField()
     pulp_domain = models.ForeignKey("Domain", default=get_domain_pk, on_delete=models.PROTECT)
     hidden = models.BooleanField(default=False, null=True)
     checkpoint = models.BooleanField(default=False)
@@ -657,6 +659,13 @@ class Distribution(MasterModel):
 
     class Meta:
         unique_together = (("name", "pulp_domain"), ("base_path", "pulp_domain"))
+        indexes = [
+            SpGistIndex(
+                OpClass("base_path", name="text_ops"),
+                include=("pulp_domain",),
+                name="%(app_label)s_%(class)s_base_path_text",
+            ),  # Allows fast startswith (^@) lookups.
+        ]
 
     def get_repository_publication_and_version(self):
         """

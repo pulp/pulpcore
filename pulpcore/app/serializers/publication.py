@@ -13,6 +13,7 @@ from pulpcore.app.serializers import (
     DomainUniqueValidator,
     GetOrCreateSerializerMixin,
     ModelSerializer,
+    RelativePathField,
     RepositoryVersionRelatedField,
     pulp_labels_validator,
 )
@@ -203,7 +204,7 @@ class DistributionSerializer(ModelSerializer):
     pulp_href = DetailIdentityField(view_name_pattern=r"distributions(-.*/.*)-detail")
     pulp_labels = serializers.HStoreField(required=False, validators=[pulp_labels_validator])
 
-    base_path = serializers.CharField(
+    base_path = RelativePathField(
         help_text=_(
             'The base (relative) path component of the published url. Avoid paths that \
                     overlap with other distribution base paths (e.g. "foo" and "foo/bar")'
@@ -264,7 +265,7 @@ class DistributionSerializer(ModelSerializer):
             "repository_version",
         )
 
-    def _validate_path_overlap(self, path):
+    def validate_base_path(self, path):
         # look for any base paths nested in path
         search = path.split("/")[0]
         q = Q(base_path=search)
@@ -273,25 +274,18 @@ class DistributionSerializer(ModelSerializer):
             q |= Q(base_path=search)
 
         # look for any base paths that nest path
-        q |= Q(base_path__startswith="{}/".format(path))
+        q |= Q(base_path__startswith=f"{path}/")
         qs = models.Distribution.objects.filter(q & Q(pulp_domain=get_domain()))
 
         if self.instance is not None:
             qs = qs.exclude(pk=self.instance.pk)
 
-        match = qs.first()
-        if match:
+        if qs.exists():
             raise serializers.ValidationError(
-                detail={
-                    "base_path": _("Overlaps with existing distribution '{}'").format(match.name)
-                },
+                detail={"base_path": _("Overlaps with an existing distribution.")},
             )
 
         return path
-
-    def validate_base_path(self, path):
-        self._validate_relative_path(path)
-        return self._validate_path_overlap(path)
 
     def validate(self, data):
         super().validate(data)
