@@ -249,23 +249,18 @@ def test_distribution_filtering(
     file_repository_factory,
     gen_object_with_cleanup,
     monitor_task,
-    random_artifact_factory,
+    tmp_path,
 ):
     """Test distribution filtering based on the content exposed from the distribution."""
 
-    # Two content units are enough for with_content filtering; create them concurrently.
-    create_tasks = []
-    for _ in range(2):
-        artifact = random_artifact_factory()
-        create_tasks.append(
-            file_bindings.ContentFilesApi.create(
-                artifact=artifact.pulp_href, relative_path=f"{uuid4()}.iso"
-            ).task
+    content_units = []
+    for name in ("1.bin", "2.bin"):
+        path = tmp_path / name
+        path.write_bytes(name.encode())
+        content_units.append(
+            file_bindings.ContentFilesApi.upload(file=str(path), relative_path=f"{uuid4()}.iso")
         )
-    content1, content2 = [
-        file_bindings.ContentFilesApi.read(monitor_task(task_href).created_resources[0])
-        for task_href in create_tasks
-    ]
+    content1, content2 = content_units
 
     def generate_repo_with_content(content):
         repo = file_repository_factory()
@@ -390,7 +385,7 @@ def test_distribution_serves_publication_content(
     file_distribution_factory,
     distribution_base_url,
     monitor_task,
-    random_artifact_factory,
+    tmp_path,
 ):
     """Test that publication, repository, and repository_version distributions serve
     correct content.
@@ -401,16 +396,15 @@ def test_distribution_serves_publication_content(
     - A distribution with ``repository`` serves the latest publication (for the latest version).
     - A distribution with ``repository_version`` serves the latest publication for that version.
     """
-    # Create three content units concurrently, then add them for version 1
-    create_tasks = []
-    for _ in range(3):
-        artifact = random_artifact_factory()
-        create_tasks.append(
-            file_bindings.ContentFilesApi.create(
-                artifact=artifact.pulp_href, relative_path=f"{uuid4()}.iso"
-            ).task
+    content_hrefs = []
+    for i in range(3):
+        path = tmp_path / f"{i}.bin"
+        path.write_bytes(f"{i}".encode())
+        content_hrefs.append(
+            file_bindings.ContentFilesApi.upload(
+                file=str(path), relative_path=f"{uuid4()}.iso"
+            ).pulp_href
         )
-    content_hrefs = [monitor_task(task_href).created_resources[0] for task_href in create_tasks]
     monitor_task(
         file_bindings.RepositoriesFileApi.modify(
             file_repo.pulp_href, {"add_content_units": content_hrefs}

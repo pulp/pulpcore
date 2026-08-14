@@ -10,27 +10,15 @@ from pulpcore.tests.functional.utils import PulpTaskError, get_files_in_manifest
 
 
 @pytest.fixture
-def file_9_contents(file_bindings, monitor_task, tmp_path):
+def file_9_contents(file_bindings, tmp_path):
     """Create 9 content units with relative paths "A" through "I"."""
     names = ["A", "B", "C", "D", "E", "F", "G", "H", "I"]
-    create_tasks = []
+    content_units = {}
     for name in names:
         path = tmp_path / name
         path.write_bytes(name.encode())
-        create_tasks.append(
-            (
-                name,
-                file_bindings.ContentFilesApi.create(relative_path=name, file=str(path)).task,
-            )
-        )
-
-    content_units = {}
-    for name, task_href in create_tasks:
-        result = monitor_task(task_href)
-        content_href = next(
-            item for item in result.created_resources if "content/file/files/" in item
-        )
-        content_units[name] = file_bindings.ContentFilesApi.read(content_href)
+        uploaded = file_bindings.ContentFilesApi.upload(relative_path=name, file=str(path))
+        content_units[name] = file_bindings.ContentFilesApi.read(uploaded.pulp_href)
     return content_units
 
 
@@ -877,7 +865,7 @@ def test_repo_versions_protected_from_cleanup(
     file_distribution_factory,
     gen_object_with_cleanup,
     monitor_task,
-    random_artifact_factory,
+    tmp_path,
 ):
     """Test that distributed repo versions are protected from retain_repo_versions."""
 
@@ -895,18 +883,16 @@ def test_repo_versions_protected_from_cleanup(
 
         return repo
 
-    # Create content up front so create tasks can overlap before serial modifies.
-    create_tasks = []
+    content_hrefs = []
     for i in range(6):
-        artifact = random_artifact_factory()
-        create_tasks.append(
-            file_bindings.ContentFilesApi.create(
-                artifact=artifact.pulp_href, relative_path=f"{uuid.uuid4()}.iso"
-            ).task
+        path = tmp_path / f"{i}.bin"
+        path.write_bytes(f"{i}".encode())
+        content_hrefs.append(
+            file_bindings.ContentFilesApi.upload(
+                file=str(path), relative_path=f"{uuid.uuid4()}.iso"
+            ).pulp_href
         )
-    content_hrefs = iter(
-        [monitor_task(task_href).created_resources[0] for task_href in create_tasks]
-    )
+    content_hrefs = iter(content_hrefs)
 
     # Setup
     repo = file_repository_factory(retain_repo_versions=1)

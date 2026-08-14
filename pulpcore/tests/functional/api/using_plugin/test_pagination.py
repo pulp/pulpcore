@@ -8,23 +8,21 @@ def test_repo_version_pagination(
     file_bindings,
     file_repo,
     monitor_task,
-    random_artifact_factory,
+    tmp_path,
 ):
-    # Create several content units first so their tasks can overlap, then add
-    # them one-by-one to produce enough repository versions for pagination.
+    # Create several content units, then add them one-by-one to produce enough
+    # repository versions for pagination.
     # limit=2 with 5 versions total (initial + 4) covers first/middle/last pages.
     page_size = 2
     versions_to_add = 4
 
-    create_tasks = []
+    content_hrefs = []
     for i in range(versions_to_add):
-        artifact = random_artifact_factory()
-        create_tasks.append(
-            file_bindings.ContentFilesApi.create(
-                artifact=artifact.pulp_href, relative_path=f"{i}.iso"
-            ).task
+        path = tmp_path / f"{i}.iso"
+        path.write_bytes(f"{i}".encode())
+        content_hrefs.append(
+            file_bindings.ContentFilesApi.upload(file=str(path), relative_path=f"{i}.iso").pulp_href
         )
-    content_hrefs = [monitor_task(task_href).created_resources[0] for task_href in create_tasks]
 
     for content_href in content_hrefs:
         monitor_task(

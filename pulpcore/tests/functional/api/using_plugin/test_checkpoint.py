@@ -25,24 +25,14 @@ def _wait_until_checkpoint_ts_advances(previous_created):
 
 
 @pytest.fixture(scope="class")
-def content_factory(tmp_path_factory, file_bindings, monitor_task):
+def content_factory(tmp_path_factory, file_bindings):
     def _content_factory(name):
         file = tmp_path_factory.mktemp("content") / name
         file.write_text(str(uuid.uuid4()))
-        return monitor_task(
-            file_bindings.ContentFilesApi.create(relative_path=name, file=str(file)).task
-        ).created_resources[0]
+        return file_bindings.ContentFilesApi.upload(relative_path=name, file=str(file)).pulp_href
 
     def _precreate(names):
-        """Create many content units, dispatching tasks before waiting."""
-        create_tasks = []
-        for name in names:
-            file = tmp_path_factory.mktemp("content") / name
-            file.write_text(str(uuid.uuid4()))
-            create_tasks.append(
-                file_bindings.ContentFilesApi.create(relative_path=name, file=str(file)).task
-            )
-        return [monitor_task(task_href).created_resources[0] for task_href in create_tasks]
+        return [_content_factory(name) for name in names]
 
     _content_factory.precreate = _precreate
     return _content_factory
