@@ -6,19 +6,20 @@ workers, fetch_task() should learn which resources are blocked and exclude
 them from subsequent DB queries — not re-scan from position 0 each time.
 """
 
-import pytest
-import redis
 from datetime import timedelta
 from unittest.mock import patch as mock_patch
 
+import pytest
+import redis
+
 from pulpcore.app.models import AppStatus, Domain, Task
-from pulpcore.tasking.redis_locks import acquire_locks as real_acquire, safe_release_task_locks
+from pulpcore.tasking.redis_locks import acquire_locks as real_acquire
+from pulpcore.tasking.redis_locks import safe_release_task_locks
 from pulpcore.tasking.redis_worker import RedisWorker
 
 
 @pytest.mark.django_db
 class TestFetchTaskHeadOfLineBlocking:
-
     @pytest.fixture(autouse=True)
     def setup(self):
         AppStatus.objects._current_app_status = None
@@ -115,9 +116,7 @@ class TestFetchTaskHeadOfLineBlocking:
             self.redis_conn.delete(key)
 
         assert result is not None, "Worker failed to reach the free task behind 200 blocked tasks"
-        assert result.pk == free_task.pk, (
-            "Worker claimed a blocked task instead of the free task"
-        )
+        assert result.pk == free_task.pk, "Worker claimed a blocked task instead of the free task"
         assert call_count <= 300, (
             f"acquire_locks called {call_count} times (expected <= 300). "
             f"The doubling loop re-scans blocked tasks from position 0 instead of "
