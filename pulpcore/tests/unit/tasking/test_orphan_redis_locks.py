@@ -16,6 +16,7 @@ from pulpcore.app.models import AppStatus, Task
 from pulpcore.constants import TASK_STATES
 from pulpcore.tasking import redis_locks, redis_worker
 from pulpcore.tasking.redis_locks import (
+    ACTIVE_OWNERS_KEY,
     LEGACY_OWNER_SCAN_INTERVAL,
     LEGACY_OWNER_SCAN_KEY,
     acquire_locks,
@@ -139,6 +140,29 @@ def test_shared_lock_release_preserves_other_owners(pulp_redisdb):
     assert conn.exists(get_owner_registry_key("owner-b")) == 0
 
 
+@pytest.mark.django_db
+def test_release_keeps_owner_in_active_owners(pulp_redisdb, reset_singleton):
+    """Releasing the last lock keeps the owner in active_owners (no release->acquire gap
+    for reconcile); it is dropped only later by orphan reconciliation.
+
+    Regression guard: the release script must NOT srem active_owners on scard==0.
+    """
+    conn = pulp_redisdb
+    task_lock_key = seed_locks_via_acquire(conn, "owner-a", "t1", exclusive=["res-excl"])
+    assert "owner-a" in _smembers(conn, ACTIVE_OWNERS_KEY)
+
+    # Full release empties the registry but must leave active_owners untouched.
+    redis_locks.release_resource_locks(conn, "owner-a", task_lock_key, ["res-excl"], [])
+    assert conn.exists(get_owner_registry_key("owner-a")) == 0
+    assert "owner-a" in _smembers(conn, ACTIVE_OWNERS_KEY)
+
+    # Reconcile (owner-a has no AppStatus row) finally removes the stale marker.
+    cleaner = AppStatus.objects.create(app_type="worker", name="cleaner")
+    w = make_worker(conn, "cleaner", cleaner)
+    w.reconcile_orphan_redis_locks()
+    assert "owner-a" not in _smembers(conn, ACTIVE_OWNERS_KEY)
+
+
 # --------------------------------------------------------------------------- #
 # cleanup_locks_for_owner / collect_lock_owners
 # --------------------------------------------------------------------------- #
@@ -178,6 +202,35 @@ def test_cleanup_locks_for_owner_legacy_scan(pulp_redisdb):
     assert conn.exists(get_task_lock_key("leg")) == 0
     assert conn.exists(resource_to_lock_key("leg-excl")) == 0
     assert conn.exists(resource_to_lock_key("leg-shared")) == 0
+
+
+def test_cleanup_preserves_unexpected_registry_entry(pulp_redisdb, caplog):
+    """Cleaning an owner releases its normal locks but leaves an unexpected-type key (and
+    its registry entry) in place, keeping the owner in active_owners for a later pass.
+
+    Guards the reviewer's concern: unknown key types must not be silently orphaned.
+    """
+    conn = pulp_redisdb
+    task_lock_key = seed_locks_via_acquire(conn, "owner-a", "t1", exclusive=["res-excl"])
+
+    # Inject a registry member pointing at a key of an unexpected type (a Redis list).
+    bogus_key = "task:bogus-type"
+    conn.rpush(bogus_key, "not-a-lock")
+    conn.sadd(get_owner_registry_key("owner-a"), bogus_key)
+
+    with caplog.at_level("WARNING", logger="pulpcore.tasking.redis_locks"):
+        assert cleanup_locks_for_owner(conn, "owner-a") is True
+
+    # Normal locks released...
+    assert conn.exists(task_lock_key) == 0
+    assert conn.exists(resource_to_lock_key("res-excl")) == 0
+    # ...but the unexpected key survives and remains tracked in the registry.
+    assert conn.exists(bogus_key) == 1
+    assert bogus_key in _smembers(conn, get_owner_registry_key("owner-a"))
+    # Owner is retained for a later cleanup pass.
+    assert "owner-a" in _smembers(conn, ACTIVE_OWNERS_KEY)
+    # The skipped key is surfaced by name so an operator can locate it.
+    assert bogus_key in caplog.text
 
 
 def test_cleanup_locks_for_owner_returns_false_on_error():
