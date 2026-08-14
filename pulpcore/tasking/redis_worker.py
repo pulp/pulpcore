@@ -498,17 +498,15 @@ class RedisWorker:
             taken_exclusive = set()
             taken_shared = set()
 
-            qs = (
-                Task.objects.filter(state=TASK_STATES.WAITING, app_lock=None)
-                .exclude(pk__in=self.ignored_task_ids)
+            qs = Task.objects.filter(state=TASK_STATES.WAITING, app_lock=None).exclude(
+                pk__in=self.ignored_task_ids
             )
             if blocked_resources:
-                qs = qs.exclude(
-                    reserved_resources_record__overlap=list(blocked_resources)
-                )
+                qs = qs.exclude(reserved_resources_record__overlap=list(blocked_resources))
             waiting_tasks = list(
-                qs.order_by("pulp_created")
-                .select_related("pulp_domain")[offset:offset + FETCH_TASK_LIMIT]
+                qs.order_by("pulp_created").select_related("pulp_domain")[
+                    offset : offset + FETCH_TASK_LIMIT
+                ]
             )
 
             if not waiting_tasks:

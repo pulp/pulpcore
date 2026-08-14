@@ -35,9 +35,7 @@ class TestFetchTaskHeadOfLineBlocking:
             versions={},
             ttl=timedelta(seconds=30),
         )
-        self.redis_conn = redis.Redis(
-            host="localhost", port=6379, decode_responses=True
-        )
+        self.redis_conn = redis.Redis(host="localhost", port=6379, decode_responses=True)
         yield
         AppStatus.objects._current_app_status = None
 
@@ -100,9 +98,7 @@ class TestFetchTaskHeadOfLineBlocking:
                     state="waiting",
                     name="pulpcore.app.tasks.test.sleep",
                     logging_cid=f"blocked-{i}",
-                    reserved_resources_record=[
-                        blocked_resources[i], domain_shared
-                    ],
+                    reserved_resources_record=[blocked_resources[i], domain_shared],
                     pulp_domain=domain,
                     enc_args=[0],
                     enc_kwargs={},
@@ -159,7 +155,5 @@ class TestFetchTaskHeadOfLineBlocking:
         finally:
             for key in lock_keys:
                 self.redis_conn.delete(key)
-            Task.objects.filter(
-                logging_cid__startswith="blocked-"
-            ).delete()
+            Task.objects.filter(logging_cid__startswith="blocked-").delete()
             Task.objects.filter(logging_cid="free-task").delete()
