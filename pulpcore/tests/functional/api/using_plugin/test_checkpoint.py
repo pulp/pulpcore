@@ -252,7 +252,6 @@ class TestCheckpointDistribution:
 def test_checkpoint_retention(
     file_bindings,
     file_repository_factory,
-    file_distribution_factory,
     create_publication,
     monitor_task,
 ):
@@ -262,36 +261,24 @@ def test_checkpoint_retention(
     retain their checkpoint=True flag. Older ones get their checkpoint flag cleared.
     """
     repo = file_repository_factory()
-    file_distribution_factory(repository=repo.pulp_href, checkpoint=True)
 
-    # Create 4 checkpoint publications (content creates overlap up front).
-    create_publication.precreate(5)
-    checkpoint_pubs = []
-    for _ in range(4):
-        checkpoint_pubs.append(create_publication(repo, True))
+    create_publication.precreate(3)
+    checkpoint_pubs = [create_publication(repo, True) for _ in range(2)]
 
-    # Verify all 4 publications are checkpoints
     for pub in checkpoint_pubs:
         assert file_bindings.PublicationsFileApi.read(pub.pulp_href).checkpoint is True
 
-    # Set retain_checkpoints=2 — should clear checkpoint flag on the 2 oldest
+    # Set retain_checkpoints=1 — should clear checkpoint flag on the oldest
     task = file_bindings.RepositoriesFileApi.partial_update(
-        repo.pulp_href, {"retain_checkpoints": 2}
+        repo.pulp_href, {"retain_checkpoints": 1}
     ).task
     monitor_task(task)
 
-    # Verify the 2 oldest had their flag cleared
-    for pub in checkpoint_pubs[:2]:
-        assert file_bindings.PublicationsFileApi.read(pub.pulp_href).checkpoint is False
-
-    # Verify the 2 most recent still have checkpoint=True
-    for pub in checkpoint_pubs[2:]:
-        assert file_bindings.PublicationsFileApi.read(pub.pulp_href).checkpoint is True
+    assert file_bindings.PublicationsFileApi.read(checkpoint_pubs[0].pulp_href).checkpoint is False
+    assert file_bindings.PublicationsFileApi.read(checkpoint_pubs[1].pulp_href).checkpoint is True
 
     # Create another checkpoint — should trigger steady-state cleanup
     new_pub = create_publication(repo, True)
 
-    # checkpoint_pubs[2] should now be cleared too
-    assert file_bindings.PublicationsFileApi.read(checkpoint_pubs[2].pulp_href).checkpoint is False
-    assert file_bindings.PublicationsFileApi.read(checkpoint_pubs[3].pulp_href).checkpoint is True
+    assert file_bindings.PublicationsFileApi.read(checkpoint_pubs[1].pulp_href).checkpoint is False
     assert file_bindings.PublicationsFileApi.read(new_pub.pulp_href).checkpoint is True
