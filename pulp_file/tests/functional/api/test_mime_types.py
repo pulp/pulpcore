@@ -38,9 +38,7 @@ def test_content_types(
     blob = tmp_path / "blob"
     blob.write_bytes(b"mime-type-test")
     files = {
-        extension: file_bindings.ContentFilesApi.upload(
-            file=str(blob), relative_path=relative_path
-        )
+        extension: file_bindings.ContentFilesApi.upload(file=str(blob), relative_path=relative_path)
         for extension, relative_path in relative_paths.items()
     }
 
