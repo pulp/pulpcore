@@ -21,10 +21,10 @@ REDIS_LOCK_PREFIX = "pulp:resource_lock:"
 # lock keys it currently holds so cleanup is O(locks held by owner), not O(all locks).
 REDIS_OWNER_REGISTRY_PREFIX = "pulp:owner_locks:"
 
-# Redis SET of owner names that currently hold at least one lock. Enumerating owners
-# via SMEMBERS on this key is O(#owners); it avoids a full-keyspace SCAN (a SCAN with
-# MATCH still walks every key). Kept in sync inside the acquire/release/cleanup Lua
-# scripts, which hardcode this literal -- keep them matching this constant.
+# Redis SET of owner names holding at least one lock. SMEMBERS here is O(#owners),
+# avoiding a full-keyspace SCAN. Added by the acquire script; removed only by the cleanup
+# path (REDIS_CLEANUP_OWNER_LOCKS_SCRIPT / cleanup_locks_for_owner) -- the release script
+# deliberately does NOT (see there). These paths hardcode this literal; keep it matching.
 ACTIVE_OWNERS_KEY = "pulp:active_owners"
 
 # Throttle key + interval (seconds) for the legacy full-keyspace SCAN fallback used
@@ -186,43 +186,58 @@ elseif task_lock_owner ~= false then
     task_lock_not_owned = true
 end
 
--- If this owner no longer holds any locks, drop it from the active-owners set
--- (the registry key auto-deletes once empty, so scard == 0 means "no locks left").
-if redis.call("scard", owner_registry_key) == 0 then
-    redis.call("srem", "pulp:active_owners", lock_owner)
-end
+-- Do NOT remove lock_owner from "pulp:active_owners" here, even if its registry is now
+-- empty: that opens a release->next-acquire gap where reconcile_orphan_redis_locks would
+-- miss the owner. A live worker holding zero locks is harmless (reconcile only cleans
+-- owners with no AppStatus row); owners leave active_owners only during cleanup.
 
 return {not_owned_exclusive, not_in_shared, task_lock_not_owned}
 """
 
 
 REDIS_CLEANUP_OWNER_LOCKS_SCRIPT = """
--- Release every lock held by an owner, using the per-owner registry set.
+-- Release every lock held by an owner via the per-owner registry set. Each entry is
+-- removed individually (not a wholesale registry delete); a key of an unexpected type is
+-- left in place and reported as skipped so it is not silently orphaned.
 -- ARGV[1]: lock_owner
--- Returns: number of locks released (best effort)
+-- Returns: {released, skipped_keys} (skipped = registry entries with an unexpected type)
 local lock_owner = ARGV[1]
 local owner_registry_key = "pulp:owner_locks:" .. lock_owner
 local keys = redis.call("smembers", owner_registry_key)
 local released = 0
+local skipped_keys = {}
 
 for _, key in ipairs(keys) do
     local key_type = redis.call("type", key)["ok"]
     if key_type == "string" then
-        -- Only delete if we still own it (a successor may have re-taken the name).
         if redis.call("get", key) == lock_owner then
+            -- Still ours: release and stop tracking.
             redis.call("del", key)
+            redis.call("srem", owner_registry_key, key)
             released = released + 1
+        else
+            -- Not ours (successor re-took the name): stop tracking, leave the lock.
+            redis.call("srem", owner_registry_key, key)
         end
     elseif key_type == "set" then
         -- srem; the set auto-deletes once its last member leaves.
         released = released + redis.call("srem", key, lock_owner)
+        redis.call("srem", owner_registry_key, key)
+    elseif key_type == "none" then
+        -- Stale entry: lock already gone.
+        redis.call("srem", owner_registry_key, key)
+    else
+        -- Unexpected type: leave it and keep tracking (reported by name, not orphaned).
+        skipped_keys[#skipped_keys + 1] = key
     end
-    -- key_type == "none": stale registry entry, nothing to release.
 end
 
-redis.call("del", owner_registry_key)
-redis.call("srem", "pulp:active_owners", lock_owner)
-return released
+-- Forget the owner only once its registry is empty; skipped keys keep it enumerable.
+if redis.call("scard", owner_registry_key) == 0 then
+    redis.call("srem", "pulp:active_owners", lock_owner)
+end
+
+return {released, skipped_keys}
 """
 
 
@@ -338,9 +353,10 @@ def cleanup_locks_for_owner(redis_conn, owner, allow_legacy_scan=False):
     registry_key = get_owner_registry_key(owner)
     try:
         released = 0
+        skipped_keys = []
         if redis_conn.exists(registry_key):
             cleanup_script = redis_conn.register_script(REDIS_CLEANUP_OWNER_LOCKS_SCRIPT)
-            released = cleanup_script(keys=[], args=[owner])
+            released, skipped_keys = cleanup_script(keys=[], args=[owner])
         elif allow_legacy_scan:
             released = _legacy_scan_cleanup_for_owner(redis_conn, owner)
         else:
@@ -349,6 +365,14 @@ def cleanup_locks_for_owner(redis_conn, owner, allow_legacy_scan=False):
             redis_conn.srem(ACTIVE_OWNERS_KEY, owner)
         if released:
             _logger.info("Reclaimed %d Redis lock(s) held by owner %s", released, owner)
+        if skipped_keys:
+            _logger.warning(
+                "Left %d unexpected registry entr(y/ies) for owner %s in place for a "
+                "later cleanup pass: %s",
+                len(skipped_keys),
+                owner,
+                ", ".join(_decode(key) for key in skipped_keys),
+            )
         return True
     except Exception as e:
         _logger.error("Error cleaning up Redis locks for owner %s: %s", owner, e)
