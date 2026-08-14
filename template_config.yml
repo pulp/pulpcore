@@ -89,6 +89,7 @@ pulp_settings_azure:
   worker_type: "redis"
 pulp_settings_gcp: null
 pulp_settings_s3:
+  ENABLE_V4_API: true
   DISABLED_authentication_backends: "@merge django.contrib.auth.backends.RemoteUserBackend"
   DISABLED_authentication_json_header: "HTTP_X_RH_IDENTITY"
   DISABLED_authentication_json_header_jq_filter: ".identity.user.username"
