@@ -1,6 +1,8 @@
+import asyncio
 import json
 import uuid
 
+import aiohttp
 import pytest
 
 """
@@ -49,14 +51,24 @@ def auth_headers(bindings):
 def test_list_endpoints(file_bindings, proxy_rewrite_set, pulp_api_v3_path):
     """Check that ALL rewritten API_ROOT endpoints are accessible."""
     API_ROOT = pulp_api_v3_path.encode("utf-8")
-    for endpoint, url in proxy_rewrite_set.items():
-        headers = auth_headers(file_bindings)
-        response = file_bindings.client.rest_client.request("GET", url, headers=headers)
-        assert response.status == 200
+    headers = auth_headers(file_bindings)
 
+    async def fetch_all():
+        async with aiohttp.ClientSession(headers=headers) as session:
+
+            async def get_one(endpoint, url):
+                async with session.get(url, params={"limit": 1}, ssl=False) as response:
+                    return endpoint, url, response.status, await response.read()
+
+            return await asyncio.gather(
+                *(get_one(endpoint, url) for endpoint, url in proxy_rewrite_set.items())
+            )
+
+    for endpoint, url, status, body in asyncio.run(fetch_all()):
+        assert status == 200, f"failed on {endpoint}:{url}"
         if endpoint != "tasks":
             # Tasks reserved resources can have original API_ROOT
-            assert API_ROOT not in response.response.data, f"failed on {endpoint}:{url}"
+            assert API_ROOT not in body, f"failed on {endpoint}:{url}"
 
 
 @pytest.mark.parallel
