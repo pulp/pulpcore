@@ -482,26 +482,40 @@ class RedisWorker:
         3. If resource locks acquired, attempts to claim the task
            with a Redis task lock (24h expiration)
         4. Returns the first task for which both locks can be acquired
-        5. If no task found in the batch, doubles the fetch limit and retries from the oldest
+        5. Tracks resources that are blocked and excludes tasks needing those
+           resources from subsequent DB queries, preventing head-of-line blocking
+           when many tasks compete for the same locked resource
 
         Returns:
             Task: A task object if one was successfully locked, None otherwise
         """
         fetch_limit = FETCH_TASK_LIMIT
+        # Track resources confirmed blocked by acquire_locks. On the next
+        # query iteration, tasks needing any of these resources are excluded
+        # at the DB level via the GIN-indexed reserved_resources_record
+        # overlap check.  This set is local to this call — it resets when
+        # fetch_task() is called again, so newly-freed resources are never
+        # permanently skipped.
+        blocked_resources = set()
 
         while True:
             taken_exclusive = set()
             taken_shared = set()
 
+            qs = Task.objects.filter(state=TASK_STATES.WAITING, app_lock=None).exclude(
+                pk__in=self.ignored_task_ids
+            )
+            if blocked_resources:
+                qs = qs.exclude(reserved_resources_record__overlap=list(blocked_resources))
+
             waiting_tasks = list(
-                Task.objects.filter(state=TASK_STATES.WAITING, app_lock=None)
-                .exclude(pk__in=self.ignored_task_ids)
-                .order_by("pulp_created")
-                .select_related("pulp_domain")[:fetch_limit]
+                qs.order_by("pulp_created").select_related("pulp_domain")[:fetch_limit]
             )
 
             if not waiting_tasks:
                 break
+
+            blocked_grew = False
 
             for task in waiting_tasks:
                 try:
@@ -533,6 +547,22 @@ class RedisWorker:
                         shared_resources,
                     )
                     if blocked_resource_list:
+                        for resource in blocked_resource_list:
+                            # Decode bytes from Redis if needed
+                            if isinstance(resource, bytes):
+                                resource = resource.decode()
+                            # Skip the task-lock sentinel — it is
+                            # task-specific, not a shared resource.
+                            if resource == "__task_lock__":
+                                continue
+                            # Add both the raw name (matches exclusive
+                            # entries in reserved_resources_record) and
+                            # the shared:-prefixed form (matches shared
+                            # entries) so the DB exclusion covers tasks
+                            # needing either kind of access.
+                            blocked_resources.add(resource)
+                            blocked_resources.add(f"shared:{resource}")
+                        blocked_grew = True
                         continue
 
                     rows = Task.objects.filter(
@@ -560,6 +590,19 @@ class RedisWorker:
             if len(waiting_tasks) < fetch_limit:
                 break
 
+            if blocked_grew:
+                # New blocked resources discovered — re-query from the
+                # start with the narrower filter.  The DB will skip all
+                # tasks that need the blocked resources (using the GIN
+                # index on reserved_resources_record), returning tasks
+                # with free resources within the same FETCH_TASK_LIMIT.
+                fetch_limit = FETCH_TASK_LIMIT
+                continue
+
+            # Fallback: no new blocked resources, but the batch was full.
+            # Double fetch_limit to look further into the queue (same
+            # strategy as the original algorithm for edge cases like
+            # FIFO-skipped tasks or concurrent DB claim races).
             fetch_limit *= 2
 
         return None
