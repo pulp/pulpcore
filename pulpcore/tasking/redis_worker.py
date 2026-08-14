@@ -482,26 +482,34 @@ class RedisWorker:
         3. If resource locks acquired, attempts to claim the task
            with a Redis task lock (24h expiration)
         4. Returns the first task for which both locks can be acquired
-        5. If no task found in the batch, doubles the fetch limit and retries from the oldest
+        5. Resources reported as blocked by acquire_locks are accumulated and excluded
+           from subsequent DB queries via reserved_resources_record overlap filtering
 
         Returns:
             Task: A task object if one was successfully locked, None otherwise
         """
         fetch_limit = FETCH_TASK_LIMIT
+        blocked_resources = set()
 
         while True:
             taken_exclusive = set()
             taken_shared = set()
 
-            waiting_tasks = list(
+            qs = (
                 Task.objects.filter(state=TASK_STATES.WAITING, app_lock=None)
                 .exclude(pk__in=self.ignored_task_ids)
                 .order_by("pulp_created")
-                .select_related("pulp_domain")[:fetch_limit]
+                .select_related("pulp_domain")
             )
+            if blocked_resources:
+                qs = qs.exclude(reserved_resources_record__overlap=list(blocked_resources))
+
+            waiting_tasks = list(qs[:fetch_limit])
 
             if not waiting_tasks:
                 break
+
+            found_new_blocked = False
 
             for task in waiting_tasks:
                 try:
@@ -533,6 +541,12 @@ class RedisWorker:
                         shared_resources,
                     )
                     if blocked_resource_list:
+                        for resource in blocked_resource_list:
+                            if resource != "__task_lock__":
+                                if resource not in blocked_resources:
+                                    blocked_resources.add(resource)
+                                    blocked_resources.add(f"shared:{resource}")
+                                    found_new_blocked = True
                         continue
 
                     rows = Task.objects.filter(
@@ -560,7 +574,8 @@ class RedisWorker:
             if len(waiting_tasks) < fetch_limit:
                 break
 
-            fetch_limit *= 2
+            if not found_new_blocked:
+                fetch_limit *= 2
 
         return None
 
