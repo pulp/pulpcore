@@ -38,6 +38,8 @@ pulpcore & pulp-file functional tests require both client bindings to be install
 
 **Always** use the `oci-env` to run the functional and unit tests.
 
+Do not UPDATE `Task.pulp_created`. A Postgres trigger (`on_update_timestamp_task`) raises `Updating pulp_created is not allowed.` Create rows in the desired order instead.
+
 ## Modifying template_config.yml
 
 Use the `plugin-template` tool after any changes made to `template_config.yml`.
