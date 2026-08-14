@@ -174,6 +174,15 @@ def test_fsexport_by_version(
     }
 
 
+def _filesystem_domain(pulpcore_bindings, gen_object_with_cleanup):
+    body = {
+        "name": str(uuid.uuid4()),
+        "storage_class": "pulpcore.app.models.storage.FileSystem",
+        "storage_settings": {"MEDIA_ROOT": "/var/lib/pulp/media/"},
+    }
+    return gen_object_with_cleanup(pulpcore_bindings.DomainsApi, body)
+
+
 @pytest.mark.skipif(not settings.DOMAIN_ENABLED, reason="Domains not enabled.")
 @pytest.mark.parallel
 def test_fsexport_cross_domain(
@@ -181,40 +190,48 @@ def test_fsexport_cross_domain(
     fs_export_factory,
     gen_object_with_cleanup,
     pulpcore_bindings,
-    pub_and_repo,
+    file_bindings,
+    file_repository_factory,
+    file_publication_factory,
+    tmp_path,
+    monitor_task,
 ):
+    # Publication and versions live in source_domain; exporter lives in other_domain.
+    source_domain = _filesystem_domain(pulpcore_bindings, gen_object_with_cleanup)
+    other_domain = _filesystem_domain(pulpcore_bindings, gen_object_with_cleanup)
 
-    entities = [{}, {}]
-    for e in entities:
-        body = {
-            "name": str(uuid.uuid4()),
-            "storage_class": "pulpcore.app.models.storage.FileSystem",
-            "storage_settings": {"MEDIA_ROOT": "/var/lib/pulp/media/"},
-        }
-        e["domain"] = gen_object_with_cleanup(pulpcore_bindings.DomainsApi, body)
-        e["publication"], e["repository"] = pub_and_repo(pulp_domain=e["domain"].name)
-        e["exporter"] = fs_exporter_factory(pulp_domain=e["domain"].name)
-        body = {"publication": e["publication"].pulp_href}
-        e["export"] = fs_export_factory(e["exporter"], body=body)
+    src = tmp_path / "file.dat"
+    src.write_text("x")
+    content_href = file_bindings.ContentFilesApi.upload(
+        relative_path="0.dat", file=str(src), pulp_domain=source_domain.name
+    ).pulp_href
+    repository = file_repository_factory(pulp_domain=source_domain.name)
+    monitor_task(
+        file_bindings.RepositoriesFileApi.modify(
+            repository.pulp_href, {"add_content_units": [content_href]}
+        ).task
+    )
+    repository = file_bindings.RepositoriesFileApi.read(repository.pulp_href)
+    publication = file_publication_factory(
+        repository=repository.pulp_href, pulp_domain=source_domain.name
+    )
+    latest = repository.latest_version_href
+    zeroth = latest.rsplit("/", 2)[0] + "/0/"
+    exporter = fs_exporter_factory(pulp_domain=other_domain.name)
 
-    latest = entities[0]["repository"].latest_version_href
-    zeroth = latest.replace("/2/", "/0/")
+    with pytest.raises(BadRequestException):
+        fs_export_factory(exporter, body={"publication": publication.pulp_href})
 
-    with pytest.raises(BadRequestException) as e:
-        body = {"publication": entities[0]["publication"].pulp_href}
-        fs_export_factory(entities[1]["exporter"], body=body)
+    with pytest.raises(BadRequestException):
+        fs_export_factory(exporter, body={"repository_version": latest})
 
-    with pytest.raises(BadRequestException) as e:
-        body = {"repository_version": latest}
-        fs_export_factory(entities[1]["exporter"], body=body)
+    with pytest.raises(BadRequestException):
+        fs_export_factory(
+            exporter, body={"repository_version": latest, "start_repository_version": zeroth}
+        )
 
-    with pytest.raises(BadRequestException) as e:
-        body = {"repository_version": latest, "start_repository_version": zeroth}
-        fs_export_factory(entities[1]["exporter"], body=body)
-
-    with pytest.raises(BadRequestException) as e:
-        body = {
-            "publication": entities[0]["publication"].pulp_href,
-            "start_repository_version": zeroth,
-        }
-        fs_export_factory(entities[1]["exporter"], body=body)
+    with pytest.raises(BadRequestException):
+        fs_export_factory(
+            exporter,
+            body={"publication": publication.pulp_href, "start_repository_version": zeroth},
+        )
