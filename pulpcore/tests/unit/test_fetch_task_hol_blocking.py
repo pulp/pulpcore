@@ -26,7 +26,19 @@ from pulpcore.tasking.redis_locks import acquire_locks as real_acquire_locks
 class TestFetchTaskHeadOfLineBlocking:
     @pytest.fixture(autouse=True)
     def setup(self):
-        from pulpcore.app.models import AppStatus
+        from pulpcore.app.models import AppStatus, Domain
+        from pulpcore.app.util import set_domain
+
+        try:
+            self.redis_conn = redis.Redis(host="localhost", port=6379, decode_responses=True)
+            self.redis_conn.ping()
+        except redis.ConnectionError:
+            pytest.skip("Redis not available")
+
+        self.domain, _ = Domain.objects.get_or_create(
+            name="default", defaults={"storage_class": "pulpcore.app.models.storage.FileSystem"}
+        )
+        set_domain(self.domain)
 
         AppStatus.objects._current_app_status = None
         self.app_status = AppStatus.objects.create(
@@ -35,7 +47,6 @@ class TestFetchTaskHeadOfLineBlocking:
             versions={},
             ttl=timedelta(seconds=30),
         )
-        self.redis_conn = redis.Redis(host="localhost", port=6379, decode_responses=True)
         yield
         AppStatus.objects._current_app_status = None
 
@@ -72,12 +83,9 @@ class TestFetchTaskHeadOfLineBlocking:
           batch 3 (80 from 0): 80 calls (re-tries first 40)
           batch 4 (160 from 0): 101 calls (re-tries first 80)
         """
-        from pulpcore.app.models import Domain, Task
-        from pulpcore.app.util import set_domain
+        from pulpcore.app.models import Task
 
-        domain = Domain.objects.get(name="default")
-        set_domain(domain)
-
+        domain = self.domain
         domain_shared = f"shared:prn:core.domain:{domain.pk}"
         num_blocked = 100
         blocked_resources = []
