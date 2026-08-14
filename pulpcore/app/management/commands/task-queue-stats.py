@@ -60,9 +60,7 @@ def _summarize(values):
 
 
 class Command(BaseCommand):
-    help = _(
-        "Summarize how long completed tasks waited for a worker after becoming unblocked."
-    )
+    help = _("Summarize how long completed tasks waited for a worker after becoming unblocked.")
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -168,9 +166,7 @@ class Command(BaseCommand):
             reverse=True,
         )[:top_n]
 
-        null_unblocked = Task.objects.filter(
-            state=TASK_STATES.COMPLETED, unblocked_at__isnull=True
-        )
+        null_unblocked = Task.objects.filter(state=TASK_STATES.COMPLETED, unblocked_at__isnull=True)
         if since is not None:
             null_unblocked = null_unblocked.filter(pulp_created__gte=since)
         null_unblocked_count = null_unblocked.count()
