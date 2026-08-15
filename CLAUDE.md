@@ -3,6 +3,10 @@
 The role of this file is to describe common mistakes and confusion points that agents might encounter as they work in this project.
 If you ever encounter something in the project that surprises you, please alert the developer working with you and indicate that this is the case in the CLAUDE.md file to help prevent future agents from having the same issue.
 
+## Setting up the developer environment
+
+Pulp uses the [`oci-env`](https://github.com/pulp/oci_env/) repository to spin up dev Pulp instances. Please check to see if this repository is available (typically in the parent directory) and clone it if not. Then follow the [quickstart guide](https://github.com/pulp/oci_env/blob/main/docs/dev/tutorials/quickstart.md) to setup Pulp. We also recommend installing the `pulp-cli` from PyPI to interact with Pulp.
+
 ## Interacting with the developer environment
 
 Use the `pulp-cli` to interact with the Pulp API. Fallback on `httpie/curl` when the CLI doesn't support the endpoint/options needed.
