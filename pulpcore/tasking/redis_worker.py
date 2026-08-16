@@ -625,9 +625,7 @@ class RedisWorker:
                 .select_related("pulp_domain")
             )
             if blocked_resources:
-                qs = qs.exclude(
-                    reserved_resources_record__overlap=list(blocked_resources)
-                )
+                qs = qs.exclude(reserved_resources_record__overlap=list(blocked_resources))
 
             waiting_tasks = list(qs[:fetch_limit])
 
