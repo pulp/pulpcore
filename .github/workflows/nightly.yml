@@ -14,6 +14,9 @@ on:
     - cron: "00 3 * * *"
   workflow_dispatch:
 
+env:
+  UV_SYSTEM_PYTHON: "1"
+
 defaults:
   run:
     working-directory: "pulpcore"
@@ -44,10 +47,14 @@ jobs:
       - uses: "actions/setup-python@v6"
         with:
           python-version: "3.13"
+      - name: "Install uv"
+        uses: "astral-sh/setup-uv@v7"
+        with:
+          enable-cache: true
 
       - name: "Install python dependencies"
         run: |
-          pip install gitpython packaging toml
+          uv pip install gitpython packaging toml
 
       - name: "Configure Git with pulpbot name and email"
         run: |

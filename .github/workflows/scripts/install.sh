@@ -17,8 +17,8 @@ source .github/workflows/scripts/utils.sh
 
 PIP_REQUIREMENTS=("pulp-cli" "yq")
 
-# This must be the **only** call to "pip install" on the test runner.
-pip install ${PIP_REQUIREMENTS[*]}
+# This must be the **only** package install on the test runner.
+uv pip install ${PIP_REQUIREMENTS[*]}
 
 if [[ "$TEST" = "s3" ]]; then
 for i in {1..3}
@@ -33,7 +33,7 @@ fi
 fi
 
 # Check out the pulp-cli branch matching the installed version.
-PULP_CLI_VERSION="$(pip freeze | sed -n -e 's/pulp-cli==//p')"
+PULP_CLI_VERSION="$(uv pip freeze | sed -n -e 's/pulp-cli==//p')"
 git clone --depth 1 --branch "$PULP_CLI_VERSION" https://github.com/pulp/pulp-cli.git ../pulp-cli
 
 PULP_API_ROOT="$(yq -r '.pulp_scenario_settings.api_root // .pulp_settings.api_root // "/pulp/"' < .ci/ansible/vars/main.yaml)"
