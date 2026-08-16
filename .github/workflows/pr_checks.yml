@@ -17,6 +17,9 @@ on:
       - "main"
       - "[0-9]+.[0-9]+"
 
+env:
+  UV_SYSTEM_PYTHON: "1"
+
 # This workflow runs with elevated permissions.
 # Do not even think about running a single bit of code from the PR.
 # Static analysis should be fine however.
@@ -38,9 +41,13 @@ jobs:
       - uses: "actions/setup-python@v6"
         with:
           python-version: "3.11"
+      - name: "Install uv"
+        uses: "astral-sh/setup-uv@v7"
+        with:
+          enable-cache: true
       - name: "Determine PR labels"
         run: |
-          pip install GitPython==3.1.42
+          uv pip install GitPython==3.1.42
           git fetch origin ${{ github.event.pull_request.head.sha }}
           python .ci/scripts/pr_labels.py "origin/${{ github.base_ref }}" "${{ github.event.pull_request.head.sha }}" >> "$GITHUB_ENV"
       - uses: "actions/github-script@v8"
