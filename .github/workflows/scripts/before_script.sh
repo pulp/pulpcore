@@ -39,12 +39,12 @@ echo "# Constraints Files:"
 tail -v -n +1  ../*/*constraints.txt || true
 
 echo
-echo "# pip list outside the container"
-pip list
+echo "# package list outside the container"
+uv pip list
 
 echo
-echo "# pip list inside the container"
-cmd_prefix bash -c "pip3 list"
+echo "# package list inside the container"
+cmd_prefix bash -c "uv pip list"
 
 echo
 echo "# State of the containers"
