@@ -9,6 +9,9 @@
 name: "Core CI"
 on: {pull_request: {branches: ['*']}}
 
+env:
+  UV_SYSTEM_PYTHON: "1"
+
 concurrency:
   group: ${{ github.ref_name }}-${{ github.workflow }}
   cancel-in-progress: true
@@ -28,9 +31,13 @@ jobs:
       - uses: "actions/setup-python@v6"
         with:
           python-version: "3.11"
+      - name: "Install uv"
+        uses: "astral-sh/setup-uv@v7"
+        with:
+          enable-cache: true
       - name: "Install python dependencies"
         run: |
-          pip install requests pygithub pyyaml
+          uv pip install requests pygithub pyyaml
       - name: "Check commit message"
         if: github.event_name == 'pull_request'
         env:
@@ -55,10 +62,14 @@ jobs:
       - uses: "actions/setup-python@v6"
         with:
           python-version: "3.12"
+      - name: "Install uv"
+        uses: "astral-sh/setup-uv@v7"
+        with:
+          enable-cache: true
 
       - name: "Install python dependencies"
         run: |
-          pip install gitpython
+          uv pip install gitpython
 
       - name: "Analyze changed files"
         id: "check"
