@@ -16,6 +16,8 @@ from pulpcore.app.redis_connection import get_redis_connection
 from pulpcore.constants import TASK_STATES
 from pulpcore.tasking.redis_locks import (
     acquire_locks as real_acquire,
+)
+from pulpcore.tasking.redis_locks import (
     resource_to_lock_key,
     safe_release_task_locks,
 )
@@ -56,9 +58,7 @@ def test_fetch_task_skips_blocked_resources():
 
     worker = object.__new__(RedisWorker)
     worker.ignored_task_ids = list(
-        Task.objects.filter(state=TASK_STATES.WAITING, app_lock=None).values_list(
-            "pk", flat=True
-        )
+        Task.objects.filter(state=TASK_STATES.WAITING, app_lock=None).values_list("pk", flat=True)
     )
     worker.redis_conn = redis_conn
     worker.name = app_status.name
@@ -137,9 +137,7 @@ def test_fetch_task_skips_blocked_resources():
             redis_conn.delete(key)
         if result:
             safe_release_task_locks(result, lock_owner=worker.name)
-            Task.objects.filter(pk=result.pk).update(
-                app_lock=None, state=TASK_STATES.COMPLETED
-            )
+            Task.objects.filter(pk=result.pk).update(app_lock=None, state=TASK_STATES.COMPLETED)
         Task.objects.filter(logging_cid__startswith=f"hol-{test_id}").delete()
         AppStatus.objects._current_app_status = None
         app_status.delete()

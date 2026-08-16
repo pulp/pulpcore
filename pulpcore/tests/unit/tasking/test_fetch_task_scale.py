@@ -20,11 +20,12 @@ from pulpcore.app.redis_connection import get_redis_connection
 from pulpcore.constants import TASK_STATES
 from pulpcore.tasking.redis_locks import (
     acquire_locks as real_acquire,
+)
+from pulpcore.tasking.redis_locks import (
     resource_to_lock_key,
     safe_release_task_locks,
 )
 from pulpcore.tasking.redis_worker import RedisWorker
-
 
 NUM_BLOCKED_RESOURCES = 50
 NUM_BLOCKED_TASKS = 2000
@@ -56,18 +57,14 @@ def test_fetch_task_uses_db_exclusion_at_scale():
 
     worker = object.__new__(RedisWorker)
     worker.ignored_task_ids = list(
-        Task.objects.filter(state=TASK_STATES.WAITING, app_lock=None).values_list(
-            "pk", flat=True
-        )
+        Task.objects.filter(state=TASK_STATES.WAITING, app_lock=None).values_list("pk", flat=True)
     )
     worker.redis_conn = redis_conn
     worker.name = app_status.name
     worker.app_status = app_status
 
     # Block 50 distinct resources in Redis
-    blocked_resources = [
-        f"prn:test.scale-{test_id}.r:{i}" for i in range(NUM_BLOCKED_RESOURCES)
-    ]
+    blocked_resources = [f"prn:test.scale-{test_id}.r:{i}" for i in range(NUM_BLOCKED_RESOURCES)]
     for res in blocked_resources:
         key = resource_to_lock_key(res)
         redis_conn.set(key, "other-worker")
@@ -133,26 +130,18 @@ def test_fetch_task_uses_db_exclusion_at_scale():
 
         # 1. The overlap operator (&&) must appear in at least one query
         overlap_queries = [
-            q
-            for q in captured_queries
-            if "&&" in q["sql"] and "core_task" in q["sql"]
+            q for q in captured_queries if "&&" in q["sql"] and "core_task" in q["sql"]
         ]
         assert len(overlap_queries) > 0, (
             "NO OVERLAP QUERIES: fetch_task() did not use the && operator "
             "to exclude blocked resources at the DB level. "
             "Captured queries:\n"
-            + "\n".join(
-                q["sql"][:200]
-                for q in captured_queries
-                if "core_task" in q["sql"]
-            )
+            + "\n".join(q["sql"][:200] for q in captured_queries if "core_task" in q["sql"])
         )
 
         # 2. Total task queries should be small (not O(log n) doubling)
         task_select_queries = [
-            q
-            for q in captured_queries
-            if "core_task" in q["sql"] and "SELECT" in q["sql"].upper()
+            q for q in captured_queries if "core_task" in q["sql"] and "SELECT" in q["sql"].upper()
         ]
         assert len(task_select_queries) <= 10, (
             f"TOO MANY DB QUERIES: {len(task_select_queries)} SELECT queries "
@@ -184,13 +173,9 @@ def test_fetch_task_uses_db_exclusion_at_scale():
             for line in log_after.split("\n")
             if "Scan" in line or "Index" in line or "Bitmap" in line
         ]
-        index_used = any(
-            "Index Scan" in line or "Bitmap" in line for line in plan_lines
-        )
+        index_used = any("Index Scan" in line or "Bitmap" in line for line in plan_lines)
         seq_scan_only = (
-            all("Seq Scan" in line for line in plan_lines if "Scan" in line)
-            if plan_lines
-            else True
+            all("Seq Scan" in line for line in plan_lines if "Scan" in line) if plan_lines else True
         )
 
         assert index_used and not seq_scan_only, (
@@ -204,11 +189,7 @@ def test_fetch_task_uses_db_exclusion_at_scale():
             redis_conn.delete(key)
         if result:
             safe_release_task_locks(result, lock_owner=worker.name)
-            Task.objects.filter(pk=result.pk).update(
-                app_lock=None, state=TASK_STATES.COMPLETED
-            )
-        Task.objects.filter(
-            logging_cid__startswith=f"scale-{test_id}"
-        ).delete()
+            Task.objects.filter(pk=result.pk).update(app_lock=None, state=TASK_STATES.COMPLETED)
+        Task.objects.filter(logging_cid__startswith=f"scale-{test_id}").delete()
         AppStatus.objects._current_app_status = None
         app_status.delete()
