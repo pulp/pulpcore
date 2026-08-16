@@ -9,7 +9,7 @@ ADD ./{{ plugin_name }}/{{ plugin_name | replace("-", "_") }}/app/webserver_snip
 ADD ./{{ item.origin }} {{ item.destination }}
 {%- endfor %}
 
-# This MUST be the ONLY call to pip install in inside the container.
+# This MUST be the ONLY package install inside the container.
 RUN --mount=type=cache,target=/root/.cache/uv uv pip install --upgrade setuptools wheel && \
   uv pip install {{ image.source }}
 {%- if image.upperbounds | default(false) -%}

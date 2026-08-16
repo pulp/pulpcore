@@ -117,7 +117,7 @@ cmd_stdin_prefix bash -c "cat > /tmp/unittest_requirements.txt" < unittest_requi
 cmd_stdin_prefix bash -c "cat > /tmp/functest_requirements.txt" < functest_requirements.txt
 cmd_stdin_prefix bash -c "cat > /tmp/bindings_requirements.txt" < bindings_requirements.txt
 cmd_stdin_prefix bash -c "cat > /tmp/bindings_constraints.txt" < bindings_constraints.txt
-cmd_prefix pip3 install -r /tmp/unittest_requirements.txt -r /tmp/functest_requirements.txt -r /tmp/bindings_requirements.txt -c /tmp/bindings_constraints.txt
+cmd_prefix uv pip install -r /tmp/unittest_requirements.txt -r /tmp/functest_requirements.txt -r /tmp/bindings_requirements.txt -c /tmp/bindings_constraints.txt
 
 CERTIFI=$(cmd_prefix python3 -c 'import certifi; print(certifi.where())')
 cmd_prefix bash -c "cat /etc/pulp/certs/pulp_webserver.crt >> '$CERTIFI'"
@@ -170,13 +170,7 @@ export PULP_FIXTURES_URL="http://pulp-fixtures:8080"
 # some pulp-cli tests use the api root envvar
 export PULP_API_ROOT="$(EDITOR=cat pulp config edit 2>/dev/null | awk -F'"' '/api_root/{print $2; exit}')"
 pushd ../pulp-cli
-if [[ -f "test_requirements.txt" ]]
-then
-  pip install -r test_requirements.txt
-  pytest -v tests -m "pulpcore or pulp_file or pulp_certguard"
-else
-  PULP_CA_BUNDLE="/usr/local/share/ca-certificates/pulp_webserver.crt" make livetest PYTEST_MARK="live and (pulpcore or pulp_file or pulp_certguard)"
-fi
+PULP_CA_BUNDLE="/usr/local/share/ca-certificates/pulp_webserver.crt" make paralleltest PYTEST_MARK="live and (pulpcore or pulp_file or pulp_certguard)"
 popd
 
 if [ -f "$POST_SCRIPT" ]; then
