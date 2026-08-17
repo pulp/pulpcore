@@ -476,28 +476,23 @@ class RedisWorker:
         """
         Fetch an available waiting task using Redis locks.
 
-        This method:
-        1. Queries waiting tasks (sorted by creation time, limited)
-        2. For each task, attempts to acquire Redis distributed locks for exclusive resources
-        3. If resource locks acquired, attempts to claim the task
-           with a Redis task lock (24h expiration)
-        4. Returns the first task for which both locks can be acquired
-        5. If no task found in the batch, doubles the fetch limit and retries from the oldest
-
         Returns:
             Task: A task object if one was successfully locked, None otherwise
         """
-        fetch_limit = FETCH_TASK_LIMIT
+        taken_exclusive = set()
+        taken_shared = set()
 
         while True:
-            taken_exclusive = set()
-            taken_shared = set()
+            qs = Task.objects.filter(state=TASK_STATES.WAITING, app_lock=None).exclude(
+                pk__in=self.ignored_task_ids
+            )
+
+            if taken_exclusive or taken_shared:
+                blocked = taken_shared | taken_exclusive | {f"shared:{r}" for r in taken_exclusive}
+                qs = qs.exclude(reserved_resources_record__overlap=list(blocked))
 
             waiting_tasks = list(
-                Task.objects.filter(state=TASK_STATES.WAITING, app_lock=None)
-                .exclude(pk__in=self.ignored_task_ids)
-                .order_by("pulp_created")
-                .select_related("pulp_domain")[:fetch_limit]
+                qs.order_by("pulp_created").select_related("pulp_domain")[:FETCH_TASK_LIMIT]
             )
 
             if not waiting_tasks:
@@ -557,10 +552,8 @@ class RedisWorker:
                         pass
                     continue
 
-            if len(waiting_tasks) < fetch_limit:
+            if len(waiting_tasks) < FETCH_TASK_LIMIT:
                 break
-
-            fetch_limit *= 2
 
         return None
 
