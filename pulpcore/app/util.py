@@ -260,8 +260,16 @@ def get_viewset_for_model(model_obj, ignore_error=False):
     # go through the viewset registry to find the viewset for the passed-in model
     for app in pulp_plugin_configs():
         for model, viewsets in app.named_viewsets.items():
-            # There may be multiple viewsets for a model. In this
-            # case, we can't reverse the mapping.
+            # There may be multiple viewsets for a model, e.g. a plugin may register an
+            # additional read-only, nested viewset that reuses an existing content type's
+            # queryset for its own purposes (a ContentView search endpoint, for example),
+            # without intending to compete for that model's canonical viewset. Such viewsets
+            # are always nested (they declare a parent_viewset), so if excluding them leaves
+            # exactly one candidate, that candidate is unambiguously the canonical viewset.
+            if len(viewsets) > 1:
+                non_nested = [vs for vs in viewsets if getattr(vs, "parent_viewset", None) is None]
+                if len(non_nested) == 1:
+                    viewsets = non_nested
             if len(viewsets) == 1:
                 viewset = viewsets[0]
                 _model_viewset_cache.setdefault(model, viewset)

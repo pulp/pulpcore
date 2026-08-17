@@ -61,6 +61,10 @@ from .content import (
     SigningServiceSerializer,
     SingleArtifactContentSerializer,
 )
+from .content_view import (
+    ContentViewDistributionStatusSerializer,
+    ContentViewSerializer,
+)
 from .domain import DomainSerializer, DomainBackendMigratorSerializer
 from .exporter import (
     ExporterSerializer,

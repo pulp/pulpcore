@@ -1,0 +1,1 @@
+Added the ``ContentView`` resource: a named, persistable scope composed of Distributions -- potentially spanning multiple domains -- with full CRUD and RBAC. This lets plugins implement RBAC-respecting, cross-domain search over the content served by those Distributions without querying the database directly or passing raw repository version hrefs on every request.

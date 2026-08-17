@@ -25,6 +25,7 @@ from .content import (
     ReadOnlyContentViewSet,
     SigningServiceViewSet,
 )
+from .content_view import ContentViewFilter, ContentViewViewSet
 from .custom_filters import (
     RepoVersionHrefPrnFilter,
     RepositoryVersionFilter,
