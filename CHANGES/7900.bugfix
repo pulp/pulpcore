@@ -1,0 +1,1 @@
+Fixed head-of-line blocking in RedisWorker fetch_task() when thousands of tasks need the same blocked resource by excluding known-blocked resources from subsequent DB queries.

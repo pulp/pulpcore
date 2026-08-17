@@ -599,26 +599,40 @@ class RedisWorker:
         3. If resource locks acquired, attempts to claim the task
            with a Redis task lock (24h expiration)
         4. Returns the first task for which both locks can be acquired
-        5. If no task found in the batch, doubles the fetch limit and retries from the oldest
+        5. Tracks blocked resources across iterations and excludes them at the DB level
+           using the ``reserved_resources_record__overlap`` filter, leveraging the partial
+           GIN index ``pulp_task_resources_index``
+
+        The ``blocked_resources`` set is local to each ``fetch_task()`` call — it resets
+        between calls so that resources freed while the worker was busy are retried.
+        FIFO ordering within a resource is preserved because all tasks needing a blocked
+        resource are excluded together.
 
         Returns:
             Task: A task object if one was successfully locked, None otherwise
         """
         fetch_limit = FETCH_TASK_LIMIT
+        blocked_resources = set()
+        taken_exclusive = set()
+        taken_shared = set()
 
         while True:
-            taken_exclusive = set()
-            taken_shared = set()
 
-            waiting_tasks = list(
+            qs = (
                 Task.objects.filter(state=TASK_STATES.WAITING, app_lock=None)
                 .exclude(pk__in=self.ignored_task_ids)
                 .order_by("pulp_created")
-                .select_related("pulp_domain")[:fetch_limit]
+                .select_related("pulp_domain")
             )
+            if blocked_resources:
+                qs = qs.exclude(reserved_resources_record__overlap=list(blocked_resources))
+
+            waiting_tasks = list(qs[:fetch_limit])
 
             if not waiting_tasks:
                 break
+
+            prev_blocked_count = len(blocked_resources)
 
             for task in waiting_tasks:
                 try:
@@ -650,6 +664,18 @@ class RedisWorker:
                         shared_resources,
                     )
                     if blocked_resource_list:
+                        for resource_name in blocked_resource_list:
+                            # Redis returns bytes; decode for ORM compatibility.
+                            if isinstance(resource_name, bytes):
+                                resource_name = resource_name.decode()
+                            if resource_name == "__task_lock__":
+                                continue
+                            # Add the raw resource name (matches exclusive entries
+                            # in reserved_resources_record).
+                            blocked_resources.add(resource_name)
+                            # Also add the shared: variant so tasks referencing
+                            # this resource as shared are excluded too.
+                            blocked_resources.add(f"shared:{resource_name}")
                         continue
 
                     rows = Task.objects.filter(
@@ -673,6 +699,11 @@ class RedisWorker:
                     except Exception:
                         pass
                     continue
+
+            # If we learned new blocked resources, re-query with updated exclusions
+            # (same fetch_limit — the exclusion yields different tasks).
+            if len(blocked_resources) > prev_blocked_count:
+                continue
 
             if len(waiting_tasks) < fetch_limit:
                 break
