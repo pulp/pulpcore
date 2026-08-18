@@ -108,6 +108,13 @@ class DomainViewSet(
         "core.domain_viewer": ["core.view_domain"],
     }
 
+    def get_queryset(self):
+        """Prefetch the default content guard to avoid N+1 queries on the list endpoint."""
+        qs = super().get_queryset()
+        if getattr(self, "action", "") == "list":
+            qs = qs.select_related("default_content_guard")
+        return qs
+
     @extend_schema(
         description="Trigger an asynchronous update task",
         responses={200: DomainSerializer, 202: AsyncOperationResponseSerializer},

@@ -9,13 +9,15 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
-from pulpcore.app.models import Domain
+from pulpcore.app.models import ContentGuard, Domain
 from pulpcore.app.serializers import (
+    DetailRelatedField,
     HiddenFieldsMixin,
     IdentityField,
     ModelSerializer,
     pulp_labels_validator,
 )
+from pulpcore.app.util import get_prn
 
 BACKEND_CHOICES = (
     ("pulpcore.app.models.storage.FileSystem", "Use local filesystem as storage"),
@@ -454,6 +456,23 @@ class DomainSerializer(BackendSettingsValidator, ModelSerializer):
         help_text=_("Boolean to hide distributions with a content guard in the content app."),
         default=False,
     )
+    default_content_guard = DetailRelatedField(
+        required=False,
+        allow_null=True,
+        help_text=_(
+            "An optional content-guard that is automatically assigned to new distributions "
+            "created within this domain when they do not specify their own content-guard. To "
+            "apply multiple guards by default, use a composite content-guard."
+        ),
+        view_name_pattern=r"contentguards(-.*/.*)?-detail",
+        queryset=ContentGuard.objects.all(),
+    )
+    default_content_guard_prn = serializers.SerializerMethodField(
+        help_text=_("The Pulp Resource Name (PRN) of the domain's default content-guard."),
+    )
+
+    def get_default_content_guard_prn(self, obj):
+        return get_prn(obj.default_content_guard) if obj.default_content_guard else None
 
     def validate_name(self, value):
         """Ensure name is not 'api' or 'content'."""
@@ -463,6 +482,26 @@ class DomainSerializer(BackendSettingsValidator, ModelSerializer):
 
     def validate(self, data):
         """Ensure that Domain settings are valid."""
+        # A default content-guard must live in the same domain it is being assigned to.
+        # Checked before the "default" domain short-circuit so it is never silently skipped.
+        default_content_guard = data.get("default_content_guard")
+        if default_content_guard is not None:
+            if self.instance is None:
+                raise serializers.ValidationError(
+                    detail={
+                        "default_content_guard": _(
+                            "A default content-guard can only be set on an existing domain. "
+                            "Create the domain first, then set this field with an update."
+                        )
+                    }
+                )
+            if default_content_guard.pulp_domain_id != self.instance.pulp_id:
+                raise serializers.ValidationError(
+                    detail={
+                        "default_content_guard": _("The content-guard must belong to this domain.")
+                    }
+                )
+
         # Validate for update gets called before ViewSet default check
         if self.instance and self.instance.name == "default":
             return data
@@ -495,6 +534,8 @@ class DomainSerializer(BackendSettingsValidator, ModelSerializer):
             "storage_settings",
             "redirect_to_object_storage",
             "hide_guarded_distributions",
+            "default_content_guard",
+            "default_content_guard_prn",
         )
 
 

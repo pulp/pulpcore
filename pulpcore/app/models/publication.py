@@ -16,7 +16,7 @@ from django.contrib.postgres.fields import HStoreField
 from django.contrib.postgres.indexes import OpClass, SpGistIndex
 from django.db import DatabaseError, IntegrityError, models, transaction
 from django.utils import timezone
-from django_lifecycle import AFTER_CREATE, AFTER_UPDATE, BEFORE_DELETE, hook
+from django_lifecycle import AFTER_CREATE, AFTER_UPDATE, BEFORE_CREATE, BEFORE_DELETE, hook
 from rest_framework.exceptions import APIException
 from url_normalize import url_normalize
 
@@ -791,6 +791,19 @@ class Distribution(MasterModel):
                 if pa is not None:
                     return pa.content_artifact
         return None
+
+    @hook(BEFORE_CREATE)
+    def _set_default_content_guard(self):
+        """Apply the domain's default content guard when none is explicitly set.
+
+        If the distribution is created without a ``content_guard`` and its domain has a
+        ``default_content_guard`` configured, that guard is assigned automatically. An
+        explicitly provided ``content_guard`` always takes precedence.
+        """
+        if self.content_guard_id is None:
+            default_content_guard_id = self.pulp_domain.default_content_guard_id
+            if default_content_guard_id is not None:
+                self.content_guard_id = default_content_guard_id
 
     @hook(AFTER_CREATE)
     @hook(
