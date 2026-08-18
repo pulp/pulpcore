@@ -3,7 +3,7 @@
 from django.db import migrations
 
 
-CREATE_REL_PATH_DOMAINS = """
+CREATE_REL_PATH_DOMAINS = r"""
 CREATE DOMAIN "relative_path" AS text CHECK ('/' || VALUE || '/' !~ '[\n\r\s\t\?#]|(/\.{0,2}/)');
 """
 
