@@ -2,6 +2,6 @@
 mock
 aiotools
 pytest<8
-pytest-django
+pytest-django[django]
 pytest-asyncio
 pytest-redis<3.1.0 # https://github.com/ClearcodeHQ/pytest-redis/issues/679
