@@ -157,7 +157,7 @@ class NamedModelViewSet(viewsets.GenericViewSet):
         return match.func.cls.queryset.model
 
     @staticmethod
-    def get_resource(uri, model=None):
+    def get_resource(uri, model=None, deferred_fields=None):
         """
         Resolve a resource URI/PRN to an instance of the resource.
 
@@ -168,6 +168,9 @@ class NamedModelViewSet(viewsets.GenericViewSet):
             uri (str): A resource URI/PRN.
             model (django.models.Model): A model class. If not provided, the method automatically
                 determines the used model from the resource URI/PRN.
+            deferred_fields (iterable): Optional field names to defer when loading the resource, so
+                large columns are not fetched from the database. Field names that do not exist on
+                the resolved model are ignored.
 
         Returns:
             django.models.Model: The resource fetched from the DB.
@@ -209,7 +212,13 @@ class NamedModelViewSet(viewsets.GenericViewSet):
                     kwargs[key] = value
 
         try:
-            return model.objects.get(**kwargs)
+            manager = model.objects
+            if deferred_fields:
+                model_fields = {field.name for field in model._meta.concrete_fields}
+                to_defer = [name for name in deferred_fields if name in model_fields]
+                if to_defer:
+                    manager = manager.defer(*to_defer)
+            return manager.get(**kwargs)
         except model.MultipleObjectsReturned:
             raise DRFValidationError(
                 detail=_("URI {u} matches more than one {m}.").format(
