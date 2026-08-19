@@ -48,20 +48,23 @@ class OpenPGPPublicKey(_OpenPGPContent):
         else:
             content_filter = {}
         data = self.packet()
-        # note: because these queries aren't ordered, the result may be nondetermininistic
-        for signature in self.openpgp_signatures.filter(**content_filter):
+        for signature in self.openpgp_signatures.filter(**content_filter).order_by("pk"):
             data += signature.packet()
-        for user_id in self.user_ids.filter(**content_filter):
+        for user_id in self.user_ids.filter(**content_filter).order_by("pk"):
             data += user_id.packet()
-            for signature in user_id.openpgp_signatures.filter(**content_filter):
+            for signature in user_id.openpgp_signatures.filter(**content_filter).order_by("pk"):
                 data += signature.packet()
-        for user_attribute in self.user_attributes.filter(**content_filter):
+        for user_attribute in self.user_attributes.filter(**content_filter).order_by("pk"):
             data += user_attribute.packet()
-            for signature in user_attribute.openpgp_signatures.filter(**content_filter):
+            for signature in user_attribute.openpgp_signatures.filter(**content_filter).order_by(
+                "pk"
+            ):
                 data += signature.packet()
-        for public_subkey in self.public_subkeys.filter(**content_filter):
+        for public_subkey in self.public_subkeys.filter(**content_filter).order_by("pk"):
             data += public_subkey.packet()
-            for signature in public_subkey.openpgp_signatures.filter(**content_filter):
+            for signature in public_subkey.openpgp_signatures.filter(**content_filter).order_by(
+                "pk"
+            ):
                 data += signature.packet()
         return armor(data, ArmorKind.PublicKey).strip()  # avoid trailing newline
 
@@ -140,7 +143,7 @@ class OpenPGPSignature(_OpenPGPContent):
 
     @property
     def expired(self):
-        return self.expiration_time and timezone.now() > self.created + self.expiration_time
+        return bool(self.expiration_time and timezone.now() > self.created + self.expiration_time)
 
     @property
     def key_expired(self):
@@ -222,6 +225,8 @@ class OpenPGPDistribution(Distribution, AutoAddObjPermsMixin):
     def content_handler_list_directory(self, rel_path):
         if rel_path == "":
             repository_version = self.repository_version or self.repository.latest_version()
+            if repository_version is None:
+                return set()
             fingerprints = OpenPGPPublicKey.objects.filter(
                 pk__in=repository_version.content
             ).values_list("fingerprint", flat=True)
@@ -231,5 +236,5 @@ class OpenPGPDistribution(Distribution, AutoAddObjPermsMixin):
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
         permissions = [
-            ("manage_roles_openpgpdistribution", "Can manage roles on gem distributions"),
+            ("manage_roles_openpgpdistribution", "Can manage roles on openpgp distributions"),
         ]
