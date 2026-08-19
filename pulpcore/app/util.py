@@ -677,6 +677,17 @@ def get_worker_name():
     )
 
 
+def _is_read_only_db_error(exc):
+    """Check if a DatabaseError was caused by a read-only database (SQLSTATE 25006)."""
+    cause = exc.__cause__
+    while cause is not None:
+        pgcode = getattr(cause, "pgcode", None) or getattr(cause, "sqlstate", None)
+        if pgcode == "25006":
+            return True
+        cause = getattr(cause, "__cause__", None)
+    return False
+
+
 def normalize_http_status(status):
     """Convert the HTTP status code to 2xx, 3xx, etc., normalizing the last two digits."""
     if 100 <= status < 200:
