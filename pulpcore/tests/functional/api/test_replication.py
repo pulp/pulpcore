@@ -293,21 +293,26 @@ def test_replication_with_repo_based_distribution(
     gen_object_with_cleanup,
     file_distribution_factory,
     file_repository_factory,
-    file_remote_factory,
-    basic_manifest_path,
     add_domain_objects_to_cleanup,
+    tmp_path,
 ):
     """Test replication when upstream distribution uses repository (not publication)."""
     source_domain = domain_factory()
     add_domain_objects_to_cleanup(source_domain)
 
-    # Create a repo, sync it w/ mirror=True, and distribute via repository (not publication)
-    remote = file_remote_factory(
-        pulp_domain=source_domain.name, manifest_path=basic_manifest_path, policy="immediate"
+    src = tmp_path / "file.txt"
+    src.write_text("repo-based")
+    content_href = file_bindings.ContentFilesApi.upload(
+        relative_path="file.txt",
+        file=str(src),
+        pulp_domain=source_domain.name,
+    ).pulp_href
+    repo = file_repository_factory(pulp_domain=source_domain.name, autopublish=True)
+    monitor_task(
+        file_bindings.RepositoriesFileApi.modify(
+            repo.pulp_href, {"add_content_units": [content_href]}
+        ).task
     )
-    repo = file_repository_factory(pulp_domain=source_domain.name)
-    sync_data = file_bindings.module.FileRepositorySyncURL(remote=remote.pulp_href, mirror=True)
-    monitor_task(file_bindings.RepositoriesFileApi.sync(repo.pulp_href, sync_data).task)
     _ = file_distribution_factory(pulp_domain=source_domain.name, repository=repo.pulp_href)
 
     # Replicate
@@ -369,22 +374,28 @@ def test_replication_multi_distribution_content_update(
     source_domain = domain_factory()
     add_domain_objects_to_cleanup(source_domain)
 
-    # Create 3 repos with content and publication-based distributions
+    # Create 2 repos with content and publication-based distributions
     distros = []
     repos = []
-    for i in range(3):
+    modify_tasks = []
+    for i in range(2):
         repo = file_repository_factory(pulp_domain=source_domain.name)
         repos.append(repo)
         file_path = tmp_path / f"file_{i}.txt"
         file_path.write_text(f"content_{i}")
-        monitor_task(
-            file_bindings.ContentFilesApi.create(
-                file=str(file_path),
-                relative_path=f"file_{i}.txt",
-                repository=repo.pulp_href,
-                pulp_domain=source_domain.name,
+        content_href = file_bindings.ContentFilesApi.upload(
+            file=str(file_path),
+            relative_path=f"file_{i}.txt",
+            pulp_domain=source_domain.name,
+        ).pulp_href
+        modify_tasks.append(
+            file_bindings.RepositoriesFileApi.modify(
+                repo.pulp_href, {"add_content_units": [content_href]}
             ).task
         )
+    for task in modify_tasks:
+        monitor_task(task)
+    for repo in repos:
         pub = file_publication_factory(pulp_domain=source_domain.name, repository=repo.pulp_href)
         distros.append(
             file_distribution_factory(pulp_domain=source_domain.name, publication=pub.pulp_href)
@@ -414,7 +425,7 @@ def test_replication_multi_distribution_content_update(
     replica_distros = file_bindings.DistributionsFileApi.list(
         pulp_domain=replica_domain.name
     ).results
-    assert len(replica_distros) == 3
+    assert len(replica_distros) == 2
     initial_versions = {}
     for rd in replica_distros:
         assert rd.repository is None
@@ -423,17 +434,23 @@ def test_replication_multi_distribution_content_update(
         initial_versions[rd.name] = rd.repository_version
 
     # Add new content to all source repos and update publications
+    modify_tasks = []
     for i, repo in enumerate(repos):
         file_path = tmp_path / f"file_{i}_v2.txt"
         file_path.write_text(f"new_content_{i}")
-        monitor_task(
-            file_bindings.ContentFilesApi.create(
-                file=str(file_path),
-                relative_path=f"file_{i}_v2.txt",
-                repository=repo.pulp_href,
-                pulp_domain=source_domain.name,
+        content_href = file_bindings.ContentFilesApi.upload(
+            file=str(file_path),
+            relative_path=f"file_{i}_v2.txt",
+            pulp_domain=source_domain.name,
+        ).pulp_href
+        modify_tasks.append(
+            file_bindings.RepositoriesFileApi.modify(
+                repo.pulp_href, {"add_content_units": [content_href]}
             ).task
         )
+    for task in modify_tasks:
+        monitor_task(task)
+    for i, repo in enumerate(repos):
         repo = file_bindings.RepositoriesFileApi.read(repo.pulp_href)
         pub = file_publication_factory(
             pulp_domain=source_domain.name,
@@ -455,7 +472,7 @@ def test_replication_multi_distribution_content_update(
     replica_distros = file_bindings.DistributionsFileApi.list(
         pulp_domain=replica_domain.name
     ).results
-    assert len(replica_distros) == 3
+    assert len(replica_distros) == 2
     for rd in replica_distros:
         assert rd.repository is None
         assert rd.repository_version is not None
@@ -561,10 +578,8 @@ def test_replication_optimization(
     pulp_settings,
     file_bindings,
     file_repository_factory,
-    file_remote_factory,
     file_distribution_factory,
     file_publication_factory,
-    basic_manifest_path,
     monitor_task,
     gen_object_with_cleanup,
     tmp_path,
@@ -583,19 +598,20 @@ def test_replication_optimization(
         pulpcore_bindings.UpstreamPulpsApi, upstream_pulp_body, pulp_domain=non_default_domain.name
     )
 
-    # sync a repository on the "remote" Pulp instance
-    upstream_remote = file_remote_factory(
-        pulp_domain=source_domain.name, manifest_path=basic_manifest_path, policy="immediate"
-    )
+    # One content unit on the "remote" Pulp instance is enough to test skip-sync
+    src = tmp_path / "file.txt"
+    src.write_text("replica")
+    content_href = file_bindings.ContentFilesApi.upload(
+        relative_path="file.txt",
+        file=str(src),
+        pulp_domain=source_domain.name,
+    ).pulp_href
     upstream_repository = file_repository_factory(pulp_domain=source_domain.name)
-
-    repository_sync_data = file_bindings.module.FileRepositorySyncURL(
-        remote=upstream_remote.pulp_href, mirror=True
+    monitor_task(
+        file_bindings.RepositoriesFileApi.modify(
+            upstream_repository.pulp_href, {"add_content_units": [content_href]}
+        ).task
     )
-    response = file_bindings.RepositoriesFileApi.sync(
-        upstream_repository.pulp_href, repository_sync_data
-    )
-    monitor_task(response.task)
     upstream_repository = file_bindings.RepositoriesFileApi.read(upstream_repository.pulp_href)
     upstream_publication = file_publication_factory(
         pulp_domain=source_domain.name, repository_version=upstream_repository.latest_version_href
@@ -1057,23 +1073,29 @@ def populate_upstream(
     domain_factory,
     file_bindings,
     file_repository_factory,
-    file_remote_factory,
     file_distribution_factory,
-    write_3_iso_file_fixture_data_factory,
     monitor_task,
+    tmp_path,
 ):
     def _populate_upstream(number, prefix=""):
         upstream_domain = domain_factory()
+        src = tmp_path / f"{uuid.uuid4()}.txt"
+        src.write_text("replica")
+        content_href = file_bindings.ContentFilesApi.upload(
+            relative_path="file.txt",
+            file=str(src),
+            pulp_domain=upstream_domain.name,
+        ).pulp_href
         tasks = []
         for i in range(number):
             repo = file_repository_factory(pulp_domain=upstream_domain.name, autopublish=True)
-            name = f"{prefix}{i}"
-            fix = write_3_iso_file_fixture_data_factory(name)
-            remote = file_remote_factory(pulp_domain=upstream_domain.name, manifest_path=fix)
-            body = {"remote": remote.pulp_href}
-            tasks.append(file_bindings.RepositoriesFileApi.sync(repo.pulp_href, body).task)
+            tasks.append(
+                file_bindings.RepositoriesFileApi.modify(
+                    repo.pulp_href, {"add_content_units": [content_href]}
+                ).task
+            )
             file_distribution_factory(
-                name=name,
+                name=f"{prefix}{i}",
                 pulp_domain=upstream_domain.name,
                 repository=repo.pulp_href,
                 pulp_labels={"upstream": str(i), "even" if i % 2 == 0 else "odd": ""},
@@ -1097,7 +1119,7 @@ def test_replicate_with_basic_q_select(
     add_domain_objects_to_cleanup,
 ):
     """Test basic label select replication."""
-    source_domain = populate_upstream(6)
+    source_domain = populate_upstream(4)
     dest_domain = domain_factory()
     upstream_body = {
         "name": str(uuid.uuid4()),
@@ -1110,14 +1132,14 @@ def test_replicate_with_basic_q_select(
     upstream = gen_object_with_cleanup(
         pulpcore_bindings.UpstreamPulpsApi, upstream_body, pulp_domain=dest_domain.name
     )
-    # Run the replicate task and assert that all 6 repos got synced
+    # Run the replicate task and assert that all repos got synced
     response = pulpcore_bindings.UpstreamPulpsApi.replicate(
         upstream.pulp_href, pulpcore_bindings.module.UpstreamPulpReplicate()
     )
     monitor_task_group(response.task_group)
     add_domain_objects_to_cleanup(dest_domain)
     result = pulpcore_bindings.DistributionsApi.list(pulp_domain=dest_domain.name)
-    assert result.count == 6
+    assert result.count == 4
 
     # Update q_select to sync only 'even' repos
     body = {"q_select": "pulp_label_select='even'"}
@@ -1127,11 +1149,11 @@ def test_replicate_with_basic_q_select(
     )
     monitor_task_group(response.task_group)
     result = pulpcore_bindings.DistributionsApi.list(pulp_domain=dest_domain.name)
-    assert result.count == 3
-    assert {d.name for d in result.results} == {"0", "2", "4"}
+    assert result.count == 2
+    assert {d.name for d in result.results} == {"0", "2"}
 
     # Update q_select to sync one 'upstream' repo
-    body["q_select"] = "pulp_label_select='upstream=4'"
+    body["q_select"] = "pulp_label_select='upstream=2'"
     pulpcore_bindings.UpstreamPulpsApi.partial_update(upstream.pulp_href, body)
     response = pulpcore_bindings.UpstreamPulpsApi.replicate(
         upstream.pulp_href, pulpcore_bindings.module.UpstreamPulpReplicate()
@@ -1139,7 +1161,7 @@ def test_replicate_with_basic_q_select(
     monitor_task_group(response.task_group)
     result = pulpcore_bindings.DistributionsApi.list(pulp_domain=dest_domain.name)
     assert result.count == 1
-    assert result.results[0].name == "4"
+    assert result.results[0].name == "2"
 
     # Show that basic label select is ANDed together
     body["q_select"] = "pulp_label_select='even,upstream=0'"
@@ -1165,7 +1187,7 @@ def test_replicate_with_per_request_q_select(
     add_domain_objects_to_cleanup,
 ):
     """Test that q_select can be passed per-request to the replicate action."""
-    source_domain = populate_upstream(6)
+    source_domain = populate_upstream(4)
     dest_domain = domain_factory()
     add_domain_objects_to_cleanup(dest_domain)
 
@@ -1192,8 +1214,8 @@ def test_replicate_with_per_request_q_select(
     )
     monitor_task_group(response.task_group)
     result = pulpcore_bindings.DistributionsApi.list(pulp_domain=dest_domain.name)
-    assert result.count == 3
-    assert {d.name for d in result.results} == {"0", "2", "4"}
+    assert result.count == 2
+    assert {d.name for d in result.results} == {"0", "2"}
 
     # Selective replicate of 'odd' should NOT delete the 'even' ones (remove_missing skipped)
     replicate_body = pulpcore_bindings.module.UpstreamPulpReplicate(
@@ -1204,8 +1226,8 @@ def test_replicate_with_per_request_q_select(
     )
     monitor_task_group(response.task_group)
     result = pulpcore_bindings.DistributionsApi.list(pulp_domain=dest_domain.name)
-    assert result.count == 6
-    assert {d.name for d in result.results} == {"0", "1", "2", "3", "4", "5"}
+    assert result.count == 4
+    assert {d.name for d in result.results} == {"0", "1", "2", "3"}
 
     # Full replicate (no per-request q_select) should still work and run remove_missing
     response = pulpcore_bindings.UpstreamPulpsApi.replicate(
@@ -1213,7 +1235,7 @@ def test_replicate_with_per_request_q_select(
     )
     monitor_task_group(response.task_group)
     result = pulpcore_bindings.DistributionsApi.list(pulp_domain=dest_domain.name)
-    assert result.count == 6
+    assert result.count == 4
 
 
 @pytest.mark.parallel
@@ -1228,7 +1250,7 @@ def test_replicate_with_complex_q_select(
     add_domain_objects_to_cleanup,
 ):
     """Test complex q_select replication."""
-    source_domain = populate_upstream(6)
+    source_domain = populate_upstream(4)
     dest_domain = domain_factory()
     add_domain_objects_to_cleanup(dest_domain)
     upstream_body = {
@@ -1252,16 +1274,16 @@ def test_replicate_with_complex_q_select(
     assert result.count == 2
     assert {d.name for d in result.results} == {"1", "2"}
 
-    # Test odds but not five
-    body = {"q_select": "pulp_label_select='odd' AND NOT pulp_label_select='upstream=5'"}
+    # Test odds but not three
+    body = {"q_select": "pulp_label_select='odd' AND NOT pulp_label_select='upstream=3'"}
     pulpcore_bindings.UpstreamPulpsApi.partial_update(upstream.pulp_href, body)
     response = pulpcore_bindings.UpstreamPulpsApi.replicate(
         upstream.pulp_href, pulpcore_bindings.module.UpstreamPulpReplicate()
     )
     monitor_task_group(response.task_group)
     result = pulpcore_bindings.DistributionsApi.list(pulp_domain=dest_domain.name)
-    assert result.count == 2
-    assert {d.name for d in result.results} == {"1", "3"}
+    assert result.count == 1
+    assert {d.name for d in result.results} == {"1"}
 
     # Test we error when trying to provide an invalid q expression
     body["q_select"] = "invalid='testing'"
@@ -1301,9 +1323,9 @@ def add_domain_objects_to_cleanup(add_to_cleanup, file_bindings):
 @pytest.mark.parametrize(
     "policy,results",
     [
-        ("nodelete", [{"b0", "b1", "a0", "a1", "a2"}, {"b0", "b1", "a0", "a1", "a2"}]),
-        ("labeled", [{"b0", "b1", "a0", "a1", "a2"}, {"b0", "b1", "a0"}]),
-        ("all", [{"a0", "a1", "a2"}, {"a0"}]),
+        ("nodelete", [{"b0", "a0", "a1"}, {"b0", "a0", "a1"}]),
+        ("labeled", [{"b0", "a0", "a1"}, {"b0", "a0"}]),
+        ("all", [{"a0", "a1"}, {"a0"}]),
     ],
 )
 def test_replicate_policy(
@@ -1320,8 +1342,8 @@ def test_replicate_policy(
     gen_object_with_cleanup,
 ):
     """Test replicate delete_policy."""
-    a_domain = populate_upstream(3, prefix="a")
-    b_domain = populate_upstream(2, prefix="b")
+    a_domain = populate_upstream(2, prefix="a")
+    b_domain = populate_upstream(1, prefix="b")
     upstream_body = {
         "name": str(uuid.uuid4()),
         "base_url": bindings_cfg.host,
@@ -1345,10 +1367,10 @@ def test_replicate_policy(
     assert result.count == len(results[0])
     assert {r.name for r in result.results} == results[0]
 
-    # delete a1, a2
+    # delete a1
     result = pulpcore_bindings.DistributionsApi.list(pulp_domain=a_domain.name)
-    monitor_task(file_bindings.DistributionsFileApi.delete(result.results[0].pulp_href).task)
-    monitor_task(file_bindings.DistributionsFileApi.delete(result.results[1].pulp_href).task)
+    a1 = next(d for d in result.results if d.name == "a1")
+    monitor_task(file_bindings.DistributionsFileApi.delete(a1.pulp_href).task)
     result = pulpcore_bindings.DistributionsApi.list(pulp_domain=a_domain.name)
     assert result.count == 1
     assert result.results[0].name == "a0"

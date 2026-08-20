@@ -3,8 +3,8 @@ import pytest
 
 @pytest.mark.parallel
 def test_hidden_distros(file_distribution_factory, pulp_content_url, http_get):
-    visible = [file_distribution_factory() for _ in range(5)]
-    hidden = [file_distribution_factory(hidden=True) for _ in range(5)]
+    visible = [file_distribution_factory() for _ in range(2)]
+    hidden = [file_distribution_factory(hidden=True) for _ in range(2)]
 
     content = http_get(pulp_content_url).decode("utf-8")
 

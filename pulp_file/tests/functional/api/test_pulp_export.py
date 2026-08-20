@@ -19,7 +19,7 @@ pytestmark = [
 
 @pytest.fixture
 def pulp_exporter_factory(
-    tmpdir,
+    tmp_path_factory,
     pulpcore_bindings,
     gen_object_with_cleanup,
     add_to_filesystem_cleanup,
@@ -31,7 +31,7 @@ def pulp_exporter_factory(
         if repositories is None:
             repositories = []
         name = str(uuid.uuid4())
-        path = "{}/{}/".format(tmpdir, name)
+        path = "{}/{}/".format(tmp_path_factory.mktemp("exporter"), name)
         body = {
             "name": name,
             "path": path,
@@ -82,7 +82,7 @@ def pulp_export_factory(pulpcore_bindings, monitor_task):
     return _pulp_export_factory
 
 
-@pytest.fixture
+@pytest.fixture(scope="class")
 def three_synced_repositories(
     file_bindings,
     file_repository_factory,
@@ -101,7 +101,8 @@ def three_synced_repositories(
         file_bindings.RepositoriesFileApi.sync(repository.pulp_href, {}).task
         for repository in repositories
     ]
-    [monitor_task(task) for task in sync_tasks]
+    for task in sync_tasks:
+        monitor_task(task)
     repositories = [
         file_bindings.RepositoriesFileApi.read(repository.pulp_href) for repository in repositories
     ]
@@ -132,13 +133,25 @@ def shallow_pulp_exporter(pulp_exporter_factory):
     return pulp_exporter_factory()
 
 
-@pytest.fixture
+@pytest.fixture(scope="class")
 def full_pulp_exporter(
-    pulp_exporter_factory,
+    pulpcore_bindings,
+    tmp_path_factory,
+    gen_object_with_cleanup,
+    add_to_filesystem_cleanup,
     three_synced_repositories,
 ):
-    repositories = three_synced_repositories
-    return pulp_exporter_factory(repositories=repositories)
+    """Build exporter inline so this class-scoped fixture need not depend on a function factory."""
+    name = str(uuid.uuid4())
+    path = "{}/{}/".format(tmp_path_factory.mktemp("full-exporter"), name)
+    body = {
+        "name": name,
+        "path": path,
+        "repositories": [r.pulp_href for r in three_synced_repositories],
+    }
+    exporter = gen_object_with_cleanup(pulpcore_bindings.ExportersPulpApi, body)
+    add_to_filesystem_cleanup(path)
+    return exporter
 
 
 @pytest.mark.parallel
@@ -169,74 +182,143 @@ def test_crud_exporter(pulpcore_bindings, shallow_pulp_exporter, monitor_task):
         pulpcore_bindings.ExportersPulpApi.read(exporter.pulp_href)
 
 
-@pytest.mark.parallel
-def test_export(pulpcore_bindings, pulp_export_factory, full_pulp_exporter, monitor_task):
-    exporter = full_pulp_exporter
-    assert len(exporter.repositories) == 3
+class TestSyncedRepoExport:
+    """Don't mark parallel, tests are shorter than setup."""
 
-    # Test export
-    export = pulp_export_factory(exporter)
+    def test_export(self, pulpcore_bindings, pulp_export_factory, full_pulp_exporter, monitor_task):
+        exporter = full_pulp_exporter
+        assert len(exporter.repositories) == 3
 
-    # Test list and delete
-    # export 2 more to test on
-    export_href2, export_href3 = (
-        monitor_task(
-            pulpcore_bindings.ExportersPulpExportsApi.create(exporter.pulp_href, {}).task
-        ).created_resources[0]
-        for _ in range(2)
-    )
-    exports = pulpcore_bindings.ExportersPulpExportsApi.list(exporter.pulp_href).results
-    assert len(exports) == 3
-    pulpcore_bindings.ExportersPulpExportsApi.delete(export.pulp_href)
-    pulpcore_bindings.ExportersPulpExportsApi.delete(export_href2)
-    exports = pulpcore_bindings.ExportersPulpExportsApi.list(exporter.pulp_href).results
-    assert len(exports) == 1
-    pulpcore_bindings.ExportersPulpExportsApi.delete(export_href3)
-    exports = pulpcore_bindings.ExportersPulpExportsApi.list(exporter.pulp_href).results
-    assert len(exports) == 0
+        # Test export
+        export = pulp_export_factory(exporter)
 
+        # Test list and delete
+        # export 2 more to test on
+        export_href2, export_href3 = (
+            monitor_task(
+                pulpcore_bindings.ExportersPulpExportsApi.create(exporter.pulp_href, {}).task
+            ).created_resources[0]
+            for _ in range(2)
+        )
+        exports = pulpcore_bindings.ExportersPulpExportsApi.list(exporter.pulp_href).results
+        assert len(exports) == 3
+        pulpcore_bindings.ExportersPulpExportsApi.delete(export.pulp_href)
+        pulpcore_bindings.ExportersPulpExportsApi.delete(export_href2)
+        exports = pulpcore_bindings.ExportersPulpExportsApi.list(exporter.pulp_href).results
+        assert len(exports) == 1
+        pulpcore_bindings.ExportersPulpExportsApi.delete(export_href3)
+        exports = pulpcore_bindings.ExportersPulpExportsApi.list(exporter.pulp_href).results
+        assert len(exports) == 0
 
-@pytest.mark.parallel
-def test_export_by_version_and_chunked(
-    pulp_exporter_factory,
-    pulp_export_factory,
-    three_synced_repositories,
-):
-    repositories = three_synced_repositories
-    latest_versions = [r.latest_version_href for r in repositories]
-    zeroth_versions = [v_href.replace("/1/", "/0/") for v_href in latest_versions]
+    def test_export_by_version_and_chunked(
+        self,
+        pulp_exporter_factory,
+        pulp_export_factory,
+        three_synced_repositories,
+    ):
+        repositories = three_synced_repositories
+        latest_versions = [r.latest_version_href for r in repositories]
+        zeroth_versions = [v_href.replace("/1/", "/0/") for v_href in latest_versions]
 
-    # exporter for one repo. specify one version
-    exporter = pulp_exporter_factory(repositories=[repositories[0]])
-    body = {"versions": [latest_versions[0]]}
-    export = pulp_export_factory(exporter, body)
-    assert export.exported_resources[0].endswith("/1/")
-    body = {"versions": [zeroth_versions[0]]}
-    export = pulp_export_factory(exporter, body)
-    assert export.exported_resources[0].endswith("/0/")
-
-    # exporter for one repo. specify one *wrong* version
-    with pytest.raises(ApiException, match="must belong to"):
-        body = {"versions": [latest_versions[1]]}
-        pulp_export_factory(exporter, body)
-
-    # test chunked export
-    body = {"chunk_size": "250B"}
-    export = pulp_export_factory(exporter, body)
-    assert export.output_file_info is not None
-    assert len(export.output_file_info) > 1
-
-    # Create a new exporter with two repos
-    exporter = pulp_exporter_factory(repositories=[repositories[0], repositories[1]])
-    # exporter for two repos, specify one version
-    with pytest.raises(ApiException, match="does not match the number"):
+        # exporter for one repo. specify one version
+        exporter = pulp_exporter_factory(repositories=[repositories[0]])
         body = {"versions": [latest_versions[0]]}
-        pulp_export_factory(exporter, body)
+        export = pulp_export_factory(exporter, body)
+        assert export.exported_resources[0].endswith("/1/")
+        body = {"versions": [zeroth_versions[0]]}
+        export = pulp_export_factory(exporter, body)
+        assert export.exported_resources[0].endswith("/0/")
 
-    # exporter for two repos, specify one correct and one *wrong* version
-    with pytest.raises(ApiException, match="must belong to"):
-        body = {"versions": [latest_versions[0], latest_versions[2]]}
-        pulp_export_factory(exporter, body)
+        # exporter for one repo. specify one *wrong* version
+        with pytest.raises(ApiException, match="must belong to"):
+            body = {"versions": [latest_versions[1]]}
+            pulp_export_factory(exporter, body)
+
+        # test chunked export
+        body = {"chunk_size": "250B"}
+        export = pulp_export_factory(exporter, body)
+        assert export.output_file_info is not None
+        assert len(export.output_file_info) > 1
+
+        # Create a new exporter with two repos
+        exporter = pulp_exporter_factory(repositories=[repositories[0], repositories[1]])
+        # exporter for two repos, specify one version
+        with pytest.raises(ApiException, match="does not match the number"):
+            body = {"versions": [latest_versions[0]]}
+            pulp_export_factory(exporter, body)
+
+        # exporter for two repos, specify one correct and one *wrong* version
+        with pytest.raises(ApiException, match="must belong to"):
+            body = {"versions": [latest_versions[0], latest_versions[2]]}
+            pulp_export_factory(exporter, body)
+
+    def test_export_with_meta(self, pulpcore_bindings, pulp_export_factory, full_pulp_exporter):
+        exporter = full_pulp_exporter
+        user_meta = {
+            "initiator": "ci",
+            "purpose": "export",
+            "checksum_type": "md5",  # pulp should override only in TOC JSON
+        }
+
+        export = pulp_export_factory(exporter, {"meta": user_meta})
+
+        # toc_info contains exactly user meta (unmodified)
+        meta_info = export.toc_info.get("meta", {})
+        assert meta_info == user_meta
+
+        # Validate TOC JSON file content
+        toc_file_path = export.toc_info.get("file")
+        assert toc_file_path and isinstance(toc_file_path, str)
+
+        with open(toc_file_path, "r") as f:
+            toc_data = json.load(f)
+
+        meta_json = toc_data.get("meta", {})
+        assert meta_json.get("initiator") == "ci"
+        assert meta_json.get("purpose") == "export"
+        # overridden field check
+        assert meta_json.get("checksum_type") == "crc32"
+
+    def test_export_chunk_ordering_and_naming(
+        self,
+        pulp_exporter_factory,
+        pulp_export_factory,
+        three_synced_repositories,
+    ):
+        exporter = pulp_exporter_factory(repositories=[three_synced_repositories[0]])
+        chunk_size_bytes = 100
+        body = {"chunk_size": f"{chunk_size_bytes}B"}
+        export = pulp_export_factory(exporter, body)
+
+        all_paths = [Path(p) for p in export.output_file_info.keys()]
+        tar_chunks = [p for p in all_paths if ".tar." in p.name]
+
+        assert len(tar_chunks) > 1, f"Expected multiple chunks for {chunk_size_bytes}B limit."
+
+        for index, path in enumerate(tar_chunks):
+            expected_suffix = f"{index:04d}"
+
+            assert path.name.endswith(expected_suffix), (
+                f"Chunk {path} missing suffix {expected_suffix}"
+            )
+            assert path.exists(), f"Chunk file {path} was not found on disk."
+
+            if index < len(tar_chunks) - 1:
+                assert path.stat().st_size == chunk_size_bytes
+
+        toc_path = Path(export.toc_info["file"])
+        with toc_path.open("r", encoding="utf-8") as f:
+            toc_data = json.load(f)
+
+        toc_filenames = list(toc_data["files"].keys())
+        expected_filenames = [p.name for p in tar_chunks]
+
+        assert toc_filenames == expected_filenames, (
+            f"TOC order mismatch.\nExpected: {expected_filenames}\nActual: {toc_filenames}"
+        )
+
+        assert toc_data["meta"]["chunk_size"] == chunk_size_bytes
+        assert toc_data["meta"]["checksum_type"] == "crc32"
 
 
 @pytest.mark.parallel
@@ -307,65 +389,66 @@ def test_export_incremental(
 @pytest.mark.skipif(not settings.DOMAIN_ENABLED, reason="Domains not enabled.")
 @pytest.mark.parallel
 def test_cross_domain_exporter(
-    basic_manifest_path,
     file_bindings,
-    file_remote_factory,
+    file_repository_factory,
     gen_object_with_cleanup,
     pulpcore_bindings,
     pulp_export_factory,
     pulp_exporter_factory,
     monitor_task,
+    tmp_path,
 ):
-    # Create two domains
-    #   In each, create and sync a repository, create and export an exporter
-    # Attempt to create an exporter using the *other domain's* repo
-    # Attempt to update the exporter using the *other domain's* repo and last_export
-    # Use the exporter and attempt to export the *other domain's* repo-versions
+    # Source domain: one uploaded file, exporter, and export (needed for last_export).
+    # Target domain: empty repo + exporter. Same-domain sync/export in the target is unused.
 
-    entities = [{}, {}]
-    for e in entities:
+    def _domain():
         body = {
             "name": str(uuid.uuid4()),
             "storage_class": "pulpcore.app.models.storage.FileSystem",
             "storage_settings": {"MEDIA_ROOT": "/var/lib/pulp/media/"},
         }
-        e["domain"] = gen_object_with_cleanup(pulpcore_bindings.DomainsApi, body)
-        remote = file_remote_factory(
-            manifest_path=basic_manifest_path, policy="immediate", pulp_domain=e["domain"].name
-        )
+        return gen_object_with_cleanup(pulpcore_bindings.DomainsApi, body)
 
-        repo_body = {"name": str(uuid.uuid4()), "remote": remote.pulp_href}
-        e["repository"] = gen_object_with_cleanup(
-            file_bindings.RepositoriesFileApi, repo_body, pulp_domain=e["domain"].name
-        )
-        task = file_bindings.RepositoriesFileApi.sync(e["repository"].pulp_href, {}).task
-        monitor_task(task)
-        e["repository"] = file_bindings.RepositoriesFileApi.read(e["repository"].pulp_href)
-        e["exporter"] = pulp_exporter_factory(
-            repositories=[e["repository"]], pulp_domain=e["domain"]
-        )
-        e["export"] = pulp_export_factory(e["exporter"])
+    source_domain = _domain()
+    target_domain = _domain()
 
-    target_domain = entities[1]["domain"]
+    src = tmp_path / "file.txt"
+    src.write_text("x")
+    content_href = file_bindings.ContentFilesApi.upload(
+        relative_path="file.txt", file=str(src), pulp_domain=source_domain.name
+    ).pulp_href
+    source_repo = file_repository_factory(pulp_domain=source_domain.name)
+    monitor_task(
+        file_bindings.RepositoriesFileApi.modify(
+            source_repo.pulp_href, {"add_content_units": [content_href]}
+        ).task
+    )
+    source_repo = file_bindings.RepositoriesFileApi.read(source_repo.pulp_href)
+    source_exporter = pulp_exporter_factory(repositories=[source_repo], pulp_domain=source_domain)
+    source_export = pulp_export_factory(source_exporter)
+
+    other_repo = file_repository_factory(pulp_domain=target_domain.name)
+    other_exporter = pulp_exporter_factory(repositories=[other_repo], pulp_domain=target_domain)
+
     # cross-create
     with pytest.raises(BadRequestException) as e:
-        pulp_exporter_factory(repositories=[entities[0]["repository"]], pulp_domain=target_domain)
+        pulp_exporter_factory(repositories=[source_repo], pulp_domain=target_domain)
     assert e.value.status == 400
     assert json.loads(e.value.body) == {
         "non_field_errors": [f"Objects must all be a part of the {target_domain.name} domain."]
     }
     # cross-update
-    body = {"repositories": [entities[0]["repository"].pulp_href]}
+    body = {"repositories": [source_repo.pulp_href]}
     with pytest.raises(BadRequestException) as e:
-        pulpcore_bindings.ExportersPulpApi.partial_update(entities[1]["exporter"].pulp_href, body)
+        pulpcore_bindings.ExportersPulpApi.partial_update(other_exporter.pulp_href, body)
     assert e.value.status == 400
     assert json.loads(e.value.body) == {
         "non_field_errors": [f"Objects must all be a part of the {target_domain.name} domain."]
     }
 
-    body = {"last_export": entities[0]["export"].pulp_href}
+    body = {"last_export": source_export.pulp_href}
     with pytest.raises(BadRequestException) as e:
-        pulpcore_bindings.ExportersPulpApi.partial_update(entities[1]["exporter"].pulp_href, body)
+        pulpcore_bindings.ExportersPulpApi.partial_update(other_exporter.pulp_href, body)
     assert e.value.status == 400
     assert json.loads(e.value.body) == {
         "non_field_errors": [f"Objects must all be a part of the {target_domain.name} domain."]
@@ -373,14 +456,14 @@ def test_cross_domain_exporter(
 
     # cross-export
     with pytest.raises(BadRequestException) as e:
-        latest_v = entities[0]["repository"].latest_version_href
-        zero_v = latest_v.replace("/1/", "/0/")
+        latest_v = source_repo.latest_version_href
+        zero_v = latest_v.rsplit("/", 2)[0] + "/0/"
         body = {
             "start_versions": [latest_v],
             "versions": [zero_v],
             "full": False,
         }
-        pulp_export_factory(entities[1]["exporter"], body)
+        pulp_export_factory(other_exporter, body)
     assert e.value.status == 400
     msgs = json.loads(e.value.body)
     assert "versions" in msgs
@@ -391,72 +474,3 @@ def test_cross_domain_exporter(
     assert msgs["start_versions"] == [
         "Requested RepositoryVersions must belong to the Repositories named by the Exporter!"
     ]
-
-
-@pytest.mark.parallel
-def test_export_with_meta(pulpcore_bindings, pulp_export_factory, full_pulp_exporter):
-    exporter = full_pulp_exporter
-    user_meta = {
-        "initiator": "ci",
-        "purpose": "export",
-        "checksum_type": "md5",  # pulp should override only in TOC JSON
-    }
-
-    export = pulp_export_factory(exporter, {"meta": user_meta})
-
-    # toc_info contains exactly user meta (unmodified)
-    meta_info = export.toc_info.get("meta", {})
-    assert meta_info == user_meta
-
-    # Validate TOC JSON file content
-    toc_file_path = export.toc_info.get("file")
-    assert toc_file_path and isinstance(toc_file_path, str)
-
-    with open(toc_file_path, "r") as f:
-        toc_data = json.load(f)
-
-    meta_json = toc_data.get("meta", {})
-    assert meta_json.get("initiator") == "ci"
-    assert meta_json.get("purpose") == "export"
-    # overridden field check
-    assert meta_json.get("checksum_type") == "crc32"
-
-
-@pytest.mark.parallel
-def test_export_chunk_ordering_and_naming(
-    pulp_exporter_factory,
-    pulp_export_factory,
-    three_synced_repositories,
-):
-    exporter = pulp_exporter_factory(repositories=[three_synced_repositories[0]])
-    chunk_size_bytes = 100
-    body = {"chunk_size": f"{chunk_size_bytes}B"}
-    export = pulp_export_factory(exporter, body)
-
-    all_paths = [Path(p) for p in export.output_file_info.keys()]
-    tar_chunks = [p for p in all_paths if ".tar." in p.name]
-
-    assert len(tar_chunks) > 1, f"Expected multiple chunks for {chunk_size_bytes}B limit."
-
-    for index, path in enumerate(tar_chunks):
-        expected_suffix = f"{index:04d}"
-
-        assert path.name.endswith(expected_suffix), f"Chunk {path} missing suffix {expected_suffix}"
-        assert path.exists(), f"Chunk file {path} was not found on disk."
-
-        if index < len(tar_chunks) - 1:
-            assert path.stat().st_size == chunk_size_bytes
-
-    toc_path = Path(export.toc_info["file"])
-    with toc_path.open("r", encoding="utf-8") as f:
-        toc_data = json.load(f)
-
-    toc_filenames = list(toc_data["files"].keys())
-    expected_filenames = [p.name for p in tar_chunks]
-
-    assert toc_filenames == expected_filenames, (
-        f"TOC order mismatch.\nExpected: {expected_filenames}\nActual: {toc_filenames}"
-    )
-
-    assert toc_data["meta"]["chunk_size"] == chunk_size_bytes
-    assert toc_data["meta"]["checksum_type"] == "crc32"

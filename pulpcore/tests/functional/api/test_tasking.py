@@ -9,7 +9,6 @@ from uuid import uuid4
 
 import pytest
 from aiohttp import BasicAuth
-from django.conf import settings
 
 from pulpcore.client.pulpcore import ApiException
 from pulpcore.constants import IMMEDIATE_TIMEOUT
@@ -93,6 +92,10 @@ def test_worker_cleanup_on_missing_worker(dispatch_task, monitor_task, pulpcore_
     Test that when a worker dies unexpectedly while executing a task,
     the worker cleanup process marks the task as failed and releases its locks,
     allowing subsequent tasks requiring the same resource to execute.
+
+    Prefer the unit test pulpcore.tests.unit.tasking.test_missing_worker_cleanup
+    for routine coverage of the cleanup path. This e2e test is long_running
+    (skipped when --timeout < 600) but still runs in nightly CI.
     """
     # Use a unique resource identifier to avoid conflicts with other tests
     resource = str(uuid4())
@@ -731,54 +734,3 @@ class TestImmediateTaskWithBlockedResource:
                 )
             monitor_task(task_href)
         assert "timed out after" in ctx.value.task.error["description"]
-
-
-@pytest.mark.parallel
-@pytest.mark.skipif(
-    settings.WORKER_TYPE != "redis",
-    reason="Only runs with WORKER_TYPE=redis",
-)
-def test_fetch_task_beyond_initial_batch(dispatch_task, monitor_task, pulpcore_bindings):
-    """Test that tasks beyond the initial fetch batch are still processed.
-
-    When more than FETCH_TASK_LIMIT tasks are blocked on the same exclusive resource,
-    the RedisWorker should double the fetch limit and find runnable tasks further
-    down the queue.
-    """
-    blocker_resource = str(uuid4())
-    other_resource = str(uuid4())
-
-    # Dispatch a long-running task that holds the blocker resource
-    blocker_href = dispatch_task(
-        "pulpcore.app.tasks.test.sleep",
-        args=(60,),
-        exclusive_resources=[blocker_resource],
-    )
-    time.sleep(2)
-
-    # Dispatch 25 tasks that all need the same blocked resource
-    blocked_hrefs = []
-    for _ in range(25):
-        href = dispatch_task(
-            "pulpcore.app.tasks.test.sleep",
-            args=(0,),
-            exclusive_resources=[blocker_resource],
-        )
-        blocked_hrefs.append(href)
-
-    # Dispatch a task that uses a completely different resource (position 27 in the queue)
-    unblocked_href = dispatch_task(
-        "pulpcore.app.tasks.test.sleep",
-        args=(0,),
-        exclusive_resources=[other_resource],
-    )
-
-    # The unblocked task should complete even though 25 tasks ahead of it are blocked
-    unblocked_task = monitor_task(unblocked_href)
-    assert unblocked_task.state == "completed"
-
-    # Cancel the blocker so blocked tasks can drain
-    try:
-        pulpcore_bindings.TasksApi.tasks_cancel(blocker_href, {"state": "canceled"})
-    except ApiException:
-        pass

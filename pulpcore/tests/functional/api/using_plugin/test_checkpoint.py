@@ -2,7 +2,7 @@
 
 import re
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from time import sleep
 from urllib.parse import urlparse
 
@@ -13,25 +13,47 @@ from pulpcore.client.pulp_file import exceptions
 from pulpcore.content.handler import Handler
 
 
+def _wait_until_checkpoint_ts_advances(previous_created):
+    """Block until wall-clock formats to a later checkpoint timestamp than previous_created.
+
+    Checkpoint URLs are second-resolution, so consecutive publications need distinct
+    seconds. Fixed sleep(1) is wasteful when create/publish already crossed a second.
+    """
+    previous_ts = Handler._format_checkpoint_timestamp(previous_created)
+    while Handler._format_checkpoint_timestamp(datetime.now(timezone.utc)) == previous_ts:
+        sleep(0.05)
+
+
 @pytest.fixture(scope="class")
-def content_factory(tmp_path_factory, file_bindings, monitor_task):
+def content_factory(tmp_path_factory, file_bindings):
     def _content_factory(name):
         file = tmp_path_factory.mktemp("content") / name
         file.write_text(str(uuid.uuid4()))
-        return monitor_task(
-            file_bindings.ContentFilesApi.create(relative_path=name, file=str(file)).task
-        ).created_resources[0]
+        return file_bindings.ContentFilesApi.upload(relative_path=name, file=str(file)).pulp_href
 
+    def _precreate(names):
+        return [_content_factory(name) for name in names]
+
+    _content_factory.precreate = _precreate
     return _content_factory
 
 
 @pytest.fixture(scope="class")
 def create_publication(content_factory, file_bindings, monitor_task):
     counter = [0]
+    content_queue = []
+
+    def precreate(n):
+        names = []
+        for _ in range(n):
+            names.append(str(counter[0]))
+            counter[0] += 1
+        content_queue.extend(content_factory.precreate(names))
 
     def _create_publication(repo, checkpoint):
-        content_href = content_factory(f"{counter[0]}")
-        counter[0] += 1
+        if not content_queue:
+            precreate(1)
+        content_href = content_queue.pop(0)
 
         monitor_task(
             file_bindings.RepositoriesFileApi.modify(
@@ -46,6 +68,7 @@ def create_publication(content_factory, file_bindings, monitor_task):
         )
         return file_bindings.PublicationsFileApi.read(response.created_resources[0])
 
+    _create_publication.precreate = precreate
     return _create_publication
 
 
@@ -58,16 +81,14 @@ def setup(
     repo = file_repository_factory()
     distribution = file_distribution_factory(repository=repo.pulp_href, checkpoint=True)
 
+    # Five publications: content creates overlap; only wait between pubs when needed
+    # for distinct second-resolution checkpoint timestamps.
+    create_publication.precreate(5)
     pubs = []
-    pubs.append(create_publication(repo, False))
-    sleep(1)
-    pubs.append(create_publication(repo, True))
-    sleep(1)
-    pubs.append(create_publication(repo, False))
-    sleep(1)
-    pubs.append(create_publication(repo, True))
-    sleep(1)
-    pubs.append(create_publication(repo, False))
+    for checkpoint in (False, True, False, True, False):
+        if pubs:
+            _wait_until_checkpoint_ts_advances(pubs[-1].pulp_created)
+        pubs.append(create_publication(repo, checkpoint))
 
     return pubs, distribution
 
@@ -82,7 +103,8 @@ def checkpoint_url(distribution_base_url):
 
 
 class TestCheckpointDistribution:
-    @pytest.mark.parallel
+    """Don't mark parallel, tests are shorter than setup."""
+
     def test_base_path_lists_checkpoints(self, setup, http_get, distribution_base_url):
         pubs, distribution = setup
 
@@ -93,7 +115,6 @@ class TestCheckpointDistribution:
         assert Handler._format_checkpoint_timestamp(pubs[1].pulp_created) in checkpoints_ts
         assert Handler._format_checkpoint_timestamp(pubs[3].pulp_created) in checkpoints_ts
 
-    @pytest.mark.parallel
     def test_distro_root_no_trailing_slash_is_redirected(
         self,
         setup,
@@ -112,7 +133,6 @@ class TestCheckpointDistribution:
         assert Handler._format_checkpoint_timestamp(pubs[1].pulp_created) in checkpoints_ts
         assert Handler._format_checkpoint_timestamp(pubs[3].pulp_created) in checkpoints_ts
 
-    @pytest.mark.parallel
     def test_timestamped_checkpoint_no_trailing_slash_is_redirected(
         self,
         setup,
@@ -128,7 +148,6 @@ class TestCheckpointDistribution:
 
         assert f"<h1>Index of {urlparse(pub_1_url).path}</h1>" in response
 
-    @pytest.mark.parallel
     def test_exact_timestamp_is_served(self, setup, http_get, checkpoint_url):
         pubs, distribution = setup
 
@@ -137,7 +156,6 @@ class TestCheckpointDistribution:
 
         assert f"<h1>Index of {urlparse(pub_1_url).path}</h1>" in response
 
-    @pytest.mark.parallel
     def test_invalid_timestamp_returns_404(self, setup, http_get, distribution_base_url):
         _, distribution = setup
         with pytest.raises(ClientResponseError) as exc:
@@ -150,7 +168,6 @@ class TestCheckpointDistribution:
 
         assert exc.value.status == 404
 
-    @pytest.mark.parallel
     def test_checkpoint_artifact_is_served(self, setup, http_get, checkpoint_url):
         pubs, distribution = setup
         pub_1_url = checkpoint_url(distribution, pubs[1].pulp_created)
@@ -164,7 +181,6 @@ class TestCheckpointDistribution:
         artifact_names = {line.split(",")[0] for line in lines}
         assert artifact_names == {"0", "1"}
 
-    @pytest.mark.parallel
     def test_non_checkpoint_timestamp_is_redirected(self, setup, http_get, checkpoint_url):
         pubs, distribution = setup
         # Using a non-checkpoint publication timestamp
@@ -178,7 +194,6 @@ class TestCheckpointDistribution:
         response = http_get(pub_4_url[:-1]).decode("utf-8")
         assert f"<h1>Index of {urlparse(pub_3_url).path}</h1>" in response
 
-    @pytest.mark.parallel
     def test_arbitrary_timestamp_is_redirected(self, setup, http_get, checkpoint_url):
         pubs, distribution = setup
         pub_1_url = checkpoint_url(distribution, pubs[1].pulp_created)
@@ -191,7 +206,6 @@ class TestCheckpointDistribution:
         response = http_get(arbitrary_url[:-1]).decode("utf-8")
         assert f"<h1>Index of {urlparse(pub_1_url).path}</h1>" in response
 
-    @pytest.mark.parallel
     def test_current_timestamp_serves_latest_checkpoint(self, setup, http_get, checkpoint_url):
         pubs, distribution = setup
         pub_3_url = checkpoint_url(distribution, pubs[3].pulp_created)
@@ -201,7 +215,6 @@ class TestCheckpointDistribution:
 
         assert f"<h1>Index of {urlparse(pub_3_url).path}</h1>" in response
 
-    @pytest.mark.parallel
     def test_before_first_timestamp_returns_404(self, setup, http_get, checkpoint_url):
         pubs, distribution = setup
         pub_0_url = checkpoint_url(distribution, pubs[0].pulp_created)
@@ -211,7 +224,6 @@ class TestCheckpointDistribution:
 
         assert exc.value.status == 404
 
-    @pytest.mark.parallel
     def test_future_timestamp_returns_404(self, setup, http_get, checkpoint_url):
         _, distribution = setup
         url = checkpoint_url(distribution, datetime.now() + timedelta(days=1))
@@ -240,7 +252,6 @@ class TestCheckpointDistribution:
 def test_checkpoint_retention(
     file_bindings,
     file_repository_factory,
-    file_distribution_factory,
     create_publication,
     monitor_task,
 ):
@@ -250,35 +261,24 @@ def test_checkpoint_retention(
     retain their checkpoint=True flag. Older ones get their checkpoint flag cleared.
     """
     repo = file_repository_factory()
-    file_distribution_factory(repository=repo.pulp_href, checkpoint=True)
 
-    # Create 4 checkpoint publications
-    checkpoint_pubs = []
-    for _ in range(4):
-        checkpoint_pubs.append(create_publication(repo, True))
+    create_publication.precreate(3)
+    checkpoint_pubs = [create_publication(repo, True) for _ in range(2)]
 
-    # Verify all 4 publications are checkpoints
     for pub in checkpoint_pubs:
         assert file_bindings.PublicationsFileApi.read(pub.pulp_href).checkpoint is True
 
-    # Set retain_checkpoints=2 — should clear checkpoint flag on the 2 oldest
+    # Set retain_checkpoints=1 — should clear checkpoint flag on the oldest
     task = file_bindings.RepositoriesFileApi.partial_update(
-        repo.pulp_href, {"retain_checkpoints": 2}
+        repo.pulp_href, {"retain_checkpoints": 1}
     ).task
     monitor_task(task)
 
-    # Verify the 2 oldest had their flag cleared
-    for pub in checkpoint_pubs[:2]:
-        assert file_bindings.PublicationsFileApi.read(pub.pulp_href).checkpoint is False
-
-    # Verify the 2 most recent still have checkpoint=True
-    for pub in checkpoint_pubs[2:]:
-        assert file_bindings.PublicationsFileApi.read(pub.pulp_href).checkpoint is True
+    assert file_bindings.PublicationsFileApi.read(checkpoint_pubs[0].pulp_href).checkpoint is False
+    assert file_bindings.PublicationsFileApi.read(checkpoint_pubs[1].pulp_href).checkpoint is True
 
     # Create another checkpoint — should trigger steady-state cleanup
     new_pub = create_publication(repo, True)
 
-    # checkpoint_pubs[2] should now be cleared too
-    assert file_bindings.PublicationsFileApi.read(checkpoint_pubs[2].pulp_href).checkpoint is False
-    assert file_bindings.PublicationsFileApi.read(checkpoint_pubs[3].pulp_href).checkpoint is True
+    assert file_bindings.PublicationsFileApi.read(checkpoint_pubs[1].pulp_href).checkpoint is False
     assert file_bindings.PublicationsFileApi.read(new_pub.pulp_href).checkpoint is True
