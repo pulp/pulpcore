@@ -1,0 +1,1 @@
+Fixed cache invalidation and DistributedPublication tracking for distributions serving via `repository_version` when publications are created or deleted.

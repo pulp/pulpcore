@@ -177,6 +177,20 @@ class Publication(MasterModel):
             except Publication.DoesNotExist:
                 pass
 
+            # A distribution serving this publication's version directly (repository_version)
+            # resolves to the latest publication of that version. Invalidate those distributions
+            # when this is that latest publication.
+            try:
+                version_latest = Publication.objects.filter(
+                    repository_version=self.repository_version, complete=True
+                ).latest("pulp_created")
+                if self.pk == version_latest.pk:
+                    base_paths |= Distribution.objects.filter(
+                        repository_version=self.repository_version
+                    ).values_list("base_path", flat=True)
+            except Publication.DoesNotExist:
+                pass
+
             # Invalidate cache for all distributions serving this publication
             if base_paths:
                 Cache().delete(base_key=cache_key(base_paths))
@@ -234,17 +248,16 @@ class Publication(MasterModel):
                 self.delete()
                 raise
 
-            # Create distributed publication for repository auto-publish scenario
+            # Refresh distributed publications for the auto-publish scenario. A distribution can
+            # distribute this publication indirectly either through its repository (latest
+            # publication of the latest version) or through its repository_version (latest
+            # publication of that version), without the distribution itself changing.
             if retain_distributed_pub_enabled():
-                for distro in Distribution.objects.filter(repository=self.repository):
-                    detail_distro = distro.cast()
-                    if not detail_distro.SERVE_FROM_PUBLICATION:
-                        continue
-                    _, _, latest_repo_publication = (
-                        detail_distro.get_repository_publication_and_version()
-                    )
-                    if self == latest_repo_publication:
-                        DistributedPublication(distribution=distro, publication=self).save()
+                for distro in Distribution.objects.filter(
+                    models.Q(repository=self.repository_version.repository)
+                    | models.Q(repository_version=self.repository_version)
+                ):
+                    distro.set_distributed_publication()
 
             # Unmark old checkpoints if retention is configured
             if self.checkpoint:
@@ -254,7 +267,8 @@ class Publication(MasterModel):
             # invalidate cache
             if settings.CACHE_ENABLED:
                 base_paths = Distribution.objects.filter(
-                    repository=self.repository_version.repository
+                    models.Q(repository=self.repository_version.repository)
+                    | models.Q(repository_version=self.repository_version)
                 ).values_list("base_path", flat=True)
                 if base_paths:
                     Cache().delete(base_key=cache_key(base_paths))
@@ -838,14 +852,50 @@ class Distribution(MasterModel):
         is_not=None,
     )
     def set_distributed_publication(self):
-        """Track the publication being served when a distribution is created or changed."""
+        """
+        Track the publication currently served by this distribution.
+
+        Records a DistributedPublication for the publication this distribution resolves to
+        (directly, or indirectly via its repository/repository_version). Idempotent: does
+        nothing if the active DistributedPublication already points at that publication.
+        """
         detail = self.cast()
         if not detail.SERVE_FROM_PUBLICATION or not retain_distributed_pub_enabled():
             return
         _, _, pub = detail.get_repository_publication_and_version()
         if pub is None:
             return
-        DistributedPublication(distribution=self, publication=pub).save()
+
+        # Fast path: check if already active without locking (handles most calls)
+        if DistributedPublication.objects.filter(
+            distribution=self, publication=pub, expires_at__isnull=True
+        ).exists():
+            return
+
+        # Slow path: create or reactivate under a lock. We lock the Distribution row rather
+        # than the DP row because the DP may not exist yet, and SELECT FOR UPDATE cannot lock
+        # a nonexistent row -- without this, two concurrent writers could both insert an active
+        # DP, violating the "at most one active DP per distribution" invariant.
+        with transaction.atomic():
+            Distribution.objects.select_for_update().get(pk=self.pk)
+
+            dp = DistributedPublication.objects.filter(distribution=self, publication=pub).first()
+            if dp is None:
+                # No DP exists; creating one fires the AFTER_CREATE cleanup hook, which
+                # expires the previously-active DP(s) for this distribution.
+                DistributedPublication(distribution=self, publication=pub).save()
+            elif dp.expires_at is None:
+                # Already active (raced past the fast path); nothing to do.
+                return
+            else:
+                # Reactivate an expiring DP. The AFTER_CREATE cleanup hook does not run on an
+                # update, so expire the other active DP(s) here to keep a single active DP.
+                dp.expires_at = None
+                dp.save(skip_hooks=True)
+                retention = settings.DISTRIBUTED_PUBLICATION_RETENTION_PERIOD
+                DistributedPublication.objects.filter(
+                    distribution=self, expires_at__isnull=True
+                ).exclude(pk=dp.pk).update(expires_at=timezone.now() + timedelta(seconds=retention))
 
     @hook(
         AFTER_UPDATE,
