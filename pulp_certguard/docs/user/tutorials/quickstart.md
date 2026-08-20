@@ -138,14 +138,7 @@ Server: nginx/1.16.1
 
 ## RHSM-CertGuard-specific rules
 
-!!! note
-    To use the `RHSMCertGuard` you have to manually install the [rhsm Python module](https://pypi.org/project/rhsm/) which provides RHSM certificate parsing on the pulp server.
-    It requires some system level dependencies, e.g. OpenSSL libraries, which are not the same on
-    all operating operating systems. `rhsm` from PyPI not being cross-distro is why this requires
-    manual installation.
-
-
-If the RHSM client cert contains entitlement paths, **they must match the full path to the
-Distribution** the client is fetching from. In this example that is `/pulp/content/somepath/`.
-
-
+If the RHSM client cert contains entitlement paths, **they must match the `Distribution.base_path`**
+the client is fetching from. In this example that is `somepath`. Only the `base_path` portion of the
+URL is checked; the `/pulp/content/` prefix (and the `/{domain}/` segment when domains are enabled)
+is excluded.
