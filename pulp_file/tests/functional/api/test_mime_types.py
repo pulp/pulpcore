@@ -13,30 +13,36 @@ def test_content_types(
     file_bindings,
     distribution_base_url,
     file_repo_with_auto_publish,
-    file_content_unit_with_name_factory,
     gen_object_with_cleanup,
     monitor_task,
+    tmp_path,
 ):
     """Test if content-app correctly returns mime-types based on filenames."""
-    files = {
-        "tar.gz": file_content_unit_with_name_factory(f"{str(uuid.uuid4())}.tar.gz"),
-        "xml.gz": file_content_unit_with_name_factory(f"{str(uuid.uuid4())}.xml.gz"),
-        "xml.bz2": file_content_unit_with_name_factory(f"{str(uuid.uuid4())}.xml.bz2"),
-        "xml.zstd": file_content_unit_with_name_factory(f"{str(uuid.uuid4())}.xml.zstd"),
-        "xml.xz": file_content_unit_with_name_factory(f"{str(uuid.uuid4())}.xml.xz"),
-        "json.zstd": file_content_unit_with_name_factory(f"{str(uuid.uuid4())}.json.zstd"),
-        "json": file_content_unit_with_name_factory(f"{str(uuid.uuid4())}.json"),
-        "txt": file_content_unit_with_name_factory(f"{str(uuid.uuid4())}.txt"),
-        "xml": file_content_unit_with_name_factory(f"{str(uuid.uuid4())}.xml"),
-        "jpg": file_content_unit_with_name_factory(f"{str(uuid.uuid4())}.jpg"),
-        "JPG": file_content_unit_with_name_factory(f"{str(uuid.uuid4())}.JPG"),
-        "halabala": file_content_unit_with_name_factory(f"{str(uuid.uuid4())}.halabala"),
-        "noextension1": file_content_unit_with_name_factory(f"{str(uuid.uuid4())}.asd/.asd/a"),
-        "noextension2": file_content_unit_with_name_factory(f"{str(uuid.uuid4())}.....f"),
+    relative_paths = {
+        "tar.gz": f"{uuid.uuid4()}.tar.gz",
+        "xml.gz": f"{uuid.uuid4()}.xml.gz",
+        "xml.bz2": f"{uuid.uuid4()}.xml.bz2",
+        "xml.zstd": f"{uuid.uuid4()}.xml.zstd",
+        "xml.xz": f"{uuid.uuid4()}.xml.xz",
+        "json.zstd": f"{uuid.uuid4()}.json.zstd",
+        "json": f"{uuid.uuid4()}.json",
+        "txt": f"{uuid.uuid4()}.txt",
+        "xml": f"{uuid.uuid4()}.xml",
+        "jpg": f"{uuid.uuid4()}.jpg",
+        "JPG": f"{uuid.uuid4()}.JPG",
+        "halabala": f"{uuid.uuid4()}.halabala",
+        "noextension1": f"{uuid.uuid4()}.asd/.asd/a",
+        "noextension2": f"{uuid.uuid4()}.....f",
     }
 
-    units_to_add = list(map(lambda f: f.pulp_href, files.values()))
-    data = RepositoryAddRemoveContent(add_content_units=units_to_add)
+    blob = tmp_path / "blob"
+    blob.write_bytes(b"mime-type-test")
+    files = {
+        extension: file_bindings.ContentFilesApi.upload(file=str(blob), relative_path=relative_path)
+        for extension, relative_path in relative_paths.items()
+    }
+
+    data = RepositoryAddRemoveContent(add_content_units=[f.pulp_href for f in files.values()])
     monitor_task(
         file_bindings.RepositoriesFileApi.modify(file_repo_with_auto_publish.pulp_href, data).task
     )
@@ -49,18 +55,20 @@ def test_content_types(
     distribution = gen_object_with_cleanup(file_bindings.DistributionsFileApi, data)
     distribution_base_url = distribution_base_url(distribution.base_url)
 
-    received_mimetypes = {}
-    for extension, content_unit in files.items():
+    async def fetch_mimetypes():
+        async with aiohttp.ClientSession() as session:
 
-        async def get_content_type():
-            async with aiohttp.ClientSession() as session:
+            async def get_content_type(extension, content_unit):
                 url = urljoin(distribution_base_url, content_unit.relative_path)
                 async with session.get(url) as response:
-                    return response.headers.get("Content-Type")
+                    return extension, response.headers.get("Content-Type")
 
-        content_type = asyncio.run(get_content_type())
-        received_mimetypes[extension] = content_type
+            pairs = await asyncio.gather(
+                *(get_content_type(ext, unit) for ext, unit in files.items())
+            )
+        return dict(pairs)
 
+    received_mimetypes = asyncio.run(fetch_mimetypes())
     expected_mimetypes = {
         "tar.gz": "application/gzip",
         "xml.gz": "application/gzip",
