@@ -32,6 +32,10 @@ class Domain(BaseModel, AutoAddObjPermsMixin):
         storage_settings (EncryptedJSONField): Settings needed to configure storage backend
         redirect_to_object_storage (models.BooleanField): Redirect to object storage in content app
         hide_guarded_distributions (models.BooleanField): Hide guarded distributions in content app
+
+    Relations:
+        default_content_guard (models.ForeignKey): An optional content-guard automatically
+            assigned to new distributions created within this domain.
     """
 
     name = models.SlugField(null=False, unique=True)
@@ -43,6 +47,9 @@ class Domain(BaseModel, AutoAddObjPermsMixin):
     # Pulp settings that are appropriate to be set on a "per domain" level
     redirect_to_object_storage = models.BooleanField(default=True)
     hide_guarded_distributions = models.BooleanField(default=False)
+    default_content_guard = models.ForeignKey(
+        "ContentGuard", null=True, on_delete=models.SET_NULL, related_name="+"
+    )
 
     def get_storage(self):
         """Returns this domain's instantiated storage class."""
