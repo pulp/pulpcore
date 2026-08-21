@@ -55,3 +55,15 @@ def test_json_header_authentication(settings):
     settings.set("AUTHENTICATION_JSON_HEADER", "SOMETHING")
     with pytest.raises(ValidationError):
         settings.validators.validate()
+
+
+def test_content_json_listing_limits(settings):
+    """Test that JSON listing page-size settings must be positive integers."""
+    settings.set("CONTENT_JSON_LISTING_DEFAULT_LIMIT", 0)
+    with pytest.raises(ValidationError):
+        settings.validators.validate()
+
+    settings.set("CONTENT_JSON_LISTING_DEFAULT_LIMIT", 1000)
+    settings.set("CONTENT_JSON_LISTING_MAX_LIMIT", "lots")
+    with pytest.raises(ValidationError):
+        settings.validators.validate()

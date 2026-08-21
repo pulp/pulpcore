@@ -288,6 +288,10 @@ DRF_ACCESS_POLICY = {"reusable_conditions": ["pulpcore.app.global_access_conditi
 CONTENT_ORIGIN = None
 CONTENT_PATH_PREFIX = "/pulp/content/"
 
+# Pagination for the content app's generic JSON directory listing (?limit=&offset=).
+CONTENT_JSON_LISTING_DEFAULT_LIMIT = 1000
+CONTENT_JSON_LISTING_MAX_LIMIT = 10000
+
 API_APP_TTL = 120  # The heartbeat is called from gunicorn notify (defaulting to 45 sec).
 CONTENT_APP_TTL = 30
 WORKER_TTL = 30
@@ -597,6 +601,25 @@ distributed_publication_retention_period_validator = Validator(
     },
 )
 
+content_json_listing_default_limit_validator = Validator(
+    "CONTENT_JSON_LISTING_DEFAULT_LIMIT",
+    is_type_of=int,
+    gte=1,
+    messages={
+        "is_type_of": "{name} must be an integer.",
+        "gte": "{name} must be at least 1.",
+    },
+)
+content_json_listing_max_limit_validator = Validator(
+    "CONTENT_JSON_LISTING_MAX_LIMIT",
+    is_type_of=int,
+    gte=1,
+    messages={
+        "is_type_of": "{name} must be an integer.",
+        "gte": "{name} must be at least 1.",
+    },
+)
+
 
 def otel_middleware_hook(settings):
     data = {"dynaconf_merge": True}
@@ -694,6 +717,8 @@ settings = DjangoDynaconf(
         otel_pulp_api_histogram_buckets_validator,
         otel_metrics_dispatch_interval_validator,
         distributed_publication_retention_period_validator,
+        content_json_listing_default_limit_validator,
+        content_json_listing_max_limit_validator,
     ],
     post_hooks=(
         otel_middleware_hook,

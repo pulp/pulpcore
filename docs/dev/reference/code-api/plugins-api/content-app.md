@@ -13,12 +13,37 @@ Making a custom Handler is a two-step process:
 2. Add the Handler to a route using aiohttp.server's [add_route()](https://aiohttp.readthedocs.io/en/stable/web_reference.html#aiohttp.web.UrlDispatcher.add_route) interface.
 
 If content needs to be served from within the `Distribution`'s base_path,
-overriding the `pulpcore.plugin.models.Distribution.content_handler` and
-`pulpcore.plugin.models.Distribution.content_handler_directory_listing`
-methods in your Distribution is an easier way to serve this content. The
-`pulpcore.plugin.models.Distribution.content_handler` method should
-return an instance of `aiohttp.web_response.Response` or a
-`pulpcore.plugin.models.ContentArtifact`.
+overriding `pulpcore.plugin.models.Distribution.content_handler`,
+`content_handler_json`, and `content_handler_list_directory` is an easier
+way to serve this content.
+
+`content_handler` should return an instance of `aiohttp.web_response.Response`
+or a `pulpcore.plugin.models.ContentArtifact`. It is used for the default
+HTML/binary representation.
+
+`content_handler_json` is invoked when the client's `Accept` header prefers
+JSON (see `pulpcore.cache.accept_prefers_json`). Return `None` (the default)
+to use pulpcore's generic paginated JSON directory listing, a JSON-serializable
+dict/list, or an `aiohttp.web.StreamResponse` for full control over
+headers/status. Concrete artifact paths stay binary unless this method returns
+JSON. Missing/`*/*`/`text/html` Accept headers keep today's HTML/binary
+responses.
+
+The generic JSON listing envelope is:
+
+```json
+{
+  "path": "/pulp/content/my-distro/",
+  "packages": [{"path": "subdir/file.iso", "size": 1024, "date": "..."}],
+  "count": 1,
+  "limit": 1000,
+  "offset": 0
+}
+```
+
+Pagination uses `?limit=` and `?offset=`. The default and maximum `limit` are
+`CONTENT_JSON_LISTING_DEFAULT_LIMIT` (1000) and `CONTENT_JSON_LISTING_MAX_LIMIT` (10000).
+When more pages exist the body also includes `next_offset`.
 
 ## Creating your Handler
 
