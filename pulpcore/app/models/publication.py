@@ -755,14 +755,26 @@ class Distribution(MasterModel):
         """
         Return a ContentArtifact for path from the grace-period publication history, or None.
 
+        See :meth:`get_fallback` for the publication that contained the unit.
+        """
+        ca, _publication = self.get_fallback(path)
+        return ca
+
+    def get_fallback(self, path):
+        """
+        Return ``(ContentArtifact, Publication)`` from grace-period history, or ``(None, None)``.
+
         Iterates DistributedPublication records for this distribution from newest to oldest,
         trying each publication until the path is found.  Handles both pass-through and
         non-pass-through (PublishedArtifact) publications.
 
-        Returns None immediately when DISTRIBUTED_PUBLICATION_RETENTION_PERIOD is 0.
+        Returns ``(None, None)`` immediately when DISTRIBUTED_PUBLICATION_RETENTION_PERIOD is 0.
+        The publication is the one that still contains the unit, which may be a superseded
+        version — callers that need ``RepositoryContent.pulp_created`` must use that publication's
+        repository version, not the distribution's current one.
         """
         if not retain_distributed_pub_enabled():
-            return None
+            return None, None
         recent_dp = (
             DistributedPublication.get_non_expired()
             .filter(distribution=self)
@@ -778,7 +790,7 @@ class Distribution(MasterModel):
                     .first()
                 )
                 if ca is not None:
-                    return ca
+                    return ca, pub
             else:
                 pa = (
                     pub.published_artifact.select_related(
@@ -789,8 +801,8 @@ class Distribution(MasterModel):
                     .first()
                 )
                 if pa is not None:
-                    return pa.content_artifact
-        return None
+                    return pa.content_artifact, pub
+        return None, None
 
     @hook(AFTER_CREATE)
     @hook(
