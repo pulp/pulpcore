@@ -1,10 +1,14 @@
+import hashlib
+import json
 import uuid
 from datetime import timedelta
 from unittest.mock import AsyncMock, Mock
 
 import pytest
 import pytest_asyncio
+from aiohttp.web import HTTPOk, StreamResponse
 from aiohttp.web_exceptions import HTTPMovedPermanently
+from asgiref.sync import async_to_sync
 from django.db import IntegrityError
 from django_guid import clear_guid, set_guid
 
@@ -17,6 +21,7 @@ from pulpcore.plugin.models import (
     ContentArtifact,
     Distribution,
     Publication,
+    PublishedArtifact,
     Remote,
     RemoteArtifact,
     Repository,
@@ -607,3 +612,140 @@ async def test_async_pull_through_add(ca1, monkeypatch, app_status):
         await repo.adelete()
         if task:
             await task.adelete()
+
+
+def test_content_handler_json_default_returns_none():
+    assert Distribution().content_handler_json("any/path") is None
+
+
+@pytest.mark.parametrize(
+    "accept,expected",
+    [
+        (None, False),
+        ("text/html", False),
+        ("*/*", False),
+        ("application/json", True),
+        ("application/vnd.pypi.simple.v1+json", True),
+    ],
+)
+def test_negotiate_json(accept, expected):
+    request = Mock(headers={} if accept is None else {"Accept": accept})
+    assert Handler.negotiate_json(request) is expected
+
+
+def test_pagination_params_defaults_and_bounds():
+    request = Mock(query={})
+    assert Handler._pagination_params(request) == (Handler.DEFAULT_JSON_LIST_LIMIT, 0)
+
+    request = Mock(query={"limit": "nope", "offset": "also-nope"})
+    assert Handler._pagination_params(request) == (Handler.DEFAULT_JSON_LIST_LIMIT, 0)
+
+    request = Mock(query={"limit": "0", "offset": "-5"})
+    assert Handler._pagination_params(request) == (1, 0)
+
+    request = Mock(query={"limit": "99999", "offset": "10"})
+    assert Handler._pagination_params(request) == (Handler.MAX_JSON_LIST_LIMIT, 10)
+
+
+def test_json_listing_response_envelope_and_next_offset():
+    entries = [{"path": "a.iso", "size": 1, "date": "2026-01-01T00:00:00"}]
+    response = Handler._json_listing_response("/pulp/content/foo/", entries, 3, 1, 0)
+    assert isinstance(response, HTTPOk)
+    assert "application/json" in response.headers["Content-Type"]
+    assert response.headers["Vary"] == "Accept"
+    body = json.loads(response.text)
+    assert body["path"] == "/pulp/content/foo/"
+    assert body["packages"] == entries
+    assert body["count"] == 3
+    assert body["limit"] == 1
+    assert body["offset"] == 0
+    assert body["next_offset"] == 1
+
+    last_page = Handler._json_listing_response("/pulp/content/foo/", entries, 1, 1, 0)
+    assert "next_offset" not in json.loads(last_page.text)
+
+
+def test_json_response_passes_through_stream_response():
+    original = StreamResponse()
+    assert Handler._json_response(original) is original
+
+    response = Handler._json_response({"hello": "world"})
+    assert "application/json" in response.headers["Content-Type"]
+    assert json.loads(response.text) == {"hello": "world"}
+
+
+@pytest.mark.asyncio
+async def test_content_handler_json_hook_is_used_when_accept_prefers_json():
+    """A Distribution.content_handler_json override is returned as the JSON response."""
+    handler = Handler()
+    distro = Mock()
+    distro.base_path = "foo"
+    distro.checkpoint = False
+    distro.content_handler.return_value = None
+    distro.content_handler_json.return_value = {"packages": ["from-plugin"]}
+    distro.content_headers_for.return_value = {}
+    handler._match_distribution = Mock(return_value=distro)
+    handler._permit = Mock(return_value=False)
+
+    request = Mock()
+    request.headers = {"Accept": "application/json"}
+    request.path = "/pulp/content/foo/"
+    request.query = {}
+
+    response = await handler._match_and_stream("foo/", request)
+
+    distro.content_handler_json.assert_called_once_with("")
+    assert "application/json" in response.headers["Content-Type"]
+    assert json.loads(response.text) == {"packages": ["from-plugin"]}
+
+
+@pytest.mark.django_db
+def test_list_directory_flat_recursive_leaves_and_pagination():
+    from pulp_file.app.models import FileContent, FilePublication, FileRepository
+
+    repo = FileRepository.objects.create(name=str(uuid.uuid4()))
+    paths = ["a.iso", "subdir/b.iso"]
+    with repo.new_version() as repo_version:
+        for path in paths:
+            digest = hashlib.sha256(path.encode()).hexdigest()
+            content = FileContent.objects.create(relative_path=path, digest=digest)
+            repo_version.add_content(Content.objects.filter(pk=content.pk))
+            ContentArtifact.objects.create(content=content, relative_path=path)
+
+    publication = FilePublication.objects.create(repository_version=repo_version, complete=True)
+    for ca in ContentArtifact.objects.filter(content__in=repo_version.content.all()):
+        PublishedArtifact.objects.create(
+            publication=publication, content_artifact=ca, relative_path=ca.relative_path
+        )
+
+    handler = Handler()
+    list_flat = async_to_sync(handler.list_directory_flat)
+    entries, total = list_flat(None, publication, "", 1000, 0)
+    listed_paths = [entry["path"] for entry in entries]
+    assert total == 2
+    assert listed_paths == ["a.iso", "subdir/b.iso"]
+    assert "subdir/" not in listed_paths
+    assert all("size" in entry and "date" in entry for entry in entries)
+
+    nested, nested_total = list_flat(None, publication, "subdir/", 1000, 0)
+    assert nested_total == 1
+    assert nested[0]["path"] == "b.iso"
+
+    page, page_total = list_flat(None, publication, "", 1, 0)
+    assert page_total == 2
+    assert [entry["path"] for entry in page] == ["a.iso"]
+
+    empty, empty_total = list_flat(None, publication, "missing/", 1000, 0)
+    assert empty_total == 0
+    assert empty == []
+
+    rv_entries, rv_total = list_flat(repo_version, None, "", 1000, 0)
+    assert rv_total == 2
+    assert [entry["path"] for entry in rv_entries] == ["a.iso", "subdir/b.iso"]
+
+    from django.db import connection
+    from django.test.utils import CaptureQueriesContext
+
+    with CaptureQueriesContext(connection) as ctx:
+        list_flat(None, publication, "", 1, 0)
+    assert any("LIMIT" in q["sql"].upper() for q in ctx.captured_queries)

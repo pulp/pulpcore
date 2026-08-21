@@ -29,6 +29,93 @@ class CacheKeys(enum.Enum):
     path = "path"
     host = "host"
     method = "method"
+    format = "format"
+    query = "query"
+
+
+def accept_prefers_json(accept_header):
+    """
+    Determine whether an HTTP Accept header value prefers application/json over other types.
+
+    A missing/empty header, or one whose highest-quality (per RFC 9110 q-values) entry isn't
+    "application/json" or a "+json" subtype, is treated as "does not prefer JSON". This is the
+    single source of truth for JSON content negotiation in the content app; it lives here (a
+    dependency-free leaf module) rather than in ``pulpcore.content.handler`` so that both the
+    content app's response logic and its cache key (see ``AsyncContentCache.make_key``) can use
+    the exact same decision, avoiding any risk of a JSON response being cached/served for an
+    HTML request or vice versa.
+
+    Args:
+        accept_header (str): The raw value of the request's Accept header, or None.
+
+    Returns:
+        bool: True if the client's top choice is JSON, False otherwise.
+    """
+    if not isinstance(accept_header, str) or not accept_header:
+        return False
+
+    best_type = None
+    best_q = -1.0
+    for part in accept_header.split(","):
+        part = part.strip()
+        if not part:
+            continue
+        media_type, _, params_str = part.partition(";")
+        media_type = media_type.strip().lower()
+        q = 1.0
+        for param in params_str.split(";"):
+            param = param.strip()
+            if param.startswith("q="):
+                try:
+                    q = float(param[2:])
+                except ValueError:
+                    q = 1.0
+        if q > best_q:
+            best_q = q
+            best_type = media_type
+
+    if not best_type or best_q <= 0:
+        return False
+
+    return best_type == "application/json" or best_type.endswith("+json")
+
+
+JSON_LIST_DEFAULT_LIMIT = 1000
+JSON_LIST_MAX_LIMIT = 10000
+
+
+def json_listing_pagination(query):
+    """
+    Parse and bound ``limit``/``offset`` from a request query mapping.
+
+    Invalid or missing values fall back to defaults rather than raising. This is shared by
+    the content app's JSON listing and its cache key so paginated pages cannot collide, and
+    unrecognized query params cannot fragment the cache.
+
+    Args:
+        query: A mapping with ``.get()`` (e.g. aiohttp ``request.query``), or None.
+
+    Returns:
+        tuple: ``(limit, offset)`` integers.
+    """
+
+    def parse_int(name, default, minimum, maximum):
+        if query is None:
+            raw = default
+        else:
+            try:
+                raw = query.get(name, default)
+            except (AttributeError, TypeError):
+                raw = default
+        try:
+            value = int(raw)
+        except (TypeError, ValueError):
+            value = default
+        return max(minimum, min(value, maximum))
+
+    limit = parse_int("limit", JSON_LIST_DEFAULT_LIMIT, 1, JSON_LIST_MAX_LIMIT)
+    offset = parse_int("offset", 0, 0, 2**31 - 1)
+    return limit, offset
 
 
 def connection_error_wrapper(func):
@@ -323,7 +410,10 @@ class AsyncContentCache(AsyncCache):
                       can be a callable taking the request and cache instance as arguments
             expires_ttl: length in seconds entries should live in the cache, EXPIRES_TTL is default
             keys: a list of CacheKeys to use for key creation upon entry placement,
-                (path, method) is default
+                (path, method) is default. Pass CacheKeys.format if responses for the same
+                path/method can differ based on the request's Accept header (e.g. JSON vs.
+                HTML). Pass CacheKeys.query to include normalized JSON ``limit``/``offset``
+                (other query params and HTML requests are ignored).
             auth: a callable to check authorization of the request; takes the request, cache
                   instance, and base_key as arguments.
         """
@@ -444,10 +534,23 @@ class AsyncContentCache(AsyncCache):
     def make_key(self, request):
         """Makes the key based off the request"""
         # Might potentially have to make this async if keys require async data from request
+        wants_json = accept_prefers_json(request.headers.get("Accept"))
+        if wants_json:
+            limit, offset = json_listing_pagination(getattr(request, "query", None))
+            query_key = f"{limit}:{offset}"
+        else:
+            query_key = ""
         all_keys = {
             CacheKeys.path: request.path,
             CacheKeys.method: request.method,
             CacheKeys.host: request.url.host,
+            CacheKeys.format: "json" if wants_json else "other",
+            CacheKeys.query: query_key,
         }
-        key = ":".join(all_keys[k] for k in self.keys)
-        return key
+        parts = []
+        for key_name in self.keys:
+            value = all_keys[key_name]
+            if key_name is CacheKeys.query and value == "":
+                continue
+            parts.append(value)
+        return ":".join(parts)

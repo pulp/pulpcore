@@ -1,9 +1,10 @@
 from time import sleep
+from unittest.mock import Mock
 
 import pytest
 
 import pulpcore.app.redis_connection
-from pulpcore.cache import Cache
+from pulpcore.cache import AsyncContentCache, Cache, CacheKeys, accept_prefers_json
 
 
 @pytest.fixture
@@ -107,3 +108,91 @@ def test_clear(pulp_redisdb):
     cache.redis.flushdb()
     for key, _, base_key in tuples:
         assert not cache.exists(key, base_key=base_key)
+
+
+@pytest.mark.parametrize(
+    "accept_header,expected",
+    [
+        (None, False),
+        ("", False),
+        ("*/*", False),
+        ("text/html", False),
+        ("text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8", False),
+        ("application/json, text/html", True),
+        ("text/html, application/json", False),
+        ("application/json", True),
+        ("Application/JSON", True),
+        ("application/vnd.pypi.simple.v1+json", True),
+        ("application/json;q=0.5, text/html", False),
+        ("application/json;q=0.9, text/html;q=0.8", True),
+        ("application/json;q=0", False),
+        ("application/json;charset=utf-8", True),
+        ("text/html;q=0.9, application/json;q=0.9", False),
+        ("  application/json  ", True),
+        (Mock(), False),
+        (1, False),
+    ],
+)
+def test_accept_prefers_json(accept_header, expected):
+    assert accept_prefers_json(accept_header) is expected
+
+
+def test_content_cache_key_varies_by_accept(monkeypatch):
+    """JSON and HTML requests for the same path must not share a cache key."""
+    monkeypatch.setattr("pulpcore.cache.cache.get_async_redis_connection", lambda: None)
+    cache = AsyncContentCache(keys=(CacheKeys.path, CacheKeys.method, CacheKeys.format))
+
+    def make_request(accept):
+        request = Mock()
+        request.path = "/pulp/content/foo/"
+        request.method = "GET"
+        request.url.host = "example.com"
+        request.headers = {} if accept is None else {"Accept": accept}
+        return request
+
+    json_key = cache.make_key(make_request("application/json"))
+    html_key = cache.make_key(make_request("text/html"))
+    default_key = cache.make_key(make_request(None))
+    star_key = cache.make_key(make_request("*/*"))
+
+    assert json_key == "/pulp/content/foo/:GET:json"
+    assert html_key == "/pulp/content/foo/:GET:other"
+    assert default_key == html_key
+    assert star_key == html_key
+    assert json_key != html_key
+
+
+def test_content_cache_key_varies_by_query(monkeypatch):
+    """JSON pagination params must be in the cache key; junk query params and HTML must not."""
+    monkeypatch.setattr("pulpcore.cache.cache.get_async_redis_connection", lambda: None)
+    cache = AsyncContentCache(
+        keys=(CacheKeys.path, CacheKeys.method, CacheKeys.format, CacheKeys.query)
+    )
+
+    def make_request(accept, query=None):
+        request = Mock()
+        request.path = "/pulp/content/foo/"
+        request.method = "GET"
+        request.url.host = "example.com"
+        request.headers = {"Accept": accept}
+        request.query = {} if query is None else query
+        return request
+
+    page0 = cache.make_key(make_request("application/json", {"limit": "1", "offset": "0"}))
+    page0_reordered = cache.make_key(
+        make_request("application/json", {"offset": "0", "limit": "1"})
+    )
+    page1 = cache.make_key(make_request("application/json", {"limit": "1", "offset": "1"}))
+    no_query = cache.make_key(make_request("application/json", {}))
+    junk = cache.make_key(make_request("application/json", {"t": "12345", "foo": "bar"}))
+    html_junk = cache.make_key(make_request("text/html", {"t": "12345", "limit": "1"}))
+    html_plain = cache.make_key(make_request("text/html", {}))
+
+    assert page0 == "/pulp/content/foo/:GET:json:1:0"
+    assert page0_reordered == page0
+    assert page1 == "/pulp/content/foo/:GET:json:1:1"
+    assert no_query == "/pulp/content/foo/:GET:json:1000:0"
+    assert junk == no_query
+    assert html_junk == html_plain
+    assert html_plain == "/pulp/content/foo/:GET:other"
+    assert page0 != page1

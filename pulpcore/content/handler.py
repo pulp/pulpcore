@@ -1,4 +1,5 @@
 import asyncio
+import json
 import logging
 import os
 import re
@@ -58,7 +59,14 @@ from pulpcore.app.util import (  # noqa: E402
     cache_key,
     get_domain,
 )
-from pulpcore.cache import AsyncContentCache  # noqa: E402
+from pulpcore.cache import (  # noqa: E402
+    JSON_LIST_DEFAULT_LIMIT,
+    JSON_LIST_MAX_LIMIT,
+    AsyncContentCache,
+    CacheKeys,
+    accept_prefers_json,
+    json_listing_pagination,
+)
 from pulpcore.exceptions import (  # noqa: E402
     DigestValidationError,
     UnsupportedDigestValidationError,
@@ -185,6 +193,10 @@ class Handler:
 
     distribution_model = None
 
+    # Defaults/bounds for the ?limit=&offset= pagination of the generic JSON directory listing.
+    DEFAULT_JSON_LIST_LIMIT = JSON_LIST_DEFAULT_LIMIT
+    MAX_JSON_LIST_LIMIT = JSON_LIST_MAX_LIMIT
+
     @staticmethod
     def _reset_db_connection():
         """
@@ -272,6 +284,13 @@ class Handler:
     @AsyncContentCache(
         base_key=lambda req, cac: Handler.find_base_path_cached(req, cac),
         auth=lambda req, cac, bk: Handler.auth_cached(req, cac, bk),
+        # A response for a given path/method can now differ based on the client's Accept
+        # header (JSON vs. HTML/binary), so CacheKeys.format must be part of the cache key.
+        # Without it, a JSON response could be cached and served back for an HTML request
+        # (or vice versa). See pulpcore.cache.accept_prefers_json.
+        # JSON listings are paginated via ?limit=&offset=. CacheKeys.query stores only those
+        # normalized values (and only for JSON), or page N would be served from page 0.
+        keys=(CacheKeys.path, CacheKeys.method, CacheKeys.format, CacheKeys.query),
     )
     async def stream_content(self, request):
         """
@@ -582,6 +601,227 @@ class Handler:
             sizes=sizes,
         )
 
+    @staticmethod
+    def negotiate_json(request):
+        """
+        Determine whether the client's Accept header prefers application/json over text/html.
+
+        A missing Accept header, or one whose highest-priority entry is "*/*" or some other
+        non-JSON type, is treated as "not asking for JSON" so that existing clients (browsers,
+        package managers, etc.) keep receiving today's HTML/binary responses unchanged.
+
+        This delegates to :func:`pulpcore.cache.accept_prefers_json`, which is also used by
+        :meth:`pulpcore.cache.AsyncContentCache.make_key` (via ``CacheKeys.format``) to key
+        cache entries by negotiated representation. Keeping a single implementation guarantees
+        the caching layer and this negotiation decision can never disagree.
+
+        Args:
+            request (aiohttp.web.Request): The incoming request.
+
+        Returns:
+            bool: True if the highest-quality (per RFC 9110 q-values) media type the client
+                accepts is "application/json" or a "+json" subtype, False otherwise.
+        """
+        return accept_prefers_json(request.headers.get("Accept"))
+
+    @staticmethod
+    def _pagination_params(request):
+        """
+        Parse and bound the ?limit=&offset= query params used by the generic JSON listing.
+
+        Invalid or missing values fall back to defaults rather than raising, since pagination
+        parameters should never be the reason a request fails.
+
+        Args:
+            request (aiohttp.web.Request): The incoming request.
+
+        Returns:
+            (int, int): A (limit, offset) tuple.
+        """
+        return json_listing_pagination(getattr(request, "query", None))
+
+    @staticmethod
+    def _json_response(data):
+        """
+        Wrap a JSON-serializable object as a JSON HTTP response, passing responses through as-is.
+
+        Args:
+            data: Either an aiohttp.web.StreamResponse (returned as-is, giving a Distribution
+                full control over headers/status) or a JSON-serializable object (dict/list).
+
+        Returns:
+            aiohttp.web.StreamResponse: The response to return to the client.
+        """
+        if isinstance(data, StreamResponse):
+            return data
+        return HTTPOk(
+            headers={"Content-Type": "application/json", "Vary": "Accept"},
+            text=json.dumps(data, default=str),
+        )
+
+    @staticmethod
+    def _json_listing_response(request_path, entries, total, limit, offset):
+        """
+        Build the JSON response envelope for the generic, recursive directory listing.
+
+        Args:
+            request_path (str): The full request path, echoed back for client convenience.
+            entries (list): List of {"path", "size", "date"} dicts, already paginated.
+            total (int): Total number of matching entries before pagination was applied.
+            limit (int): The limit that was applied.
+            offset (int): The offset that was applied.
+
+        Returns:
+            aiohttp.web.HTTPOk: The JSON response.
+        """
+        body = {
+            "path": request_path,
+            "packages": entries,
+            "count": total,
+            "limit": limit,
+            "offset": offset,
+        }
+        if offset + len(entries) < total:
+            body["next_offset"] = offset + len(entries)
+        return HTTPOk(
+            headers={"Content-Type": "application/json", "Vary": "Accept"},
+            text=json.dumps(body, default=str),
+        )
+
+    async def list_directory_flat(self, repo_version, publication, path, limit, offset):
+        """
+        Generate a flat, recursive listing of every actual file under ``path``.
+
+        Unlike :meth:`list_directory`, this does not collapse nested files down to their
+        first path segment (i.e. it never synthesizes directory placeholders): every leaf
+        file anywhere below ``path`` is returned with its full path relative to ``path``.
+        This backs the generic, plugin-agnostic JSON representation of a distribution's
+        contents (see :meth:`negotiate_json`), so that a client can request the root (or
+        any subdirectory) of a distribution and get every package beneath it without having
+        to walk the directory tree itself.
+
+        Pagination (``limit``/``offset``) is applied in the database: only the requested page
+        of paths is loaded, and repository-membership dates are fetched for that page's
+        content IDs.
+
+        Args:
+            repo_version (pulpcore.app.models.RepositoryVersion) The repository version
+            publication (pulpcore.app.models.Publication) Publication
+            path (str): relative path inside the repo version or publication.
+            limit (int): Maximum number of entries to return.
+            offset (int): Number of matching entries (sorted by path) to skip.
+
+        Returns:
+            (list, int): A tuple of (entries, total) where entries is a list of
+                {"path": str, "size": int|None, "date": str|None} dicts already sliced to
+                [offset:offset + limit] and sorted by path, and total is the number of
+                matching entries before slicing (for pagination).
+        """
+
+        def list_directory_flat_blocking():
+            if not publication and not repo_version:
+                raise Exception("Either a repo_version or publication is required.")
+            if publication and repo_version:
+                raise Exception("Either a repo_version or publication can be specified.")
+            content_repo_ver = repo_version or publication.repository_version
+            use_content_artifacts = bool(repo_version or publication.pass_through)
+
+            pub_paths = None
+            if publication:
+                pub_paths = publication.published_artifact.filter(
+                    relative_path__startswith=path
+                ).values_list("relative_path", flat=True)
+            ca_paths = None
+            if use_content_artifacts:
+                ca_paths = ContentArtifact.objects.filter(
+                    content__in=content_repo_ver.content,
+                    relative_path__startswith=path,
+                ).values_list("relative_path", flat=True)
+
+            if pub_paths is not None and ca_paths is not None:
+                path_qs = pub_paths.union(ca_paths).order_by("relative_path")
+            elif ca_paths is not None:
+                path_qs = ca_paths.distinct().order_by("relative_path")
+            else:
+                path_qs = pub_paths.order_by("relative_path")
+
+            total = path_qs.count()
+            if total == 0:
+                return [], 0
+
+            page_full_paths = list(path_qs[offset : offset + limit])
+            if not page_full_paths:
+                return [], total
+
+            # relative_path -> {date, size, content_id, ca_pk}. ContentArtifact overwrites
+            # PublishedArtifact for the same path (same last-write-wins as the unpaginated loop).
+            details = {
+                rel: {"date": None, "size": None, "content_id": None, "ca_pk": None}
+                for rel in page_full_paths
+            }
+
+            if publication:
+                for pa in publication.published_artifact.select_related(
+                    "content_artifact__artifact"
+                ).filter(relative_path__in=page_full_paths):
+                    details[pa.relative_path]["date"] = pa.pulp_created
+                    details[pa.relative_path]["content_id"] = pa.content_artifact.content_id
+                    if pa.content_artifact.artifact:
+                        details[pa.relative_path]["size"] = pa.content_artifact.artifact.size
+                    else:
+                        details[pa.relative_path]["ca_pk"] = pa.content_artifact.pk
+
+            if use_content_artifacts:
+                for ca in ContentArtifact.objects.select_related("artifact").filter(
+                    content__in=content_repo_ver.content,
+                    relative_path__in=page_full_paths,
+                ):
+                    details[ca.relative_path]["date"] = ca.pulp_created
+                    details[ca.relative_path]["content_id"] = ca.content_id
+                    if ca.artifact:
+                        details[ca.relative_path]["size"] = ca.artifact.size
+                        details[ca.relative_path]["ca_pk"] = None
+                    else:
+                        details[ca.relative_path]["ca_pk"] = ca.pk
+
+            content_ids = [
+                item["content_id"] for item in details.values() if item["content_id"] is not None
+            ]
+            if content_ids:
+                content_id_to_path = {
+                    item["content_id"]: rel
+                    for rel, item in details.items()
+                    if item["content_id"] is not None
+                }
+                for rc in content_repo_ver._content_relationships().filter(
+                    content_id__in=content_ids
+                ):
+                    rel = content_id_to_path.get(rc.content_id)
+                    if rel is not None:
+                        details[rel]["date"] = rc.pulp_created
+
+            artifacts_to_find = {
+                item["ca_pk"]: rel for rel, item in details.items() if item["ca_pk"] is not None
+            }
+            if artifacts_to_find:
+                r_artifacts = RemoteArtifact.objects.filter(
+                    content_artifact__in=artifacts_to_find.keys(), size__isnull=False
+                ).values_list("content_artifact_id", "size")
+                for ca_pk, size in r_artifacts:
+                    details[artifacts_to_find[ca_pk]]["size"] = size
+
+            result = [
+                {
+                    "path": rel[len(path) :],
+                    "size": details[rel]["size"],
+                    "date": (details[rel]["date"].isoformat() if details[rel]["date"] else None),
+                }
+                for rel in page_full_paths
+            ]
+            return result, total
+
+        return await sync_to_async(list_directory_flat_blocking)()
+
     async def list_directory(self, repo_version, publication, path):
         """
         Generate a set with directory listing of the path.
@@ -683,6 +923,13 @@ class Handler:
         Finally, when nothing is served to client yet, we check if there is a remote for the
         Distribution. If so, the Artifact is pulled from the remote and streamed to the client.
 
+        If the client's ``Accept`` header prefers JSON (see :meth:`negotiate_json`), this method
+        instead calls :meth:`Distribution.content_handler_json` for a plugin-specific JSON
+        representation of ``path``; if that returns None, it falls back to a generic, recursive
+        JSON listing of every file at or below ``path`` (see :meth:`list_directory_flat`) when
+        ``path`` resolves to a directory. Concrete artifact paths are unaffected by ``Accept``
+        unless a plugin's ``content_handler_json`` explicitly handles them.
+
         Args:
             path (str): The path component of the URL.
             request(aiohttp.web.Request) The request to prepare a response for.
@@ -717,6 +964,11 @@ class Handler:
 
         headers = self.response_headers(original_rel_path, distro)
 
+        # Determine, once, whether the client is asking for a JSON representation of this path
+        # rather than the default HTML/binary behavior. See negotiate_json() for details.
+        wants_json = self.negotiate_json(request)
+        json_limit, json_offset = self._pagination_params(request) if wants_json else (None, None)
+
         content_handler_result = await sync_to_async(distro.content_handler)(original_rel_path)
         if content_handler_result is not None:
             if isinstance(content_handler_result, ContentArtifact):
@@ -732,6 +984,13 @@ class Handler:
                 # the result is a response so just return it
                 return content_handler_result
 
+        if wants_json:
+            content_handler_json_result = await sync_to_async(distro.content_handler_json)(
+                original_rel_path
+            )
+            if content_handler_json_result is not None:
+                return self._json_response(content_handler_json_result)
+
         if distro.checkpoint:
             repository = repo_version = None
             publication = await sync_to_async(self._select_checkpoint_publication)(
@@ -746,30 +1005,42 @@ class Handler:
             )()
 
         if publication:
-            try:
-                index_path = "{}index.html".format(rel_path)
-
-                await publication.published_artifact.aget(relative_path=index_path)
-                if not ends_in_slash:
-                    # index.html found, but user didn't specify a trailing slash
-                    raise HTTPMovedPermanently(f"{request.path}/")
-                original_rel_path = index_path
-                headers = self.response_headers(original_rel_path, distro)
-            except ObjectDoesNotExist:
-                dir_list, dates, sizes = await self.list_directory(None, publication, rel_path)
-                dir_list.update(
-                    await sync_to_async(distro.content_handler_list_directory)(rel_path)
+            if wants_json:
+                entries, total = await self.list_directory_flat(
+                    None, publication, rel_path, json_limit, json_offset
                 )
-                if dir_list and not ends_in_slash:
-                    # Directory can be listed, but user did not specify trailing slash
-                    raise HTTPMovedPermanently(f"{request.path}/")
-                elif dir_list:
-                    return HTTPOk(
-                        headers={"Content-Type": "text/html"},
-                        text=self.render_html(
-                            dir_list, path=request.path, dates=dates, sizes=sizes
-                        ),
+                if total:
+                    if not ends_in_slash:
+                        # Directory can be listed, but user did not specify trailing slash
+                        raise HTTPMovedPermanently(f"{request.path}/")
+                    return self._json_listing_response(
+                        request.path, entries, total, json_limit, json_offset
                     )
+            else:
+                try:
+                    index_path = "{}index.html".format(rel_path)
+
+                    await publication.published_artifact.aget(relative_path=index_path)
+                    if not ends_in_slash:
+                        # index.html found, but user didn't specify a trailing slash
+                        raise HTTPMovedPermanently(f"{request.path}/")
+                    original_rel_path = index_path
+                    headers = self.response_headers(original_rel_path, distro)
+                except ObjectDoesNotExist:
+                    dir_list, dates, sizes = await self.list_directory(None, publication, rel_path)
+                    dir_list.update(
+                        await sync_to_async(distro.content_handler_list_directory)(rel_path)
+                    )
+                    if dir_list and not ends_in_slash:
+                        # Directory can be listed, but user did not specify trailing slash
+                        raise HTTPMovedPermanently(f"{request.path}/")
+                    elif dir_list:
+                        return HTTPOk(
+                            headers={"Content-Type": "text/html", "Vary": "Accept"},
+                            text=self.render_html(
+                                dir_list, path=request.path, dates=dates, sizes=sizes
+                            ),
+                        )
 
             # published artifact
             try:
@@ -832,30 +1103,42 @@ class Handler:
                     )
 
         if repo_version and not publication and not distro.SERVE_FROM_PUBLICATION:
-            # Look for index.html or list the directory
-            index_path = "{}index.html".format(rel_path)
-
-            contentartifact_exists = await ContentArtifact.objects.filter(
-                content__in=repo_version.content, relative_path=index_path
-            ).aexists()
-            if contentartifact_exists:
-                original_rel_path = index_path
-                headers = self.response_headers(original_rel_path, distro)
-            else:
-                dir_list, dates, sizes = await self.list_directory(repo_version, None, rel_path)
-                dir_list.update(
-                    await sync_to_async(distro.content_handler_list_directory)(rel_path)
+            if wants_json:
+                entries, total = await self.list_directory_flat(
+                    repo_version, None, rel_path, json_limit, json_offset
                 )
-                if dir_list and not ends_in_slash:
-                    # Directory can be listed, but user did not specify trailing slash
-                    raise HTTPMovedPermanently(f"{request.path}/")
-                elif dir_list:
-                    return HTTPOk(
-                        headers={"Content-Type": "text/html"},
-                        text=self.render_html(
-                            dir_list, path=request.path, dates=dates, sizes=sizes
-                        ),
+                if total:
+                    if not ends_in_slash:
+                        # Directory can be listed, but user did not specify trailing slash
+                        raise HTTPMovedPermanently(f"{request.path}/")
+                    return self._json_listing_response(
+                        request.path, entries, total, json_limit, json_offset
                     )
+            else:
+                # Look for index.html or list the directory
+                index_path = "{}index.html".format(rel_path)
+
+                contentartifact_exists = await ContentArtifact.objects.filter(
+                    content__in=repo_version.content, relative_path=index_path
+                ).aexists()
+                if contentartifact_exists:
+                    original_rel_path = index_path
+                    headers = self.response_headers(original_rel_path, distro)
+                else:
+                    dir_list, dates, sizes = await self.list_directory(repo_version, None, rel_path)
+                    dir_list.update(
+                        await sync_to_async(distro.content_handler_list_directory)(rel_path)
+                    )
+                    if dir_list and not ends_in_slash:
+                        # Directory can be listed, but user did not specify trailing slash
+                        raise HTTPMovedPermanently(f"{request.path}/")
+                    elif dir_list:
+                        return HTTPOk(
+                            headers={"Content-Type": "text/html", "Vary": "Accept"},
+                            text=self.render_html(
+                                dir_list, path=request.path, dates=dates, sizes=sizes
+                            ),
+                        )
 
             try:
                 ca = await ContentArtifact.objects.select_related(
