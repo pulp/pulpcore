@@ -55,13 +55,35 @@
       become: true
 
     - name: "Create Pulp Bucket"
-      amazon.aws.s3_bucket:
-        aws_access_key: "{{ minio_access_key }}"
-        aws_secret_key: "{{ minio_secret_key }}"
-        endpoint_url: "http://minio:9000"
-        region: "eu-central-1"
-        name: "pulp3"
-        state: "present"
+      ansible.builtin.command:
+        argv:
+          - "python3"
+          - "-c"
+          - |
+            import boto3
+            from botocore.exceptions import ClientError
+            client = boto3.client(
+                "s3",
+                aws_access_key_id="{{ minio_access_key }}",
+                aws_secret_access_key="{{ minio_secret_key }}",
+                endpoint_url="http://minio:9000",
+                region_name="eu-central-1",
+            )
+            try:
+                client.create_bucket(
+                    Bucket="pulp3",
+                    CreateBucketConfiguration={"LocationConstraint": "eu-central-1"},
+                )
+            except ClientError as exc:
+                if exc.response["Error"]["Code"] not in (
+                    "BucketAlreadyOwnedByYou",
+                    "BucketAlreadyExists",
+                ):
+                    raise
+      register: "create_bucket"
+      retries: 6
+      delay: 5
+      until: "create_bucket is succeeded"
       when: "s3_test | default(false)"
 
     - name: "Wait on Services"
