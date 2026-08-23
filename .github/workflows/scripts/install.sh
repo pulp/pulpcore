@@ -20,18 +20,6 @@ PIP_REQUIREMENTS=("pulp-cli" "yq")
 # This must be the **only** package install on the test runner.
 uv pip install ${PIP_REQUIREMENTS[*]}
 
-if [[ "$TEST" = "s3" ]]; then
-for i in {1..3}
-do
-  ansible-galaxy collection install "amazon.aws:11.1.0" && s=0 && break || s=$? && sleep 3
-done
-if [[ $s -gt 0 ]]
-then
-  echo "Failed to install amazon.aws"
-  exit $s
-fi
-fi
-
 # Check out the pulp-cli branch matching the installed version.
 PULP_CLI_VERSION="$(uv pip freeze | sed -n -e 's/pulp-cli==//p')"
 git clone --depth 1 --branch "$PULP_CLI_VERSION" https://github.com/pulp/pulp-cli.git ../pulp-cli
