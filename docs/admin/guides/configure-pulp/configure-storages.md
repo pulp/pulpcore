@@ -141,6 +141,9 @@ When creating a `Domain` you can use the following payload:
 Create your remotes, repositories, and distributions under this domain and the requests will be redirected to the
 CloudFront custom domain specified.
 
+For the content response validators and cache policy that apply when a CDN is in front of Pulp, see
+the [CDN caching guide](site:pulpcore/docs/admin/learn/cdn-caching/).
+
 
 Comprehensive options for Amazon S3 can be found in
 [`django-storages` docs](https://django-storages.readthedocs.io/en/latest/backends/amazon-S3.html#configuration-settings).
