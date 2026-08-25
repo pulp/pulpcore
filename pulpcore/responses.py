@@ -1,13 +1,64 @@
 import asyncio
 
 from aiohttp import hdrs
-from aiohttp.web import StreamResponse
+from aiohttp.web import FileResponse, StreamResponse
 from aiohttp.web_exceptions import (
     HTTPPartialContent,
     HTTPRequestRangeNotSatisfiable,
 )
 
 from pulpcore.app.models import Artifact
+
+# aiohttp reads these as ``@reify`` properties off ``request._cache`` (private, present through
+# aiohttp 3.10–3.14). Seeding them to None suppresses only the headers that would 304 against file
+# mtime; If-Range / If-Match / If-Unmodified-Since stay intact so Range requests cannot return a
+# corrupt 206.
+_MTIME_304_REIFY_KEYS = ("if_modified_since", "if_none_match")
+
+
+def _suppress_mtime_conditionals(request):
+    """Neutralize aiohttp's native mtime-based If-Modified-Since/ETag 304 handling for a request."""
+    for key in _MTIME_304_REIFY_KEYS:
+        request._cache[key] = None
+
+
+class PulpFileResponse(FileResponse):
+    """A FileResponse that lets the content app own the ``Last-Modified`` validator.
+
+    aiohttp's ``FileResponse`` overwrites ``Last-Modified`` with the file's mtime and runs its own
+    ``If-Modified-Since``/``ETag`` handling against that mtime. The content app instead uses
+    ``RepositoryContent.pulp_created`` (or omits the header) and answers conditional requests
+    itself, so this class never advertises filesystem mtime as a validator.
+    """
+
+    async def prepare(self, request):
+        # aiohttp < 3.11 runs the mtime-304 check inline in prepare(); 3.11+ moved it into
+        # _make_response() (which prepare() calls). Seed here so it is neutralized on every
+        # supported aiohttp version, not just those that expose _make_response().
+        _suppress_mtime_conditionals(request)
+        return await super().prepare(request)
+
+    def _make_response(self, request, accept_encoding):
+        _suppress_mtime_conditionals(request)
+        return super()._make_response(request, accept_encoding)
+
+    @property
+    def last_modified(self):
+        return FileResponse.last_modified.fget(self)
+
+    @last_modified.setter
+    def last_modified(self, value):
+        # Never replace a handler Last-Modified, and never advertise the file mtime.
+        return
+
+    @property
+    def etag(self):
+        return FileResponse.etag.fget(self)
+
+    @etag.setter
+    def etag(self, value):
+        # mtime-based ETags would disagree with RepositoryContent.pulp_created as Last-Modified.
+        return
 
 
 class ArtifactResponse(StreamResponse):
