@@ -1,11 +1,19 @@
 import uuid
-from datetime import timedelta
+from datetime import datetime, timedelta
+from datetime import timezone as dt_timezone
 from unittest.mock import AsyncMock, Mock
 
 import pytest
 import pytest_asyncio
-from aiohttp.web_exceptions import HTTPMovedPermanently
+from aiohttp.web_exceptions import (
+    HTTPFound,
+    HTTPMovedPermanently,
+    HTTPNotModified,
+)
+from asgiref.sync import sync_to_async
 from django.db import IntegrityError
+from django.test import override_settings
+from django.utils.http import http_date
 from django_guid import clear_guid, set_guid
 
 from pulpcore.app.models import AppStatus
@@ -196,6 +204,18 @@ async def create_distribution(remote, repository=None):
     return await Distribution.objects.acreate(
         name=name, base_path=name, remote=remote, repository=repository
     )
+
+
+async def _add_content_to_new_version(repo, content):
+    """Add ``content`` to a new complete version of ``repo`` and return that version."""
+    repo.CONTENT_TYPES = [Content]
+
+    def _add():
+        with repo.new_version() as version:
+            version.add_content(Content.objects.filter(pk=content.pk))
+        return repo.latest_version()
+
+    return await sync_to_async(_add)()
 
 
 @pytest.mark.asyncio
@@ -584,6 +604,218 @@ def test_render_html_normal_name():
     """Normal directory names should also get the './' prefix."""
     html = Handler.render_html(["simple-dir/"])
     assert '<a href="./simple-dir/">simple-dir/</a>' in html
+
+
+_LAST_MODIFIED = datetime(2020, 1, 1, tzinfo=dt_timezone.utc)
+_LAST_MODIFIED_HTTP = http_date(_LAST_MODIFIED.timestamp())
+_IF_MODIFIED_SINCE_AFTER = http_date(datetime(2021, 1, 1, tzinfo=dt_timezone.utc).timestamp())
+_IF_MODIFIED_SINCE_BEFORE = http_date(datetime(2019, 1, 1, tzinfo=dt_timezone.utc).timestamp())
+_CACHE_CONTROL = "public, max-age=0, must-revalidate"
+
+
+class _UnsatisfiableRange:
+    @property
+    def start(self):
+        raise ValueError()
+
+    stop = None
+
+
+def _request(*, if_modified_since=None, http_range=None):
+    return Mock(
+        method="GET",
+        http_range=http_range if http_range is not None else Mock(start=None, stop=None),
+        headers={"If-Modified-Since": if_modified_since} if if_modified_since else {},
+    )
+
+
+def _ca(*, artifact=True):
+    ca = Mock()
+    ca.relative_path = "file.iso"
+    if artifact:
+        ca.artifact.file.size = 7
+        ca.artifact.file.name = "artifacts/obj"
+    else:
+        ca.artifact = None
+    return ca
+
+
+def _handler_with_built_response(monkeypatch, built=None):
+    handler = Handler()
+    ca = _ca()
+    if built is None:
+        built = Mock(headers={"Cache-Control": _CACHE_CONTROL}, status=200)
+    monkeypatch.setattr(handler, "_build_response_from_content_artifact", Mock(return_value=built))
+    return handler, ca, built
+
+
+def _membership_pulp_created(version, content):
+    return (
+        version._content_relationships()
+        .filter(content_id=content.pk)
+        .values_list("pulp_created", flat=True)
+        .get()
+    )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "if_modified_since, last_modified, cache_enabled, expect_304",
+    [
+        (None, _LAST_MODIFIED, False, False),
+        (_IF_MODIFIED_SINCE_AFTER, _LAST_MODIFIED, False, True),
+        (_IF_MODIFIED_SINCE_BEFORE, _LAST_MODIFIED, False, False),
+        (_IF_MODIFIED_SINCE_AFTER, None, False, False),
+        (_IF_MODIFIED_SINCE_AFTER, _LAST_MODIFIED, True, False),
+    ],
+    ids=["no-if-modified-since", "fresh", "stale", "no-timestamp", "cache-on"],
+)
+async def test_serve_content_artifact_if_modified_since(
+    monkeypatch, if_modified_since, last_modified, cache_enabled, expect_304
+):
+    """Filesystem responses stamp Last-Modified.
+
+    A matching If-Modified-Since is 304 unless the cache is on.
+    """
+    handler, ca, built = _handler_with_built_response(monkeypatch)
+
+    with override_settings(CACHE_ENABLED=cache_enabled):
+        if expect_304:
+            with pytest.raises(HTTPNotModified) as exc:
+                await handler._serve_content_artifact(
+                    ca,
+                    {},
+                    _request(if_modified_since=if_modified_since),
+                    last_modified=last_modified,
+                )
+            assert exc.value.headers["Last-Modified"] == _LAST_MODIFIED_HTTP
+            assert exc.value.headers["Cache-Control"] == _CACHE_CONTROL
+        else:
+            response = await handler._serve_content_artifact(
+                ca,
+                {},
+                _request(if_modified_since=if_modified_since),
+                last_modified=last_modified,
+            )
+            assert response is built
+            if last_modified is None:
+                assert "Last-Modified" not in response.headers
+            else:
+                assert response.headers["Last-Modified"] == _LAST_MODIFIED_HTTP
+
+
+def test_response_headers_sets_cache_control():
+    """All content responses instruct edge caches to revalidate on every use."""
+    headers = Handler.response_headers("path/to/file.iso")
+    assert headers["Cache-Control"] == _CACHE_CONTROL
+
+
+@pytest.mark.asyncio
+async def test_serve_content_artifact_redirect_is_not_304(monkeypatch):
+    """Object-storage 302s never get a Pulp Last-Modified.
+
+    A matching If-Modified-Since must not 304.
+    """
+    redirect = HTTPFound(
+        "http://example.test/redirect",
+        headers={"Cache-Control": _CACHE_CONTROL},
+    )
+    handler, ca, _built = _handler_with_built_response(monkeypatch, built=redirect)
+
+    with override_settings(CACHE_ENABLED=False):
+        with pytest.raises(HTTPFound) as exc:
+            await handler._serve_content_artifact(
+                ca,
+                {},
+                _request(if_modified_since=_IF_MODIFIED_SINCE_AFTER),
+                last_modified=_LAST_MODIFIED,
+            )
+
+    assert "Last-Modified" not in exc.value.headers
+    assert "Cache-Control" not in exc.value.headers
+
+
+@pytest.mark.asyncio
+async def test_serve_content_artifact_304_beats_unsatisfiable_range(monkeypatch):
+    """A matching If-Modified-Since 304s even when Range would otherwise be 416."""
+    handler, ca, _built = _handler_with_built_response(monkeypatch)
+    request = _request(if_modified_since=_IF_MODIFIED_SINCE_AFTER, http_range=_UnsatisfiableRange())
+
+    with override_settings(CACHE_ENABLED=False):
+        with pytest.raises(HTTPNotModified) as exc:
+            await handler._serve_content_artifact(ca, {}, request, last_modified=_LAST_MODIFIED)
+
+    assert exc.value.status == 304
+    assert exc.value.headers["Last-Modified"] == _LAST_MODIFIED_HTTP
+
+
+@pytest.mark.asyncio
+async def test_on_demand_conditional_before_stream(monkeypatch):
+    """On-demand units 304 before the remote fetch; otherwise the stream carries Last-Modified."""
+    handler = Handler()
+    ca = _ca(artifact=False)
+    monkeypatch.setattr(handler, "_content_last_modified", AsyncMock(return_value=_LAST_MODIFIED))
+    handler._stream_content_artifact = AsyncMock(return_value="streamed")
+
+    with pytest.raises(HTTPNotModified) as exc:
+        await handler._serve_ca(
+            ca,
+            {"Cache-Control": _CACHE_CONTROL},
+            Mock(headers={"If-Modified-Since": _LAST_MODIFIED_HTTP}),
+            repository_version="rv",
+        )
+    handler._stream_content_artifact.assert_not_awaited()
+    assert exc.value.headers["Last-Modified"] == _LAST_MODIFIED_HTTP
+    assert exc.value.headers["Cache-Control"] == _CACHE_CONTROL
+
+    result = await handler._serve_ca(ca, {}, Mock(headers={}), repository_version="rv")
+    assert result == "streamed"
+    _, stream_response, stream_ca = handler._stream_content_artifact.call_args.args
+    assert stream_ca is ca
+    assert stream_response.headers["Last-Modified"] == _LAST_MODIFIED_HTTP
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db
+async def test_content_last_modified_from_repository_membership():
+    """Last-Modified is RepositoryContent.pulp_created for the served version, else omitted."""
+    repo = await create_repository()
+    content = await create_content()
+    other = await create_content()
+    publication = None
+    try:
+        ca = await create_content_artifact(content)
+        handler = Handler()
+        assert await handler._content_last_modified(ca) is None
+
+        v1 = await _add_content_to_new_version(repo, content)
+        expected = await sync_to_async(_membership_pulp_created)(v1, content)
+        assert await handler._content_last_modified(ca, repository_version=v1) == expected
+
+        publication = await sync_to_async(Publication.objects.create)(repository_version=v1)
+        assert await handler._content_last_modified(ca, publication=publication) == expected
+
+        def _add_other():
+            with repo.new_version() as version:
+                version.add_content(Content.objects.filter(pk=other.pk))
+            return repo.latest_version()
+
+        v2 = await sync_to_async(_add_other)()
+        assert await handler._content_last_modified(ca, repository_version=v2) == expected
+
+        def _remove():
+            with repo.new_version() as version:
+                version.remove_content(Content.objects.filter(pk=content.pk))
+            return repo.latest_version()
+
+        v3 = await sync_to_async(_remove)()
+        assert await handler._content_last_modified(ca, repository_version=v3) is None
+    finally:
+        if publication is not None:
+            await publication.adelete()
+        await repo.adelete()
+        await content.adelete()
+        await other.adelete()
 
 
 @pytest.mark.asyncio

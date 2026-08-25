@@ -348,6 +348,9 @@ class TestGetFallbackCa:
         pub_with_a = pub_factory(version_with_content, pass_through=True)
         dist = dist_factory(pub=pub_with_a)
         assert dist.get_fallback_ca(self.content_path) == expected_ca
+        ca, publication = dist.get_fallback(self.content_path)
+        assert ca == expected_ca
+        assert publication.pk == pub_with_a.pk
 
     def test_returns_none_when_content_not_in_publication(self, version_without_content):
         """Returns None when the served publication does not contain the content."""
@@ -379,6 +382,9 @@ class TestGetFallbackCa:
         pub_without_a = pub_factory(version_without_content, pass_through=True)
         update_dist(dist, pub=pub_without_a)
         assert dist.get_fallback_ca(self.content_path) == expected_ca
+        ca, publication = dist.get_fallback(self.content_path)
+        assert ca == expected_ca
+        assert publication.pk == pub_with_a.pk
 
     def test_returns_none_when_repository_unset(self, version_with_content, expected_ca):
         """Returns None once the distribution's repository is cleared."""
