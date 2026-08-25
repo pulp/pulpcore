@@ -18,10 +18,12 @@ from aiohttp.web_exceptions import (
     HTTPFound,
     HTTPMovedPermanently,
     HTTPNotFound,
+    HTTPNotModified,
     HTTPRequestRangeNotSatisfiable,
 )
 from asgiref.sync import sync_to_async
 from django.utils import timezone
+from django.utils.http import http_date
 from multidict import CIMultiDict
 from yarl import URL
 
@@ -57,6 +59,7 @@ from pulpcore.app.models import (  # noqa: E402
 )
 from pulpcore.app.util import (  # noqa: E402
     cache_key,
+    check_request_was_modified,
     get_domain,
 )
 from pulpcore.cache import AsyncContentCache  # noqa: E402
@@ -68,6 +71,12 @@ from pulpcore.metrics import artifacts_size_counter  # noqa: E402
 
 log = logging.getLogger(__name__)
 _current_distribution = ContextVar("current_distribution", default=None)
+
+# The "shared cache" (cdn/edge) should always ask pulp if their cache is still valid
+EDGE_CACHE_CONTROL = "public, max-age=0, must-revalidate"
+
+# Tell HTTP caches not to store redirects containing signed URLs.
+NO_STORE_EDGE_CACHE_CONTROL = "no-store"
 
 
 class PathNotResolved(HTTPNotFound):
@@ -536,6 +545,8 @@ class Handler:
         if content_type:
             headers["Content-Type"] = content_type
 
+        headers["Cache-Control"] = EDGE_CACHE_CONTROL
+
         # Let plugin-Distribution set headers for this path if it wants.
         if distribution:
             headers.update(distribution.content_headers_for(path))
@@ -593,6 +604,48 @@ class Handler:
             root=root,
             sizes=sizes,
         )
+
+    @staticmethod
+    async def _set_last_modified_header(
+        headers,
+        last_modified: datetime | None = None,
+        ca=None,
+        rv=None,
+    ):
+        """Add the last-modified header to the response headers if not already present.
+
+        Pulp doesnt track "content served by a distribution" over time, so we need to use some
+        heuristics here. Lets call hypothesis 1 (H1) the common case where the distribution D is
+        serving content from RVs monotonically (either auto-publish, or something else) and that
+        the handler found a ContentArtifact (CA)  matching the path for a request.
+
+        If H1 is true, we can use the repository version history as the distributed content history.
+        In other words, we can use the following strategy for establishing last-modified for the
+        path/resource in the request with a matching CA/RV:
+
+            Given a CA is provided with its RepositoryVersion (RV_n), find the earliest version RV_k
+            such that CA is in RV_k and use that timestamp as last-modified.
+
+        If H1 is not true, (e.g the distribution rolled back the RV it serves, changed repository, etc)
+        then this can produce incorrect last_modified results (e.g, say resource dist/path/to/resource
+        was not modified, when in fact it was).
+        """
+
+        def _find_repo_add_time():
+            cpk = ca.content_id
+            rc = rv._content_relationships().filter(content_id=cpk).first()
+            return rc.pulp_created if rc else rv.pulp_created
+
+        if "Last-Modified" not in headers:
+            if last_modified is None and ca and rv:
+                last_modified = await sync_to_async(_find_repo_add_time)()
+
+            if last_modified is not None:
+                headers["Last-Modified"] = http_date(last_modified.timestamp())
+
+    @staticmethod
+    def _set_etag_headers(headers, sha):
+        headers["ETag"] = f'"{sha}"'
 
     async def list_directory(self, repo_version, publication, path):
         """
@@ -740,6 +793,13 @@ class Handler:
         content_handler_result = await sync_to_async(distro.content_handler)(original_rel_path)
         if content_handler_result is not None:
             if isinstance(content_handler_result, ContentArtifact):
+                # infer the RV which CA returned by content handler probably belongs to
+                __, rv_candidate, __ = await sync_to_async(
+                    distro.get_repository_publication_and_version
+                )()
+                await self._set_last_modified_header(
+                    headers, ca=content_handler_result, rv=rv_candidate
+                )
                 if content_handler_result.artifact:
                     return await self._serve_content_artifact(
                         content_handler_result, headers, request
@@ -775,6 +835,10 @@ class Handler:
                     raise HTTPMovedPermanently(f"{request.path}/")
                 original_rel_path = index_path
                 headers = self.response_headers(original_rel_path, distro)
+                # last-modified heuristic assumes distribution doesn't rollback to older publications
+                await self._set_last_modified_header(
+                    headers, last_modified=publication.pulp_created
+                )
             except ObjectDoesNotExist:
                 dir_list, dates, sizes = await self.list_directory(None, publication, rel_path)
                 dir_list.update(
@@ -804,6 +868,8 @@ class Handler:
             except ObjectDoesNotExist:
                 pass
             else:
+                publication_rv = publication.repository_version
+                await self._set_last_modified_header(headers, ca=ca, rv=publication_rv)
                 if ca.artifact:
                     return await self._serve_content_artifact(ca, headers, request)
                 else:
@@ -833,6 +899,8 @@ class Handler:
                 except ObjectDoesNotExist:
                     pass
                 else:
+                    publication_rv = publication.repository_version
+                    await self._set_last_modified_header(headers, ca=ca, rv=publication_rv)
                     if ca.artifact:
                         return await self._serve_content_artifact(ca, headers, request)
                     else:
@@ -842,8 +910,10 @@ class Handler:
 
         # Grace-period fallback: serve from a recently-superseded publication
         if distro.SERVE_FROM_PUBLICATION:
-            ca = await sync_to_async(distro.get_fallback_ca)(original_rel_path)
-            if ca is not None:
+            fallback = await sync_to_async(distro.get_fallback_ca)(original_rel_path)
+            if fallback is not None:
+                ca, fallback_rv = fallback
+                await self._set_last_modified_header(headers, ca=ca, rv=fallback_rv)
                 if ca.artifact:
                     return await self._serve_content_artifact(ca, headers, request)
                 else:
@@ -891,6 +961,7 @@ class Handler:
             except ObjectDoesNotExist:
                 pass
             else:
+                await self._set_last_modified_header(headers, ca=ca, rv=repo_version)
                 if ca.artifact:
                     return await self._serve_content_artifact(ca, headers, request)
                 else:
@@ -1136,6 +1207,12 @@ class Handler:
 
             return URL(storage_url, encoded=True)
 
+        def _build_redirect_response(**kwargs):
+            url = _build_url(**kwargs)
+            # Contains signed URL. Tell external caches to not store this
+            headers["Cache-Control"] = NO_STORE_EDGE_CACHE_CONTROL
+            return HTTPFound(url, headers=headers)
+
         artifact_file = content_artifact.artifact.file
         artifact_name = artifact_file.name
         domain = get_domain()
@@ -1153,12 +1230,12 @@ class Handler:
             "storages.backends.s3boto3.S3Boto3Storage",
             "storages.backends.s3.S3Storage",
         ):
-            return HTTPFound(_build_url(http_method=request.method), headers=headers)
+            return _build_redirect_response(http_method=request.method)
         elif domain.storage_class in (
             "storages.backends.azure_storage.AzureStorage",
             "storages.backends.gcloud.GoogleCloudStorage",
         ):
-            return HTTPFound(_build_url(), headers=headers)
+            return _build_redirect_response()
         else:
             raise NotImplementedError()
 
@@ -1183,8 +1260,10 @@ class Handler:
         Returns:
             The [aiohttp.web.FileResponse][] for the file.
         """
-        artifact_file = content_artifact.artifact.file
+        artifact = content_artifact.artifact
+        artifact_file = artifact.file
         content_length = artifact_file.size
+        self._set_etag_headers(headers, artifact.sha256)
 
         try:
             range_start, range_stop = request.http_range.start, request.http_range.stop
@@ -1198,9 +1277,20 @@ class Handler:
             size = artifact_file.size or "*"
             raise HTTPRequestRangeNotSatisfiable(headers={"Content-Range": f"bytes */{size}"})
 
+        response = self._build_response_from_content_artifact(content_artifact, headers, request)
+
+        if not check_request_was_modified(
+            request, last_modified=headers.get("Last-Modified"), etag=headers.get("ETag")
+        ):
+            nmod_response = HTTPNotModified(
+                headers={key: headers[key] for key in ("Cache-Control", "ETag") if key in headers}
+            )
+            if settings.CACHE_ENABLED:
+                nmod_response.future_response = response
+            raise nmod_response
+
         artifacts_size_counter.add(content_length)
 
-        response = self._build_response_from_content_artifact(content_artifact, headers, request)
         if isinstance(response, HTTPFound):
             raise response
         else:
