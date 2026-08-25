@@ -45,6 +45,7 @@ from pulpcore.tasking.redis_locks import (
     IMMEDIATE_OWNER_PREFIX,
     LEGACY_OWNER_SCAN_INTERVAL,
     LEGACY_OWNER_SCAN_KEY,
+    _split_reserved_resources,
     acquire_locks,
     cleanup_locks_for_owner,
     collect_lock_owners,
@@ -110,21 +111,22 @@ def count_waiting_tasks_for_metric():
     """
     cutoff_time = timezone.now() - timedelta(seconds=5)
 
-    incomplete_tasks = (
+    resources_iter = (
         Task.objects.filter(
             state__in=[TASK_STATES.RUNNING, TASK_STATES.WAITING],
             pulp_created__lt=cutoff_time,
         )
         .order_by("pulp_created")
-        .only("reserved_resources_record")
+        .values_list("reserved_resources_record", flat=True)  # Avoids Task object allocation
+        .iterator()
     )
 
     taken_exclusive = set()
     taken_shared = set()
     parallel_count = 0
 
-    for task in incomplete_tasks:
-        exclusive_resources, shared_resources = extract_task_resources(task)
+    for reserved in resources_iter:
+        exclusive_resources, shared_resources = _split_reserved_resources(reserved)
         conflicts = False
 
         for resource in exclusive_resources:
