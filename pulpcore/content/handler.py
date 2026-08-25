@@ -10,7 +10,7 @@ from gettext import gettext as _
 
 import django
 from aiohttp.client_exceptions import ClientConnectionError, ClientResponseError
-from aiohttp.web import FileResponse, HTTPOk, StreamResponse
+from aiohttp.web import HTTPOk, StreamResponse
 from aiohttp.web_exceptions import (
     HTTPError,
     HTTPForbidden,
@@ -21,11 +21,12 @@ from aiohttp.web_exceptions import (
 )
 from asgiref.sync import sync_to_async
 from django.utils import timezone
+from django.utils.http import http_date
 from multidict import CIMultiDict
 from yarl import URL
 
 from pulpcore.constants import CHECKPOINT_TS_FORMAT, STORAGE_RESPONSE_MAP
-from pulpcore.responses import ArtifactResponse
+from pulpcore.responses import ArtifactResponse, PulpFileResponse
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pulpcore.app.settings")
 django.setup()
@@ -524,6 +525,10 @@ class Handler:
         if content_type:
             headers["Content-Type"] = content_type
 
+        # Tell edge caches to revalidate on every use. Combined with Last-Modified below this
+        # lets them confirm freshness with a lightweight If-Modified-Since instead of re-fetching.
+        headers["Cache-Control"] = "public, max-age=0, must-revalidate"
+
         # Let plugin-Distribution set headers for this path if it wants.
         if distribution:
             headers.update(distribution.content_headers_for(path))
@@ -720,14 +725,16 @@ class Handler:
         content_handler_result = await sync_to_async(distro.content_handler)(original_rel_path)
         if content_handler_result is not None:
             if isinstance(content_handler_result, ContentArtifact):
-                if content_handler_result.artifact:
-                    return await self._serve_content_artifact(
-                        content_handler_result, headers, request
-                    )
-                else:
-                    return await self._stream_content_artifact(
-                        request, StreamResponse(headers=headers), content_handler_result
-                    )
+                ch_repository, ch_repo_version, ch_publication = await sync_to_async(
+                    distro.get_repository_publication_and_version
+                )()
+                return await self._serve_ca(
+                    content_handler_result,
+                    headers,
+                    request,
+                    publication=ch_publication,
+                    repository_version=ch_repo_version,
+                )
             else:
                 # the result is a response so just return it
                 return content_handler_result
@@ -784,12 +791,7 @@ class Handler:
             except ObjectDoesNotExist:
                 pass
             else:
-                if ca.artifact:
-                    return await self._serve_content_artifact(ca, headers, request)
-                else:
-                    return await self._stream_content_artifact(
-                        request, StreamResponse(headers=headers), ca
-                    )
+                return await self._serve_ca(ca, headers, request, publication=publication)
 
             # pass-through
             if publication.pass_through:
@@ -813,23 +815,13 @@ class Handler:
                 except ObjectDoesNotExist:
                     pass
                 else:
-                    if ca.artifact:
-                        return await self._serve_content_artifact(ca, headers, request)
-                    else:
-                        return await self._stream_content_artifact(
-                            request, StreamResponse(headers=headers), ca
-                        )
+                    return await self._serve_ca(ca, headers, request, publication=publication)
 
         # Grace-period fallback: serve from a recently-superseded publication
         if distro.SERVE_FROM_PUBLICATION:
-            ca = await sync_to_async(distro.get_fallback_ca)(original_rel_path)
+            ca, fallback_publication = await sync_to_async(distro.get_fallback)(original_rel_path)
             if ca is not None:
-                if ca.artifact:
-                    return await self._serve_content_artifact(ca, headers, request)
-                else:
-                    return await self._stream_content_artifact(
-                        request, StreamResponse(headers=headers), ca
-                    )
+                return await self._serve_ca(ca, headers, request, publication=fallback_publication)
 
         if repo_version and not publication and not distro.SERVE_FROM_PUBLICATION:
             # Look for index.html or list the directory
@@ -871,12 +863,7 @@ class Handler:
             except ObjectDoesNotExist:
                 pass
             else:
-                if ca.artifact:
-                    return await self._serve_content_artifact(ca, headers, request)
-                else:
-                    return await self._stream_content_artifact(
-                        request, StreamResponse(headers=headers), ca
-                    )
+                return await self._serve_ca(ca, headers, request, repository_version=repo_version)
 
         # If we haven't found a match yet, try to use pull-through caching with remote
         if distro.remote:
@@ -893,13 +880,10 @@ class Handler:
                     # Try to add content to repository if present & supported
                     if repository and repository.PULL_THROUGH_SUPPORTED:
                         await repository.async_pull_through_add_content(ca)
-                    # Try to stream the ContentArtifact if already created
-                    if ca.artifact:
-                        return await self._serve_content_artifact(ca, headers, request)
-                    else:
-                        return await self._stream_content_artifact(
-                            request, StreamResponse(headers=headers), ca
-                        )
+                    # Serve the ContentArtifact if already created (streams if not yet saved)
+                    return await self._serve_ca(
+                        ca, headers, request, repository_version=repo_version
+                    )
                 else:
                     # Try to stream the RemoteArtifact and potentially save it as a new Content unit
                     save_artifact = (
@@ -1090,6 +1074,81 @@ class Handler:
             ret.update({ca.relative_path: ca for ca in cas})
         return ret
 
+    async def _content_last_modified(
+        self, content_artifact, *, repository_version=None, publication=None
+    ):
+        """
+        Return when the content unit was added to the repository being served, or None.
+
+        Uses ``RepositoryContent.pulp_created`` (the time the unit joined the served repository
+        version), which is the value the content app exposes as ``Last-Modified``. Returns None
+        when no repository version is available or the unit has no membership row (e.g. publish-
+        generated metadata), in which case no ``Last-Modified`` header is set.
+        """
+
+        def _get():
+            repo_version = repository_version
+            if repo_version is None and publication is not None:
+                repo_version = publication.repository_version
+            if repo_version is None:
+                return None
+            return (
+                repo_version._content_relationships()
+                .filter(content_id=content_artifact.content_id)
+                .order_by("-pulp_created")
+                .values_list("pulp_created", flat=True)
+                .first()
+            )
+
+        return await sync_to_async(_get)()
+
+    @staticmethod
+    def _last_modified_http_date(last_modified):
+        """Format a datetime as an HTTP ``Last-Modified`` value, or None."""
+        if last_modified is None:
+            return None
+        return http_date(last_modified.timestamp())
+
+    @staticmethod
+    def _strip_cache_control(headers):
+        """Drop Cache-Control so a response cannot be stored as a shared public copy."""
+        headers.pop("Cache-Control", None)
+        return headers
+
+    @staticmethod
+    def _maybe_not_modified(request, headers, last_modified_header, *, raise_304=True):
+        """Return True when If-Modified-Since covers Last-Modified; optionally raise 304."""
+        if not AsyncContentCache._not_modified(request, last_modified_header):
+            return False
+        if raise_304:
+            raise AsyncContentCache._make_not_modified(headers, last_modified_header)
+        return True
+
+    async def _serve_ca(self, ca, headers, request, *, publication=None, repository_version=None):
+        """Serve a ContentArtifact, attaching ``Last-Modified`` from pulp_created.
+
+        Looks up when the unit joined the served repository version. Saved artifacts get that
+        timestamp in ``_serve_content_artifact`` (after the redirect check, so object-storage
+        302s stay unmodified). On-demand units without a local artifact 304 before the remote
+        fetch when If-Modified-Since covers that timestamp.
+        """
+        last_modified = await self._content_last_modified(
+            ca, publication=publication, repository_version=repository_version
+        )
+        if ca.artifact:
+            # Last-Modified is applied in `_serve_content_artifact` after the redirect check so
+            # object-storage 302s do not advertise a Pulp validator they cannot honor.
+            return await self._serve_content_artifact(
+                ca, headers, request, last_modified=last_modified
+            )
+        last_modified_header = self._last_modified_http_date(last_modified)
+        if last_modified_header:
+            headers["Last-Modified"] = last_modified_header
+            # 304 before opening the remote, including when the cache is on: streams are not
+            # stored as cacheable file responses, and a started StreamResponse cannot become 304.
+            self._maybe_not_modified(request, headers, last_modified_header)
+        return await self._stream_content_artifact(request, StreamResponse(headers=headers), ca)
+
     def _build_response_from_content_artifact(self, content_artifact, headers, request):
         """Helper method to build the correct response to serve a ContentArtifact."""
 
@@ -1118,27 +1177,33 @@ class Handler:
         storage = domain.get_storage()
         headers["X-PULP-ARTIFACT-SIZE"] = str(artifact_file.size)
 
+        def _object_storage_redirect(url):
+            # Presigned Locations must not be stored by shared caches.
+            return HTTPFound(url, headers=self._strip_cache_control(CIMultiDict(headers)))
+
         if domain.storage_class == "pulpcore.app.models.storage.FileSystem":
             path = storage.path(artifact_name)
             if not os.path.exists(path):
                 raise Exception(_("Expected path '{}' is not found").format(path))
-            return FileResponse(path, headers=headers)
+            return PulpFileResponse(path, headers=headers)
         elif not domain.redirect_to_object_storage:
             return ArtifactResponse(content_artifact.artifact, headers=headers)
         elif domain.storage_class in (
             "storages.backends.s3boto3.S3Boto3Storage",
             "storages.backends.s3.S3Storage",
         ):
-            return HTTPFound(_build_url(http_method=request.method), headers=headers)
+            return _object_storage_redirect(_build_url(http_method=request.method))
         elif domain.storage_class in (
             "storages.backends.azure_storage.AzureStorage",
             "storages.backends.gcloud.GoogleCloudStorage",
         ):
-            return HTTPFound(_build_url(), headers=headers)
+            return _object_storage_redirect(_build_url())
         else:
             raise NotImplementedError()
 
-    async def _serve_content_artifact(self, content_artifact, headers, request):
+    async def _serve_content_artifact(
+        self, content_artifact, headers, request, *, last_modified=None
+    ):
         """
         Handle response for a Content Artifact with the file present.
 
@@ -1150,6 +1215,8 @@ class Handler:
                 respond with.
             headers (dict): A dictionary of response headers.
             request(aiohttp.web.Request) The request to prepare a response for.
+            last_modified (datetime): When the content was added to the served repository, used
+                for the ``Last-Modified`` header and ``If-Modified-Since`` handling. May be None.
 
         Raises:
             [aiohttp.web_exceptions.HTTPFound][]: When we need to redirect to the file
@@ -1161,26 +1228,44 @@ class Handler:
         """
         artifact_file = content_artifact.artifact.file
         content_length = artifact_file.size
-
-        try:
-            range_start, range_stop = request.http_range.start, request.http_range.stop
-            if range_start or range_stop:
-                if range_stop and artifact_file.size and range_stop > artifact_file.size:
-                    start = 0 if range_start is None else range_start
-                    content_length = artifact_file.size - start
-                elif range_stop:
-                    content_length = range_stop - range_start
-        except ValueError:
-            size = artifact_file.size or "*"
-            raise HTTPRequestRangeNotSatisfiable(headers={"Content-Range": f"bytes */{size}"})
-
-        artifacts_size_counter.add(content_length)
+        last_modified_header = self._last_modified_http_date(last_modified)
 
         response = self._build_response_from_content_artifact(content_artifact, headers, request)
         if isinstance(response, HTTPFound):
+            # Redirect (object-storage) responses are left without a Pulp validator. Presigned
+            # Locations must not be stored by shared caches.
+            self._strip_cache_control(response.headers)
+            artifacts_size_counter.add(content_length)
             raise response
-        else:
-            return response
+
+        if last_modified_header is not None:
+            response.headers["Last-Modified"] = last_modified_header
+
+        # If-Modified-Since is checked as if Range were not present. A matching
+        # If-Modified-Since must 304, not 416. When the cache is on, skip the handler 304 so
+        # Redis can store a 200.
+        would_304 = self._maybe_not_modified(
+            request,
+            response.headers,
+            response.headers.get("Last-Modified"),
+            raise_304=not settings.CACHE_ENABLED,
+        )
+
+        if not would_304:
+            try:
+                range_start, range_stop = request.http_range.start, request.http_range.stop
+                if range_start or range_stop:
+                    if range_stop and artifact_file.size and range_stop > artifact_file.size:
+                        start = 0 if range_start is None else range_start
+                        content_length = artifact_file.size - start
+                    elif range_stop:
+                        content_length = range_stop - range_start
+            except ValueError:
+                size = artifact_file.size or "*"
+                raise HTTPRequestRangeNotSatisfiable(headers={"Content-Range": f"bytes */{size}"})
+
+        artifacts_size_counter.add(content_length)
+        return response
 
     async def _stream_remote_artifact(
         self, request, response, remote_artifact, save_artifact, repository=None
@@ -1212,8 +1297,8 @@ class Handler:
             )
         )
 
-        # According to RFC7233 if a server cannot satisfy a Range request, the response needs to
-        # contain a Content-Range header with an unsatisfied-range value.
+        # If a Range cannot be satisfied, the response needs a Content-Range header with an
+        # unsatisfied-range value.
         try:
             range_start, range_stop = request.http_range.start, request.http_range.stop
             size = remote_artifact.size
