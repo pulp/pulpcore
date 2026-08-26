@@ -11,8 +11,8 @@ from uuid import uuid4
 
 import pytest
 
+import pulpcore.app.redis_connection
 from pulpcore.app.models import AppStatus, Domain, Task
-from pulpcore.app.redis_connection import get_redis_connection
 from pulpcore.constants import TASK_STATES
 from pulpcore.tasking.redis_locks import (
     acquire_locks as real_acquire,
@@ -23,45 +23,23 @@ from pulpcore.tasking.redis_locks import (
 )
 from pulpcore.tasking.redis_worker import RedisWorker
 
-
-def _redis_available():
-    """Check if Redis is reachable (not whether WORKER_TYPE is redis)."""
-    try:
-        conn = get_redis_connection()
-        if conn is None:
-            import redis as redis_lib
-
-            conn = redis_lib.Redis(host="localhost", port=6379, decode_responses=True)
-        conn.ping()
-        return True
-    except Exception:
-        return False
-
-
-pytestmark = pytest.mark.skipif(
-    not _redis_available(),
-    reason="Redis is not available",
-)
-
-
 NUM_BLOCKED_RESOURCES = 10
 NUM_BLOCKED_TASKS_PER_RESOURCE = 20
 FREE_RESOURCE_SUFFIX = "free"
 
 
 @pytest.fixture
-def redis_conn():
-    """Get a real Redis connection."""
-    conn = get_redis_connection()
-    if conn is None:
-        import redis as redis_lib
-
-        conn = redis_lib.Redis(host="localhost", port=6379, decode_responses=True)
-    return conn
+def pulp_redisdb(settings, redisdb, monkeypatch):
+    """Point pulpcore's redis connection at the ephemeral ``redisdb`` instance."""
+    monkeypatch.setattr(pulpcore.app.redis_connection, "_conn", None)
+    monkeypatch.setattr(pulpcore.app.redis_connection, "_a_conn", None)
+    settings.CACHE_ENABLED = True
+    settings.REDIS_URL = "unix://" + redisdb.get_connection_kwargs()["path"]
+    return pulpcore.app.redis_connection.get_redis_connection()
 
 
 @pytest.fixture
-def test_worker(redis_conn):
+def test_worker(pulp_redisdb):
     """Create a test RedisWorker without starting a real worker process."""
     test_id = uuid4().hex[:8]
     AppStatus.objects._current_app_status = None
@@ -76,7 +54,7 @@ def test_worker(redis_conn):
     worker.ignored_task_ids = list(
         Task.objects.filter(state=TASK_STATES.WAITING, app_lock=None).values_list("pk", flat=True)
     )
-    worker.redis_conn = redis_conn
+    worker.redis_conn = pulp_redisdb
     worker.name = app_status.name
     worker.app_status = app_status
 
@@ -87,7 +65,7 @@ def test_worker(redis_conn):
 
 
 @pytest.mark.django_db
-def test_fetch_task_skips_blocked_resources_efficiently(redis_conn, test_worker):
+def test_fetch_task_skips_blocked_resources_efficiently(pulp_redisdb, test_worker):
     """fetch_task() should call acquire_locks once per distinct blocked resource, not per task."""
     domain = Domain.objects.get(name="default")
     domain_shared = f"shared:prn:core.domain:{domain.pk}"
@@ -98,7 +76,7 @@ def test_fetch_task_skips_blocked_resources_efficiently(redis_conn, test_worker)
     blocked_resources = [f"prn:test.hol-{test_id}.r:{i}" for i in range(NUM_BLOCKED_RESOURCES)]
     for res in blocked_resources:
         key = resource_to_lock_key(res)
-        redis_conn.set(key, "other-worker-holding-lock")
+        pulp_redisdb.set(key, "other-worker-holding-lock")
         redis_keys.append(key)
 
     # Create tasks on blocked resources (200 total)
@@ -162,6 +140,5 @@ def test_fetch_task_skips_blocked_resources_efficiently(redis_conn, test_worker)
 
     # Cleanup Redis keys (DB is rolled back by pytest-django)
     for key in redis_keys:
-        redis_conn.delete(key)
-    if result:
-        safe_release_task_locks(result, lock_owner=test_worker.name)
+        pulp_redisdb.delete(key)
+    assert safe_release_task_locks(result, lock_owner=test_worker.name) is True
