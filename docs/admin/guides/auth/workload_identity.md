@@ -43,11 +43,13 @@ AUTHENTICATION_BACKENDS = [
 ]
 ```
 
-The backend answers the permission checks for a workload identity request, so it must be present
-for the feature to grant anything. Nothing is active until all three pieces are configured.
+The backend answers the permission checks for a workload identity request,
+so it must be present for the feature to grant anything.
+Nothing is active until all three pieces are configured.
 
 With the example below,
-a push from the `main` branch of `my-org/app` is granted the `file.filerepository_owner` role on the repository named `prod`,
+a push from the `main` branch of `my-org/app`
+is granted the `file.filerepository_owner` role on the repository named `prod`,
 and nothing else.
 See the configuration reference at the end for every option.
 
@@ -60,8 +62,8 @@ Grant a role carrying `core.view_task` when the CI needs to read its own tasks.
 
 ## Domains
 
-When `DOMAIN_ENABLED` is on, scope an object grant to a single tenant:
-use a `prn`, or add a `domain` to a `name` scope.
+When `DOMAIN_ENABLED` is on, scope an object grant to a single tenant.
+Use a `prn`, or add a `domain` to a `name` scope.
 A bare `name` matches that name in every domain, which breaks the isolation between domains.
 Pulp raises a startup check warning when a name scope is left unqualified while domains are enabled.
 

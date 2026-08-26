@@ -650,7 +650,7 @@ def test_authenticate_no_token_returns_none():
         },
     },
 )
-def test_checks_silent_when_backend_not_configured():
+def test_checks_are_silent_when_the_backend_is_not_configured():
     assert workload_identity_reserved_username(None) == []
     assert workload_identity_domain_scopes(None) == []
     assert workload_identity_unqualified_name_scopes(None) == []
