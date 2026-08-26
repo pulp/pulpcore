@@ -468,6 +468,8 @@ def safe_release_task_locks(task, lock_owner=None):
         return False
 
     redis_conn = get_redis_connection()
+    if redis_conn is None:
+        return False
 
     # Extract resources from task
     exclusive_resources, shared_resources = extract_task_resources(task)
@@ -507,7 +509,7 @@ async def async_safe_release_task_locks(task, lock_owner=None):
             AppStatus.objects.current() or fall back to f"immediate-{task.pk}"
 
     Returns:
-        bool: True if locks were released, False if already released
+        bool: True if locks were released, False if already released or no Redis connection
     """
     from pulpcore.app.models import AppStatus
 
@@ -516,6 +518,8 @@ async def async_safe_release_task_locks(task, lock_owner=None):
         return False
 
     redis_conn = get_redis_connection()
+    if redis_conn is None:
+        return False
 
     # Extract resources from task
     exclusive_resources, shared_resources = extract_task_resources(task)

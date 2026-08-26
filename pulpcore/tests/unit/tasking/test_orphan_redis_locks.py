@@ -6,6 +6,8 @@ Tests use a real Redis provided by the ``redisdb`` pytest fixture (mirroring
 """
 
 from datetime import timedelta
+from types import SimpleNamespace
+from uuid import uuid4
 
 import pytest
 import redis
@@ -666,3 +668,18 @@ def test_legacy_scan_control_scales_with_keyspace(pulp_redisdb, monkeypatch):
         scans[total] = len(_scans(log))
     assert scans[100] > 0, scans
     assert scans[10_000] > scans[100], scans
+
+
+def test_safe_release_task_locks_returns_false_without_redis(monkeypatch):
+    """safe_release_task_locks must not call register_script when Redis is unavailable."""
+    monkeypatch.setattr(redis_locks, "get_redis_connection", lambda: None)
+    task = SimpleNamespace(pk=uuid4())
+    assert redis_locks.safe_release_task_locks(task, lock_owner="owner") is False
+
+
+@pytest.mark.asyncio
+async def test_async_safe_release_task_locks_returns_false_without_redis(monkeypatch):
+    """async_safe_release_task_locks must not call register_script when Redis is unavailable."""
+    monkeypatch.setattr(redis_locks, "get_redis_connection", lambda: None)
+    task = SimpleNamespace(pk=uuid4())
+    assert await redis_locks.async_safe_release_task_locks(task, lock_owner="owner") is False
