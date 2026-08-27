@@ -8,6 +8,31 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.116.1 (2026-08-27) {: #3.116.1 }
+
+### REST API {: #3.116.1-rest-api }
+
+#### Bugfixes {: #3.116.1-rest-api-bugfix }
+
+- Fixed head-of-line blocking in `fetch_task()` by excluding blocked resources at the DB level.
+  [#7900](https://github.com/pulp/pulpcore/issues/7900)
+
+### Plugin API {: #3.116.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.116.1-pulp-file }
+
+#### Bugfixes {: #3.116.1-pulp-file-bugfix }
+
+- Fixed synchronous File uploads failing with "Artifact already exists" instead of reusing the existing Artifact.
+
+### Pulp Cert Guard {: #3.116.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.116.0 (2026-08-12) {: #3.116.0 }
 
 ### REST API {: #3.116.0-rest-api }

@@ -1,1 +1,0 @@
-Fixed head-of-line blocking in `fetch_task()` by excluding blocked resources at the DB level.
