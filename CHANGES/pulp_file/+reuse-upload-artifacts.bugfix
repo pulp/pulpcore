@@ -1,1 +1,0 @@
-Fixed synchronous File uploads failing with "Artifact already exists" instead of reusing the existing Artifact.

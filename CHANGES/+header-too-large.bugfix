@@ -1,1 +1,0 @@
-Increased the content app's maximum HTTP header field size from 8190 to 16384 bytes to support PQC (post-quantum) X.509 certificates forwarded via the `X-CLIENT-CERT` header.
