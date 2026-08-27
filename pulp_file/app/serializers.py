@@ -2,14 +2,13 @@ from gettext import gettext as _
 from tempfile import NamedTemporaryFile
 
 from django.conf import settings
-from django.db import DatabaseError
+from django.db import DatabaseError, IntegrityError, transaction
 from rest_framework import serializers
 
 from pulpcore.plugin import models
 from pulpcore.plugin.files import PulpTemporaryUploadedFile
 from pulpcore.plugin.serializers import (
     AlternateContentSourceSerializer,
-    ArtifactSerializer,
     ContentChecksumSerializer,
     DetailRelatedField,
     DistributionSerializer,
@@ -89,21 +88,25 @@ class FileContentUploadSerializer(FileContentSerializer):
                 file_url, expected_digests=expected_digests, expected_size=expected_size
             )
         if file := data.pop("file", None):
-            # if artifact already exists, let's use it
+            artifact = models.Artifact.init_and_validate(file)
             try:
                 artifact = models.Artifact.objects.get(
-                    sha256=file.hashers["sha256"].hexdigest(), pulp_domain=get_domain_pk()
+                    sha256=artifact.sha256, pulp_domain=get_domain_pk()
                 )
                 if not artifact.pulp_domain.get_storage().exists(artifact.file.name):
+                    # save() rewrites storage only when file is set and dirty
                     artifact.file = file
-                    artifact.save()
-                else:
-                    artifact.touch()
+                    raise models.Artifact.DoesNotExist
+                artifact.touch()
             except (models.Artifact.DoesNotExist, DatabaseError):
-                artifact_data = {"file": file}
-                serializer = ArtifactSerializer(data=artifact_data)
-                serializer.is_valid(raise_exception=True)
-                artifact = serializer.save()
+                try:
+                    with transaction.atomic():
+                        artifact.save()
+                except IntegrityError:
+                    artifact = models.Artifact.objects.get(
+                        sha256=artifact.sha256, pulp_domain=get_domain_pk()
+                    )
+                    artifact.touch()
             data["artifact"] = artifact
 
         data["digest"] = data["artifact"].sha256
