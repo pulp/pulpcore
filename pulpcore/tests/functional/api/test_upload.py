@@ -3,6 +3,7 @@
 import hashlib
 import os
 import uuid
+from concurrent.futures import ThreadPoolExecutor
 from random import shuffle
 
 import pytest
@@ -259,3 +260,41 @@ def test_upload_synchronous(file_bindings, gen_user, file_fixtures_root):
         upload_attrs = {"file": str(file_path), "relative_path": "1.iso", "pulp_labels": labels}
         file_bindings.ContentFilesApi.upload(**upload_attrs)
     assert ctx.value.status == 403
+
+
+@pytest.mark.parallel
+def test_sync_upload_reuses_existing_artifact(file_bindings, tmp_path):
+    """Uploading the same bytes twice should reuse the Artifact instead of 400ing."""
+    path = tmp_path / "blob"
+    path.write_bytes(uuid.uuid4().bytes)
+
+    first = file_bindings.ContentFilesApi.upload(
+        relative_path=f"{uuid.uuid4()}.bin", file=str(path)
+    )
+    second = file_bindings.ContentFilesApi.upload(
+        relative_path=f"{uuid.uuid4()}.bin", file=str(path)
+    )
+    first = file_bindings.ContentFilesApi.read(first.pulp_href)
+    second = file_bindings.ContentFilesApi.read(second.pulp_href)
+
+    assert first.pulp_href != second.pulp_href
+    assert first.sha256 == second.sha256
+    assert first.artifact == second.artifact
+
+
+@pytest.mark.parallel
+def test_sync_upload_reuses_artifact_concurrently(file_bindings, tmp_path):
+    """Concurrent uploads of the same bytes must share one Artifact."""
+    path = tmp_path / "blob"
+    path.write_bytes(uuid.uuid4().bytes)
+    names = [f"{uuid.uuid4()}.bin" for _ in range(4)]
+
+    def _upload(name):
+        return file_bindings.ContentFilesApi.upload(relative_path=name, file=str(path))
+
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        results = list(pool.map(_upload, names))
+
+    contents = [file_bindings.ContentFilesApi.read(result.pulp_href) for result in results]
+    assert len({content.artifact for content in contents}) == 1
+    assert len({content.pulp_href for content in contents}) == 4
