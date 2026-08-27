@@ -52,6 +52,26 @@ def _ssl_temp_files(server):
                 pass
 
 
+def _build_remote_settings(server):
+    """Build fields copied onto remotes created during replication."""
+    remote_settings = {
+        "ca_cert": server.ca_cert,
+        "tls_validation": server.tls_validation,
+        "client_cert": server.client_cert,
+        "client_key": server.client_key,
+        "download_concurrency": server.download_concurrency,
+        "max_retries": server.max_retries,
+        "total_timeout": server.total_timeout,
+        "connect_timeout": server.connect_timeout,
+        "sock_connect_timeout": server.sock_connect_timeout,
+        "sock_read_timeout": server.sock_read_timeout,
+    }
+    # Omit policy when unset so new remotes keep Remote.policy's default (immediate).
+    if (remote_policy := getattr(server, "remote_policy", None)) is not None:
+        remote_settings["policy"] = remote_policy
+    return remote_settings
+
+
 def replicate_distributions(server_pk, q_select=None, **kwargs):
     server = UpstreamPulp.objects.get(pk=server_pk)
     with _ssl_temp_files(server) as ssl_files:
@@ -75,18 +95,7 @@ def replicate_distributions(server_pk, q_select=None, **kwargs):
             }
         )
 
-        remote_settings = {
-            "ca_cert": server.ca_cert,
-            "tls_validation": server.tls_validation,
-            "client_cert": server.client_cert,
-            "client_key": server.client_key,
-            "download_concurrency": server.download_concurrency,
-            "max_retries": server.max_retries,
-            "total_timeout": server.total_timeout,
-            "connect_timeout": server.connect_timeout,
-            "sock_connect_timeout": server.sock_connect_timeout,
-            "sock_read_timeout": server.sock_read_timeout,
-        }
+        remote_settings = _build_remote_settings(server)
         try:
             task_group = TaskGroup.current()
             supported_replicators = []
