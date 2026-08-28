@@ -8,6 +8,31 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.116.1 (2026-08-27) {: #3.116.1 }
+
+### REST API {: #3.116.1-rest-api }
+
+#### Bugfixes {: #3.116.1-rest-api-bugfix }
+
+- Fixed head-of-line blocking in `fetch_task()` by excluding blocked resources at the DB level.
+  [#7900](https://github.com/pulp/pulpcore/issues/7900)
+
+### Plugin API {: #3.116.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.116.1-pulp-file }
+
+#### Bugfixes {: #3.116.1-pulp-file-bugfix }
+
+- Fixed synchronous File uploads failing with "Artifact already exists" instead of reusing the existing Artifact.
+
+### Pulp Cert Guard {: #3.116.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.116.0 (2026-08-12) {: #3.116.0 }
 
 ### REST API {: #3.116.0-rest-api }
@@ -898,6 +923,37 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.106.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.105.17 (2026-08-27) {: #3.105.17 }
+
+### REST API {: #3.105.17-rest-api }
+
+#### Features {: #3.105.17-rest-api-feature }
+
+- Added `--backend` option to the `add-signing-service` management command, enabling Sequoia (`sq`) as an alternative to GPG for key management. Use `--backend sq` to register signing services using Sequoia's key store.
+  [#7479](https://github.com/pulp/pulpcore/issues/7479)
+
+#### Bugfixes {: #3.105.17-rest-api-bugfix }
+
+- Fixed `add-signing-service` management command failing with "There are N keys matching the key id" for PGP keys that have subkeys.
+- Fixed an issue where gpg_verify() was rejecting some valid PGP signatures after changes made in pulpcore 3.108.
+- Increased the content app's maximum HTTP header field size from 8190 to 16384 bytes to support PQC (post-quantum) X.509 certificates forwarded via the `X-CLIENT-CERT` header.
+
+### Plugin API {: #3.105.17-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.105.17-pulp-file }
+
+#### Bugfixes {: #3.105.17-pulp-file-bugfix }
+
+- Fixed synchronous File uploads failing with "Artifact already exists" instead of reusing the existing Artifact.
+
+### Pulp Cert Guard {: #3.105.17-pulp-cert-guard }
 
 No significant changes.
 
