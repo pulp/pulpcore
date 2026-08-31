@@ -1103,10 +1103,6 @@ class Handler:
             return params
 
         def _build_url(**kwargs):
-            filename = os.path.basename(content_artifact.relative_path)
-            content_disposition = f"attachment;filename={filename}"
-
-            headers["Content-Disposition"] = content_disposition
             parameters = _set_params_from_headers(headers, domain.storage_class)
             storage_url = storage.url(artifact_name, parameters=parameters, **kwargs)
 
@@ -1117,6 +1113,12 @@ class Handler:
         domain = get_domain()
         storage = domain.get_storage()
         headers["X-PULP-ARTIFACT-SIZE"] = str(artifact_file.size)
+
+        filename = os.path.basename(content_artifact.relative_path)
+        content_disposition = f"attachment;filename={filename}"
+        headers["Content-Disposition"] = content_disposition
+        headers["Content-Security-Policy"] = "default-src 'none'; sandbox"
+        headers["X-Content-Type-Options"] = "nosniff"
 
         if domain.storage_class == "pulpcore.app.models.storage.FileSystem":
             path = storage.path(artifact_name)
