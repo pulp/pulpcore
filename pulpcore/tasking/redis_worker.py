@@ -117,7 +117,7 @@ def count_waiting_tasks_for_metric():
             pulp_created__lt=cutoff_time,
         )
         .order_by("pulp_created")
-        .values_list("reserved_resources_record", flat=True)  # Avoids Task object allocation
+        .values_list("reserved_resources_record", flat=True)
         .iterator()
     )
 
