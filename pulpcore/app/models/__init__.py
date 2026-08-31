@@ -61,6 +61,7 @@ from .publication import (
     CompositeContentGuard,
     ContentRedirectContentGuard,
     HeaderContentGuard,
+    EnvVarHeaderContentGuard,
     ArtifactDistribution,
 )
 
@@ -149,6 +150,7 @@ __all__ = [
     "CompositeContentGuard",
     "ContentRedirectContentGuard",
     "HeaderContentGuard",
+    "EnvVarHeaderContentGuard",
     "ArtifactDistribution",
     "Remote",
     "Repository",
