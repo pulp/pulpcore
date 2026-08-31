@@ -1,4 +1,5 @@
 import json
+import os
 import uuid
 from base64 import b64encode
 
@@ -7,7 +8,11 @@ from aiohttp import BasicAuth
 
 from pulpcore.client.pulp_file import PatchedfileFileDistribution
 from pulpcore.client.pulpcore import PatchedCompositeContentGuard
+from pulpcore.client.pulpcore.exceptions import ApiException
 from pulpcore.tests.functional.utils import get_from_url
+
+ENVVAR_HEADER_GUARD_ENV_VAR = "ENVVAR_HEADER_GUARD_TEST_SECRET"
+ENVVAR_HEADER_GUARD_HEADER_NAME = "X-Test-Content-Guard-Header"
 
 
 @pytest.mark.parallel
@@ -166,6 +171,84 @@ def test_header_contentguard_workflow(
 
     response = get_from_url(distribution_base_url(distro.base_url), headers=headers)
     assert response.status == 404
+
+
+@pytest.mark.parallel
+def test_envvar_header_contentguard_workflow(
+    pulpcore_bindings,
+    file_bindings,
+    distribution_base_url,
+    gen_user,
+    file_distribution_factory,
+    gen_object_with_cleanup,
+    monitor_task,
+):
+    if not os.environ.get(ENVVAR_HEADER_GUARD_ENV_VAR):
+        pytest.skip(f"{ENVVAR_HEADER_GUARD_ENV_VAR} not set")
+
+    creator_user = gen_user(
+        model_roles=["core.envvarheadercontentguard_creator", "file.filedistribution_creator"]
+    )
+    secret = os.environ[ENVVAR_HEADER_GUARD_ENV_VAR].rstrip("\r\n")
+
+    with creator_user:
+        distro = file_distribution_factory()
+
+    distro_base_url = distribution_base_url(distro.base_url)
+    # Unguarded empty distribution is reachable but has no publication.
+    response = get_from_url(distro_base_url, headers=None)
+    assert response.status == 404
+
+    with creator_user:
+        guard = gen_object_with_cleanup(
+            pulpcore_bindings.ContentguardsEnvvarHeaderApi,
+            {
+                "name": distro.name,
+                "header_name": ENVVAR_HEADER_GUARD_HEADER_NAME,
+                "env_var": ENVVAR_HEADER_GUARD_ENV_VAR,
+            },
+        )
+        body = PatchedfileFileDistribution(content_guard=guard.pulp_href)
+        monitor_task(file_bindings.DistributionsFileApi.partial_update(distro.pulp_href, body).task)
+        distro = file_bindings.DistributionsFileApi.read(distro.pulp_href)
+        assert guard.pulp_href == distro.content_guard
+        retrieved = pulpcore_bindings.ContentguardsEnvvarHeaderApi.read(guard.pulp_href)
+        assert retrieved.header_name == ENVVAR_HEADER_GUARD_HEADER_NAME
+        assert retrieved.env_var == ENVVAR_HEADER_GUARD_ENV_VAR
+        body_dict = retrieved.to_dict()
+        assert "header_value" not in body_dict
+        assert secret not in str(body_dict)
+
+    response = get_from_url(distro_base_url, headers=None)
+    assert response.status == 403
+
+    wrong_headers = {
+        ENVVAR_HEADER_GUARD_HEADER_NAME: b64encode(b"wrong-secret").decode("ascii"),
+    }
+    response = get_from_url(distro_base_url, headers=wrong_headers)
+    assert response.status == 403
+
+    # 404 is the allowed-access signal: permit() succeeded, then the content
+    # app found no publication. A 200 would require serving a real artifact and
+    # would test pulp_file, not this guard. Same pattern as HeaderContentGuard.
+    matching_headers = {
+        ENVVAR_HEADER_GUARD_HEADER_NAME: b64encode(secret.encode("utf-8")).decode("ascii"),
+    }
+    response = get_from_url(distro_base_url, headers=matching_headers)
+    assert response.status == 404
+
+
+def test_envvar_header_content_guard_rejects_disallowed_env_var(pulpcore_bindings, gen_user):
+    creator_user = gen_user(model_roles=["core.envvarheadercontentguard_creator"])
+    with creator_user, pytest.raises(ApiException) as exc:
+        pulpcore_bindings.ContentguardsEnvvarHeaderApi.create(
+            {
+                "name": str(uuid.uuid4()),
+                "header_name": ENVVAR_HEADER_GUARD_HEADER_NAME,
+                "env_var": "HOME",
+            }
+        )
+    assert exc.value.status == 400
 
 
 def test_composite_contentguard_crud(

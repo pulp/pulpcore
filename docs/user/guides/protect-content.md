@@ -61,6 +61,37 @@ pulp content-guard header create --name header-guard --header-name X-Pulp-User -
 pulp content-guard header create --name header-guard --header-name X-Auth-Service --header-value true --jq-filter '.authenticated'
 ```
 
+### EnvVar Header Content Guard
+
+The env-var header content guard checks a request header against a secret stored in a
+**content-app** environment variable. Proxies must send `base64(utf-8(secret))` in the configured
+header. Pulp reads the plaintext secret from the content app at request time, so rotating the
+secret is a deployment change rather than a database update.
+
+The environment variable name must be listed in
+`ENVVAR_HEADER_CONTENT_GUARD_ALLOWED_VARS`. Creating this guard is privileged: the name is a
+pointer into the content-app process environment, so this type should not be granted to
+untrusted tenants.
+
+Set the secret on every content-app replica (and typically the API as well). Setting it only on
+the API causes all content requests to be denied.
+
+Pulp CLI commands for this guard type are not available yet. Use the REST API:
+
+```bash
+# Allow the env var, then create a guard that checks X-Pulp-Shared-Secret against it
+# ENVVAR_HEADER_CONTENT_GUARD_ALLOWED_VARS = ["SHARED_SECRET"]
+export GUARD_HREF=$(curl -s -X POST :24817/pulp/api/v3/contentguards/core/envvar_header/ \
+  -H "Content-Type: application/json" \
+  -d '{"name": "shared-secret-guard", "header_name": "X-Pulp-Shared-Secret", "env_var": "SHARED_SECRET"}' \
+  | jq -r '.pulp_href')
+
+# Assign it to an existing file distribution (DISTRO_HREF is that distribution's pulp_href)
+curl -s -X PATCH :24817${DISTRO_HREF} \
+  -H "Content-Type: application/json" \
+  -d "{\"content_guard\": \"${GUARD_HREF}\"}"
+```
+
 ### Composite Content Guard
 
 The composite content guard combines multiple guards using OR logic - if any of the configured guards allows access, the request is permitted. This enables flexible authentication schemes, like allowing access via either certificates OR RBAC authentication.
