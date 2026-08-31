@@ -764,6 +764,7 @@ class Handler:
                     )
                     ca = ContentArtifact(relative_path=original_rel_path)
                     ra = RemoteArtifact(remote=remote, url=url, content_artifact=ca)
+                    self._set_secure_headers(os.path.basename(ca.relative_path), headers)
                     try:
                         return await self._stream_remote_artifact(
                             request,
@@ -941,6 +942,12 @@ class Handler:
                 content_artifact.save()
         return artifact
 
+    def _set_secure_headers(self, filename, headers):
+        content_disposition = f"attachment;filename={filename}"
+        headers["Content-Disposition"] = content_disposition
+        headers["Content-Security-Policy"] = "default-src 'none'; sandbox"
+        headers["X-Content-Type-Options"] = "nosniff"
+
     async def _serve_content_artifact(self, content_artifact, headers, request):
         """
         Handle response for a Content Artifact with the file present.
@@ -978,6 +985,7 @@ class Handler:
         domain = get_domain()
         storage = domain.get_storage()
 
+        self._set_secure_headers(os.path.basename(content_artifact.relative_path), headers)
         if domain.storage_class == "pulpcore.app.models.storage.FileSystem":
             path = storage.path(artifact_name)
             if not os.path.exists(path):
@@ -1049,6 +1057,9 @@ class Handler:
             size = remote_artifact.size or "*"
             raise HTTPRequestRangeNotSatisfiable(headers={"Content-Range": f"bytes */{size}"})
 
+        self._set_secure_headers(
+            os.path.basename(remote_artifact.content_artifact.relative_path), response.headers
+        )
         actual_content_length = None
 
         if range_start or range_stop:
