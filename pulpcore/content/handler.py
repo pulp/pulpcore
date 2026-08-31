@@ -933,6 +933,7 @@ class Handler:
                     )
                     ca = ContentArtifact(relative_path=original_rel_path)
                     ra = RemoteArtifact(remote=remote, url=url, content_artifact=ca)
+                    self._set_secure_headers(os.path.basename(ca.relative_path), headers)
                     try:
                         return await self._stream_remote_artifact(
                             request,
@@ -1112,6 +1113,12 @@ class Handler:
             ret.update({ca.relative_path: ca for ca in cas})
         return ret
 
+    def _set_secure_headers(self, filename, headers):
+        content_disposition = f"attachment;filename={filename}"
+        headers["Content-Disposition"] = content_disposition
+        headers["Content-Security-Policy"] = "default-src 'none'; sandbox"
+        headers["X-Content-Type-Options"] = "nosniff"
+
     def _build_response_from_content_artifact(self, content_artifact, headers, request):
         """Helper method to build the correct response to serve a ContentArtifact."""
 
@@ -1125,10 +1132,6 @@ class Handler:
             return params
 
         def _build_url(**kwargs):
-            filename = os.path.basename(content_artifact.relative_path)
-            content_disposition = f"attachment;filename={filename}"
-
-            headers["Content-Disposition"] = content_disposition
             parameters = _set_params_from_headers(headers, domain.storage_class)
             storage_url = storage.url(artifact_name, parameters=parameters, **kwargs)
 
@@ -1183,7 +1186,7 @@ class Handler:
         """
         artifact_file = content_artifact.artifact.file
         content_length = artifact_file.size
-
+        self._set_secure_headers(os.path.basename(content_artifact.relative_path), headers)
         try:
             range_start, range_stop = request.http_range.start, request.http_range.stop
             if range_start or range_stop:
@@ -1246,6 +1249,9 @@ class Handler:
             size = remote_artifact.size or "*"
             raise HTTPRequestRangeNotSatisfiable(headers={"Content-Range": f"bytes */{size}"})
 
+        self._set_secure_headers(
+            os.path.basename(remote_artifact.content_artifact.relative_path), response.headers
+        )
         original_headers = response.headers.copy()
         actual_content_length = None
 
