@@ -434,9 +434,6 @@ def _split_reserved_resources(reserved_resources_record):
     """
     Split a `reserved_resources_record` array into (exclusive, shared) resource names.
 
-    Shared reservations are stored with a `"shared:"` prefix; exclusive ones are bare.
-    The prefix is stripped from the returned shared names.
-
     Args:
         reserved_resources_record (list[str] | None): Raw reservation strings, or None.
 
