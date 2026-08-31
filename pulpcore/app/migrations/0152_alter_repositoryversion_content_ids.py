@@ -4,32 +4,55 @@ import django.contrib.postgres.fields
 from django.db import migrations, models
 
 
+# How many rows go into a single UPDATE statement.
+# Small on purpose: each row's content_ids can be a large UUID array, and a
+# managed DBaaS enforces a query-duration limit (~600s). Keeping each
+# bulk_update small ensures every statement returns quickly.
+BULK_UPDATE_BATCH_SIZE = 100
+
+
 def populate_content_ids(apps, schema_editor):
-    RepositoryVersion = apps.get_model('core', 'RepositoryVersion')
-    RepositoryContent = apps.get_model('core', 'RepositoryContent')
+    RepositoryVersion = apps.get_model("core", "RepositoryVersion")
+    RepositoryContent = apps.get_model("core", "RepositoryContent")
+
     repo_versions = []
     for rv in RepositoryVersion.objects.filter(content_ids=None).iterator(chunk_size=2000):
-        rv.content_ids = list(RepositoryContent.objects.filter(
-            repository_id=rv.repository_id, version_added__number__lte=rv.number
-        ).exclude(version_removed__number__lte=rv.number).values_list("content_id", flat=True))
+        rv.content_ids = list(
+            RepositoryContent.objects.filter(
+                repository_id=rv.repository_id, version_added__number__lte=rv.number
+            )
+            .exclude(version_removed__number__lte=rv.number)
+            .values_list("content_id", flat=True)
+        )
         repo_versions.append(rv)
-        if len(repo_versions) >= 2000:
-            RepositoryVersion.objects.bulk_update(repo_versions, ['content_ids'])
+
+        if len(repo_versions) >= BULK_UPDATE_BATCH_SIZE:
+            RepositoryVersion.objects.bulk_update(
+                repo_versions, ["content_ids"], batch_size=BULK_UPDATE_BATCH_SIZE
+            )
             repo_versions = []
+
     if repo_versions:
-        RepositoryVersion.objects.bulk_update(repo_versions, ['content_ids'])
+        RepositoryVersion.objects.bulk_update(
+            repo_versions, ["content_ids"], batch_size=BULK_UPDATE_BATCH_SIZE
+        )
+
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0151_upstreampulp_connect_timeout_and_more'),
+        ("core", "0151_upstreampulp_connect_timeout_and_more"),
     ]
 
     operations = [
-        migrations.RunPython(populate_content_ids, reverse_code=migrations.RunPython.noop, elidable=True),
+        migrations.RunPython(
+            populate_content_ids, reverse_code=migrations.RunPython.noop, elidable=True
+        ),
         migrations.AlterField(
-            model_name='repositoryversion',
-            name='content_ids',
-            field=django.contrib.postgres.fields.ArrayField(base_field=models.UUIDField(), default=list, size=None),
+            model_name="repositoryversion",
+            name="content_ids",
+            field=django.contrib.postgres.fields.ArrayField(
+                base_field=models.UUIDField(), default=list, size=None
+            ),
         ),
     ]
