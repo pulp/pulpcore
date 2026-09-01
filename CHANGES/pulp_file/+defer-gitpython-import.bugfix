@@ -1,0 +1,1 @@
+GitPython is now imported only when syncing a `FileGitRemote`, so `pulp_file` loads on installs with no `git` executable on `PATH`.
