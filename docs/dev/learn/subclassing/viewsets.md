@@ -73,7 +73,7 @@ See `pulpcore.plugin.tasking.dispatch` for more details.
 def sync(self, request, pk):
     """
     Synchronizes a repository.
-    The ``repository`` field has to be provided.
+    The `repository` field has to be provided.
     """
     remote = self.get_object()
     serializer = RepositorySyncURLSerializer(data=request.data, context={'request': request})

@@ -103,7 +103,7 @@ Enable python social and Keycloak integration with the following steps:
 
 3) Configure the Client `Access Type` to be "confidential.
 
-Provide `` Valid Redirect URIs` `` with
+Provide `Valid Redirect URIs` with
  `http://<pulp-hostname>:<port>/*`. Set the `User Info Signed Response Algorithm` and
  `Request Object Signature Algorithm` is set to `RS256` in the
  `Fine Grain OpenID Connect Configuration` section
