@@ -159,6 +159,47 @@ def test_cloudfront_s3_storage_settings(storage_class, required_settings):
     assert serializer.is_valid(raise_exception=True)
 
 
+DOMAIN_ID = "00000000-0000-0000-0000-000000000001"
+OTHER_DOMAIN_ID = "00000000-0000-0000-0000-000000000002"
+
+
+def test_default_content_guard_cross_domain_rejected():
+    """A content-guard from another domain cannot be a domain's default_content_guard."""
+    domain = SimpleNamespace(pulp_id=DOMAIN_ID, name="doma")
+    other_domain_guard = SimpleNamespace(pulp_domain_id=OTHER_DOMAIN_ID)
+    serializer = DomainSerializer(instance=domain)
+
+    with pytest.raises(serializers.ValidationError) as exc_info:
+        serializer.validate({"default_content_guard": other_domain_guard})
+    assert "default_content_guard" in str(exc_info.value)
+
+
+def test_default_content_guard_rejected_on_create():
+    """default_content_guard cannot be set while creating a domain (no instance yet)."""
+    guard = SimpleNamespace(pulp_domain_id=OTHER_DOMAIN_ID)
+    serializer = DomainSerializer(data={})
+
+    with pytest.raises(serializers.ValidationError) as exc_info:
+        serializer.validate({"default_content_guard": guard})
+    assert "existing domain" in str(exc_info.value)
+
+
+def test_default_content_guard_same_domain_accepted():
+    """A content-guard from the same domain passes validation."""
+    domain = SimpleNamespace(
+        pulp_id=DOMAIN_ID,
+        name="doma",
+        storage_class="pulpcore.app.models.storage.FileSystem",
+        storage_settings={"location": "/var/lib/pulp/media/"},
+        redirect_to_object_storage=True,
+    )
+    guard = SimpleNamespace(pulp_domain_id=DOMAIN_ID)
+    serializer = DomainSerializer(instance=domain)
+
+    # Should not raise (storage backend check is monkeypatched out by the autouse fixture).
+    serializer.validate({"default_content_guard": guard})
+
+
 class DomainSettingsBaseMixin:
     storage_class = None
     serializer_class = None
@@ -187,6 +228,7 @@ def test_hidden_settings(storage_class, serializer_class, all_settings):
         name="hello",
         storage_class=storage_class,
         storage_settings=all_settings,
+        default_content_guard=None,
     )
     serializer = DomainSerializer(domain)
     serializer.fields.pop("pulp_href")

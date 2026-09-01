@@ -370,3 +370,54 @@ def test_no_cross_pollination(
     assert error["add_content_units"][0].startswith(
         f"Content units are not a part of the current domain {domain.name}: ["
     )
+
+
+@pytest.mark.parallel
+def test_distribution_default_content_guard_auto_assignment(
+    pulpcore_bindings,
+    file_bindings,
+    gen_object_with_cleanup,
+    monitor_task,
+):
+    """A distribution created in a domain inherits the domain's default_content_guard."""
+    domain = gen_object_with_cleanup(
+        pulpcore_bindings.DomainsApi,
+        {
+            "name": str(uuid.uuid4()),
+            "storage_class": "pulpcore.app.models.storage.FileSystem",
+            "storage_settings": {"MEDIA_ROOT": "/var/lib/pulp/media/"},
+        },
+    )
+    domain_name = domain.name
+
+    # Create a content guard in the domain and set it as the domain default
+    guard = gen_object_with_cleanup(
+        pulpcore_bindings.ContentguardsRbacApi, {"name": str(uuid.uuid4())}, pulp_domain=domain_name
+    )
+    response = pulpcore_bindings.DomainsApi.partial_update(
+        domain.pulp_href, {"default_content_guard": guard.pulp_href}
+    )
+    monitor_task(response.task)
+
+    # A distribution created WITHOUT a content guard inherits the domain default
+    distro = gen_object_with_cleanup(
+        file_bindings.DistributionsFileApi,
+        {"name": str(uuid.uuid4()), "base_path": str(uuid.uuid4())},
+        pulp_domain=domain_name,
+    )
+    assert distro.content_guard == guard.pulp_href
+
+    # A distribution created WITH an explicit content guard keeps its own
+    other_guard = gen_object_with_cleanup(
+        pulpcore_bindings.ContentguardsRbacApi, {"name": str(uuid.uuid4())}, pulp_domain=domain_name
+    )
+    distro_explicit = gen_object_with_cleanup(
+        file_bindings.DistributionsFileApi,
+        {
+            "name": str(uuid.uuid4()),
+            "base_path": str(uuid.uuid4()),
+            "content_guard": other_guard.pulp_href,
+        },
+        pulp_domain=domain_name,
+    )
+    assert distro_explicit.content_guard == other_guard.pulp_href

@@ -41,6 +41,9 @@ The domain name must be unique and is used in the URL path after the `API_ROOT`,
 You can also customize the content app behavior for your domain through the fields `redirect_to_object_storage` and `hide_guarded_distributions`.
 See [settings] for more details on these.
 
+Domains also support a `default_content_guard` field that automatically assigns a content guard to any new distribution created within the domain when no explicit guard is provided.
+See [Protect Content](protect-content.md#domain-default-content-guard) for details on setting this up.
+
 ```bash
 pulp domain create \
   --name <domain_name> \

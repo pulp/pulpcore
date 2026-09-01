@@ -324,6 +324,70 @@ def test_special_domain_creation(pulpcore_bindings, gen_object_with_cleanup, pul
 
 
 @pytest.mark.parallel
+def test_domain_default_content_guard(
+    pulpcore_bindings, gen_object_with_cleanup, monitor_task, pulp_settings
+):
+    """Set, read, clear, and reject cross-domain values for a domain's default_content_guard."""
+    if not pulp_settings.DOMAIN_ENABLED:
+        pytest.skip("Domains not enabled")
+    name = str(uuid.uuid4())
+    body = {
+        "name": name,
+        "storage_class": "pulpcore.app.models.storage.FileSystem",
+        "storage_settings": {"MEDIA_ROOT": ""},
+    }
+    domain = pulpcore_bindings.DomainsApi.create(body)
+    guard = None
+    try:
+        # A new domain has no default content guard
+        assert domain.default_content_guard is None
+        assert domain.default_content_guard_prn is None
+
+        # Create a content guard within the domain and set it as the default
+        guard = gen_object_with_cleanup(
+            pulpcore_bindings.ContentguardsRbacApi, {"name": name}, pulp_domain=name
+        )
+        response = pulpcore_bindings.DomainsApi.partial_update(
+            domain.pulp_href, {"default_content_guard": guard.pulp_href}
+        )
+        monitor_task(response.task)
+
+        domain = pulpcore_bindings.DomainsApi.read(domain.pulp_href)
+        assert domain.default_content_guard == guard.pulp_href
+        assert domain.default_content_guard_prn is not None
+
+        # A content guard from a different domain (default) is rejected
+        other_guard = gen_object_with_cleanup(
+            pulpcore_bindings.ContentguardsRbacApi, {"name": str(uuid.uuid4())}
+        )
+        with pytest.raises(ApiException) as e:
+            pulpcore_bindings.DomainsApi.partial_update(
+                domain.pulp_href, {"default_content_guard": other_guard.pulp_href}
+            )
+        assert e.value.status == 400
+        assert "default_content_guard" in e.value.body
+
+        # Clear the default content guard
+        response = pulpcore_bindings.DomainsApi.partial_update(
+            domain.pulp_href, {"default_content_guard": None}
+        )
+        monitor_task(response.task)
+        domain = pulpcore_bindings.DomainsApi.read(domain.pulp_href)
+        assert domain.default_content_guard is None
+        assert domain.default_content_guard_prn is None
+
+    finally:
+        # ContentGuard.pulp_domain is PROTECT; delete guard before domain.
+        if guard is not None:
+            try:
+                pulpcore_bindings.ContentguardsRbacApi.delete(guard.pulp_href)
+            except Exception:
+                pass
+        response = pulpcore_bindings.DomainsApi.delete(domain.pulp_href)
+        monitor_task(response.task)
+
+
+@pytest.mark.parallel
 def test_filter_domains_by_label(pulpcore_bindings, domain_factory):
     """Test filtering domains by label."""
     # Create domains with different labels
