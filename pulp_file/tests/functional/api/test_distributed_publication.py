@@ -41,17 +41,23 @@ class DistributionPublicationContext:
 
 class TestDistributionPublicationRetention:
     @pytest.mark.parallel
-    def test_old_content_is_served_within_retention_period(
+    def test_removed_content_returns_404_immediately_after_publication_switch(
         self,
         ctx: DistributionPublicationContext,
     ):
-        """Old content is still served immediately after switching to a new publication."""
+        """Files deliberately removed from the new publication must 404 immediately.
+
+        When a distribution switches from pub_with_file to pub_without_file, direct-path
+        requests for the removed file must return 404 rather than being served from the
+        superseded publication via the grace-period fallback (phantom 302 bug).
+        """
         dist = ctx.create_distribution(publication=ctx.pub_with_file)
         file_url = ctx.get_file_url(dist)
         assert requests.get(file_url).status_code == 200
 
         ctx.update_distribution(dist, publication=ctx.pub_without_file)
-        assert requests.get(file_url).status_code == 200
+        # Removed content must not be served from the grace-period fallback.
+        assert requests.get(file_url).status_code == 404
 
     @pytest.mark.parallel
     def test_old_content_expires_after_retention_period(

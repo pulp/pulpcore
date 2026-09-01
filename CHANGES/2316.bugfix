@@ -1,0 +1,1 @@
+Fixed phantom 302 responses for removed file paths after publication swap on file distributions — the content-app grace-period fallback no longer serves content from superseded publications when the current publication explicitly excludes the path.

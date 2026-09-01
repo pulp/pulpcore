@@ -820,8 +820,10 @@ class Handler:
                             request, StreamResponse(headers=headers), ca
                         )
 
-        # Grace-period fallback: serve from a recently-superseded publication
-        if distro.SERVE_FROM_PUBLICATION:
+        # Grace-period fallback: serve from a recently-superseded publication.
+        # Skip when a complete current publication exists and does not contain the path —
+        # absence from a complete publication is a deliberate removal, not a transitional gap.
+        if distro.SERVE_FROM_PUBLICATION and publication is None:
             ca = await sync_to_async(distro.get_fallback_ca)(original_rel_path)
             if ca is not None:
                 if ca.artifact:
