@@ -427,7 +427,20 @@ def extract_task_resources(task):
             exclusive_resources: List of exclusive resource names
             shared_resources: List of shared resource names (with "shared:" prefix stripped)
     """
-    reserved_resources_record = task.reserved_resources_record or []
+    return _split_reserved_resources(task.reserved_resources_record)
+
+
+def _split_reserved_resources(reserved_resources_record):
+    """
+    Split a `reserved_resources_record` array into (exclusive, shared) resource names.
+
+    Args:
+        reserved_resources_record (list[str] | None): Raw reservation strings, or None.
+
+    Returns:
+        tuple[list[str], list[str]]: (exclusive_resources, shared_resources).
+    """
+    reserved_resources_record = reserved_resources_record or []
 
     exclusive_resources = [
         resource for resource in reserved_resources_record if not resource.startswith("shared:")
