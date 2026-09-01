@@ -292,7 +292,7 @@ class ProgressReport(BaseModel):
             iter (iterator): The iterator to loop through while incrementing
 
         Returns:
-            generator of ``iter`` argument items
+            generator of `iter` argument items
         """
         for x in iter:
             yield x

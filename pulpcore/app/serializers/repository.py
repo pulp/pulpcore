@@ -113,7 +113,7 @@ class RemoteSerializer(ModelSerializer, RemoteNetworkConfigSerializer, HiddenFie
 
     def validate_url(self, url):
         """
-        Check if the 'url' is a ``file://`` path, and if so, ensure it's an ALLOWED_IMPORT_PATH.
+        Check if the 'url' is a `file://` path, and if so, ensure it's an ALLOWED_IMPORT_PATH.
 
         The ALLOWED_IMPORT_PATH is specified as a Pulp setting.
 
@@ -192,8 +192,8 @@ class RepositorySyncURLSerializer(ValidateFieldsMixin, serializers.Serializer):
         required=False,
         default=False,
         help_text=_(
-            "If ``True``, synchronization will remove all content that is not present in "
-            "the remote repository. If ``False``, sync will be additive only."
+            "If `True`, synchronization will remove all content that is not present in "
+            "the remote repository. If `False`, sync will be additive only."
         ),
     )
 

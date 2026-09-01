@@ -666,12 +666,12 @@ class Handler:
         """
         Match the path and stream results either from the filesystem or by downloading new data.
 
-        After deciding the client can access the distribution at ``path``, this function calls
+        After deciding the client can access the distribution at `path`, this function calls
         :meth:`Distribution.content_handler`. If that function returns a not-None result, it is
         returned to the client.
 
         Then the publication linked to the Distribution is used to determine what content should
-        be served. If ``path`` is a directory entry (i.e. not a file), the directory contents
+        be served. If `path` is a directory entry (i.e. not a file), the directory contents
         are served to the client. This method calls
         :meth:`Distribution.content_handler_list_directory` to acquire any additional entries the
         Distribution's content_handler might serve in that directory. If there is an Artifact to be

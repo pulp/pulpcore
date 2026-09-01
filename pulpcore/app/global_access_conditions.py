@@ -31,7 +31,7 @@ def has_model_perms(request, view, action, permission):
             `app_label.codename`, e.g. "core.delete_task".
 
     Returns:
-        True if the user has the Permission named by the ``permission`` argument at the model-level.
+        True if the user has the Permission named by the `permission` argument at the model-level.
             False otherwise.
     """
     return request.user.has_perm(permission)
@@ -54,8 +54,8 @@ def has_obj_perms(request, view, action, permission):
     Checks if the current user has object-level permission on the specific object.
 
     The object in this case is the one the action is operating on, e.g. the URL
-    ``/pulp/api/v3/tasks/15939b47-6b6d-4613-a441-939ca4ba6e63/`` is operating on the Task object
-    with ``pk=15939b47-6b6d-4613-a441-939ca4ba6e63``.
+    `/pulp/api/v3/tasks/15939b47-6b6d-4613-a441-939ca4ba6e63/` is operating on the Task object
+    with `pk=15939b47-6b6d-4613-a441-939ca4ba6e63`.
 
     This is usable as a conditional check in an AccessPolicy. Here is an example checking for the
     "file.view_fileremote" permissions at the object-level.
@@ -76,7 +76,7 @@ def has_obj_perms(request, view, action, permission):
             `app_label.codename`, e.g. "core.delete_task".
 
     Returns:
-        True if the user has the Permission named by the ``permission`` argument on the object being
+        True if the user has the Permission named by the `permission` argument on the object being
             operated on at the object-level. False otherwise.
     """
     obj = view.get_object()
@@ -109,8 +109,8 @@ def has_model_or_obj_perms(request, view, action, permission):
     Checks if the current user has either model-level or object-level permissions.
 
     The object in this case is the one the action is operating on, e.g. the URL
-    ``/pulp/api/v3/tasks/15939b47-6b6d-4613-a441-939ca4ba6e63/`` is operating on the Task object
-    with ``pk=15939b47-6b6d-4613-a441-939ca4ba6e63``.
+    `/pulp/api/v3/tasks/15939b47-6b6d-4613-a441-939ca4ba6e63/` is operating on the Task object
+    with `pk=15939b47-6b6d-4613-a441-939ca4ba6e63`.
 
     This is usable as a conditional check in an AccessPolicy. Here is an example checking for
     "file.view_fileremote" permission at either the model-level or object-level.
@@ -131,7 +131,7 @@ def has_model_or_obj_perms(request, view, action, permission):
             `app_label.codename`, e.g. "core.delete_task".
 
     Returns:
-        True if the user has the Permission named by the ``permission`` argument at the model-level
+        True if the user has the Permission named by the `permission` argument at the model-level
             or on the object being operated on at the object-level. False otherwise.
     """
     return has_model_perms(request, view, action, permission) or has_obj_perms(
@@ -144,10 +144,10 @@ def has_model_or_obj_perms(request, view, action, permission):
 
 def has_remote_param_obj_perms(request, view, action, permission):
     """
-    Checks if the current user has object-level permission on the ``remote`` object.
+    Checks if the current user has object-level permission on the `remote` object.
 
-    The object in this case is the one specified by the ``remote`` parameter. For example when
-    syncing the ``remote`` parameter is passed in as an argument.
+    The object in this case is the one specified by the `remote` parameter. For example when
+    syncing the `remote` parameter is passed in as an argument.
 
     This is usable as a conditional check in an AccessPolicy. Here is an example checking for the
     "file.view_fileremote" permissions at the object-level.
@@ -159,11 +159,11 @@ def has_remote_param_obj_perms(request, view, action, permission):
             "condition": "has_remote_param_obj_perms:file.view_fileremote",
         }
 
-    Since it is checking a ``remote`` object the permission argument should be one of the following:
+    Since it is checking a `remote` object the permission argument should be one of the following:
 
-    * "file.change_fileremote" - Permission to change the ``FileRemote``.
-    * "file.view_fileremote" - Permission to view the ``FileRemote``.
-    * "file.delete_fileremote" - Permission to delete the ``FileRemote``.
+    * "file.change_fileremote" - Permission to change the `FileRemote`.
+    * "file.view_fileremote" - Permission to view the `FileRemote`.
+    * "file.delete_fileremote" - Permission to delete the `FileRemote`.
 
     Args:
         request (rest_framework.request.Request): The request being made.
@@ -175,7 +175,7 @@ def has_remote_param_obj_perms(request, view, action, permission):
             separated by commas.
 
     Returns:
-        True if the user has the Permission named by the ``permission`` argument on the ``remote``
+        True if the user has the Permission named by the `permission` argument on the `remote`
             parameter at the object-level or if there is no remote. False otherwise.
     """
     kwargs = {}
@@ -197,7 +197,7 @@ def has_remote_param_obj_perms(request, view, action, permission):
 
 def has_remote_param_model_or_domain_or_obj_perms(request, view, action, permission):
     """
-    Checks if the current user has the permission on the ``remote`` param.
+    Checks if the current user has the permission on the `remote` param.
     """
     return has_model_or_domain_perms(
         request, view, action, permission
@@ -206,10 +206,10 @@ def has_remote_param_model_or_domain_or_obj_perms(request, view, action, permiss
 
 def has_remote_param_model_or_obj_perms(request, view, action, permission):
     """
-    Checks if the current user has either model-level or object-level permissions on the ``remote``.
+    Checks if the current user has either model-level or object-level permissions on the `remote`.
 
-    The object in this case is the one specified by the ``remote`` parameter. For example when
-    syncing the ``remote`` parameter is passed in as an argument.
+    The object in this case is the one specified by the `remote` parameter. For example when
+    syncing the `remote` parameter is passed in as an argument.
 
     This is usable as a conditional check in an AccessPolicy. Here is an example checking for
     "file.view_fileremote" permission at either the model-level or object-level.
@@ -221,11 +221,11 @@ def has_remote_param_model_or_obj_perms(request, view, action, permission):
             "condition": "has_remote_param_model_or_obj_perms:file.view_fileremote",
         }
 
-    Since it is checking a ``remote`` object the permission argument should be one of the following:
+    Since it is checking a `remote` object the permission argument should be one of the following:
 
-    * "file.change_fileremote" - Permission to change the ``FileRemote``.
-    * "file.view_fileremote" - Permission to view the ``FileRemote``.
-    * "file.delete_fileremote" - Permission to delete the ``FileRemote``.
+    * "file.change_fileremote" - Permission to change the `FileRemote`.
+    * "file.view_fileremote" - Permission to view the `FileRemote`.
+    * "file.delete_fileremote" - Permission to delete the `FileRemote`.
 
     Args:
         request (rest_framework.request.Request): The request being made.
@@ -236,8 +236,8 @@ def has_remote_param_model_or_obj_perms(request, view, action, permission):
             `app_label.codename`, e.g. "core.delete_task".
 
     Returns:
-        True if the user has the Permission named by the ``permission`` at the model-level or on the
-            argument on the ``remote`` parameter at the object-level. False otherwise.
+        True if the user has the Permission named by the `permission` at the model-level or on the
+            argument on the `remote` parameter at the object-level. False otherwise.
     """
     return has_model_perms(request, view, action, permission) or has_remote_param_obj_perms(
         request, view, action, permission
@@ -249,10 +249,10 @@ def has_remote_param_model_or_obj_perms(request, view, action, permission):
 
 def has_repo_attr_obj_perms(request, view, action, permission):
     """
-    Checks if the current user has object-level permission on a ``repository`` attribute.
+    Checks if the current user has object-level permission on a `repository` attribute.
 
-    The object in this case is the one specified by the ``repository`` attribute of a resource
-    which is being operated on. For example, when deleting a repository version, a ``repository``
+    The object in this case is the one specified by the `repository` attribute of a resource
+    which is being operated on. For example, when deleting a repository version, a `repository`
     is its attribute.
 
     This is usable as a conditional check in an AccessPolicy. Here is an example checking for the
@@ -265,12 +265,12 @@ def has_repo_attr_obj_perms(request, view, action, permission):
             "condition": "has_repo_attr_obj_perms:file.view_filerepository",
         }
 
-    Since it is checking a ``repository`` object the permission argument should be one of the
+    Since it is checking a `repository` object the permission argument should be one of the
     following:
 
-    * "file.change_filerepository" - Permission to change the ``FileRepository``.
-    * "file.view_filerepository" - Permission to view the ``FileRepository``.
-    * "file.delete_filerepository" - Permission to delete the ``FileRepository``.
+    * "file.change_filerepository" - Permission to change the `FileRepository`.
+    * "file.view_filerepository" - Permission to view the `FileRepository`.
+    * "file.delete_filerepository" - Permission to delete the `FileRepository`.
     * any custom permission a plugin has defined for their repository.
 
     Args:
@@ -282,8 +282,8 @@ def has_repo_attr_obj_perms(request, view, action, permission):
             `app_label.codename`, e.g. "file.delete_filerepository".
 
     Returns:
-        True if the user has the Permission named by the ``permission`` argument on the
-        ``repository`` attribute at the object-level. False otherwise.
+        True if the user has the Permission named by the `permission` argument on the
+        `repository` attribute at the object-level. False otherwise.
     """
     plugin_repository = view.get_object().repository.cast()
     return request.user.has_perm(permission, plugin_repository)
@@ -291,7 +291,7 @@ def has_repo_attr_obj_perms(request, view, action, permission):
 
 def has_repo_attr_model_or_domain_or_obj_perms(request, view, action, permission):
     """
-    Checks if the current user has the permission on the ``repository`` attribute.
+    Checks if the current user has the permission on the `repository` attribute.
     """
     return has_model_or_domain_perms(request, view, action, permission) or has_repo_attr_obj_perms(
         request, view, action, permission
@@ -300,10 +300,10 @@ def has_repo_attr_model_or_domain_or_obj_perms(request, view, action, permission
 
 def has_repo_attr_model_or_obj_perms(request, view, action, permission):
     """
-    Checks if the current user has model-level or object-level permissions on a ``repository``.
+    Checks if the current user has model-level or object-level permissions on a `repository`.
 
-    The object in this case is the one specified by the ``repository`` attribute of a resource
-    which is being operated on. For example, when deleting a repository version, a ``repository``
+    The object in this case is the one specified by the `repository` attribute of a resource
+    which is being operated on. For example, when deleting a repository version, a `repository`
     is its attribute.
 
     This is usable as a conditional check in an AccessPolicy. Here is an example checking for the
@@ -316,12 +316,12 @@ def has_repo_attr_model_or_obj_perms(request, view, action, permission):
             "condition": "has_repo_attr_model_or_obj_perms:file.view_filerepository",
         }
 
-    Since it is checking a ``repository`` object the permission argument should be one of the
+    Since it is checking a `repository` object the permission argument should be one of the
     following:
 
-    * "file.change_filerepository" - Permission to change the ``FileRepository``.
-    * "file.view_filerepository" - Permission to view the ``FileRepository``.
-    * "file.delete_filerepository" - Permission to delete the ``FileRepository``.
+    * "file.change_filerepository" - Permission to change the `FileRepository`.
+    * "file.view_filerepository" - Permission to view the `FileRepository`.
+    * "file.delete_filerepository" - Permission to delete the `FileRepository`.
     * any custom permission a plugin has defined for their repository.
 
     Args:
@@ -333,8 +333,8 @@ def has_repo_attr_model_or_obj_perms(request, view, action, permission):
             `app_label.codename`, e.g. "file.delete_filerepository".
 
     Returns:
-        True if the user has the Permission on the ``repository`` attribute named by the
-        ``permission`` at the model or object level. False otherwise.
+        True if the user has the Permission on the `repository` attribute named by the
+        `permission` at the model or object level. False otherwise.
     """
     return has_model_perms(request, view, action, permission) or has_repo_attr_obj_perms(
         request, view, action, permission
@@ -364,8 +364,8 @@ def has_repository_obj_perms(request, view, action, permission):
             `app_label.codename`, e.g. "file.filerepository_change".
 
     Returns:
-        True if the user has the Permission on the ``Repository`` specified in the URL named by the
-        ``permission`` at object level. False otherwise.
+        True if the user has the Permission on the `Repository` specified in the URL named by the
+        `permission` at object level. False otherwise.
     """
     plugin_repository = Repository.objects.get(pk=view.kwargs["repository_pk"]).cast()
     return request.user.has_perm(permission, plugin_repository)
@@ -404,8 +404,8 @@ def has_repository_model_or_obj_perms(request, view, action, permission):
             `app_label.codename`, e.g. "file.filerepository_change".
 
     Returns:
-        True if the user has the Permission on the ``Repository`` specified in the URL named by the
-        ``permission`` at model or object level. False otherwise.
+        True if the user has the Permission on the `Repository` specified in the URL named by the
+        `permission` at model or object level. False otherwise.
     """
     return request.user.has_perm(permission) or has_repository_obj_perms(
         request, view, action, permission
@@ -414,7 +414,7 @@ def has_repository_model_or_obj_perms(request, view, action, permission):
 
 def has_repo_or_repo_ver_param_model_or_domain_or_obj_perms(request, view, action, permission):
     """
-    Checks if the current user has permission on the ``repository`` or ``repository_version``.
+    Checks if the current user has permission on the `repository` or `repository_version`.
     """
     if has_model_or_domain_perms(request, view, action, permission):
         return True
@@ -435,10 +435,10 @@ def has_repo_or_repo_ver_param_model_or_domain_or_obj_perms(request, view, actio
 
 def has_repo_or_repo_ver_param_model_or_obj_perms(request, view, action, permission):
     """
-    Checks if the current user has object-level permission on the ``repository`` object.
+    Checks if the current user has object-level permission on the `repository` object.
 
-    The object in this case is the one specified by the ``repository`` or ``repository_version``
-    parameter. For example when publishing the ``repository`` parameter is passed in as an argument.
+    The object in this case is the one specified by the `repository` or `repository_version`
+    parameter. For example when publishing the `repository` parameter is passed in as an argument.
 
     This is usable as a conditional check in an AccessPolicy. Here is an example checking for the
     "file.view_filerepository" permissions at the object-level.
@@ -450,13 +450,13 @@ def has_repo_or_repo_ver_param_model_or_obj_perms(request, view, action, permiss
             "condition": "has_repo_or_repo_ver_param_model_or_obj_perms:file.view_filerepository",
         }
 
-    Since it is checking a ``repository`` object the permission argument should be one of the
+    Since it is checking a `repository` object the permission argument should be one of the
     following:
 
-    * "file.change_filerepository" - Permission to change the ``FileRepository``.
-    * "file.view_filerepository" - Permission to view the ``FileRepository``.
-    * "file.delete_filerepository" - Permission to delete the ``FileRepository``.
-    * "file.sync_filerepository" - Permission to sync the ``FileRepository``.
+    * "file.change_filerepository" - Permission to change the `FileRepository`.
+    * "file.view_filerepository" - Permission to view the `FileRepository`.
+    * "file.delete_filerepository" - Permission to delete the `FileRepository`.
+    * "file.sync_filerepository" - Permission to sync the `FileRepository`.
 
     Args:
         request (rest_framework.request.Request): The request being made.
@@ -467,8 +467,8 @@ def has_repo_or_repo_ver_param_model_or_obj_perms(request, view, action, permiss
             `app_label.codename`, e.g. "core.delete_task".
 
     Returns:
-        True if the user has the Permission named by the ``permission`` argument on the
-            ``repository`` or ``repository_version`` parameter at the object-level or if there is
+        True if the user has the Permission named by the `permission` argument on the
+            `repository` or `repository_version` parameter at the object-level or if there is
             no repository. False otherwise.
     """
     if has_model_perms(request, view, action, permission):
@@ -490,10 +490,10 @@ def has_repo_or_repo_ver_param_model_or_obj_perms(request, view, action, permiss
 
 def has_required_repo_perms_on_upload(request, view, action, permission):
     """
-    Checks if the current user has permission to upload content to the ``repository`` object.
+    Checks if the current user has permission to upload content to the `repository` object.
 
     Since content queryset scoping prevents users from seeing orphaned content by default this
-    also checks to make sure that any user that isn't an admin has also supplied the ``repository``
+    also checks to make sure that any user that isn't an admin has also supplied the `repository`
     parameter when performing a content upload.
 
     In addition, if the user has specified labels with this content, make sure they are allowed
@@ -518,8 +518,8 @@ def has_required_repo_perms_on_upload(request, view, action, permission):
             `app_label.codename`, e.g. "core.delete_task".
 
     Returns:
-        True if the user has supplied the ``repository`` parameter and has the Permission on it
-            named by the ``permission`` argument, or is an admin. False otherwise.
+        True if the user has supplied the `repository` parameter and has the Permission on it
+            named by the `permission` argument, or is an admin. False otherwise.
     """
 
     def _forbidden_labels():
@@ -564,7 +564,7 @@ def has_required_repo_perms_on_upload(request, view, action, permission):
 
 def has_publication_param_model_or_domain_or_obj_perms(request, view, action, permission):
     """
-    Checks if the current user has permission on the ``Publication`` param.
+    Checks if the current user has permission on the `Publication` param.
     """
     if has_model_or_domain_perms(request, view, action, permission):
         return True
@@ -583,10 +583,10 @@ def has_publication_param_model_or_domain_or_obj_perms(request, view, action, pe
 
 def has_publication_param_model_or_obj_perms(request, view, action, permission):
     """
-    Checks if the current user has permission on the ``Publication`` object.
+    Checks if the current user has permission on the `Publication` object.
 
-    The object in this case is the one specified by the ``publication`` parameter. For example when
-    distributing the ``publication`` parameter is passed in as an argument.
+    The object in this case is the one specified by the `publication` parameter. For example when
+    distributing the `publication` parameter is passed in as an argument.
 
     This is usable as a conditional check in an AccessPolicy. Here is an example checking for the
     "file.view_filepublication" permission.
@@ -598,11 +598,11 @@ def has_publication_param_model_or_obj_perms(request, view, action, permission):
             "condition": "has_publication_param_model_or_obj_perms:file.view_filepublication",
         }
 
-    Since it is checking a ``Publication`` object the permission argument should be one of the
+    Since it is checking a `Publication` object the permission argument should be one of the
     following:
 
-    * "file.view_filepublication" - Permission to view the ``FilePublication``.
-    * "file.delete_filepublication" - Permission to delete the ``FilePublication``.
+    * "file.view_filepublication" - Permission to view the `FilePublication`.
+    * "file.delete_filepublication" - Permission to delete the `FilePublication`.
 
     Args:
         request (rest_framework.request.Request): The request being made.
@@ -613,8 +613,8 @@ def has_publication_param_model_or_obj_perms(request, view, action, permission):
             `app_label.codename`, e.g. "core.delete_task".
 
     Returns:
-        True if the user has the Permission named by the ``permission`` argument on the
-            ``publication`` parameter or if there is no publication. False otherwise.
+        True if the user has the Permission named by the `permission` argument on the
+            `publication` parameter or if there is no publication. False otherwise.
     """
     if has_model_perms(request, view, action, permission):
         return True
@@ -633,7 +633,7 @@ def has_publication_param_model_or_obj_perms(request, view, action, permission):
 
 def has_upload_param_model_or_domain_or_obj_perms(request, view, action, permission):
     """
-    Checks if the current user has permission on the ``Upload`` param.
+    Checks if the current user has permission on the `Upload` param.
     """
     if has_model_or_domain_perms(request, view, action, permission):
         return True
@@ -652,9 +652,9 @@ def has_upload_param_model_or_domain_or_obj_perms(request, view, action, permiss
 
 def has_upload_param_model_or_obj_perms(request, view, action, permission):
     """
-    Checks if the current user has permission on the ``Upload`` object.
+    Checks if the current user has permission on the `Upload` object.
 
-    The object in this case is the one specified by the ``upload`` parameter, for example to a
+    The object in this case is the one specified by the `upload` parameter, for example to a
     one-shot content creation call.
 
     This is usable as a conditional check in an AccessPolicy. Here is an example checking for the
@@ -667,11 +667,11 @@ def has_upload_param_model_or_obj_perms(request, view, action, permission):
             "condition": "has_upload_param_model_or_obj_perms:core.change_upload",
         }
 
-    Since it is checking a ``Upload`` object the permission argument should be one of the following:
+    Since it is checking a `Upload` object the permission argument should be one of the following:
 
-    * "core.view_upload" - Permission to view the ``Upload``.
-    * "core.change_upload" - Permission to change the ``Upload``.
-    * "core.delete_upload" - Permission to delete the ``Upload``.
+    * "core.view_upload" - Permission to view the `Upload`.
+    * "core.change_upload" - Permission to change the `Upload`.
+    * "core.delete_upload" - Permission to delete the `Upload`.
 
     Args:
         request (rest_framework.request.Request): The request being made.
@@ -682,8 +682,8 @@ def has_upload_param_model_or_obj_perms(request, view, action, permission):
             `app_label.codename`, e.g. "core.delete_task".
 
     Returns:
-        True if the user has the Permission named by the ``permission`` argument on the
-            ``Upload`` parameter or if there is no upload. False otherwise.
+        True if the user has the Permission named by the `permission` argument on the
+            `Upload` parameter or if there is no upload. False otherwise.
     """
     if has_model_perms(request, view, action, permission):
         return True
@@ -726,8 +726,8 @@ def has_group_obj_perms(request, view, action, permission):
             `app_label.codename`, e.g. "core.group_change".
 
     Returns:
-        True if the user has the Permission on the ``Group`` specified in the URL named by the
-        ``permission`` at object level. False otherwise.
+        True if the user has the Permission on the `Group` specified in the URL named by the
+        `permission` at object level. False otherwise.
     """
     group_pk = request.resolver_match.kwargs["group_pk"]
     return request.user.has_perm(permission, Group.objects.get(pk=group_pk))
@@ -756,8 +756,8 @@ def has_group_model_or_obj_perms(request, view, action, permission):
             `app_label.codename`, e.g. "core.group_change".
 
     Returns:
-        True if the user has the Permission on the ``Group`` specified in the URL named by the
-        ``permission`` at the model or object level. False otherwise.
+        True if the user has the Permission on the `Group` specified in the URL named by the
+        `permission` at the model or object level. False otherwise.
     """
     return request.user.has_perm(permission) or has_group_obj_perms(
         request, view, action, permission

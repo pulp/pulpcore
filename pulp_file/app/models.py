@@ -65,8 +65,8 @@ class FileGitRemote(Remote, AutoAddObjPermsMixin):
     """
     Remote for syncing files from a Git repository (without PULP_MANIFEST).
 
-    The URL should point to a Git repository. The ``git_ref`` field can be used to specify a
-    branch, tag, or commit to sync from (defaults to ``HEAD``).
+    The URL should point to a Git repository. The `git_ref` field can be used to specify a
+    branch, tag, or commit to sync from (defaults to `HEAD`).
     """
 
     TYPE = "git"

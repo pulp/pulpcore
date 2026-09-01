@@ -124,12 +124,12 @@ def test_distribution_base_path(
 ):
     distribution = file_distribution_factory(base_path=str(uuid4()).replace("-", "/"))
 
-    # Test that spaces can not be part of ``base_path``.
+    # Test that spaces can not be part of `base_path`.
     with pytest.raises(ApiException) as exc:
         file_distribution_factory(base_path=str(uuid4()).replace("-", " "))
     assert json.loads(exc.value.body)["base_path"] is not None
 
-    # Test that slash cannot be used in the beginning of ``base_path``.
+    # Test that slash cannot be used in the beginning of `base_path`.
     with pytest.raises(ApiException) as exc:
         file_distribution_factory(base_path=f"/{str(uuid4())}")
     assert json.loads(exc.value.body)["base_path"] is not None
@@ -140,7 +140,7 @@ def test_distribution_base_path(
         )
     assert json.loads(exc.value.body)["base_path"] is not None
 
-    # Test that slash cannot be in the end of ``base_path``."""
+    # Test that slash cannot be in the end of `base_path`."""
     with pytest.raises(ApiException) as exc:
         file_distribution_factory(base_path=f"{str(uuid4())}/")
     assert json.loads(exc.value.body)["base_path"] is not None
@@ -151,12 +151,12 @@ def test_distribution_base_path(
         )
     assert json.loads(exc.value.body)["base_path"] is not None
 
-    # Test that ``base_path`` can not be duplicated.
+    # Test that `base_path` can not be duplicated.
     with pytest.raises(ApiException) as exc:
         file_distribution_factory(base_path=distribution.base_path)
     assert json.loads(exc.value.body)["base_path"] is not None
 
-    # Test that distributions can't have overlapping ``base_path``.
+    # Test that distributions can't have overlapping `base_path`.
     with pytest.raises(ApiException) as exc:
         file_distribution_factory(base_path=distribution.base_path.rsplit("/", 1)[0])
     assert json.loads(exc.value.body)["base_path"] is not None
@@ -314,8 +314,8 @@ def test_distribution_serves_publication_content(
     Sets up a repository with two versions (v1 has 3 files, v2 has 2 files), publishes both,
     then verifies:
     - A distribution with an explicit publication serves that publication's content.
-    - A distribution with ``repository`` serves the latest publication (for the latest version).
-    - A distribution with ``repository_version`` serves the latest publication for that version.
+    - A distribution with `repository` serves the latest publication (for the latest version).
+    - A distribution with `repository_version` serves the latest publication for that version.
     """
     # Sync to create version 1 (3 files)
     remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="immediate")

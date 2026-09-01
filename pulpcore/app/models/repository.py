@@ -981,7 +981,7 @@ class RepositoryVersion(BaseModel):
         Args:
             content_qs (django.db.models.QuerySet): The queryset for Content that will be
                 restricted further to the content present in this repository version. If not given,
-                ``Content.objects.all()`` is used (to return over all content types present in the
+                `Content.objects.all()` is used (to return over all content types present in the
                 repository version).
 
         Returns:
@@ -1049,14 +1049,14 @@ class RepositoryVersion(BaseModel):
         Args:
             content_qs (django.db.models.QuerySet) The queryset for Content that will be
                 restricted further to the content present in this repository version. If not given,
-                ``Content.objects.all()`` is used (to iterate over all content present in the
+                `Content.objects.all()` is used (to iterate over all content present in the
                 repository version). A plugin may want to use a specific subclass of
-                [pulpcore.plugin.models.Content][] or use e.g. ``filter()`` to select
+                [pulpcore.plugin.models.Content][] or use e.g. `filter()` to select
                 a subset of the repository version's content.
-            order_by_params (tuple of str): The parameters for the ``order_by`` clause
-                for the content. The Default is ``("pk",)``. This needs to
+            order_by_params (tuple of str): The parameters for the `order_by` clause
+                for the content. The Default is `("pk",)`. This needs to
                 specify a stable order. For example, if you want to iterate by
-                decreasing creation time stamps use ``("-pulp_created", "pk")`` to
+                decreasing creation time stamps use `("-pulp_created", "pk")` to
                 ensure that content records are still sorted by primary key even
                 if their creation timestamp happens to be equal.
             batch_size (int): The maximum batch size.
@@ -1065,8 +1065,8 @@ class RepositoryVersion(BaseModel):
             [django.db.models.QuerySet][]: A QuerySet representing a slice of the content.
 
         Example:
-            The following code could be used to loop over all ``FileContent`` in
-            ``repository_version``. It prefetches the related
+            The following code could be used to loop over all `FileContent` in
+            `repository_version`. It prefetches the related
             [pulpcore.plugin.models.ContentArtifact][] instances for every batch::
 
                 repository_version = ...

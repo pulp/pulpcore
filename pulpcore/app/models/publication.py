@@ -611,13 +611,13 @@ class Distribution(MasterModel):
 
     This master model can be used by plugin writers to create detail Distribution objects.
 
-    The ``name`` must be unique.
+    The `name` must be unique.
 
-    The ``base_path`` must have no overlapping components. So if a Distribution with ``base_path``
-    of ``a/path/foo`` existed, you could not make a second Distribution with a ``base_path`` of
-    ``a/path`` or ``a`` because both are subpaths of ``a/path/foo``.
+    The `base_path` must have no overlapping components. So if a Distribution with `base_path`
+    of `a/path/foo` existed, you could not make a second Distribution with a `base_path` of
+    `a/path` or `a` because both are subpaths of `a/path/foo`.
 
-    Subclasses are expected to use either the ``publication`` or ``repository_version`` field, but
+    Subclasses are expected to use either the `publication` or `repository_version` field, but
     not both. The content app that serves content is not prepared to serve content both ways at the
     same time.
 
@@ -742,16 +742,16 @@ class Distribution(MasterModel):
 
     def content_handler_json(self, path):
         """
-        Handler to serve a JSON representation of the content at ``path`` for this Distribution.
+        Handler to serve a JSON representation of the content at `path` for this Distribution.
 
         This is the JSON counterpart to :meth:`content_handler`. It is invoked instead of (and
         checked before) the generic, plugin-agnostic JSON directory listing whenever the
-        client's ``Accept`` header indicates a preference for JSON over HTML. Plugins override
+        client's `Accept` header indicates a preference for JSON over HTML. Plugins override
         this to provide type-specific JSON (e.g. package metadata, a de-duplicated "package"
         listing, etc.) rather than falling back to the generic file/size/date listing that
         pulpcore builds automatically for every Distribution.
 
-        The default implementation returns ``None`` for every path, which is safe for any
+        The default implementation returns `None` for every path, which is safe for any
         Distribution subclass that doesn't override it: pulpcore's generic JSON directory
         listing (or the normal HTML/binary behavior) is used instead.
 

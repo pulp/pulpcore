@@ -476,7 +476,7 @@ def test_create_repo_base_version(
     monitor_task,
 ):
     """Test whether one can create a repository version from any version."""
-    # Test ``base_version`` for the same repository
+    # Test `base_version` for the same repository
     remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="on_demand")
     repo = file_repository_factory()
     monitor_task(
@@ -512,7 +512,7 @@ def test_create_repo_base_version(
     assert latest_content.count == base_content.count
     assert file_random_content_unit.pulp_href not in {c.pulp_href for c in latest_content.results}
 
-    # Test ``base_version`` for different repositories
+    # Test `base_version` for different repositories
     repo2 = file_repository_factory()
     # create a version for repo B using repo A version 1 as base_version
     monitor_task(
@@ -533,7 +533,7 @@ def test_create_repo_base_version(
     assert latest_content2.count == base_content.count
     assert latest_content2.results == base_content.results
 
-    # Test ``base_version`` can be used together with other parameters
+    # Test `base_version` can be used together with other parameters
     repo3 = file_repository_factory()
     # create repo version 2 from version 1
     added_content = file_random_content_unit
@@ -560,7 +560,7 @@ def test_create_repo_base_version(
     # assert that the added content is present on repo version 2
     assert added_content.pulp_href in content3_hrefs
 
-    # Exception is raised when non-existent ``base_version`` is used
+    # Exception is raised when non-existent `base_version` is used
     nonexistant_version = f"{repo.versions_href}5/"
     with pytest.raises(file_bindings.ApiException) as e:
         file_bindings.RepositoriesFileApi.modify(

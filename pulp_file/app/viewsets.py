@@ -262,7 +262,7 @@ class FileRepositoryViewSet(RepositoryViewSet, ModifyRepositoryActionMixin, Role
         """
         Synchronizes a repository.
 
-        The ``repository`` field has to be provided.
+        The `repository` field has to be provided.
         """
         serializer = FileRepositorySyncURLSerializer(
             data=request.data, context={"request": request, "repository_pk": pk}
@@ -566,7 +566,7 @@ class FilePublicationViewSet(PublicationViewSet, RolesMixin):
         """
         Publishes a repository.
 
-        Either the ``repository`` or the ``repository_version`` fields can
+        Either the `repository` or the `repository_version` fields can
         be provided but not both at the same time.
         """
         serializer = self.get_serializer(data=request.data)

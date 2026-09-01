@@ -20,10 +20,10 @@ class AccessPolicy(BaseModel):
     Fields:
 
         creation_hooks (models.JSONField): A list of dictionaries identifying callables on the
-            ``pulpcore.plugin.access_policy.AccessPolicyFromDB`` which can add user or group roles
+            `pulpcore.plugin.access_policy.AccessPolicyFromDB` which can add user or group roles
             for newly created objects. This is a nullable field due to not all endpoints creating
             objects.
-        statements (models.JSONField): A list of ``drf-access-policy`` statements.
+        statements (models.JSONField): A list of `drf-access-policy` statements.
         viewset_name (models.TextField): The name of the viewset this instance controls
             authorization for.
         customized (BooleanField): False if the AccessPolicy has been user-modified. True otherwise.
@@ -42,18 +42,18 @@ class AccessPolicy(BaseModel):
 
 class AutoAddObjPermsMixin:
     """
-    A mixin that automatically adds roles based on the ``creation_hooks`` data.
+    A mixin that automatically adds roles based on the `creation_hooks` data.
 
-    To use this mixin, your model must support ``django-lifecycle``.
+    To use this mixin, your model must support `django-lifecycle`.
 
-    This mixin adds an ``after_create`` hook which properly interprets the ``creation_hooks``
+    This mixin adds an `after_create` hook which properly interprets the `creation_hooks`
     data and calls methods also provided by this mixin to add roles.
 
     These hooks are provided by default:
 
-    * ``add_roles_for_object_creator`` will add the roles to the creator of the object.
-    * ``add_roles_for_users`` will add the roles for one or more users by name.
-    * ``add_roles_for_groups`` will add the roles for one or more groups by name.
+    * `add_roles_for_object_creator` will add the roles to the creator of the object.
+    * `add_roles_for_users` will add the roles for one or more users by name.
+    * `add_roles_for_groups` will add the roles for one or more groups by name.
 
     """
 
@@ -126,7 +126,7 @@ class AutoAddObjPermsMixin:
         """
         Adds object-level roles for the user creating the newly created object.
 
-        If the ``get_current_authenticated_user`` returns None because the API client did not
+        If the `get_current_authenticated_user` returns None because the API client did not
         provide authentication credentials, *no* permissions are added and this passes silently.
         This allows endpoints which create objects and do not require authorization to execute
         without error.

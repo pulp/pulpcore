@@ -49,7 +49,7 @@ class HyperlinkRelatedFilter(filters.Filter):
     e.g. Filter by file remotes: ?remote=/pulp/api/v3/remotes/file/file/
     Filtering by object type is not possible using PRNs.
 
-    Can also filter for foreign key to be unset by setting ``allow_null`` to True. Query parameter
+    Can also filter for foreign key to be unset by setting `allow_null` to True. Query parameter
     will then accept "null" or "" for filtering.
     e.g. Filter for no remote: ?remote="null"
     """

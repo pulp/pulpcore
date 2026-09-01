@@ -57,7 +57,7 @@ class DefaultSchema(PulpAutoSchema):
     """
     Overrides _allows_filters method to include filter fields only for read actions.
 
-    Schema can be customised per view(set). Override this class and set it as a ``schema``
+    Schema can be customised per view(set). Override this class and set it as a `schema`
     attribute of a view(set) of interest.
     """
 
@@ -82,7 +82,7 @@ class NamedModelViewSet(viewsets.GenericViewSet):
     A customized named ModelViewSet that knows how to register itself with the Pulp API router.
 
     This viewset is discoverable by its name.
-    "Normal" Django Models and Master/Detail models are supported by the ``register_with`` method.
+    "Normal" Django Models and Master/Detail models are supported by the `register_with` method.
 
     Attributes:
         lookup_field (str): The name of the field by which an object should be looked up, in

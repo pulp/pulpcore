@@ -106,7 +106,7 @@ class MasterModel(BaseModel, metaclass=MasterModelMeta):
 
     Attributes:
 
-        TYPE (str): Default constant value saved into the ``pulp_type``
+        TYPE (str): Default constant value saved into the `pulp_type`
             field of Model instances
 
     Fields:
@@ -214,7 +214,7 @@ def master_model(options):
     """
     The Master model class of this Model's Master/Detail relationship.
 
-    Accessible at ``<model_class>._meta.master_model``, the Master model class in a Master/Detail
+    Accessible at `<model_class>._meta.master_model`, the Master model class in a Master/Detail
     relationship is the most generic non-abstract Model in this model's multiple-table chain
     of inheritance.
 
