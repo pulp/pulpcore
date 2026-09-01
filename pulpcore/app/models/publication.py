@@ -16,7 +16,7 @@ from django.contrib.postgres.fields import HStoreField
 from django.contrib.postgres.indexes import OpClass, SpGistIndex
 from django.db import DatabaseError, IntegrityError, models, transaction
 from django.utils import timezone
-from django_lifecycle import AFTER_CREATE, AFTER_UPDATE, BEFORE_DELETE, hook
+from django_lifecycle import AFTER_CREATE, AFTER_UPDATE, BEFORE_CREATE, BEFORE_DELETE, hook
 from rest_framework.exceptions import APIException
 from url_normalize import url_normalize
 
@@ -740,6 +740,31 @@ class Distribution(MasterModel):
         """
         return set()
 
+    def content_handler_json(self, path):
+        """
+        Handler to serve a JSON representation of the content at ``path`` for this Distribution.
+
+        This is the JSON counterpart to :meth:`content_handler`. It is invoked instead of (and
+        checked before) the generic, plugin-agnostic JSON directory listing whenever the
+        client's ``Accept`` header indicates a preference for JSON over HTML. Plugins override
+        this to provide type-specific JSON (e.g. package metadata, a de-duplicated "package"
+        listing, etc.) rather than falling back to the generic file/size/date listing that
+        pulpcore builds automatically for every Distribution.
+
+        The default implementation returns ``None`` for every path, which is safe for any
+        Distribution subclass that doesn't override it: pulpcore's generic JSON directory
+        listing (or the normal HTML/binary behavior) is used instead.
+
+        Args:
+            path (str): The path being requested
+        Returns:
+            None if there is no JSON representation to serve at path. Otherwise, a
+            JSON-serializable object (dict/list) to be returned to the client, or an
+            aiohttp.web.StreamResponse (e.g. built via aiohttp.web.json_response) for full
+            control over headers/status.
+        """
+        return None
+
     def content_headers_for(self, path):
         """
         Opportunity for Distribution to specify response-headers for a specific path
@@ -791,6 +816,19 @@ class Distribution(MasterModel):
                 if pa is not None:
                     return pa.content_artifact
         return None
+
+    @hook(BEFORE_CREATE)
+    def _set_default_content_guard(self):
+        """Apply the domain's default content guard when none is explicitly set.
+
+        If the distribution is created without a `content_guard` and its domain has a
+        `default_content_guard` configured, that guard is assigned automatically. An
+        explicitly provided `content_guard` always takes precedence.
+        """
+        if self.content_guard_id is None:
+            default_content_guard_id = self.pulp_domain.default_content_guard_id
+            if default_content_guard_id is not None:
+                self.content_guard_id = default_content_guard_id
 
     @hook(AFTER_CREATE)
     @hook(
