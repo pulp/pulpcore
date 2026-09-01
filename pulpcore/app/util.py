@@ -513,6 +513,11 @@ def configure_cleanup():
         ),
         ("tasks", "pulpcore.app.tasks.purge.purge", settings.TASK_PROTECTION_TIME),
         ("content", "pulpcore.app.tasks.orphan.orphan_cleanup", settings.ORPHAN_PROTECTION_TIME),
+        (
+            "cross-plane references",
+            "pulpcore.app.tasks.reconciliation.reconcile_cross_plane_references",
+            settings.CROSS_PLANE_RECONCILIATION_INTERVAL_MINUTES,
+        ),
     ]:
         if protection_time > 0:
             dispatch_interval = timedelta(minutes=protection_time)

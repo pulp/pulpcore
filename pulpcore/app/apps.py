@@ -1,3 +1,4 @@
+import logging
 import random
 from collections import defaultdict
 from gettext import gettext as _
@@ -6,8 +7,8 @@ from importlib import import_module
 from django import apps
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.db import connection, transaction
-from django.db.models.signals import post_delete, post_migrate, pre_migrate
+from django.db import connection, connections, transaction
+from django.db.models.signals import post_delete, post_migrate, post_save, pre_migrate
 from django.utils.module_loading import module_has_submodule
 
 from pulpcore.exceptions.plugin import MissingPlugin
@@ -256,9 +257,23 @@ class PulpAppConfig(PulpPluginAppConfig):
             _populate_system_id, sender=self, dispatch_uid="populate_system_id_identifier"
         )
         post_migrate.connect(
+            _ensure_domains_replicated,
+            sender=self,
+            dispatch_uid="ensure_domains_replicated_identifier",
+        )
+        post_migrate.connect(
             _populate_artifact_serving_distribution,
             sender=self,
             dispatch_uid="populate_artifact_serving_distribution_identifier",
+        )
+        from pulpcore.app.domain_sync import on_domain_post_delete, on_domain_post_save
+        from pulpcore.app.models import Domain
+
+        post_save.connect(
+            on_domain_post_save, sender=Domain, dispatch_uid="replicate_domain_post_save"
+        )
+        post_delete.connect(
+            on_domain_post_delete, sender=Domain, dispatch_uid="replicate_domain_post_delete"
         )
 
         from pulpcore.app.db_router import is_multi_db_routing_active
@@ -359,6 +374,26 @@ def _ensure_default_domain(sender, **kwargs):
             default.redirect_to_object_storage = settings.REDIRECT_TO_OBJECT_STORAGE
             default.storage_class = settings.STORAGES["default"]["BACKEND"]
             default.save(skip_hooks=True)
+
+
+def _ensure_domains_replicated(sender, **kwargs):
+    using = kwargs.get("using", "default")
+    if using == "default":
+        return
+    if "core_domain" not in connections[using].introspection.table_names():
+        return
+    from pulpcore.app.domain_sync import reconcile_domains_to_alias
+
+    try:
+        reconcile_domains_to_alias(using)
+    except Exception:
+        logging.getLogger(__name__).error(
+            "Reconciling Domain rows to alias '%s' failed during migration. Data-plane objects "
+            "created on this alias by later migrations/post_migrate hooks that FK to Domain may "
+            "fail until 'pulpcore-manager sync-domains' is run.",
+            using,
+            exc_info=True,
+        )
 
 
 def _populate_roles(sender, apps, verbosity, **kwargs):
