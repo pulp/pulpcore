@@ -1,3 +1,3 @@
 # ruff: noqa: F401
 # isort: skip_file
-from pulpcore.cache import CacheKeys, AsyncContentCache, SyncContentCache
+from pulpcore.cache import CacheKeys, AsyncContentCache, SyncContentCache, accept_prefers_json

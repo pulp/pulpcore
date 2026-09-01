@@ -260,6 +260,14 @@ The number of seconds before a content app should be considered lost.
 
 Defaults to `30` seconds.
 
+### CONTENT\_JSON\_LISTING\_DEFAULT\_LIMIT and CONTENT\_JSON\_LISTING\_MAX\_LIMIT
+
+Page size for the content app's generic JSON directory listing (`?limit=` / `?offset=`), used when a client `Accept` header prefers JSON.
+
+`CONTENT_JSON_LISTING_DEFAULT_LIMIT` is used when `limit` is omitted or invalid. Defaults to `1000`.
+
+`CONTENT_JSON_LISTING_MAX_LIMIT` is the upper bound for `limit`. Defaults to `10000`.
+
 ### CONTENT\_ORIGIN
 
 A string containing the `protocol`, `fqdn`, and optionally `port` where the content app is reachable by users.
