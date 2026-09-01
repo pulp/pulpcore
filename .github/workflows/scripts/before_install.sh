@@ -124,6 +124,20 @@ pulp_scenario_env: {}
 VARSYAML
 fi
 
+if [ "$TEST" = "multi_db" ]; then
+  cat >> .ci/ansible/vars/main.yaml << VARSYAML
+  - name: "postgres-satellite"
+    image: "docker.io/library/postgres:16"
+    env:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
+      POSTGRES_DB: "pulp"
+multi_db_test: true
+pulp_scenario_settings: null
+pulp_scenario_env: {}
+VARSYAML
+fi
+
 cat >> .ci/ansible/vars/main.yaml << VARSYAML
 ...
 VARSYAML
