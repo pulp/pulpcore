@@ -263,6 +263,8 @@ class PulpAppConfig(PulpPluginAppConfig):
 
 
 def _clean_app_status(sender, apps, verbosity, **kwargs):
+    if kwargs.get("using", "default") != "default":
+        return
     from django.contrib.postgres.functions import TransactionNow
     from django.db.models import F
 
@@ -276,6 +278,9 @@ def _clean_app_status(sender, apps, verbosity, **kwargs):
 
 
 def _populate_access_policies(sender, apps, verbosity, **kwargs):
+    if kwargs.get("using", "default") != "default":
+        return
+
     from pulpcore.app.util import get_view_urlpattern
     from pulpcore.app.viewsets import LoginViewSet
 
@@ -320,12 +325,16 @@ def _populate_access_policies(sender, apps, verbosity, **kwargs):
 
 
 def _populate_system_id(sender, apps, verbosity, **kwargs):
+    if kwargs.get("using", "default") != "default":
+        return
     SystemID = apps.get_model("core", "SystemID")
     if not SystemID.objects.exists():
         SystemID().save()
 
 
 def _ensure_default_domain(sender, **kwargs):
+    if kwargs.get("using", "default") != "default":
+        return
     table_names = connection.introspection.table_names()
     if "core_domain" in table_names:
         from pulpcore.app.util import get_default_domain
@@ -344,6 +353,8 @@ def _ensure_default_domain(sender, **kwargs):
 
 
 def _populate_roles(sender, apps, verbosity, **kwargs):
+    if kwargs.get("using", "default") != "default":
+        return
     role_prefix = f"{sender.label}."
     # collect all plugin defined roles
     desired_roles = {}
@@ -403,6 +414,7 @@ def adjust_roles(apps, role_prefix, desired_roles, verbosity=1):
 
 
 def _populate_artifact_serving_distribution(sender, apps, verbosity, **kwargs):
+    alias = kwargs.get("using", "default")
     if (
         settings.STORAGES["default"]["BACKEND"] == "pulpcore.app.models.storage.FileSystem"
         or not settings.REDIRECT_TO_OBJECT_STORAGE
@@ -415,15 +427,17 @@ def _populate_artifact_serving_distribution(sender, apps, verbosity, **kwargs):
                 print(_("ArtifactDistribution model does not exist. Skipping initialization."))
             return
         try:
-            ArtifactDistribution.objects.get()
+            ArtifactDistribution.objects.using(alias).get()
         except ArtifactDistribution.DoesNotExist:
             name = f"{random.getrandbits(256):x}"
-            with transaction.atomic():
-                content_guard, _created = ContentRedirectContentGuard.objects.get_or_create(
+            with transaction.atomic(using=alias):
+                content_guard, _created = ContentRedirectContentGuard.objects.using(
+                    alias
+                ).get_or_create(
                     name=name,
                     pulp_type="core.content_redirect",
                 )
-                _dist, _created = ArtifactDistribution.objects.get_or_create(
+                _dist, _created = ArtifactDistribution.objects.using(alias).get_or_create(
                     name=name,
                     pulp_type="core.artifact",
                     defaults={"base_path": name, "content_guard": content_guard},

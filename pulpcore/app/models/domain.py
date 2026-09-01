@@ -1,7 +1,9 @@
+from django.conf import settings
 from django.contrib.postgres.fields import HStoreField
+from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.db import models
-from django_lifecycle import BEFORE_DELETE, BEFORE_UPDATE, hook
+from django_lifecycle import BEFORE_CREATE, BEFORE_DELETE, BEFORE_UPDATE, hook
 
 from pulpcore.app.models import AutoAddObjPermsMixin, BaseModel
 from pulpcore.exceptions import DomainProtectedError
@@ -51,6 +53,14 @@ class Domain(BaseModel, AutoAddObjPermsMixin):
     default_content_guard = models.ForeignKey(
         "ContentGuard", null=True, on_delete=models.SET_NULL, related_name="+"
     )
+    database_alias = models.SlugField(
+        default="default",
+        help_text="DATABASES alias where this domain's data-plane objects reside.",
+    )
+    moving = models.BooleanField(
+        default=False,
+        help_text="True while this domain's data is being moved between database aliases.",
+    )
 
     def get_storage(self):
         """Returns this domain's instantiated storage class."""
@@ -73,13 +83,29 @@ class Domain(BaseModel, AutoAddObjPermsMixin):
     def prevent_default_deletion(self):
         raise models.ProtectedError("Default domain can not be updated/deleted.", [self])
 
+    @hook(BEFORE_CREATE)
+    @hook(BEFORE_UPDATE, when="database_alias", has_changed=True)
+    def _validate_database_alias(self):
+        if self.database_alias not in settings.DATABASES:
+            raise ValidationError(
+                {
+                    "database_alias": (
+                        f"'{self.database_alias}' is not a configured DATABASES alias."
+                    )
+                }
+            )
+
     @hook(BEFORE_DELETE, when="name", is_not="default")
     def _cleanup_orphans_pre_delete(self):
-        protected_content_set = self.content_set.exclude(version_memberships__isnull=True)
+        protected_content_set = self.content_set.using(self.database_alias).exclude(
+            version_memberships__isnull=True
+        )
         if protected_content_set.exists():
             raise DomainProtectedError()
-        self.content_set.filter(version_memberships__isnull=True).delete()
-        for artifact in self.artifact_set.all().iterator():
+        self.content_set.using(self.database_alias).filter(
+            version_memberships__isnull=True
+        ).delete()
+        for artifact in self.artifact_set.using(self.database_alias).all().iterator():
             # Delete on by one to properly cleanup the storage.
             artifact.delete()
 
