@@ -7,7 +7,7 @@ from django import apps
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db import connection, transaction
-from django.db.models.signals import post_migrate, pre_migrate
+from django.db.models.signals import post_delete, post_migrate, pre_migrate
 from django.utils.module_loading import module_has_submodule
 
 from pulpcore.exceptions.plugin import MissingPlugin
@@ -260,6 +260,15 @@ class PulpAppConfig(PulpPluginAppConfig):
             sender=self,
             dispatch_uid="populate_artifact_serving_distribution_identifier",
         )
+
+        from pulpcore.app.db_router import is_multi_db_routing_active
+
+        if is_multi_db_routing_active():
+            from pulpcore.app.role_util import on_any_model_post_delete
+
+            post_delete.connect(
+                on_any_model_post_delete, dispatch_uid="cleanup_cross_plane_roles_post_delete"
+            )
 
 
 def _clean_app_status(sender, apps, verbosity, **kwargs):

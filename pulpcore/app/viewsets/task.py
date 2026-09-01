@@ -12,6 +12,7 @@ from rest_framework.serializers import DictField, URLField, ValidationError
 
 from pulpcore.app.models import (
     AppStatus,
+    Artifact,
     CreatedResource,
     ProfileArtifact,
     RepositoryVersion,
@@ -290,8 +291,10 @@ class TaskViewSet(
         task = self.get_object()
         data = {}
 
-        for pa in ProfileArtifact.objects.select_related("artifact").filter(task=task):
-            data[pa.name] = get_artifact_url(pa.artifact)
+        alias = task.pulp_domain.database_alias
+        for pa in ProfileArtifact.objects.filter(task=task):
+            artifact = Artifact.objects.using(alias).get(pk=pa.artifact_id)
+            data[pa.name] = get_artifact_url(artifact)
 
         return Response({"urls": data})
 

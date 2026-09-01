@@ -132,9 +132,11 @@ def get_objects_for_user_roles(
         ):
             return qs
 
-    user_role_pks = user.object_roles.filter(
-        domain__isnull=True, role__permissions=permission
-    ).values_list("object_id", flat=True)
+    user_role_pks = list(
+        user.object_roles.filter(domain__isnull=True, role__permissions=permission).values_list(
+            "object_id", flat=True
+        )
+    )
     final_q = Q(pk_str__in=user_role_pks)
     if accept_domain_perms and hasattr(qs.model, "pulp_domain"):
         domains = list(
@@ -155,9 +157,11 @@ def get_objects_for_user_roles(
         )
 
     if use_groups:
-        group_role_pks = GroupRole.objects.filter(
-            group__in=user.groups.all(), role__permissions=permission, domain__isnull=True
-        ).values_list("object_id", flat=True)
+        group_role_pks = list(
+            GroupRole.objects.filter(
+                group__in=user.groups.all(), role__permissions=permission, domain__isnull=True
+            ).values_list("object_id", flat=True)
+        )
         final_q |= Q(pk_str__in=group_role_pks)
 
     return qs.annotate(pk_str=Cast("pk", output_field=CharField())).filter(final_q)
@@ -575,3 +579,21 @@ def get_groups_with_perms(
                 for_concrete_model=for_concrete_model,
             )
         return qs.distinct()
+
+
+def cleanup_roles_for_deleted_object(instance):
+    content_type = ContentType.objects.get_for_model(instance, for_concrete_model=False)
+    object_id = str(instance.pk)
+    UserRole.objects.using("default").filter(
+        content_type=content_type, object_id=object_id
+    ).delete()
+    GroupRole.objects.using("default").filter(
+        content_type=content_type, object_id=object_id
+    ).delete()
+
+
+def on_any_model_post_delete(sender, instance, **kwargs):
+    from pulpcore.app.models import BaseModel
+
+    if isinstance(instance, BaseModel):
+        cleanup_roles_for_deleted_object(instance)
