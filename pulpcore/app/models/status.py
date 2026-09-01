@@ -84,7 +84,7 @@ class AppStatus(BaseModel):
     @property
     def online(self) -> bool:
         """
-        To be considered 'online', an app must have a timestamp more recent than ``self.ttl``.
+        To be considered 'online', an app must have a timestamp more recent than `self.ttl`.
         """
         age_threshold = timezone.now() - self.ttl
         return self.last_heartbeat >= age_threshold
@@ -94,7 +94,7 @@ class AppStatus(BaseModel):
         """
         Whether an app can be considered 'missing'
 
-        To be considered 'missing', an App must have a timestamp older than ``self.ttl``.
+        To be considered 'missing', an App must have a timestamp older than `self.ttl`.
 
         Returns:
             bool: True if the app is considered missing, otherwise False

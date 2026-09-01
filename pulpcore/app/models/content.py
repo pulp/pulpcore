@@ -100,12 +100,12 @@ class BulkCreateManager(models.Manager):
 
 class BulkTouchQuerySet(models.QuerySet):
     """
-    A query set that provides ``touch()``.
+    A query set that provides `touch()`.
     """
 
     def touch(self):
         """
-        Update the ``timestamp_of_interest`` on all objects of the query.
+        Update the `timestamp_of_interest` on all objects of the query.
         """
 
         # Postgres' UPDATE call doesn't support order-by. This can (and does) result in deadlocks in
@@ -335,12 +335,12 @@ class Artifact(HandleTempFilesMixin, BaseModel):
             expected_size (int): The number of bytes the download is expected to have.
 
         Raises:
-            [pulpcore.exceptions.DigestValidationError][]: When any of the ``expected_digest``
+            [pulpcore.exceptions.DigestValidationError][]: When any of the `expected_digest`
                 values don't match the digest of the data
-            [pulpcore.exceptions.SizeValidationError][]: When the ``expected_size`` value
+            [pulpcore.exceptions.SizeValidationError][]: When the `expected_size` value
                 doesn't match the size of the data
             [pulpcore.exceptions.UnsupportedDigestValidationError][]: When any of the
-                ``expected_digest`` algorithms aren't in the ALLOWED_CONTENT_CHECKSUMS list
+                `expected_digest` algorithms aren't in the ALLOWED_CONTENT_CHECKSUMS list
         Returns:
             An in-memory, unsaved [pulpcore.plugin.models.Artifact][]
         """
@@ -454,12 +454,12 @@ class PulpTemporaryFile(HandleTempFilesMixin, BaseModel):
             expected_size (int): The number of bytes the download is expected to have.
 
         Raises:
-            [pulpcore.exceptions.DigestValidationError][]: When any of the ``expected_digest``
+            [pulpcore.exceptions.DigestValidationError][]: When any of the `expected_digest`
                 values don't match the digest of the data
-            [pulpcore.exceptions.SizeValidationError][]: When the ``expected_size`` value
+            [pulpcore.exceptions.SizeValidationError][]: When the `expected_size` value
                 doesn't match the size of the data
             [pulpcore.exceptions.UnsupportedDigestValidationError][]: When any of the
-                ``expected_digest`` algorithms aren't in the ALLOWED_CONTENT_CHECKSUMS list
+                `expected_digest` algorithms aren't in the ALLOWED_CONTENT_CHECKSUMS list
 
         Returns:
             An in-memory, unsaved [pulpcore.plugin.models.PulpTemporaryFile][]

@@ -1567,7 +1567,7 @@ def create_signing_service(
 
 
 def remove_signing_service(service_name, service_class="core:AsciiArmoredDetachedSigningService"):
-    """Remove a signing service created by ``create_signing_service``."""
+    """Remove a signing service created by `create_signing_service`."""
     subprocess.run(
         (
             "pulpcore-manager",

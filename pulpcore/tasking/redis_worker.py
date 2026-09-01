@@ -426,7 +426,7 @@ class RedisWorker:
         return cleanup_locks_for_owner(self.redis_conn, self.name, allow_legacy_scan=allow_legacy)
 
     def _immediate_owner_is_finished(self, owner):
-        """Return True if an ``immediate-{pk}`` owner's task is gone or finished."""
+        """Return True if an `immediate-{pk}` owner's task is gone or finished."""
         task_pk = owner[len(IMMEDIATE_OWNER_PREFIX) :]
         return not Task.objects.filter(pk=task_pk, state__in=TASK_INCOMPLETE_STATES).exists()
 

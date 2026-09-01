@@ -274,7 +274,7 @@ def dispatch(
     This method creates a [pulpcore.app.models.Task][] object and returns it.
 
     The values in `args` and `kwargs` must be JSON serializable, but may contain instances of
-    ``uuid.UUID``.
+    `uuid.UUID`.
 
     Args:
         func (callable | str): The function to be run when the necessary locks are acquired.

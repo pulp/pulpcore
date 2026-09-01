@@ -167,10 +167,10 @@ class BaseDownloader:
         :meth:`~pulpcore.plugin.download.BaseDownloader.handle_data`.
 
         Raises:
-            [pulpcore.exceptions.DigestValidationError][]: When any of the ``expected_digest``
+            [pulpcore.exceptions.DigestValidationError][]: When any of the `expected_digest`
                 values don't match the digest of the data passed to
                 :meth:`~pulpcore.plugin.download.BaseDownloader.handle_data`.
-            [pulpcore.exceptions.SizeValidationError][]: When the ``expected_size`` value
+            [pulpcore.exceptions.SizeValidationError][]: When the `expected_size` value
                 doesn't match the size of the data passed to
                 :meth:`~pulpcore.plugin.download.BaseDownloader.handle_data`.
         """
@@ -223,10 +223,10 @@ class BaseDownloader:
 
     def validate_digests(self):
         """
-        Validate all digests validate if ``expected_digests`` is set
+        Validate all digests validate if `expected_digests` is set
 
         Raises:
-            [pulpcore.exceptions.DigestValidationError][]: When any of the ``expected_digest``
+            [pulpcore.exceptions.DigestValidationError][]: When any of the `expected_digest`
                 values don't match the digest of the data passed to
                 :meth:`~pulpcore.plugin.download.BaseDownloader.handle_data`.
         """
@@ -238,10 +238,10 @@ class BaseDownloader:
 
     def validate_size(self):
         """
-        Validate the size if ``expected_size`` is set
+        Validate the size if `expected_size` is set
 
         Raises:
-            [pulpcore.exceptions.SizeValidationError][]: When the ``expected_size`` value
+            [pulpcore.exceptions.SizeValidationError][]: When the `expected_size` value
                 doesn't match the size of the data passed to
                 :meth:`~pulpcore.plugin.download.BaseDownloader.handle_data`.
         """
@@ -287,7 +287,7 @@ class BaseDownloader:
 
         It is also expected that the subclass implementation return a
         [pulpcore.plugin.download.DownloadResult][] object. The
-        ``artifact_attributes`` value of the
+        `artifact_attributes` value of the
         [pulpcore.plugin.download.DownloadResult][] is usually set to the
         :attr:`~pulpcore.plugin.download.BaseDownloader.artifact_attributes` property value.
 

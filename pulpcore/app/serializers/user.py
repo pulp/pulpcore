@@ -123,7 +123,7 @@ class UserSerializer(serializers.ModelSerializer, HiddenFieldsMixin):
         validators=[UniqueValidator(queryset=User.objects.all())],
     )
     password = serializers.CharField(
-        help_text=_("Users password. Set to ``null`` to disable password authentication."),
+        help_text=_("Users password. Set to `null` to disable password authentication."),
         write_only=True,
         allow_null=True,
         default=None,
@@ -458,8 +458,8 @@ class NestedRoleSerializer(serializers.Serializer):
     """
     Serializer to add/remove object roles to/from users/groups.
 
-    This is used in conjunction with ``pulpcore.app.viewsets.base.RolesMixin`` and requires the
-    underlying object to be passed as ``content_object`` in the context.
+    This is used in conjunction with `pulpcore.app.viewsets.base.RolesMixin` and requires the
+    underlying object to be passed as `content_object` in the context.
     """
 
     users = serializers.ListField(

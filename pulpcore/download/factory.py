@@ -32,7 +32,7 @@ class DownloaderFactory:
     connection limit settings.
 
     It supports handling urls with the `http`, `https`, and `file` protocols. The
-    ``downloader_overrides`` option allows the caller to specify the download class to be used for
+    `downloader_overrides` option allows the caller to specify the download class to be used for
     any given protocol. This allows the user to specify custom, subclassed downloaders to be built
     by the factory.
 

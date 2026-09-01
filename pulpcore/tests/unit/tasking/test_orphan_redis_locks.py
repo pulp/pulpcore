@@ -1,8 +1,8 @@
 """
 Unit tests for orphan Redis lock cleanup (same-name restart and orphan owners).
 
-Tests use a real Redis provided by the ``redisdb`` pytest fixture (mirroring
-``pulp_redisdb`` in test_cache.py) and real DB rows via ``@pytest.mark.django_db``.
+Tests use a real Redis provided by the `redisdb` pytest fixture (mirroring
+`pulp_redisdb` in test_cache.py) and real DB rows via `@pytest.mark.django_db`.
 """
 
 from datetime import timedelta
@@ -34,7 +34,7 @@ from pulpcore.tasking.redis_worker import RedisWorker
 # --------------------------------------------------------------------------- #
 @pytest.fixture
 def pulp_redisdb(settings, redisdb, monkeypatch):
-    """Point pulpcore's redis connection at the ephemeral ``redisdb`` instance."""
+    """Point pulpcore's redis connection at the ephemeral `redisdb` instance."""
     monkeypatch.setattr(pulpcore.app.redis_connection, "_conn", None)
     monkeypatch.setattr(pulpcore.app.redis_connection, "_a_conn", None)
     settings.CACHE_ENABLED = True
@@ -44,7 +44,7 @@ def pulp_redisdb(settings, redisdb, monkeypatch):
 
 @pytest.fixture
 def reset_singleton(monkeypatch):
-    """Reset the in-process AppStatus singleton so ``create()`` works per-test."""
+    """Reset the in-process AppStatus singleton so `create()` works per-test."""
     monkeypatch.setattr(AppStatus.objects, "_current_app_status", None)
 
 
@@ -368,7 +368,7 @@ def test_reconcile_isolates_per_owner_errors(pulp_redisdb, reset_singleton, monk
 
 @pytest.mark.django_db
 def test_reconcile_immediate_owner_grace(pulp_redisdb, reset_singleton):
-    """Immediate grace: Given an ``immediate-{pk}`` owner whose task is still
+    """Immediate grace: Given an `immediate-{pk}` owner whose task is still
     incomplete, When reconcile runs, Then its locks are kept; once the task is
     finished they are reclaimed."""
     conn = pulp_redisdb

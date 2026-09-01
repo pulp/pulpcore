@@ -336,14 +336,14 @@ def _legacy_scan_cleanup_for_owner(redis_conn, owner):
 
 def cleanup_locks_for_owner(redis_conn, owner, allow_legacy_scan=False):
     """
-    Release all Redis locks held by ``owner``.
+    Release all Redis locks held by `owner`.
 
     Prefers the per-owner registry (O(locks held by owner)). Falls back to a legacy
-    keyspace SCAN only when the registry is missing and ``allow_legacy_scan`` is set.
+    keyspace SCAN only when the registry is missing and `allow_legacy_scan` is set.
 
     Args:
         redis_conn: Redis connection
-        owner (str): The lock owner (worker name or ``immediate-{task_pk}``)
+        owner (str): The lock owner (worker name or `immediate-{task_pk}`)
         allow_legacy_scan (bool): Permit the legacy SCAN fallback for pre-registry locks
 
     Returns:
@@ -385,9 +385,9 @@ def collect_lock_owners(redis_conn, allow_legacy_scan=False):
 
     Owners are read from the global active-owners SET via SMEMBERS -- O(#owners) and
     scan-free (a SCAN with MATCH still walks the whole keyspace, so scanning for
-    registry keys would be O(all locks)). The legacy SCAN of the full ``task:*`` /
-    ``pulp:resource_lock:*`` keyspace is expensive and is only run when
-    ``allow_legacy_scan`` is set (throttled by the caller) to catch pre-registry locks.
+    registry keys would be O(all locks)). The legacy SCAN of the full `task:*` /
+    `pulp:resource_lock:*` keyspace is expensive and is only run when
+    `allow_legacy_scan` is set (throttled by the caller) to catch pre-registry locks.
 
     Args:
         redis_conn: Redis connection

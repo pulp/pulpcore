@@ -34,7 +34,7 @@ def _do_upload_valid_attrs(pulpcore_bindings, file, data):
 def test_upload_valid_attrs(pulpcore_bindings, pulpcore_random_file, monitor_task):
     """Upload a file, and provide valid attributes.
 
-    For each possible combination of ``sha256`` and ``size`` (including
+    For each possible combination of `sha256` and `size` (including
     neither), do the following:
 
     1. Upload a file with the chosen combination of attributes.
@@ -58,7 +58,7 @@ def test_upload_valid_attrs(pulpcore_bindings, pulpcore_random_file, monitor_tas
 def test_upload_empty_file(pulpcore_bindings, tmp_path, monitor_task):
     """Upload an empty file.
 
-    For each possible combination of ``sha256`` and ``size`` (including
+    For each possible combination of `sha256` and `size` (including
     neither), do the following:
 
     1. Upload a file with the chosen combination of attributes.
@@ -82,7 +82,7 @@ def test_upload_empty_file(pulpcore_bindings, tmp_path, monitor_task):
 def test_upload_invalid_attrs(pulpcore_bindings, pulpcore_random_file):
     """Upload a file, and provide invalid attributes.
 
-    For each possible combination of ``sha256`` and ``size`` (except for
+    For each possible combination of `sha256` and `size` (except for
     neither), do the following:
 
     1. Upload a file with the chosen combination of attributes. Verify that
@@ -112,7 +112,7 @@ def _do_upload_invalid_attrs(pulpcore_bindings, file, data):
 def test_upload_md5(pulpcore_bindings, pulpcore_random_file):
     """Attempt to upload a file using an MD5 checksum.
 
-    Assumes ALLOWED_CONTENT_CHECKSUMS does NOT contain ``md5``
+    Assumes ALLOWED_CONTENT_CHECKSUMS does NOT contain `md5`
     """
     file_attrs = {"md5": str(uuid.uuid4()), "size": pulpcore_random_file["size"]}
     with pytest.raises(pulpcore_bindings.ApiException) as e:
@@ -127,7 +127,7 @@ def test_upload_mixed_attrs(pulpcore_bindings, pulpcore_random_file):
 
     Do the following:
 
-    1. Upload a file and provide both an ``sha256`` and a ``size``. Let one
+    1. Upload a file and provide both an `sha256` and a `size`. Let one
        be valid, and the other be invalid. Verify that an error is returned.
     2. Verify that no artifacts exist in Pulp whose attributes match the
        file that was unsuccessfully uploaded.
