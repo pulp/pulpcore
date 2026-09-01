@@ -7,10 +7,8 @@ from gettext import gettext as _
 from hashlib import sha256
 from urllib.parse import quote, urlparse, urlunparse
 
-import git as gitpython
 from django.conf import settings
 from django.core.files import File
-from gitdb.exc import BadName, BadObject
 
 from pulpcore.plugin.exceptions import SyncError
 from pulpcore.plugin.models import Artifact, ProgressReport, PublishedMetadata, Remote
@@ -406,6 +404,16 @@ class GitFirstStage(Stage):
         """
         Build and emit `DeclarativeContent` from the Git repository tree.
         """
+        # Imported here rather than at module scope: GitPython runs refresh() on
+        # import and raises unless a git binary is on PATH, which would make the
+        # whole plugin unimportable on installs that only use FileRemote.
+        try:
+            import git as gitpython
+            from gitdb.exc import BadName, BadObject
+        except ImportError:
+            raise SyncError(
+                _("Syncing a FileGitRemote requires GitPython and a git executable on PATH.")
+            )
 
         remote = self.remote
         git_ref = remote.git_ref or "HEAD"
