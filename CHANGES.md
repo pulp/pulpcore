@@ -8,6 +8,30 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.116.2 (2026-09-01) {: #3.116.2 }
+
+### REST API {: #3.116.2-rest-api }
+
+#### Features {: #3.116.2-rest-api-feature }
+
+- Pulpcore is now considered provisionally "post quantum cryptography" (PQC) compatible. PQC certificates are now supported for TLS, PGP operations, and signing services.
+
+### Plugin API {: #3.116.2-plugin-api }
+
+#### Features {: #3.116.2-plugin-api-feature }
+
+- `gpg_verify()` now supports post-quantum cryptography (PQC) algorithms.
+
+### Pulp File {: #3.116.2-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.116.2-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.116.1 (2026-08-27) {: #3.116.1 }
 
 ### REST API {: #3.116.1-rest-api }
