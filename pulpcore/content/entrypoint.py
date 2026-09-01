@@ -60,6 +60,14 @@ class PulpcoreContentApplication(PulpcoreGunicornApplication):
     help="Path to the gunicorn control socket (requires gunicorn>=25.1).",
 )
 @click.option(
+    "--no-control-socket",
+    "control_socket_disable",
+    default=None,
+    is_flag=True,
+    flag_value=True,
+    help="Disable the gunicorn control socket (requires gunicorn>=25.1).",
+)
+@click.option(
     "--name-template",
     type=str,
     help="Format string to use for the status name. "
