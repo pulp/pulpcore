@@ -320,7 +320,7 @@ No significant changes.
 
 #### Features {: #3.113.0-rest-api-feature }
 
-- Added support for passing ``q_select`` as a parameter to the replicate action, allowing users to selectively sync a subset of upstream distributions without modifying the stored upstream-pulp configuration.
+- Added support for passing `q_select` as a parameter to the replicate action, allowing users to selectively sync a subset of upstream distributions without modifying the stored upstream-pulp configuration.
   [#7617](https://github.com/pulp/pulpcore/issues/7617)
 - Added the `FeatureNotImplementedError` exception to indicate that a requested feature is not yet implemented.
 
@@ -342,8 +342,8 @@ No significant changes.
 
 #### Features {: #3.113.0-plugin-api-feature }
 
-- Exposed ``StableOrderingFilter`` in the plugin API so pulp plugins can import it from ``pulpcore.plugin``.
-- Exposed ``cancel_task`` and ``cancel_task_group`` from ``pulpcore.plugin.tasking`` so plugins can import them.
+- Exposed `StableOrderingFilter` in the plugin API so pulp plugins can import it from `pulpcore.plugin`.
+- Exposed `cancel_task` and `cancel_task_group` from `pulpcore.plugin.tasking` so plugins can import them.
 
 ### Pulp File {: #3.113.0-pulp-file }
 
@@ -370,7 +370,7 @@ No significant changes.
 
 #### Features {: #3.112.1-plugin-api-feature }
 
-- Exposed ``StableOrderingFilter`` in the plugin API so pulp plugins can import it from ``pulpcore.plugin``.
+- Exposed `StableOrderingFilter` in the plugin API so pulp plugins can import it from `pulpcore.plugin`.
 
 ### Pulp File {: #3.112.1-pulp-file }
 
@@ -786,7 +786,7 @@ No significant changes.
 
 #### Bugfixes {: #3.108.0-rest-api-bugfix }
 
-- Set default ``--max-requests 10000`` and ``--max-requests-jitter 500`` for API workers
+- Set default `--max-requests 10000` and `--max-requests-jitter 500` for API workers
   to prevent unbounded RSS growth from glibc heap fragmentation over long-lived worker processes.
   [#7482](https://github.com/pulp/pulpcore/issues/7482)
 - Fixed `reset-admin-password` command failing when using `--random` option on Django 5.
@@ -875,7 +875,7 @@ No significant changes.
   [#7004](https://github.com/pulp/pulpcore/issues/7004)
 - Add a data repair API for admins - for more granular control and operations which are too long for migrations.
   [#7272](https://github.com/pulp/pulpcore/issues/7272)
-- Added ``retain_checkpoints`` field to Repository to automatically clear the checkpoint flag on older publications exceeding the limit.
+- Added `retain_checkpoints` field to Repository to automatically clear the checkpoint flag on older publications exceeding the limit.
   [#7428](https://github.com/pulp/pulpcore/issues/7428)
 - Added `/pulp/api/v3/datarepair/7465/` endpoint to add missing repository version content_ids cache to all repository versions.
   [#7465](https://github.com/pulp/pulpcore/issues/7465)
@@ -912,7 +912,7 @@ No significant changes.
 
 #### Features {: #3.106.0-plugin-api-feature }
 
-- Added ``PgpKeyFingerprintField`` serializer field to the plugin API for validating and normalizing type-prefixed OpenPGP key identifiers.
+- Added `PgpKeyFingerprintField` serializer field to the plugin API for validating and normalizing type-prefixed OpenPGP key identifiers.
 
 #### Bugfixes {: #3.106.0-plugin-api-bugfix }
 
@@ -1155,7 +1155,7 @@ No significant changes.
 
 #### Features {: #3.105.8-plugin-api-feature }
 
-- Exposed ``StableOrderingFilter`` in the plugin API so pulp plugins can import it from ``pulpcore.plugin``.
+- Exposed `StableOrderingFilter` in the plugin API so pulp plugins can import it from `pulpcore.plugin`.
 
 ### Pulp File {: #3.105.8-pulp-file }
 
@@ -1195,7 +1195,7 @@ No significant changes.
 
 #### Bugfixes {: #3.105.6-rest-api-bugfix }
 
-- Set default ``--max-requests 10000`` and ``--max-requests-jitter 500`` for API workers
+- Set default `--max-requests 10000` and `--max-requests-jitter 500` for API workers
   to prevent unbounded RSS growth from glibc heap fragmentation over long-lived worker processes.
   [#7482](https://github.com/pulp/pulpcore/issues/7482)
 - Added option to `pulpcore-content` and `pulpcore-api` to configure the gunicorn control socket path.
@@ -2495,7 +2495,7 @@ No significant changes.
 
 #### Features {: #3.85.22-plugin-api-feature }
 
-- Exposed ``StableOrderingFilter`` in the plugin API so pulp plugins can import it from ``pulpcore.plugin``.
+- Exposed `StableOrderingFilter` in the plugin API so pulp plugins can import it from `pulpcore.plugin`.
 
 ### Pulp File {: #3.85.22-pulp-file }
 
@@ -2555,7 +2555,7 @@ No significant changes.
 
 #### Bugfixes {: #3.85.19-rest-api-bugfix }
 
-- Set default ``--max-requests 10000`` and ``--max-requests-jitter 500`` for API workers
+- Set default `--max-requests 10000` and `--max-requests-jitter 500` for API workers
   to prevent unbounded RSS growth from glibc heap fragmentation over long-lived worker processes.
   [#7482](https://github.com/pulp/pulpcore/issues/7482)
 - Fixed `TypeError: 'str' object has no attribute 'tolower'` in `_ensure_bool` during incremental content exports. Changed `.tolower()` to `.lower()`.
@@ -2778,8 +2778,8 @@ No significant changes.
 - Adapted PulpImport/Export to allow update django-import-export==4.x.
   [#5324](https://github.com/pulp/pulpcore/issues/5324)
 - Allow use of Django 5 as well as Django 4. Note the following breaking changes if upgrading to
-  Django 5: storage configuration must use the new ``STORAGES`` format instead of
-  ``DEFAULT_FILE_STORAGE``, Python >= 3.10 is required, and PostgreSQL >= 14 is required.
+  Django 5: storage configuration must use the new `STORAGES` format instead of
+  `DEFAULT_FILE_STORAGE`, Python >= 3.10 is required, and PostgreSQL >= 14 is required.
   [#6988](https://github.com/pulp/pulpcore/issues/6988)
 
 #### Bugfixes {: #3.85.10-rest-api-bugfix }
@@ -3912,7 +3912,7 @@ No significant changes.
 
 #### Features {: #3.73.36-plugin-api-feature }
 
-- Exposed ``StableOrderingFilter`` in the plugin API so pulp plugins can import it from ``pulpcore.plugin``.
+- Exposed `StableOrderingFilter` in the plugin API so pulp plugins can import it from `pulpcore.plugin`.
 
 ### Pulp File {: #3.73.36-pulp-file }
 
@@ -3972,7 +3972,7 @@ No significant changes.
 
 #### Bugfixes {: #3.73.33-rest-api-bugfix }
 
-- Set default ``--max-requests 10000`` and ``--max-requests-jitter 500`` for API workers
+- Set default `--max-requests 10000` and `--max-requests-jitter 500` for API workers
   to prevent unbounded RSS growth from glibc heap fragmentation over long-lived worker processes.
   [#7482](https://github.com/pulp/pulpcore/issues/7482)
 - Fixed `TypeError: 'str' object has no attribute 'tolower'` in `_ensure_bool` during incremental content exports. Changed `.tolower()` to `.lower()`.
@@ -4170,8 +4170,8 @@ No significant changes.
 - Adapted PulpImport/Export to allow update django-import-export==4.x.
   [#5324](https://github.com/pulp/pulpcore/issues/5324)
 - Allow use of Django 5 as well as Django 4. Note the following breaking changes if upgrading to
-  Django 5: storage configuration must use the new ``STORAGES`` format instead of
-  ``DEFAULT_FILE_STORAGE``, Python >= 3.10 is required, and PostgreSQL >= 14 is required.
+  Django 5: storage configuration must use the new `STORAGES` format instead of
+  `DEFAULT_FILE_STORAGE`, Python >= 3.10 is required, and PostgreSQL >= 14 is required.
   [#6988](https://github.com/pulp/pulpcore/issues/6988)
 
 #### Bugfixes {: #3.73.25-rest-api-bugfix }
@@ -4836,7 +4836,7 @@ No significant changes.
 
 #### Features {: #3.72.0-rest-api-feature }
 
-- Added ``ENABLED_PLUGINS`` option to allow selecting installed plugins to be enabled.
+- Added `ENABLED_PLUGINS` option to allow selecting installed plugins to be enabled.
   [#5235](https://github.com/pulp/pulpcore/issues/5235)
 - Added support for labels on domains.
   [#6236](https://github.com/pulp/pulpcore/issues/6236)
@@ -5412,7 +5412,7 @@ No significant changes.
 
 - Started using an upstream version of the OpenTelemetry aiohttp server instrumentation.
   [#5833](https://github.com/pulp/pulpcore/issues/5833)
-- Included the worker's name in the ``http.server.duration`` OpenTelemetry metric attributes.
+- Included the worker's name in the `http.server.duration` OpenTelemetry metric attributes.
   [#5844](https://github.com/pulp/pulpcore/issues/5844)
 
 #### Bugfixes {: #3.64.0-rest-api-bugfix }
@@ -5614,7 +5614,7 @@ No significant changes.
 
 #### Bugfixes {: #3.63.37-rest-api-bugfix }
 
-- Set default ``--max-requests 10000`` and ``--max-requests-jitter 500`` for API workers
+- Set default `--max-requests 10000` and `--max-requests-jitter 500` for API workers
   to prevent unbounded RSS growth from glibc heap fragmentation over long-lived worker processes.
   [#7482](https://github.com/pulp/pulpcore/issues/7482)
 - Fixed `TypeError: 'str' object has no attribute 'tolower'` in `_ensure_bool` during incremental content exports. Changed `.tolower()` to `.lower()`.
@@ -5787,8 +5787,8 @@ No significant changes.
 - Adapted PulpImport/Export to allow update django-import-export==4.x.
   [#5324](https://github.com/pulp/pulpcore/issues/5324)
 - Allow use of Django 5 as well as Django 4. Note the following breaking changes if upgrading to
-  Django 5: storage configuration must use the new ``STORAGES`` format instead of
-  ``DEFAULT_FILE_STORAGE``, Python >= 3.10 is required, and PostgreSQL >= 14 is required.
+  Django 5: storage configuration must use the new `STORAGES` format instead of
+  `DEFAULT_FILE_STORAGE`, Python >= 3.10 is required, and PostgreSQL >= 14 is required.
   [#6988](https://github.com/pulp/pulpcore/issues/6988)
 
 #### Bugfixes {: #3.63.30-rest-api-bugfix }
@@ -6533,7 +6533,7 @@ No significant changes.
 
 - Added `name`, `base_url` and `last_replication` filters for UpstreamPulps.
   [#4110](https://github.com/pulp/pulpcore/issues/4110)
-- Added new setting ``API_ROOT_REWRITE_HEADER`` that when specified allows the API_ROOT to be rewritten
+- Added new setting `API_ROOT_REWRITE_HEADER` that when specified allows the API_ROOT to be rewritten
   per request based on the header's value.
   [#4207](https://github.com/pulp/pulpcore/issues/4207)
 - Added new `q_select` field to UpstreamPulp to allow for more advanced filtering on upstream distributions.
@@ -6555,8 +6555,8 @@ No significant changes.
 
 #### Features {: #3.62.0-plugin-api-feature }
 
-- Added new ``reverse`` method that handles Pulp specific url formatting. Plugins should update
-  instances of ``django.urls.reverse`` and ``rest_framework.reverse`` to this new Pulp one.
+- Added new `reverse` method that handles Pulp specific url formatting. Plugins should update
+  instances of `django.urls.reverse` and `rest_framework.reverse` to this new Pulp one.
   [#4207](https://github.com/pulp/pulpcore/issues/4207)
 
 #### Deprecations {: #3.62.0-plugin-api-deprecation }
@@ -6942,12 +6942,12 @@ No significant changes.
 
 #### Removals {: #3.55.0-rest-api-removal }
 
-- Removed ``pulp_hrefs`` from task reserved resources record. Task resource locking will now use Pulp
-  Resource Names (PRNs) that are immutable with respect to settings changes. A resource's ``pulp_href``
-  can still be used in task's ``reserved_resources`` filter, Pulp will convert it to the new format
+- Removed `pulp_hrefs` from task reserved resources record. Task resource locking will now use Pulp
+  Resource Names (PRNs) that are immutable with respect to settings changes. A resource's `pulp_href`
+  can still be used in task's `reserved_resources` filter, Pulp will convert it to the new format
   behind the scenes.
   [#5148](https://github.com/pulp/pulpcore/issues/5148)
-- Removed task's ``reserved_resources_record`` filter. Please use ``reserved_resources`` instead.
+- Removed task's `reserved_resources_record` filter. Please use `reserved_resources` instead.
   [#5415](https://github.com/pulp/pulpcore/issues/5415)
 - Removed deprecated `plugin` query string parameter from api doc endpoint.
   Please use a list of app labels with the `component` parameter instead.
@@ -7499,7 +7499,7 @@ No significant changes.
 
 #### Bugfixes {: #3.49.60-rest-api-bugfix }
 
-- Set default ``--max-requests 10000`` and ``--max-requests-jitter 500`` for API workers
+- Set default `--max-requests 10000` and `--max-requests-jitter 500` for API workers
   to prevent unbounded RSS growth from glibc heap fragmentation over long-lived worker processes.
   [#7482](https://github.com/pulp/pulpcore/issues/7482)
 - Fixed `TypeError: 'str' object has no attribute 'tolower'` in `_ensure_bool` during incremental content exports. Changed `.tolower()` to `.lower()`.
@@ -7728,8 +7728,8 @@ No significant changes.
 - Adapted PulpImport/Export to allow update django-import-export==4.x.
   [#5324](https://github.com/pulp/pulpcore/issues/5324)
 - Allow use of Django 5 as well as Django 4. Note the following breaking changes if upgrading to
-  Django 5: storage configuration must use the new ``STORAGES`` format instead of
-  ``DEFAULT_FILE_STORAGE``, Python >= 3.10 is required, and PostgreSQL >= 14 is required.
+  Django 5: storage configuration must use the new `STORAGES` format instead of
+  `DEFAULT_FILE_STORAGE`, Python >= 3.10 is required, and PostgreSQL >= 14 is required.
   [#6988](https://github.com/pulp/pulpcore/issues/6988)
 
 ### Plugin API {: #3.49.50-plugin-api }
@@ -12499,7 +12499,7 @@ No significant changes.
     list endpoint.
     [#3280](https://github.com/pulp/pulpcore/issues/3280)
 -   The postgresql version is now included in analytics data posted. The payload looks like:
-    `` {`'postgresqlVersion': 90200} ``. The integer value is the raw format postgresql reports its
+    `{'postgresqlVersion': 90200}`. The integer value is the raw format postgresql reports its
     version as.
     [#3396](https://github.com/pulp/pulpcore/issues/3396)
 -   The new `ANALYTICS` setting replaced the `TELEMETRY` setting to avoid confusion with
@@ -12570,7 +12570,7 @@ No significant changes.
 
 #### Deprecations
 
--   `` TELEMETRY` setting was deprecated in favor of ``ANALYTICS`.
+-   `TELEMETRY` setting was deprecated in favor of `ANALYTICS`.
     #3417 <[https://github.com/pulp/pulpcore/issues/3417](https://github.com/pulp/pulpcore/issues/3417)>`__
 
 #### Misc
@@ -16773,7 +16773,7 @@ No significant changes.
 
 #### Removals
 
--   The `component` field of the `versions` section of the status API `` `/pulp/api/v3/status/ `` now
+-   The `component` field of the `versions` section of the status API `/pulp/api/v3/status/` now
     lists the Django app name, not the Python package name. Similarly the OpenAPI schema at
     `/pulp/api/v3` does also.
     [#8198](https://pulp.plan.io/issues/8198)
@@ -17662,7 +17662,7 @@ No significant changes.
     `QueryModelResources`.
     [#7277](https://pulp.plan.io/issues/7277)
 
--   Viewsets that subclass `` pulpcore.plugin.viewsets.NamedModelViewSet` can declare the ``queryset_filtering_required_permission`[ class attribute naming the permission required to view
+-   Viewsets that subclass `pulpcore.plugin.viewsets.NamedModelViewSet` can declare the `queryset_filtering_required_permission` class attribute naming the permission required to view
     an object. See the *queryset_scoping* documentation for more information.
     ]{.title-ref}#7300 <<https://pulp.plan.io/issues/7300>>`__
 
@@ -18217,7 +18217,7 @@ No significant changes.
 
 #### Deprecations and Removals
 
--   The `` `Handler._handle_file_response` has been removed. It was renamed to ``_serve_content_artifact`` and has the following signature:
+-   The `Handler._handle_file_response` has been removed. It was renamed to `_serve_content_artifact` and has the following signature:
 
         def _serve_content_artifact(self, content_artifact, headers):
 
