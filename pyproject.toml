@@ -29,7 +29,7 @@ dependencies = [
   "aiohttp>=3.10.10,<3.15",  # SemVer https://docs.aiohttp.org/en/stable/faq.html#what-is-the-api-stability-and-deprecation-policy .
   "asyncio-throttle>=1.0,<=1.0.2",  # Unsure about versioning, but not released often anyway.
   "backoff>=2.1.2,<2.3",  # Looks like only bugfixes in z-Stream.
-  "click>=8.1.0,<8.5",  # Uses milestone.feature.fix https://palletsprojects.com/versions .
+  "click>=8.1.0,<8.6",  # Uses milestone.feature.fix https://palletsprojects.com/versions .
   "cryptography>=49.0.0,<51.0",  # SemVer compatible https://cryptography.io/en/latest/api-stability/#versioning .
   "Django>=5.2.0,<5.3",  # LTS version, we aim at supporting one or two at a time.
   "django-filter>=24.3,<=26.1",  # Uses CalVer, not released often https://github.com/carltongibson/django-filter
