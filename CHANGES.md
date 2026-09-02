@@ -8,6 +8,28 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.105.19 (2026-09-02) {: #3.105.19 }
+
+### REST API {: #3.105.19-rest-api }
+
+#### Features {: #3.105.19-rest-api-feature }
+
+- Added `--no-control-socket` flag to `pulpcore-api` and `pulpcore-content` commands to disable the gunicorn control socket.
+
+### Plugin API {: #3.105.19-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.105.19-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.105.19-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.105.18 (2026-09-01) {: #3.105.18 }
 
 ### REST API {: #3.105.18-rest-api }
