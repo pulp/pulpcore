@@ -8,6 +8,30 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.116.3 (2026-09-02) {: #3.116.3 }
+
+### REST API {: #3.116.3-rest-api }
+
+#### Bugfixes {: #3.116.3-rest-api-bugfix }
+
+- Filled missing repository version `content_ids` in SQL from content membership, committing per repository so large databases are less likely to hit statement timeouts.
+
+### Plugin API {: #3.116.3-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.116.3-pulp-file }
+
+#### Bugfixes {: #3.116.3-pulp-file-bugfix }
+
+- GitPython is now imported only when syncing a `FileGitRemote`, so `pulp_file` loads on installs with no `git` executable on `PATH`.
+
+### Pulp Cert Guard {: #3.116.3-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.116.2 (2026-09-01) {: #3.116.2 }
 
 ### REST API {: #3.116.2-rest-api }
