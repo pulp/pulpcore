@@ -53,6 +53,7 @@ from pulpcore.app.models import (  # noqa: E402
     Publication,
     Remote,
     RemoteArtifact,
+    RepositoryVersion,
 )
 from pulpcore.app.util import (  # noqa: E402
     cache_key,
@@ -342,6 +343,20 @@ class Handler:
                     "remote",
                     "pulp_domain",
                     "publication__repository_version",
+                )
+                # `content_ids` is a large ArrayField (one UUID per unit of
+                # content in the version — hundreds of thousands for an Ubuntu/Debian
+                # mirror). select_related() above pulls the FULL RepositoryVersion row
+                # for both `repository_version` and `publication__repository_version`,
+                # so without this defer() every single request pays for psycopg2 to
+                # parse that array into a Python list, even though nothing here reads
+                # it (`_match_distribution` only needs base_path/type routing).
+                # Measured against a real 347068-entry RepositoryVersion (a mirrored
+                # Ubuntu `main`+`universe` archive): 0.85s -> 0.005s for this exact
+                # query shape.
+                .defer(
+                    "repository_version__content_ids",
+                    "publication__repository_version__content_ids",
                 )
                 .get(base_path__in=base_paths)
                 .cast()
@@ -794,12 +809,41 @@ class Handler:
             # pass-through
             if publication.pass_through:
                 try:
+                    # Do NOT read `publication.repository_version.content` here.
+                    # Two reasons, both measured against a real 347068-entry
+                    # RepositoryVersion:
+                    #  1. `publication.repository_version` is a plain FK access. It
+                    #     is not guaranteed to reuse the (now-deferred, see
+                    #     _match_distribution above) instance select_related()
+                    #     loaded earlier — a fresh lazy fetch here still pulls the
+                    #     FULL RepositoryVersion row, content_ids included.
+                    #  2. Even if it were deferred, `.content` (RepositoryVersion.
+                    #     get_content()) calls `_get_content_ids()`, which reads
+                    #     `self.content_ids` unconditionally to check `is not None`
+                    #     — Django's DeferredAttribute then reloads the WHOLE array
+                    #     on that first touch. A defer that gets read anyway buys
+                    #     nothing: measured 0.43s just for that reload, then another
+                    #     ~1.2s for get_content() to filter Content client-side with
+                    #     a 347k-element `pk__in` list.
+                    # Building the `content_id IN (...)` filter as a server-side
+                    # unnest() subquery — straight off the FK id, never touching
+                    # `.content_ids` in Python — measured 0.39s -> ~0.01-0.02s for
+                    # this exact call (content parity verified: identical
+                    # ContentArtifact resolved on 15/15 sampled paths across the 3
+                    # live verbatim apt mirrors: debian, ubuntu, ubuntu-security).
+                    content_ids_subquery = (
+                        RepositoryVersion.objects.filter(
+                            pk=publication.repository_version_id
+                        )
+                        .annotate(cids=models.Func(models.F("content_ids"), function="unnest"))
+                        .values_list("cids", flat=True)
+                    )
                     ca = (
                         await ContentArtifact.objects.select_related(
                             "artifact", "artifact__pulp_domain"
                         )
                         .filter(
-                            content__in=publication.repository_version.content,
+                            content__in=content_ids_subquery,
                         )
                         .aget(relative_path=original_rel_path)
                     )
