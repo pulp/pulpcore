@@ -1,1 +1,0 @@
-Fixed `general_delete`, `ageneral_delete`, and `general_multi_delete` to skip instances that no longer exist instead of failing with a bare `DoesNotExist`. The task result now reports skipped pks under `skipped` and per-model delete counts.
