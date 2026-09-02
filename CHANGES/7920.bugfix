@@ -1,1 +1,0 @@
-Fixed orphaned Redis task/resource locks left behind when a worker's AppStatus was already deleted, via periodic reconciliation.
