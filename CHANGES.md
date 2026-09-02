@@ -8,6 +8,30 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.116.2 (2026-09-01) {: #3.116.2 }
+
+### REST API {: #3.116.2-rest-api }
+
+#### Features {: #3.116.2-rest-api-feature }
+
+- Pulpcore is now considered provisionally "post quantum cryptography" (PQC) compatible. PQC certificates are now supported for TLS, PGP operations, and signing services.
+
+### Plugin API {: #3.116.2-plugin-api }
+
+#### Features {: #3.116.2-plugin-api-feature }
+
+- `gpg_verify()` now supports post-quantum cryptography (PQC) algorithms.
+
+### Pulp File {: #3.116.2-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.116.2-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.116.1 (2026-08-27) {: #3.116.1 }
 
 ### REST API {: #3.116.1-rest-api }
@@ -923,6 +947,30 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.106.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.105.18 (2026-09-01) {: #3.105.18 }
+
+### REST API {: #3.105.18-rest-api }
+
+#### Features {: #3.105.18-rest-api-feature }
+
+- Pulpcore is now considered provisionally "post quantum cryptography" (PQC) compatible. PQC certificates are now supported for TLS, PGP operations, and signing services.
+
+### Plugin API {: #3.105.18-plugin-api }
+
+#### Features {: #3.105.18-plugin-api-feature }
+
+- `gpg_verify()` now supports post-quantum cryptography (PQC) algorithms.
+
+### Pulp File {: #3.105.18-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.105.18-pulp-cert-guard }
 
 No significant changes.
 
@@ -2319,6 +2367,26 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.86.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.85.30 (2026-09-01) {: #3.85.30 }
+
+### REST API {: #3.85.30-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.85.30-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.85.30-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.30-pulp-cert-guard }
 
 No significant changes.
 
@@ -3762,6 +3830,26 @@ No significant changes.
   [#6244](https://github.com/pulp/pulpcore/issues/6244)
 
 ### Pulp Cert Guard {: #3.74.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.73.43 (2026-09-01) {: #3.73.43 }
+
+### REST API {: #3.73.43-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.73.43-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.73.43-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.43-pulp-cert-guard }
 
 No significant changes.
 
@@ -5429,6 +5517,26 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.64.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.63.46 (2026-09-01) {: #3.63.46 }
+
+### REST API {: #3.63.46-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.63.46-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.46-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.46-pulp-cert-guard }
 
 No significant changes.
 
@@ -7314,6 +7422,26 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard
+
+No significant changes.
+
+---
+
+## 3.49.69 (2026-09-01) {: #3.49.69 }
+
+### REST API {: #3.49.69-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.49.69-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.69-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.69-pulp-cert-guard }
 
 No significant changes.
 
