@@ -8,6 +8,76 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.117.0 (2026-09-02) {: #3.117.0 }
+
+### REST API {: #3.117.0-rest-api }
+
+#### Features {: #3.117.0-rest-api-feature }
+
+- Added a `default_content_guard` field to domains that is automatically assigned to new distributions created within the domain when they do not specify their own content-guard.
+  [#7988](https://github.com/pulp/pulpcore/issues/7988)
+- Added `--no-control-socket` flag to `pulpcore-api` and `pulpcore-content` commands to disable the gunicorn control socket.
+- Pulpcore is now considered provisionally "post quantum cryptography" (PQC) compatible. PQC certificates are now supported for TLS, PGP operations, and signing services.
+
+#### Bugfixes {: #3.117.0-rest-api-bugfix }
+
+- Fixed head-of-line blocking in `fetch_task()` by excluding blocked resources at the DB level.
+  [#7900](https://github.com/pulp/pulpcore/issues/7900)
+- Fixed `general_delete`, `ageneral_delete`, and `general_multi_delete` to skip instances that no longer exist instead of failing with a bare `DoesNotExist`. The task result now reports skipped pks under `skipped` and per-model delete counts.
+  [#7910](https://github.com/pulp/pulpcore/issues/7910)
+- Fixed RedisWorker being blocked by its own stale locks after a worker restarts under the same name, by releasing them at startup.
+  [#7919](https://github.com/pulp/pulpcore/issues/7919)
+- Fixed orphaned Redis task/resource locks left behind when a worker's AppStatus was already deleted, via periodic reconciliation.
+  [#7920](https://github.com/pulp/pulpcore/issues/7920)
+- Fixed cache invalidation and DistributedPublication tracking for distributions serving via `repository_version` when publications are created or deleted.
+  [#7993](https://github.com/pulp/pulpcore/issues/7993)
+- Filled missing repository version `content_ids` in SQL from content membership, committing per repository so large databases are less likely to hit statement timeouts.
+
+### Plugin API {: #3.117.0-plugin-api }
+
+#### Features {: #3.117.0-plugin-api-feature }
+
+- `gpg_verify()` now supports post-quantum cryptography (PQC) algorithms.
+
+### Pulp File {: #3.117.0-pulp-file }
+
+#### Bugfixes {: #3.117.0-pulp-file-bugfix }
+
+- Fixed synchronous File uploads failing with "Artifact already exists" instead of reusing the existing Artifact.
+- GitPython is now imported only when syncing a `FileGitRemote`, so `pulp_file` loads on installs with no `git` executable on `PATH`.
+
+### Pulp Cert Guard {: #3.117.0-pulp-cert-guard }
+
+#### Bugfixes {: #3.117.0-pulp-cert-guard-bugfix }
+
+- Fixed RHSM certguard path matching when domains are enabled.
+
+---
+
+## 3.116.3 (2026-09-02) {: #3.116.3 }
+
+### REST API {: #3.116.3-rest-api }
+
+#### Bugfixes {: #3.116.3-rest-api-bugfix }
+
+- Filled missing repository version `content_ids` in SQL from content membership, committing per repository so large databases are less likely to hit statement timeouts.
+
+### Plugin API {: #3.116.3-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.116.3-pulp-file }
+
+#### Bugfixes {: #3.116.3-pulp-file-bugfix }
+
+- GitPython is now imported only when syncing a `FileGitRemote`, so `pulp_file` loads on installs with no `git` executable on `PATH`.
+
+### Pulp Cert Guard {: #3.116.3-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.116.2 (2026-09-01) {: #3.116.2 }
 
 ### REST API {: #3.116.2-rest-api }
@@ -947,6 +1017,28 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.106.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.105.19 (2026-09-02) {: #3.105.19 }
+
+### REST API {: #3.105.19-rest-api }
+
+#### Features {: #3.105.19-rest-api-feature }
+
+- Added `--no-control-socket` flag to `pulpcore-api` and `pulpcore-content` commands to disable the gunicorn control socket.
+
+### Plugin API {: #3.105.19-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.105.19-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.105.19-pulp-cert-guard }
 
 No significant changes.
 
@@ -3835,6 +3927,26 @@ No significant changes.
 
 ---
 
+## 3.73.44 (2026-09-02) {: #3.73.44 }
+
+### REST API {: #3.73.44-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.73.44-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.73.44-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.44-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.73.43 (2026-09-01) {: #3.73.43 }
 
 ### REST API {: #3.73.43-rest-api }
@@ -5517,6 +5629,26 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.64.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.63.47 (2026-09-02) {: #3.63.47 }
+
+### REST API {: #3.63.47-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.63.47-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.47-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.47-pulp-cert-guard }
 
 No significant changes.
 
@@ -7422,6 +7554,26 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard
+
+No significant changes.
+
+---
+
+## 3.49.70 (2026-09-02) {: #3.49.70 }
+
+### REST API {: #3.49.70-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.49.70-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.70-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.70-pulp-cert-guard }
 
 No significant changes.
 
