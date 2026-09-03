@@ -1,12 +1,13 @@
 import random
 from collections import defaultdict
+from contextlib import suppress
 from gettext import gettext as _
 from importlib import import_module
 
 from django import apps
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.db import connection, transaction
+from django.db import ProgrammingError, connection, transaction
 from django.db.models.signals import post_migrate, pre_migrate
 from django.utils.module_loading import module_has_submodule
 
@@ -320,27 +321,31 @@ def _populate_access_policies(sender, apps, verbosity, **kwargs):
 
 
 def _populate_system_id(sender, apps, verbosity, **kwargs):
-    SystemID = apps.get_model("core", "SystemID")
-    if not SystemID.objects.exists():
-        SystemID().save()
+    with suppress(LookupError):
+        SystemID = apps.get_model("core", "SystemID")
+        if not SystemID.objects.exists():
+            SystemID().save()
 
 
-def _ensure_default_domain(sender, **kwargs):
-    table_names = connection.introspection.table_names()
-    if "core_domain" in table_names:
-        from pulpcore.app.util import get_default_domain
+def _ensure_default_domain(sender, apps, **kwargs):
+    # This is a post migrate hook.
+    # But on rolling back the database may not match what this function expects.
+    with suppress(LookupError, ProgrammingError):
+        table_names = connection.introspection.table_names()
+        if "core_domain" in table_names:
+            from pulpcore.app.util import get_default_domain
 
-        default = get_default_domain()  # Cache the default domain
-        # Match the Pulp settings
-        if (
-            settings.HIDE_GUARDED_DISTRIBUTIONS != default.hide_guarded_distributions
-            or settings.REDIRECT_TO_OBJECT_STORAGE != default.redirect_to_object_storage
-            or settings.STORAGES["default"]["BACKEND"] != default.storage_class
-        ):
-            default.hide_guarded_distributions = settings.HIDE_GUARDED_DISTRIBUTIONS
-            default.redirect_to_object_storage = settings.REDIRECT_TO_OBJECT_STORAGE
-            default.storage_class = settings.STORAGES["default"]["BACKEND"]
-            default.save(skip_hooks=True)
+            default = get_default_domain()  # Cache the default domain
+            # Match the Pulp settings
+            if (
+                settings.HIDE_GUARDED_DISTRIBUTIONS != default.hide_guarded_distributions
+                or settings.REDIRECT_TO_OBJECT_STORAGE != default.redirect_to_object_storage
+                or settings.STORAGES["default"]["BACKEND"] != default.storage_class
+            ):
+                default.hide_guarded_distributions = settings.HIDE_GUARDED_DISTRIBUTIONS
+                default.redirect_to_object_storage = settings.REDIRECT_TO_OBJECT_STORAGE
+                default.storage_class = settings.STORAGES["default"]["BACKEND"]
+                default.save(skip_hooks=True)
 
 
 def _populate_roles(sender, apps, verbosity, **kwargs):
