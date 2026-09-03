@@ -57,6 +57,12 @@ When patchback fails to cherry-pick a PR into an older branch, you need to manua
 
 ## Contributing
 
-All docs, code comments, and changelogs are in markdown format, **never** use double ticks. Keep comments and changelogs short and concise. Try to keep changelogs to just one line. 
+All docs, code comments, and changelogs are in markdown format, **never** use double ticks. Keep comments and changelogs short and concise. Make sure changelogs are on one line and changelogs intended for users center around the user, not the developer.
+
+Do NOT excessively comment the code. Follow these guidelines when writing/editing comments:
+
+- Reserve line comments for noting extra context needed to understand a piece of code. 
+- Do NOT delete existing comments when rewriting code unless explicitly asked. Instead try to rewrite the comment if it no longer matches the code.
+- Do NOT add/leave in the comments traces of the prompt used, change explanation or old code history.
 
 When preparing to commit and create a PR you **must** follow our [PR checklist](https://pulpproject.org/pulpcore/docs/dev/guides/pull-request-walkthrough/) Important to note is the AI attribution requirement in our commit messages. Also, note that our changelog entries are markdown.
