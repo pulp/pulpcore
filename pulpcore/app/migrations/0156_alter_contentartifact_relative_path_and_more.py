@@ -16,7 +16,20 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='contentartifact',
             name='relative_path',
-            field=pulpcore.app.models.fields.RelativePathField(),
+            field=django.db.models.fields.TextField(null=True, default=None),
+        ),
+        migrations.RunSQL(
+            sql="""
+            UPDATE core_contentartifact SET relative_path = NULL WHERE relative_path = '';
+            """,
+            reverse_sql="""
+            UPDATE core_contentartifact SET relative_path = '' WHERE relative_path is NULL;
+            """,
+        ),
+        migrations.AlterField(
+            model_name='contentartifact',
+            name='relative_path',
+            field=pulpcore.app.models.fields.RelativePathField(null=True, default=None),
         ),
         migrations.AlterField(
             model_name='distribution',

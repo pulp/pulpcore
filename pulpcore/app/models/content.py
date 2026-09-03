@@ -658,7 +658,7 @@ class ContentArtifact(BaseModel, QueryMixin):
         Artifact, on_delete=models.PROTECT, null=True, related_name="content_memberships"
     )
     content = models.ForeignKey(Content, on_delete=models.CASCADE)
-    relative_path = RelativePathField()
+    relative_path = RelativePathField(null=True, default=None)
 
     objects = BulkCreateManager()
 
