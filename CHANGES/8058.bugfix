@@ -1,0 +1,5 @@
+Restructured migration `0156` to avoid deadlocks on large deployments. The previous migration
+used `ALTER COLUMN TYPE` which acquires `ACCESS EXCLUSIVE` and scans all rows to validate the
+domain constraint — taking 40+ minutes on large databases and causing deadlocks with concurrent
+workers. The migration now uses `ADD CONSTRAINT ... NOT VALID` (brief lock, no row scan) via
+`SeparateDatabaseAndState`, and the SpGist index is created with `CONCURRENTLY`.

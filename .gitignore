@@ -19,3 +19,6 @@ containers/images/pulp/Dockerfile.*
 
 # Cached files for offline testing
 /GPG-PRIVATE-KEY-fixture-signing
+
+# Git worktrees
+.worktrees/
