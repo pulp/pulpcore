@@ -1,0 +1,1 @@
+Fixed replicate() deleting temporary TLS files before pulp-glue could use them, and stopped leaking PULP_CA_BUNDLE into later worker tasks.
