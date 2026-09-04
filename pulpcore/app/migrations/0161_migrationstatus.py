@@ -7,7 +7,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("core", "0156_createdresource_content_object_domain_and_more"),
+        ("core", "0160_createdresource_content_object_domain_and_more"),
     ]
 
     operations = [

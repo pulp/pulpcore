@@ -5,7 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("core", "0154_task_api_version"),
+        ("core", "0158_domain_default_content_guard"),
     ]
 
     operations = [

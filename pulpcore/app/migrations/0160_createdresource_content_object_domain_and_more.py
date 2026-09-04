@@ -6,7 +6,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("core", "0155_domain_database_alias_domain_moving"),
+        ("core", "0159_domain_database_alias_domain_moving"),
     ]
 
     operations = [
