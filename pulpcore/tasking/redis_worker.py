@@ -20,7 +20,7 @@ from tempfile import TemporaryDirectory
 
 import redis
 from django.conf import settings
-from django.db import DatabaseError, IntegrityError, connection, transaction
+from django.db import DatabaseError, IntegrityError, connection, connections, transaction
 from django.utils import timezone
 
 from pulpcore.app.apps import pulp_plugin_configs
@@ -589,6 +589,29 @@ class RedisWorker:
             return False
         return True
 
+    def is_domain_available(self, task):
+        domain = task.pulp_domain
+        if domain.moving:
+            _logger.info(
+                _("Domain '%s' is being moved between databases; deferring task %s."),
+                domain.name,
+                task.pk,
+            )
+            return False
+        alias = domain.database_alias
+        if alias != "default":
+            try:
+                connections[alias].ensure_connection()
+            except DatabaseError:
+                _logger.warning(
+                    _("Database alias '%s' for domain '%s' is unavailable; deferring task %s."),
+                    alias,
+                    domain.name,
+                    task.pk,
+                )
+                return False
+        return True
+
     def fetch_task(self):
         """
         Fetch an available waiting task using Redis locks.
@@ -818,8 +841,7 @@ class RedisWorker:
                     # No task found
                     break
 
-                if not self.is_compatible(task):
-                    # Incompatible task, add to ignored list
+                if not self.is_compatible(task) or not self.is_domain_available(task):
                     self.ignored_task_ids.append(task.pk)
                     # Atomically release task lock + resource locks so other workers can attempt it
                     self._maybe_release_locks(task, mark_released=False)

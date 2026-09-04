@@ -1,9 +1,13 @@
 import re
 import time
+from gettext import gettext as _
 from os import environ
 
 from django.conf import settings
 from django.core.exceptions import MiddlewareNotUsed
+from django.db import connections
+from django.db.utils import Error as DjangoDBError
+from django.http import JsonResponse
 from django.http.response import Http404
 
 from pulpcore.app.contexts import current_pulp_api_version, x_task_diagnostics_var
@@ -15,6 +19,8 @@ from pulpcore.app.util import (
     set_domain,
 )
 from pulpcore.metrics import init_otel_meter
+
+_SAFE_HTTP_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
 
 
 class DomainMiddleware:
@@ -47,8 +53,38 @@ class DomainMiddleware:
             domain = Domain.objects.get(name=domain_name)
         except Domain.DoesNotExist:
             raise Http404()
+        degraded_response = self._degraded_response(request, domain)
+        if degraded_response is not None:
+            return degraded_response
         set_domain(domain)
         setattr(request, "pulp_domain", domain)
+        return None
+
+    @staticmethod
+    def _degraded_response(request, domain):
+        alias = domain.database_alias
+        if alias != "default":
+            try:
+                connections[alias].ensure_connection()
+            except DjangoDBError:
+                return JsonResponse(
+                    {
+                        "detail": _(
+                            "Database for domain '{name}' is currently unavailable."
+                        ).format(name=domain.name)
+                    },
+                    status=503,
+                )
+        if domain.moving and request.method not in _SAFE_HTTP_METHODS:
+            return JsonResponse(
+                {
+                    "detail": _(
+                        "Domain '{name}' is currently being moved to a different database; "
+                        "write operations are temporarily unavailable."
+                    ).format(name=domain.name)
+                },
+                status=503,
+            )
         return None
 
 

@@ -29,6 +29,7 @@ class TestDomainMiddlewareSkip(TestCase):
         view_class = type("NormalView", (), {})
         view_func = MagicMock(view_class=view_class)
         view_kwargs = {"pulp_domain": "default"}
+        mock_domain_objects.get.return_value = MagicMock(database_alias="default", moving=False)
 
         self.middleware.process_view(self.request, view_func, [], view_kwargs)
 

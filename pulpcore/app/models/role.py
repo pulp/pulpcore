@@ -5,6 +5,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
 from pulpcore.app.models import BaseModel, Group
+from pulpcore.app.models.generic import DomainResolvedGenericRelation
 
 
 class Role(BaseModel):
@@ -27,7 +28,7 @@ class Role(BaseModel):
     permissions = models.ManyToManyField(Permission)
 
 
-class UserRole(BaseModel):
+class UserRole(DomainResolvedGenericRelation, BaseModel):
     """
     Join table for user to role associations with optional content object.
 
@@ -46,7 +47,10 @@ class UserRole(BaseModel):
     role = models.ForeignKey(Role, related_name="object_users", on_delete=models.CASCADE)
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True)
     object_id = models.TextField(null=True)
-    content_object = GenericForeignKey("content_type", "object_id", for_concrete_model=False)
+    _content_object = GenericForeignKey("content_type", "object_id", for_concrete_model=False)
+    content_object_domain = models.ForeignKey(
+        "Domain", null=True, on_delete=models.SET_NULL, related_name="+"
+    )
     domain = models.ForeignKey("Domain", null=True, on_delete=models.CASCADE)
 
     class Meta:
@@ -57,7 +61,7 @@ class UserRole(BaseModel):
         ]
 
 
-class GroupRole(BaseModel):
+class GroupRole(DomainResolvedGenericRelation, BaseModel):
     """
     Join table for group to role associations with optional content object.
 
@@ -74,7 +78,10 @@ class GroupRole(BaseModel):
     role = models.ForeignKey(Role, related_name="object_groups", on_delete=models.CASCADE)
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True)
     object_id = models.TextField(null=True)
-    content_object = GenericForeignKey("content_type", "object_id", for_concrete_model=False)
+    _content_object = GenericForeignKey("content_type", "object_id", for_concrete_model=False)
+    content_object_domain = models.ForeignKey(
+        "Domain", null=True, on_delete=models.SET_NULL, related_name="+"
+    )
     domain = models.ForeignKey("Domain", null=True, on_delete=models.CASCADE)
 
     class Meta:

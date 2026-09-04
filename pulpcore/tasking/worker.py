@@ -10,7 +10,7 @@ from multiprocessing import Process
 from tempfile import TemporaryDirectory
 
 from django.conf import settings
-from django.db import DatabaseError, IntegrityError, connection, transaction
+from django.db import DatabaseError, IntegrityError, connection, connections, transaction
 from django.db.models import Case, Count, F, Max, Value, When
 from django.utils import timezone
 from packaging.version import parse as parse_version
@@ -328,6 +328,29 @@ class PulpcoreWorker:
             return False
         return True
 
+    def is_domain_available(self, task):
+        domain = task.pulp_domain
+        if domain.moving:
+            _logger.info(
+                _("Domain '%s' is being moved between databases; deferring task %s."),
+                domain.name,
+                task.pk,
+            )
+            return False
+        alias = domain.database_alias
+        if alias != "default":
+            try:
+                connections[alias].ensure_connection()
+            except DatabaseError:
+                _logger.warning(
+                    _("Database alias '%s' for domain '%s' is unavailable; deferring task %s."),
+                    alias,
+                    domain.name,
+                    task.pk,
+                )
+                return False
+        return True
+
     def unblock_tasks(self):
         """Iterate over waiting tasks and mark them unblocked accordingly.
 
@@ -605,7 +628,11 @@ class PulpcoreWorker:
                 elif task.state == TASK_STATES.RUNNING:
                     # A running task without a lock must be abandoned.
                     self.cancel_abandoned_task(task, TASK_STATES.FAILED, "Worker has gone missing.")
-                elif task.state == TASK_STATES.WAITING and self.is_compatible(task):
+                elif (
+                    task.state == TASK_STATES.WAITING
+                    and self.is_compatible(task)
+                    and self.is_domain_available(task)
+                ):
                     if task.immediate:
                         self.supervise_immediate_task(task)
                     else:

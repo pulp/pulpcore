@@ -2,7 +2,7 @@ import hashlib
 import os
 import socket
 import zlib
-from contextlib import ExitStack
+from contextlib import ExitStack, contextmanager
 from datetime import timedelta
 from functools import lru_cache
 from gettext import gettext as _
@@ -15,14 +15,19 @@ from uuid import UUID
 
 from django.apps import apps
 from django.conf import settings
-from django.db import connection
+from django.db import connections
 from django.db.models import Model, UUIDField
 from rest_framework.reverse import reverse as drf_reverse
 from rest_framework.serializers import ValidationError
 
 from pulpcore.app import models
 from pulpcore.app.apps import pulp_plugin_configs
-from pulpcore.app.contexts import _current_domain, _current_user_func, current_pulp_api_version
+from pulpcore.app.contexts import (
+    _current_domain,
+    _current_user_func,
+    current_pulp_api_version,
+    with_domain,
+)
 from pulpcore.app.loggers import deprecation_logger
 from pulpcore.exceptions.validation import InvalidSignatureError
 
@@ -508,6 +513,11 @@ def configure_cleanup():
         ),
         ("tasks", "pulpcore.app.tasks.purge.purge", settings.TASK_PROTECTION_TIME),
         ("content", "pulpcore.app.tasks.orphan.orphan_cleanup", settings.ORPHAN_PROTECTION_TIME),
+        (
+            "cross-plane references",
+            "pulpcore.app.tasks.reconciliation.reconcile_cross_plane_references",
+            settings.CROSS_PLANE_RECONCILIATION_INTERVAL_MINUTES,
+        ),
     ]:
         if protection_time > 0:
             dispatch_interval = timedelta(minutes=protection_time)
@@ -646,7 +656,7 @@ def get_domain_pk():
     if default_domain:
         return default_domain.pk
     # If we haven't cached the default_domain then use raw SQL to get its PK
-    with connection.cursor() as cursor:
+    with connections["default"].cursor() as cursor:
         cursor.execute("SELECT pulp_id FROM core_domain WHERE name = 'default'")
         row = cursor.fetchone()
         return row[0]
@@ -656,6 +666,18 @@ def set_domain(new_domain):
     # Deprecated
     _current_domain.set(new_domain)
     return new_domain
+
+
+@contextmanager
+def domain_db(domain):
+    with with_domain(domain):
+        yield domain.database_alias
+
+
+def for_each_domain(callback):
+    for domain in models.Domain.objects.all():
+        with domain_db(domain) as alias:
+            callback(domain, alias)
 
 
 def cache_key(base_path):
