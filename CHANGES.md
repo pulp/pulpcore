@@ -8,7 +8,9 @@
 
 [//]: # (towncrier release notes start)
 
-## 3.117.0 (2026-09-02) {: #3.117.0 }
+## YANKED 3.117.0 (2026-09-02) {: #3.117.0 }
+
+Yank reason: Assumption in a migration causes problems in with some plugins, and with Large Installations - yanking until we can address
 
 ### REST API {: #3.117.0-rest-api }
 
