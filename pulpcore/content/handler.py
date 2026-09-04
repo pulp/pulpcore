@@ -18,6 +18,7 @@ from aiohttp.web_exceptions import (
     HTTPMovedPermanently,
     HTTPNotFound,
     HTTPRequestRangeNotSatisfiable,
+    HTTPUnauthorized,
 )
 from asgiref.sync import sync_to_async
 from django.utils import timezone
@@ -48,6 +49,7 @@ from pulpcore.app import mime_types  # noqa: E402
 from pulpcore.app.models import (  # noqa: E402
     Artifact,
     ArtifactDistribution,
+    AuthenticationRequired,
     ContentArtifact,
     Distribution,
     Publication,
@@ -262,7 +264,7 @@ class Handler:
             )
             try:
                 guard = await sync_to_async(cls._permit)(request, distro)
-            except HTTPForbidden:
+            except (HTTPForbidden, HTTPUnauthorized):
                 guard = True
                 raise
             finally:
@@ -490,12 +492,20 @@ class Handler:
 
         Raises:
             [aiohttp.web_exceptions.HTTPForbidden][]: When not permitted.
+            [aiohttp.web_exceptions.HTTPUnauthorized][]: When no (or invalid) credentials were
+                provided at all.
         """
         guard = distribution.content_guard
         if not guard:
             return False
         try:
             guard.cast().permit(request)
+        except AuthenticationRequired as ar:
+            log.debug(
+                'Path: %(p)s not authenticated for guard: "%(g)s" reason: %(r)s',
+                {"p": request.path, "g": guard.name, "r": str(ar)},
+            )
+            raise HTTPUnauthorized(reason=str(ar))
         except PermissionError as pe:
             log.debug(
                 'Path: %(p)s not permitted by guard: "%(g)s" reason: %(r)s',
