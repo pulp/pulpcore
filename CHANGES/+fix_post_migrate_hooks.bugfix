@@ -1,1 +1,0 @@
-Fixed post-migrate hooks to prevent failing on incomplete or rolled back migrations.
