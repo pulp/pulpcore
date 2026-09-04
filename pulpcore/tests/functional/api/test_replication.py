@@ -282,6 +282,80 @@ def test_replication_remote_settings_propagation(
 
 
 @pytest.mark.parallel
+def test_replication_remote_policy(
+    domain_factory,
+    bindings_cfg,
+    pulpcore_bindings,
+    file_bindings,
+    monitor_task,
+    monitor_task_group,
+    pulp_settings,
+    gen_object_with_cleanup,
+    file_distribution_factory,
+    file_publication_factory,
+    file_repository_factory,
+    tmp_path,
+    add_domain_objects_to_cleanup,
+):
+    """Remotes created by replicate() inherit UpstreamPulp.remote_policy when set."""
+    source_domain = domain_factory()
+    add_domain_objects_to_cleanup(source_domain)
+
+    repository = file_repository_factory(pulp_domain=source_domain.name)
+    file_path = tmp_path / "file.txt"
+    file_path.write_text("DEADBEEF")
+    monitor_task(
+        file_bindings.ContentFilesApi.create(
+            file=str(file_path),
+            relative_path="file.txt",
+            repository=repository.pulp_href,
+            pulp_domain=source_domain.name,
+        ).task
+    )
+    publication = file_publication_factory(
+        pulp_domain=source_domain.name, repository=repository.pulp_href
+    )
+    file_distribution_factory(pulp_domain=source_domain.name, publication=publication.pulp_href)
+
+    replica_domain = domain_factory()
+    add_domain_objects_to_cleanup(replica_domain)
+
+    upstream_pulp_body = {
+        "name": str(uuid.uuid4()),
+        "base_url": bindings_cfg.host,
+        "api_root": pulp_settings.API_ROOT,
+        "domain": source_domain.name,
+        "username": bindings_cfg.username,
+        "password": bindings_cfg.password,
+        "remote_policy": "on_demand",
+    }
+    upstream_pulp = gen_object_with_cleanup(
+        pulpcore_bindings.UpstreamPulpsApi, upstream_pulp_body, pulp_domain=replica_domain.name
+    )
+
+    response = pulpcore_bindings.UpstreamPulpsApi.replicate(
+        upstream_pulp.pulp_href, pulpcore_bindings.module.UpstreamPulpReplicate()
+    )
+    monitor_task_group(response.task_group)
+
+    result = file_bindings.RemotesFileApi.list(pulp_domain=replica_domain.name)
+    assert result.count == 1
+    remote = result.results[0]
+    assert remote.policy == "on_demand"
+
+    pulpcore_bindings.UpstreamPulpsApi.partial_update(
+        upstream_pulp.pulp_href, {"remote_policy": "streamed"}
+    )
+    response = pulpcore_bindings.UpstreamPulpsApi.replicate(
+        upstream_pulp.pulp_href, pulpcore_bindings.module.UpstreamPulpReplicate()
+    )
+    monitor_task_group(response.task_group)
+
+    remote = file_bindings.RemotesFileApi.list(pulp_domain=replica_domain.name).results[0]
+    assert remote.policy == "streamed"
+
+
+@pytest.mark.parallel
 def test_replication_with_repo_based_distribution(
     domain_factory,
     bindings_cfg,
