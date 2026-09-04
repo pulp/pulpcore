@@ -1407,3 +1407,118 @@ def test_replicate_policy(
                 assert "UpstreamPulp" not in distro.pulp_labels
     else:
         assert result.count == 0
+
+
+@pytest.mark.parallel
+def test_replication_retain_repo_versions(
+    domain_factory,
+    bindings_cfg,
+    pulpcore_bindings,
+    file_bindings,
+    monitor_task,
+    monitor_task_group,
+    pulp_settings,
+    gen_object_with_cleanup,
+    file_distribution_factory,
+    file_repository_factory,
+    tmp_path,
+    add_domain_objects_to_cleanup,
+):
+    """Test that retain_repo_versions setting is replicated from upstream."""
+
+    # Create source domain with a repository that has retain_repo_versions=5
+    source_domain = domain_factory()
+    add_domain_objects_to_cleanup(source_domain)
+
+    # Create repository with retain_repo_versions set
+    repository = file_repository_factory(pulp_domain=source_domain.name, retain_repo_versions=5)
+
+    # Create some content and add to repository
+    file_path = tmp_path / "file1.txt"
+    file_path.write_text("content1")
+    monitor_task(
+        file_bindings.ContentFilesApi.create(
+            file=str(file_path),
+            relative_path="file1.txt",
+            repository=repository.pulp_href,
+            pulp_domain=source_domain.name,
+        ).task
+    )
+
+    # Create distribution
+    file_distribution_factory(pulp_domain=source_domain.name, repository=repository.pulp_href)
+
+    # Create replica domain
+    replica_domain = domain_factory()
+    add_domain_objects_to_cleanup(replica_domain)
+
+    # Create UpstreamPulp and replicate
+    upstream_pulp_body = {
+        "name": str(uuid.uuid4()),
+        "base_url": bindings_cfg.host,
+        "api_root": pulp_settings.API_ROOT,
+        "domain": source_domain.name,
+        "username": bindings_cfg.username,
+        "password": bindings_cfg.password,
+    }
+    upstream_pulp = gen_object_with_cleanup(
+        pulpcore_bindings.UpstreamPulpsApi,
+        upstream_pulp_body,
+        pulp_domain=replica_domain.name,
+    )
+
+    # Run replication
+    response = pulpcore_bindings.UpstreamPulpsApi.replicate(
+        upstream_pulp.pulp_href, pulpcore_bindings.module.UpstreamPulpReplicate()
+    )
+    task_group = monitor_task_group(response.task_group)
+
+    # Verify replication succeeded
+    for task in task_group.tasks:
+        assert task.state == "completed"
+
+    # Verify retain_repo_versions was replicated
+    replica_repos = file_bindings.RepositoriesFileApi.list(
+        pulp_domain=replica_domain.name, name=repository.name
+    )
+    assert replica_repos.count == 1
+    replica_repo = replica_repos.results[0]
+    assert replica_repo.retain_repo_versions == 5, (
+        f"Expected retain_repo_versions=5, got {replica_repo.retain_repo_versions}"
+    )
+
+    # Test with None value (unlimited retention)
+    repository2 = file_repository_factory(
+        pulp_domain=source_domain.name, name="test-repo-unlimited", retain_repo_versions=None
+    )
+    file_path2 = tmp_path / "file2.txt"
+    file_path2.write_text("content2")
+    monitor_task(
+        file_bindings.ContentFilesApi.create(
+            file=str(file_path2),
+            relative_path="file2.txt",
+            repository=repository2.pulp_href,
+            pulp_domain=source_domain.name,
+        ).task
+    )
+    file_distribution_factory(
+        pulp_domain=source_domain.name, repository=repository2.pulp_href, name="test-distro-2"
+    )
+
+    # Replicate again
+    response = pulpcore_bindings.UpstreamPulpsApi.replicate(
+        upstream_pulp.pulp_href, pulpcore_bindings.module.UpstreamPulpReplicate()
+    )
+    task_group = monitor_task_group(response.task_group)
+    for task in task_group.tasks:
+        assert task.state == "completed"
+
+    # Verify None value was replicated
+    replica_repos2 = file_bindings.RepositoriesFileApi.list(
+        pulp_domain=replica_domain.name, name=repository2.name
+    )
+    assert replica_repos2.count == 1
+    replica_repo2 = replica_repos2.results[0]
+    assert replica_repo2.retain_repo_versions is None, (
+        f"Expected retain_repo_versions=None, got {replica_repo2.retain_repo_versions}"
+    )
