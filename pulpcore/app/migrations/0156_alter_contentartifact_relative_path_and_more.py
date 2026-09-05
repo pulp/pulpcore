@@ -50,8 +50,7 @@ def fix_base_path_violations(apps, schema_editor):
 
     with connection.cursor() as cursor:
         cursor.execute(
-            "SELECT pulp_id, base_path FROM core_distribution"
-            " WHERE '/' || base_path || '/' ~ %s",
+            "SELECT pulp_id, base_path FROM core_distribution WHERE '/' || base_path || '/' ~ %s",
             [_INVALID_PATH_RE],
         )
         rows = cursor.fetchall()
@@ -78,7 +77,6 @@ def fix_base_path_violations(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     atomic = False
 
     dependencies = [
