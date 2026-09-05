@@ -1,7 +1,7 @@
 """Unit tests for migration 0156's normalize helper and migration function."""
 
 import importlib
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -84,10 +84,7 @@ def test_fix_base_path_violations_normalizes_row(monkeypatch):
 
 def test_fix_base_path_violations_skips_clean_rows(monkeypatch):
     """A row with a valid base_path is NOT UPDATE-d."""
-    pk = "some-uuid"
-    clean_path = "fedora/el9"
-
-    # SELECT returns no rows (clean_path doesn't match the invalid regex)
+    # SELECT returns no rows (valid paths don't match the invalid regex)
     select_cursor = _make_cursor([])
     connection_mock = MagicMock()
     connection_mock.cursor.return_value = select_cursor
