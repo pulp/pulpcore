@@ -8,6 +8,29 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.117.1 (2026-09-04) {: #3.117.1 }
+
+### REST API {: #3.117.1-rest-api }
+
+#### Bugfixes {: #3.117.1-rest-api-bugfix }
+
+- Fixed post-migrate hooks to prevent failing on incomplete or rolled back migrations.
+- Revert the migration of relative_paths to the new domain type.
+
+### Plugin API {: #3.117.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.117.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.117.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## YANKED 3.117.0 (2026-09-02) {: #3.117.0 }
 
 Yank reason: Assumption in a migration causes problems in with some plugins, and with Large Installations - yanking until we can address
