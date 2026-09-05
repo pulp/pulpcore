@@ -73,7 +73,10 @@ def test_fix_base_path_violations_normalizes_row(monkeypatch):
     connection_mock = MagicMock()
     connection_mock.cursor.side_effect = lambda: next(cursors)
 
-    with patch("pulpcore.app.migrations.0156_alter_contentartifact_relative_path_and_more.connection", connection_mock):
+    with patch(
+        "pulpcore.app.migrations.0156_alter_contentartifact_relative_path_and_more.connection",
+        connection_mock,
+    ):
         fix_base_path_violations(None, None)
 
     update_cursor.execute.assert_called_once_with(
@@ -89,7 +92,10 @@ def test_fix_base_path_violations_skips_clean_rows(monkeypatch):
     connection_mock = MagicMock()
     connection_mock.cursor.return_value = select_cursor
 
-    with patch("pulpcore.app.migrations.0156_alter_contentartifact_relative_path_and_more.connection", connection_mock):
+    with patch(
+        "pulpcore.app.migrations.0156_alter_contentartifact_relative_path_and_more.connection",
+        connection_mock,
+    ):
         fix_base_path_violations(None, None)
 
     # Only one cursor call (the SELECT), no UPDATE
@@ -106,6 +112,9 @@ def test_fix_base_path_violations_raises_for_unfixable_path():
     connection_mock = MagicMock()
     connection_mock.cursor.return_value = select_cursor
 
-    with patch("pulpcore.app.migrations.0156_alter_contentartifact_relative_path_and_more.connection", connection_mock):
+    with patch(
+        "pulpcore.app.migrations.0156_alter_contentartifact_relative_path_and_more.connection",
+        connection_mock,
+    ):
         with pytest.raises(RuntimeError, match="could not be automatically normalized"):
             fix_base_path_violations(None, None)
