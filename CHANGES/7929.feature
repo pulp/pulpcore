@@ -1,0 +1,1 @@
+Added `Last-Modified` / `If-Modified-Since` (`304 Not Modified`) and `Cache-Control: public, max-age=0, must-revalidate` on content-app artifact responses (filesystem and `ArtifactResponse`; not object-storage 302s) so edge caches can revalidate after ContentGuard without re-fetching the body.
