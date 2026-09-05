@@ -4,8 +4,9 @@ import re
 
 import django.contrib.postgres.indexes
 import django.contrib.postgres.operations
-import pulpcore.app.models.fields
 from django.db import migrations
+
+import pulpcore.app.models.fields
 
 # PostgreSQL regex matching paths that violate the relative_path domain constraint.
 # Mirrors: '/' || VALUE || '/' !~ '[\n\r\s\t\?#]|(/\.{0,2}/)'
