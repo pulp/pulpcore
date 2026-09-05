@@ -4,7 +4,6 @@ import re
 
 import django.contrib.postgres.indexes
 import django.contrib.postgres.operations
-import django.db.models.expressions
 import pulpcore.app.models.fields
 from django.db import migrations
 
