@@ -5,52 +5,44 @@ ArtifactFileField.pre_save uses a raw startswith() against settings.MEDIA_ROOT t
 detect files already in artifact storage. When MEDIA_ROOT is "" (S3/Azure backends),
 os.path.join("", "artifact") == "artifact", so any uploaded filename starting with
 "artifact" falsely trips the check and raises ValueError → 500.
+
+This test uploads a file named "artifact-foo-1.0-1.noarch.rpm" via the real Pulp
+artifacts HTTP API and asserts HTTP 201.
+Run against a container started with MEDIA_ROOT="" (PULP_MEDIA_ROOT=).
 """
-import os
+import sys
 import time
-import tempfile
 
 import pytest
+import requests
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pulpcore.app.settings")
-os.environ.setdefault("PULP_SETTINGS", "/etc/pulp/settings.py")
+# API accessible from inside the container
+API_BASE = "http://127.0.0.1:24817/api/pulp/default/api/v3"
+AUTH = ("admin", "password")
 
 
-@pytest.mark.django_db
-def test_artifact_upload_artifact_prefix_filename_no_value_error_when_media_root_empty():
+@pytest.mark.parametrize("filename", [
+    "artifact-foo-1.0-1.noarch.rpm",
+    "artifact-bar.tar.gz",
+])
+def test_artifact_upload_artifact_prefix_filename_no_500_when_media_root_empty(filename):
     """
-    Uploading a file whose name starts with 'artifact' must not raise ValueError
+    Uploading a file whose name starts with 'artifact' must return 201
     when MEDIA_ROOT is empty (S3/object-storage backend condition).
 
-    Before the fix: pre_save raises ValueError because
-      os.path.join("", "artifact") == "artifact"
-      and file.name.startswith("artifact") is True.
-    After the fix: bool("") is False so the guard short-circuits and no
-      ValueError is raised.
+    Before the fix: pre_save raises ValueError → HTTP 500.
+    After the fix: the guard bool(settings.MEDIA_ROOT) short-circuits
+      and the upload succeeds.
     """
-    from django.test import override_settings
-    from django.core.files.uploadedfile import SimpleUploadedFile
-    from django.contrib.auth.models import User
-    from rest_framework.test import APIClient
+    content = f"fake rpm for GH-8041 test {filename} {time.time()}".encode()
 
-    client = APIClient()
-    user = User.objects.create_superuser("testadmin_gh8041", "test@example.com", "password")
-    client.force_authenticate(user=user)
-
-    filename = "artifact-foo-1.0-1.noarch.rpm"
-    # Unique content per run to avoid SHA256 uniqueness conflicts
-    content = f"fake rpm for GH-8041 test {time.time()}".encode()
-
-    with tempfile.TemporaryDirectory() as tmpdir:
-        with override_settings(MEDIA_ROOT=""):
-            f = SimpleUploadedFile(filename, content, content_type="application/octet-stream")
-            response = client.post(
-                "/api/pulp/default/api/v3/artifacts/",
-                {"file": f},
-                format="multipart",
-            )
+    response = requests.post(
+        f"{API_BASE}/artifacts/",
+        auth=AUTH,
+        files={"file": (filename, content, "application/octet-stream")},
+    )
 
     assert response.status_code == 201, (
-        f"Expected HTTP 201 but got {response.status_code}. "
-        f"Response: {getattr(response, 'data', response.content[:300])}"
+        f"Expected HTTP 201 for filename '{filename}' but got {response.status_code}. "
+        f"Body: {response.text[:500]}"
     )
