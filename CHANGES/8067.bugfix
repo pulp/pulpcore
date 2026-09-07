@@ -1,0 +1,1 @@
+Add a management command to help remove distributions with a dysfunctional base_path that prevents upgrading to 3.117.
