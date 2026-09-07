@@ -3,12 +3,11 @@ import json
 import time
 from functools import wraps
 
-from aiohttp.web import FileResponse, HTTPSuccessful, Request, Response, StreamResponse
+from aiohttp.web import FileResponse, HTTPSuccessful, Request, Response
 from aiohttp.web_exceptions import HTTPFound, HTTPNotModified
 from django.conf import settings
 from django.http import FileResponse as ApiFileResponse
 from django.http import HttpResponse, HttpResponseRedirect
-from django.utils.http import parse_http_date_safe
 from redis import ConnectionError
 from redis.asyncio import ConnectionError as AConnectionError
 from rest_framework.request import Request as ApiRequest
@@ -18,8 +17,9 @@ from pulpcore.app.redis_connection import (
     get_async_redis_connection,
     get_redis_connection,
 )
+from pulpcore.app.util import check_request_was_modified
 from pulpcore.metrics import artifacts_size_counter
-from pulpcore.responses import ArtifactResponse, PulpFileResponse
+from pulpcore.responses import ArtifactResponse
 
 DEFAULT_EXPIRES_TTL = settings.CACHE_SETTINGS["EXPIRES_TTL"]
 
@@ -307,7 +307,7 @@ class AsyncContentCache(AsyncCache):
     """Cache object meant to be used for the content app"""
 
     RESPONSE_TYPES = {
-        "FileResponse": PulpFileResponse,
+        "FileResponse": FileResponse,
         "ArtifactResponse": ArtifactResponse,
         "Response": Response,
         "Redirect": HTTPFound,
@@ -350,63 +350,19 @@ class AsyncContentCache(AsyncCache):
             if self.auth:
                 await self.auth(request, self, bk)
             key = self.make_key(request)
-
             # Check cache
-            entry = await self.get_entry(key, bk)
-            if entry is not None:
-                # Cache hit. Authorization has already run. If the client's If-Modified-Since
-                # covers the stored last_modified, answer a bodyless 304 without reconstructing
-                # the full response. Fall back to the header for entries cached before this field.
-                last_modified = entry.get("last_modified") or entry.get("headers", {}).get(
-                    "Last-Modified"
+            response = await self.make_response(key, bk, request)
+            if response is None:
+                # Cache miss, create new entry
+                response = await self.make_entry(
+                    key, bk, func, args, kwargs, self.default_expires_ttl
                 )
-                if self._not_modified(request, last_modified):
-                    headers = dict(entry.get("headers") or {})
-                    headers["X-PULP-CACHE"] = "HIT"
-                    raise self._make_not_modified(headers, last_modified)
-                response = self.build_response(entry)
-                if size := response.headers.get("X-PULP-ARTIFACT-SIZE"):
-                    artifacts_size_counter.add(size)
-                return response
+            elif size := response.headers.get("X-PULP-ARTIFACT-SIZE"):
+                artifacts_size_counter.add(size)
 
-            # Cache miss: build and cache the full response (a 304 is never stored). Still answer
-            # a matching conditional request with a 304 from the fresh response's Last-Modified,
-            # but never after a stream has already started writing.
-            response = await self.make_entry(key, bk, func, args, kwargs, self.default_expires_ttl)
-            if getattr(response, "prepared", False):
-                return response
-            last_modified = response.headers.get("Last-Modified")
-            if self._not_modified(request, last_modified):
-                raise self._make_not_modified(response.headers, last_modified)
             return response
 
         return cached_function
-
-    @staticmethod
-    def _not_modified(request, last_modified):
-        """True when the request's If-Modified-Since covers the given Last-Modified value.
-
-        Ignore If-Modified-Since when If-None-Match is present, or when it is later than
-        the server clock.
-        """
-        if not last_modified:
-            return False
-        if request.headers.get("If-None-Match"):
-            return False
-        if_modified_since = parse_http_date_safe(request.headers.get("If-Modified-Since", ""))
-        if if_modified_since is None or if_modified_since > time.time():
-            return False
-        lm_epoch = parse_http_date_safe(last_modified)
-        return lm_epoch is not None and lm_epoch <= if_modified_since
-
-    @staticmethod
-    def _make_not_modified(source_headers, last_modified):
-        """Build a bodyless 304 echoing Last-Modified and any caching metadata already present."""
-        headers = {"Last-Modified": last_modified}
-        for name in ("Cache-Control", "X-PULP-CACHE"):
-            if value := source_headers.get(name):
-                headers[name] = value
-        return HTTPNotModified(headers=headers)
 
     def get_request_from_args(self, args):
         """Finds the request object from list of args"""
@@ -414,29 +370,12 @@ class AsyncContentCache(AsyncCache):
             if isinstance(arg, Request):
                 return arg
 
-    async def get_entry(self, key, base_key):
-        """Return the cached entry dict for ``key`` (deleting stale/invalid rows), or None."""
+    async def make_response(self, key, base_key, request=None):
+        """Tries to find the cached entry and turn it into a proper response"""
         entry = await self.get(key, base_key)
         if not entry:
             return None
         entry = json.loads(entry)
-        response_type = entry.get("type")
-        # None means "doesn't expire", unset/absent means "already expired".
-        expires = entry.get("expires", -1)
-        if (not response_type or response_type not in self.RESPONSE_TYPES) or (
-            expires and expires < time.time()
-        ):
-            # Bad entry, delete from cache
-            await self.delete(key, base_key)
-            return None
-        return entry
-
-    def build_response(self, entry):
-        """Turn a cached entry dict into a proper response object (marked as a cache HIT)."""
-        entry = dict(entry)  # do not mutate the caller's dict
-        entry.pop("expires", None)
-        entry.pop("last_modified", None)
-        response_type = entry.pop("type")
 
         if binary := entry.pop("body", None):
             # raw binary data were translated to their hexadecimal representation and saved in
@@ -445,39 +384,38 @@ class AsyncContentCache(AsyncCache):
             # https://docs.aiohttp.org/en/stable/web_reference.html#response
             entry["body"] = bytes.fromhex(binary)
 
-        response = self.RESPONSE_TYPES[response_type](**entry)
+        response_type = entry.pop("type", None)
+        # None means "doesn't expire", unset means "already expired".
+        expires = entry.pop("expires", -1)
+        if (not response_type or response_type not in self.RESPONSE_TYPES) or (
+            expires and expires < time.time()
+        ):
+            # Bad entry, delete from cache
+            await self.delete(key, base_key)
+            return None
+
+        headers = entry.get("headers", {})
+        if request and not check_request_was_modified(
+            request, last_modified=headers.get("Last-Modified")
+        ):
+            response = HTTPNotModified(headers={"Cache-Control": headers.get("Cache-Control")})
+        else:
+            response = self.RESPONSE_TYPES[response_type](**entry)
         response.headers.update({"X-PULP-CACHE": "HIT"})
         return response
-
-    async def make_response(self, key, base_key):
-        """Tries to find the cached entry and turn it into a proper response"""
-        entry = await self.get_entry(key, base_key)
-        if entry is None:
-            return None
-        return self.build_response(entry)
 
     async def make_entry(self, key, base_key, handler, args, kwargs, expires=DEFAULT_EXPIRES_TTL):
         """Gets the response for the request and try to turn it into a cacheable entry"""
         try:
             response = await handler(*args, **kwargs)
-        except HTTPNotModified:
-            # HTTPNotModified is HTTPSuccessful; do not swallow it into a cached entry.
-            raise
-        except (HTTPSuccessful, HTTPFound) as e:
+        except (HTTPSuccessful, HTTPFound, HTTPNotModified) as e:
             response = e
 
         original_response = response
-        if isinstance(response, StreamResponse):
-            if hasattr(response, "future_response"):
-                response = response.future_response
-
-        if getattr(response, "status", None) == 304:
-            return original_response
+        if hasattr(response, "future_response"):
+            response = response.future_response
 
         entry = {"headers": dict(response.headers), "status": response.status}
-        if last_modified := response.headers.get("Last-Modified"):
-            # Stored alongside headers so a cache hit can 304 without reconstructing the response.
-            entry["last_modified"] = last_modified
         if expires is not None:
             # Redis TTL is not sufficient: https://github.com/pulp/pulpcore/issues/4845
             entry["expires"] = expires + time.time()
