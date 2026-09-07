@@ -1,0 +1,1 @@
+Fixed ``ArtifactFileField.pre_save`` spuriously rejecting artifact uploads whose filenames start with ``artifact`` when ``MEDIA_ROOT`` is empty (S3/Azure object-storage backends). The ``startswith`` guard now short-circuits when ``MEDIA_ROOT`` is empty, preventing false detection of fresh uploads as already-stored artifacts.
