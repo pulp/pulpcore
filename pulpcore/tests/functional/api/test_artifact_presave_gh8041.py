@@ -16,6 +16,7 @@ Test logic:
   - 500 with ValueError "already present in Artifact storage": Bug is present (FAIL).
   - 500 with any other error: Fix is in place; storage failure is a separate concern (PASS).
 """
+
 import time
 
 import pytest
@@ -38,10 +39,13 @@ def _wait_for_api(timeout=30):
         time.sleep(1)
 
 
-@pytest.mark.parametrize("filename", [
-    "artifact-foo-1.0-1.noarch.rpm",
-    "artifact-bar.tar.gz",
-])
+@pytest.mark.parametrize(
+    "filename",
+    [
+        "artifact-foo-1.0-1.noarch.rpm",
+        "artifact-bar.tar.gz",
+    ],
+)
 def test_artifact_upload_artifact_prefix_filename_no_value_error_when_media_root_empty(filename):
     """
     Uploading a file whose name starts with 'artifact' must NOT raise the
