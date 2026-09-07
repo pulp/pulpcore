@@ -70,7 +70,12 @@ class ArtifactFileField(FileField):
             artifact_storage_path,
             os.path.join(settings.MEDIA_ROOT, artifact_storage_path),
         ]
-        is_in_artifact_storage = file.name.startswith(os.path.join(settings.MEDIA_ROOT, "artifact"))
+        # Guard against empty MEDIA_ROOT (object-storage backends such as S3/Azure set it to ""),
+        # where os.path.join("", "artifact") == "artifact" and any filename starting with
+        # "artifact" would be falsely detected as already residing in artifact storage.
+        is_in_artifact_storage = bool(settings.MEDIA_ROOT) and file.name.startswith(
+            os.path.join(settings.MEDIA_ROOT, "artifact")
+        )
 
         if not already_in_place and is_in_artifact_storage:
             raise ValueError(
