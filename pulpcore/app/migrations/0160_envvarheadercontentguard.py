@@ -8,7 +8,7 @@ import pulpcore.app.models.access_policy
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("core", "0157_distribution_base_path_constraint"),
+        ("core", "0159_alter_contentartifact_relative_path_and_more"),
     ]
 
     operations = [
