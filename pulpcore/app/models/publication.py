@@ -812,8 +812,9 @@ class Distribution(MasterModel):
             pub = dp.publication
             if pub.pass_through:
                 ca = (
-                    ContentArtifact.objects.select_related("artifact", "artifact__pulp_domain")
-                    .filter(content__in=pub.repository_version.content, relative_path=path)
+                    pub.repository_version.content_artifact_qs()
+                    .select_related("artifact", "artifact__pulp_domain")
+                    .filter(relative_path=path)
                     .first()
                 )
                 if ca is not None:

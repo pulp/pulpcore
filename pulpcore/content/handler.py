@@ -630,8 +630,10 @@ class Handler:
                         artifacts_to_find[pa.content_artifact.pk] = name
 
             if repo_version or publication.pass_through:
-                cas = ContentArtifact.objects.select_related("artifact").filter(
-                    content__in=content_repo_ver.content, relative_path__startswith=path
+                cas = (
+                    content_repo_ver.content_artifact_qs()
+                    .select_related("artifact")
+                    .filter(relative_path__startswith=path)
                 )
                 for ca in cas:
                     name = file_or_directory_name(path, ca.relative_path)
@@ -795,12 +797,8 @@ class Handler:
             if publication.pass_through:
                 try:
                     ca = (
-                        await ContentArtifact.objects.select_related(
-                            "artifact", "artifact__pulp_domain"
-                        )
-                        .filter(
-                            content__in=publication.repository_version.content,
-                        )
+                        await publication.repository_version.content_artifact_qs()
+                        .select_related("artifact", "artifact__pulp_domain")
                         .aget(relative_path=original_rel_path)
                     )
 
@@ -835,9 +833,9 @@ class Handler:
             # Look for index.html or list the directory
             index_path = "{}index.html".format(rel_path)
 
-            contentartifact_exists = await ContentArtifact.objects.filter(
-                content__in=repo_version.content, relative_path=index_path
-            ).aexists()
+            contentartifact_exists = (
+                await repo_version.content_artifact_qs().filter(relative_path=index_path).aexists()
+            )
             if contentartifact_exists:
                 original_rel_path = index_path
                 headers = self.response_headers(original_rel_path, distro)
@@ -858,9 +856,11 @@ class Handler:
                     )
 
             try:
-                ca = await ContentArtifact.objects.select_related(
-                    "artifact", "artifact__pulp_domain"
-                ).aget(content__in=repo_version.content, relative_path=original_rel_path)
+                ca = (
+                    await repo_version.content_artifact_qs()
+                    .select_related("artifact", "artifact__pulp_domain")
+                    .aget(relative_path=original_rel_path)
+                )
 
             except MultipleObjectsReturned:
                 log.error(

@@ -1058,6 +1058,16 @@ class RepositoryVersion(BaseModel):
 
         return self.get_content()
 
+    def content_artifact_qs(self):
+        """Return content artifacts for content contained in this version.
+
+        RepositoryContent is the authoritative representation of repository-version
+        membership. Using it avoids expanding the version's content_ids array into
+        a large membership predicate.
+        """
+        content_ids = self._content_relationships().values("content_id")
+        return ContentArtifact.objects.filter(content_id__in=content_ids)
+
     def content_batch_qs(self, content_qs=None, order_by_params=("pk",), batch_size=1000):
         """
         Generate content batches to efficiently iterate over all content.
