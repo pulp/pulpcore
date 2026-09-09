@@ -1,6 +1,7 @@
 from copy import deepcopy
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from rest_access_policy import AccessPolicy
 from rest_framework.exceptions import APIException
 
@@ -14,6 +15,17 @@ class DefaultAccessPolicy(AccessPolicy):
     """
     An AccessPolicy that takes default statements from the view(set).
     """
+
+    def get_user_group_values(self, user):
+        """Read groups from the ORM only for real database users.
+
+        drf-access-policy assumes groups live in `django.contrib.auth` and prefetches them,
+        which does not work for a stateless principal. Any non-database user (a workload-identity
+        principal, or another one added later) supplies its groups via a `group_names` attribute.
+        """
+        if isinstance(user, get_user_model()):
+            return super().get_user_group_values(user)
+        return list(getattr(user, "group_names", []))
 
     @classmethod
     def get_access_policy(cls, view):
