@@ -17,7 +17,7 @@ from django.contrib.postgres.indexes import OpClass, SpGistIndex
 from django.db import DatabaseError, IntegrityError, models, transaction
 from django.utils import timezone
 from django_lifecycle import AFTER_CREATE, AFTER_UPDATE, BEFORE_CREATE, BEFORE_DELETE, hook
-from rest_framework.exceptions import APIException
+from rest_framework.exceptions import APIException, AuthenticationFailed, NotAuthenticated
 from url_normalize import url_normalize
 
 from pulpcore.app.files import PulpTemporaryUploadedFile
@@ -366,6 +366,17 @@ class PublishedMetadata(Content):
         unique_together = ("publication", "relative_path")
 
 
+class AuthenticationRequired(PermissionError):
+    """
+    Raised by a :class:`ContentGuard` when the request has no (or invalid) credentials at all.
+
+    This is distinct from a plain :class:`PermissionError`, which signals that the request was
+    authenticated but is not authorized to access the content. The content app maps this
+    exception to an HTTP 401 response (with a `WWW-Authenticate` header), while a plain
+    `PermissionError` is mapped to an HTTP 403, matching normal HTTP authentication semantics.
+    """
+
+
 class ContentGuard(MasterModel):
     """
     Defines a named content guard.
@@ -399,6 +410,9 @@ class ContentGuard(MasterModel):
 
         Raises:
             PermissionError: When not authorized.
+            AuthenticationRequired: When no (or invalid) credentials were provided at all. This
+                is a subclass of `PermissionError`, so guards that don't distinguish the two
+                cases can keep raising a plain `PermissionError` and will keep getting a 403.
         """
         raise NotImplementedError()
 
@@ -433,8 +447,11 @@ class RBACContentGuard(ContentGuard, AutoAddObjPermsMixin):
         setattr(view, "action", "download")
         try:
             view.check_permissions(drequest)
+        except (NotAuthenticated, AuthenticationFailed) as e:
+            # No (or invalid) credentials were provided at all -> 401, not 403.
+            raise AuthenticationRequired(e) from e
         except APIException as e:
-            raise PermissionError(e)
+            raise PermissionError(e) from e
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
@@ -599,6 +616,9 @@ class CompositeContentGuard(ContentGuard, AutoAddObjPermsMixin):
             try:
                 detail_guard.permit(request)
                 return  # success on first-pass
+            except AuthenticationRequired:
+                # Re-raise immediately to preserve 401 status, don't aggregate with other denials
+                raise
             except PermissionError as pe:
                 guard_error = _("Guard: '{}', HREF: '{}', class: '{}', denial: [{}].").format(
                     detail_guard.name, get_url(detail_guard), type(detail_guard), str(pe)

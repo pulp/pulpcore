@@ -1,0 +1,1 @@
+Fixed the content app returning `403 Forbidden` instead of `401 Unauthorized` when a request to a guarded distribution had no (or invalid) credentials at all.

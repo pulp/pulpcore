@@ -4,8 +4,15 @@ from base64 import b64encode
 from unittest.mock import Mock
 
 import pytest
+from rest_framework.exceptions import NotAuthenticated, PermissionDenied
 
-from pulpcore.app.models import ContentRedirectContentGuard, HeaderContentGuard
+from pulpcore.app.models import (
+    AuthenticationRequired,
+    ContentRedirectContentGuard,
+    HeaderContentGuard,
+    RBACContentGuard,
+)
+from pulpcore.app.viewsets import RBACContentGuardViewSet
 
 
 def test_preauthenticate_urls():
@@ -142,3 +149,38 @@ def test_header_content_guard(db):
     encoded_value = b64encode(b"somevalue")
     request.headers = {"x-header-name": encoded_value}
     assert not content_guard_without_jq_filter.permit(request)
+
+
+def test_rbac_content_guard_no_credentials_raises_authentication_required(monkeypatch):
+    """
+    No credentials at all must surface as AuthenticationRequired (-> HTTP 401), not a plain
+    PermissionError (-> HTTP 403). Regression test for the content app returning 403 for
+    unauthenticated requests.
+    """
+
+    def raise_not_authenticated(self, request):
+        raise NotAuthenticated()
+
+    monkeypatch.setattr(RBACContentGuardViewSet, "check_permissions", raise_not_authenticated)
+
+    content_guard = RBACContentGuard(name="rbac_guard")
+    request = {"drf_request": Mock()}
+
+    with pytest.raises(AuthenticationRequired):
+        content_guard.permit(request)
+
+
+def test_rbac_content_guard_bad_permissions_raises_permission_error(monkeypatch):
+    """An authenticated-but-unauthorized request should still raise a plain PermissionError."""
+
+    def raise_permission_denied(self, request):
+        raise PermissionDenied()
+
+    monkeypatch.setattr(RBACContentGuardViewSet, "check_permissions", raise_permission_denied)
+
+    content_guard = RBACContentGuard(name="rbac_guard")
+    request = {"drf_request": Mock()}
+
+    with pytest.raises(PermissionError) as exc_info:
+        content_guard.permit(request)
+    assert not isinstance(exc_info.value, AuthenticationRequired)
