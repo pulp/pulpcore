@@ -5,6 +5,7 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
 from pulpcore.app import models
+from pulpcore.app.role_util import assign_content_owner_role, assign_content_viewer_role
 from pulpcore.app.serializers import (
     ContentArtifactChecksumField,
     ContentArtifactsField,
@@ -141,6 +142,12 @@ class NoArtifactContentSerializer(ModelSerializer):
             with repository.new_version() as new_version:
                 new_version.add_content(content_to_add)
 
+        # Creators own their content; uploaders of pre-existing (deduplicated) content
+        # only get read access, so they cannot manage roles on content they did not create.
+        if created:
+            assign_content_owner_role(content)
+        else:
+            assign_content_viewer_role(content)
         return content
 
     class Meta:

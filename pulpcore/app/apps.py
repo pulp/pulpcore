@@ -133,6 +133,11 @@ class PulpPluginAppConfig(apps.AppConfig):
             dispatch_uid="populate_access_policies_identifier",
         )
         post_migrate.connect(_populate_roles, sender=self, dispatch_uid="populate_roles_identifier")
+        post_migrate.connect(
+            _populate_content_owner_roles,
+            sender=self,
+            dispatch_uid=f"populate_content_owner_roles_{self.label}",
+        )
 
     def import_serializers(self):
         # circular import avoidance
@@ -346,6 +351,57 @@ def _ensure_default_domain(sender, apps, **kwargs):
                 default.redirect_to_object_storage = settings.REDIRECT_TO_OBJECT_STORAGE
                 default.storage_class = settings.STORAGES["default"]["BACKEND"]
                 default.save(skip_hooks=True)
+
+
+def _populate_content_owner_roles(sender, **kwargs):
+    """Ensure `<app>.<model>_owner` and `<app>.<model>_viewer` roles for each content type."""
+    from django.contrib.auth.models import Permission
+    from django.contrib.contenttypes.models import ContentType
+    from pulpcore.app.models.content import Content
+    from pulpcore.app.models.role import Role
+
+    for model in sender.get_models():
+        if not (issubclass(model, Content) and model is not Content):
+            continue
+        if model._meta.abstract or model._meta.proxy:
+            continue
+
+        opts = model._meta
+        ctype = ContentType.objects.get_for_model(model, for_concrete_model=False)
+
+        manage_codename = f"manage_roles_{opts.model_name}"
+        manage_perm, _ = Permission.objects.get_or_create(
+            content_type=ctype,
+            codename=manage_codename,
+            defaults={"name": f"Can manage roles on {opts.model_name}"},
+        )
+
+        view_perm = Permission.objects.filter(
+            content_type=ctype, codename=f"view_{opts.model_name}"
+        ).first()
+
+        owner_perms = list(
+            Permission.objects.filter(
+                content_type=ctype,
+                codename__in=[
+                    f"view_{opts.model_name}",
+                    f"change_{opts.model_name}",
+                    f"delete_{opts.model_name}",
+                ],
+            )
+        ) + [manage_perm]
+
+        owner_role, _ = Role.objects.update_or_create(
+            name=f"{opts.app_label}.{opts.model_name}_owner",
+            defaults={"locked": True},
+        )
+        owner_role.permissions.set(owner_perms)
+
+        viewer_role, _ = Role.objects.update_or_create(
+            name=f"{opts.app_label}.{opts.model_name}_viewer",
+            defaults={"locked": True},
+        )
+        viewer_role.permissions.set([view_perm] if view_perm else [])
 
 
 def _populate_roles(sender, apps, verbosity, **kwargs):

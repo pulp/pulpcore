@@ -1,0 +1,1 @@
+Content uploaders are now granted an object-level owner role (view/change/delete/manage_roles) on the content they create, and content read-scoping now includes content a user owns even when it is not in any repository. This lets a user read back a unit they just uploaded (e.g. fetching a package by href before adding it to a repository).

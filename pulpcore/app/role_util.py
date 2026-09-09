@@ -12,6 +12,7 @@ from django.db.models.functions import Cast
 
 from pulpcore.app.models import Group
 from pulpcore.app.models.role import GroupRole, Role, UserRole
+from pulpcore.app.util import get_current_authenticated_user
 
 
 @lru_cache(maxsize=1)
@@ -59,6 +60,31 @@ def assign_role(rolename, entity, obj=None, domain=None):
         GroupRole.objects.create(role=role, group=entity, content_object=obj, domain=domain)
     else:
         UserRole.objects.create(role=role, user=entity, content_object=obj, domain=domain)
+
+
+def _assign_content_role(content, suffix):
+    """Grant the current authenticated user a `<app>.<model>_<suffix>` role on a content unit.
+
+    No-op outside an authenticated request/task context (e.g. sync, import, migrations)
+    and idempotent (skips assignment when the user already holds the role on the object).
+    """
+    user = get_current_authenticated_user()
+    if user is None:
+        return
+    role_name = f"{content._meta.app_label}.{content._meta.model_name}_{suffix}"
+    if content.user_roles.filter(user=user, role__name=role_name).exists():
+        return
+    assign_role(role_name, user, obj=content)
+
+
+def assign_content_owner_role(content):
+    """Grant the current user the owner role on content they created."""
+    _assign_content_role(content, "owner")
+
+
+def assign_content_viewer_role(content):
+    """Grant the current user view-only access on pre-existing (deduplicated) content."""
+    _assign_content_role(content, "viewer")
 
 
 def remove_role(rolename, entity, obj=None, domain=None):

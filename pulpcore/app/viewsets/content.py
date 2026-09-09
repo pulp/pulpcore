@@ -164,22 +164,33 @@ class BaseContentViewSet(NamedModelViewSet):
         return qs
 
     def scope_queryset(self, qs):
-        """Scope the content based on repositories the user has permission to see."""
+        """Scope content by repositories the user can see, unioned with object-owned content."""
+        if self.request.user.is_superuser:
+            return qs
+
+        from pulpcore.app.role_util import get_objects_for_user
+
         # This has been optimized, see ListRepositoryVersions for more generic version
         repositories = self.queryset.model.repository_types()
-        if not self.request.user.is_superuser:
-            scoped_repos = []
-            for repo in repositories:
-                repo_viewset = get_viewset_for_model(repo)()
-                setattr(repo_viewset, "request", self.request)
-                scoped_repos.extend(repo_viewset.get_queryset().values_list("pk", flat=True))
+        scoped_repos = []
+        for repo in repositories:
+            repo_viewset = get_viewset_for_model(repo)()
+            setattr(repo_viewset, "request", self.request)
+            scoped_repos.extend(repo_viewset.get_queryset().values_list("pk", flat=True))
 
-            # calling the distinct clause at end of the query ensures that no duplicates from
-            # joined tables will be returned to the end-user; this behaviour is documented at
-            # https://docs.djangoproject.com/en/3.2/topics/db/queries, in the section Spanning
-            # multi-valued relationships
-            return qs.filter(repositories__in=scoped_repos).distinct()
-        return qs
+        # calling the distinct clause at end of the query ensures that no duplicates from
+        # joined tables will be returned to the end-user; this behaviour is documented at
+        # https://docs.djangoproject.com/en/3.2/topics/db/queries, in the section Spanning
+        # multi-valued relationships
+        repo_scoped = qs.filter(repositories__in=scoped_repos)
+
+        model = self.queryset.model
+        view_perm = f"{model._meta.app_label}.view_{model._meta.model_name}"
+        obj_scoped = get_objects_for_user(
+            self.request.user, view_perm, qs, with_superuser=False
+        )
+
+        return (repo_scoped | obj_scoped).distinct()
 
 
 class ListContentViewSet(BaseContentViewSet, mixins.ListModelMixin):
