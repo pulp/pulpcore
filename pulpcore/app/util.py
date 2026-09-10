@@ -387,26 +387,46 @@ class VerifyResult:
     Verification result mimicking the interface of gnupg.Verify for compatibility.
 
     Attributes:
-        valid (bool): Always True; invalid signatures raise InvalidSignatureError instead.
-        fingerprint (str): Fingerprint of the signing subkey (uppercase hex).
-        pubkey_fingerprint (str): Fingerprint of the signing certificate (uppercase hex).
-        key_id (str): Short (16-char) key ID derived from the fingerprint.
+        valid (bool): Whether the signature is valid.
+        status (str or None): A human-readable verification status.
+        fingerprint (str or None): Fingerprint of the signing subkey (uppercase hex).
+        pubkey_fingerprint (str or None): Fingerprint of the signing certificate (uppercase hex).
+        key_id (str or None): Short (16-char) key ID derived from the fingerprint.
         data (bytes or None): The verified plaintext content for inline signatures, None for
             detached signatures.
     """
 
-    def __init__(self, decrypted):
-        self.valid = True
-        self.data = bytes(decrypted.bytes) if decrypted.bytes is not None else None
-        vs = decrypted.valid_sigs[0]
-        self.fingerprint = vs.signing_key.upper()
-        self.pubkey_fingerprint = vs.certificate.upper()
-        self.key_id = vs.signing_key[-16:].upper()
+    def __init__(self, decrypted=None, *, status=None):
+        self.valid = decrypted is not None
+        self.status = status
+        self.data = (
+            bytes(decrypted.bytes)
+            if decrypted is not None and decrypted.bytes is not None
+            else None
+        )
+        if decrypted is None or not decrypted.valid_sigs:
+            self.fingerprint = None
+            self.pubkey_fingerprint = None
+            self.key_id = None
+        else:
+            vs = decrypted.valid_sigs[0]
+            self.fingerprint = vs.signing_key.upper()
+            self.pubkey_fingerprint = vs.certificate.upper()
+            self.key_id = openpgp_key_id(vs.signing_key)
 
     def __repr__(self):
         return (
             f"<VerifyResult valid={self.valid} fingerprint={self.fingerprint} key_id={self.key_id}>"
         )
+
+
+def openpgp_key_id(fingerprint):
+    """Return the OpenPGP key ID for a hexadecimal fingerprint.
+
+    OpenPGP v4 key IDs use the low-order 64 bits, while v6 key IDs use the
+    high-order 64 bits. The fingerprint length distinguishes these versions.
+    """
+    return (fingerprint[:16] if len(fingerprint) == 64 else fingerprint[-16:]).upper()
 
 
 def gpg_verify(public_keys, signature, detached_data=None):
@@ -448,7 +468,8 @@ def gpg_verify(public_keys, signature, detached_data=None):
         else:
             result = verify(bytes=sig_data, store=store)
     except Exception:
-        raise InvalidSignatureError(_("The signature is not valid."))
+        message = _("The signature is not valid.")
+        raise InvalidSignatureError(message, verified=VerifyResult(status=message)) from None
 
     return VerifyResult(result)
 

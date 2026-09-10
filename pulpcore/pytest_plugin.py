@@ -1484,6 +1484,8 @@ def import_signing_key(key_url, home, *, backend="gpg"):
     if backend == "sq":
         from pysequoia import Cert
 
+        from pulpcore.app.util import openpgp_key_id
+
         completed = subprocess.run(
             ("sq", "--home", str(home), "key", "import"),
             input=response.content,
@@ -1493,7 +1495,7 @@ def import_signing_key(key_url, home, *, backend="gpg"):
 
         cert = Cert.from_bytes(response.content)
         fingerprint = cert.fingerprint.upper()
-        keyid = fingerprint[-16:]
+        keyid = openpgp_key_id(fingerprint)
 
         return None, fingerprint, keyid
     else:
