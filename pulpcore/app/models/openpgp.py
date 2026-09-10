@@ -6,7 +6,7 @@ from django.utils import timezone
 from pysequoia import ArmorKind, armor
 
 from pulpcore.app.models import AutoAddObjPermsMixin, Content, Distribution, Repository
-from pulpcore.app.util import get_domain_pk, gpg_verify
+from pulpcore.app.util import get_domain_pk, gpg_verify, openpgp_key_id
 
 
 def _openpgp_packlen(length):
@@ -207,8 +207,19 @@ class OpenPGPDistribution(Distribution, AutoAddObjPermsMixin):
             if repository_version is None:
                 return None
             key_id = result.group("key_id")
+            fingerprints = OpenPGPPublicKey.objects.filter(
+                pk__in=repository_version.content
+            ).values_list("fingerprint", flat=True)
+            fingerprint = next(
+                (
+                    fingerprint
+                    for fingerprint in fingerprints
+                    if openpgp_key_id(fingerprint).lower() == key_id.lower()
+                ),
+                None,
+            )
             key = OpenPGPPublicKey.objects.filter(
-                pk__in=repository_version.content, fingerprint__iendswith=key_id
+                pk__in=repository_version.content, fingerprint=fingerprint
             ).first()
             if key is None:
                 return None
@@ -225,7 +236,7 @@ class OpenPGPDistribution(Distribution, AutoAddObjPermsMixin):
             fingerprints = OpenPGPPublicKey.objects.filter(
                 pk__in=repository_version.content
             ).values_list("fingerprint", flat=True)
-            return {fingerprint[-16:] + ".pub" for fingerprint in fingerprints}
+            return {openpgp_key_id(fingerprint) + ".pub" for fingerprint in fingerprints}
         return set()
 
     class Meta:
