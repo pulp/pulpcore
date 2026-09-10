@@ -3,7 +3,7 @@
 import pytest
 from pysequoia import CipherSuite, Profile, SignatureMode, Tsk, sign
 
-from pulpcore.app.util import VerifyResult, gpg_verify
+from pulpcore.app.util import VerifyResult, gpg_verify, openpgp_key_id
 from pulpcore.exceptions.validation import InvalidSignatureError
 
 # Test key configurations: (name, key_generator, description)
@@ -98,7 +98,7 @@ class TestGpgVerify:
         assert result.valid is True
         # pubkey_fingerprint is the primary key, fingerprint is the signing subkey
         assert result.pubkey_fingerprint.upper() == fixture["fingerprint"].upper()
-        assert result.key_id == result.fingerprint[-16:].upper()
+        assert result.key_id == openpgp_key_id(result.fingerprint)
         assert result.data is None  # detached signatures return None for data
 
     def test_inline_signature_valid(self, inline_sig_fixture):
@@ -110,7 +110,7 @@ class TestGpgVerify:
         assert isinstance(result, VerifyResult)
         assert result.valid is True
         assert result.pubkey_fingerprint.upper() == fixture["fingerprint"].upper()
-        assert result.key_id == result.fingerprint[-16:].upper()
+        assert result.key_id == openpgp_key_id(result.fingerprint)
         assert result.data == fixture["data"]
 
 
@@ -141,7 +141,7 @@ class TestVerifyResultAPI:
         assert isinstance(result.pubkey_fingerprint, str)
         assert result.pubkey_fingerprint.upper() == fingerprint.upper()
         assert isinstance(result.key_id, str)
-        assert result.key_id == result.fingerprint[-16:].upper()
+        assert result.key_id == openpgp_key_id(result.fingerprint)
         assert result.data is None  # detached signature
 
         # Test repr
@@ -188,8 +188,11 @@ class TestGpgVerifyErrorHandling:
         tampered_file = tmp_path / "tampered.txt"
         tampered_file.write_bytes(b"tampered data")
 
-        with pytest.raises(InvalidSignatureError):
+        with pytest.raises(InvalidSignatureError) as exc_info:
             gpg_verify(pubkey, str(sig_file), detached_data=str(tampered_file))
+        assert exc_info.value.verified.valid is False
+        assert exc_info.value.verified.status
+        assert exc_info.value.verified.fingerprint is None
 
     def test_wrong_key(self, tmp_path):
         """Test that wrong public key fails validation."""
@@ -206,8 +209,10 @@ class TestGpgVerifyErrorHandling:
         data_file = tmp_path / "data.txt"
         data_file.write_bytes(data)
 
-        with pytest.raises(InvalidSignatureError):
+        with pytest.raises(InvalidSignatureError) as exc_info:
             gpg_verify(wrong_pubkey, str(sig_file), detached_data=str(data_file))
+        assert exc_info.value.verified.valid is False
+        assert exc_info.value.verified.status
 
     def test_invalid_signature_data(self, tmp_path):
         """Test that invalid signature data raises InvalidSignatureError."""
