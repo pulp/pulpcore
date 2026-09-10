@@ -20,6 +20,7 @@ from .content import (
     ArtifactFilter,
     ArtifactViewSet,
     ContentFilter,
+    ContentDomainViewSet,
     ContentViewSet,
     ListContentViewSet,
     ReadOnlyContentViewSet,
