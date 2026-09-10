@@ -7,10 +7,14 @@ import uuid
 from urllib.parse import urljoin
 
 import pytest
+import requests
 from aiohttp.client_exceptions import ClientResponseError
 from bs4 import BeautifulSoup
 
-from pulpcore.client.pulp_file import FileFilePublication, FileRepositorySyncURL
+from pulpcore.client.pulp_file import (
+    FileFilePublication,
+    FileRepositorySyncURL,
+)
 from pulpcore.tests.functional.utils import download_file, get_files_in_manifest
 
 OBJECT_STORAGES = (
@@ -35,6 +39,74 @@ def _do_range_request_download_and_assert(url, range_header, expected_bytes):
     assert (
         file1.response_obj.headers["Content-Range"] == file2.response_obj.headers["Content-Range"]
     )
+
+
+@pytest.mark.parametrize(
+    "storage_class",
+    (
+        pytest.param("storages.backends.s3.S3Storage", id="s3"),
+        pytest.param("storages.backends.s3boto3.S3Boto3Storage", id="s3boto3"),
+        pytest.param("storages.backends.azure_storage.AzureStorage", id="azure"),
+    ),
+)
+def test_proxied_object_storage_artifact_streaming(
+    storage_class,
+    pulp_settings,
+    domain_factory,
+    file_bindings,
+    file_repository_factory,
+    file_publication_factory,
+    file_distribution_factory,
+    distribution_base_url,
+    monitor_task,
+    tmp_path,
+):
+    """Proxy object-storage content served by a distribution without redirecting."""
+    if pulp_settings.STORAGES["default"]["BACKEND"] != storage_class:
+        pytest.skip("The functional environment does not provide this object-storage configuration")
+
+    domain = domain_factory(storage_class=storage_class, redirect_to_object_storage=False)
+    payload = uuid.uuid4().bytes + uuid.uuid4().bytes
+    relative_path = str(uuid.uuid4())
+    file_path = tmp_path / relative_path
+    file_path.write_bytes(payload)
+    content = file_bindings.ContentFilesApi.upload(
+        file=str(file_path),
+        relative_path=relative_path,
+        pulp_domain=domain.name,
+    )
+    repository = file_repository_factory(pulp_domain=domain.name)
+    monitor_task(
+        file_bindings.RepositoriesFileApi.modify(
+            repository.pulp_href,
+            {"add_content_units": [content.pulp_href]},
+        ).task
+    )
+    publication = file_publication_factory(
+        pulp_domain=domain.name,
+        repository=repository.pulp_href,
+    )
+    distribution = file_distribution_factory(
+        pulp_domain=domain.name,
+        publication=publication.pulp_href,
+    )
+    content_url = urljoin(distribution_base_url(distribution.base_url), content.relative_path)
+
+    full_response = requests.get(content_url, allow_redirects=False)
+    assert full_response.status_code == requests.codes.ok
+    assert not full_response.is_redirect
+    assert full_response.content == payload
+    assert full_response.headers["Content-Length"] == str(len(payload))
+    assert full_response.headers["Accept-Ranges"] == "bytes"
+
+    range_response = requests.get(
+        content_url, headers={"Range": "bytes=1-4"}, allow_redirects=False
+    )
+    assert range_response.status_code == requests.codes.partial_content
+    assert not range_response.is_redirect
+    assert range_response.content == payload[1:5]
+    assert range_response.headers["Content-Length"] == "4"
+    assert range_response.headers["Content-Range"] == f"bytes 1-4/{len(payload)}"
 
 
 @pytest.mark.parallel

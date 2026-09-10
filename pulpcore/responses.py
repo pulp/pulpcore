@@ -7,6 +7,7 @@ from aiohttp.web_exceptions import (
     HTTPRequestRangeNotSatisfiable,
 )
 
+from pulpcore._object_storage import STREAMING_STORAGE_CLASSES, get_stream
 from pulpcore.app.models import Artifact
 
 
@@ -33,6 +34,17 @@ class ArtifactResponse(StreamResponse):
         self._chunk_size = chunk_size
 
     async def _sendfile(self, request, fobj, offset, count):
+        storage_class = self._artifact.pulp_domain.storage_class
+        if storage_class in STREAMING_STORAGE_CLASSES:
+            object_stream = get_stream(
+                storage_class,
+                self._artifact.pulp_domain.get_storage(),
+                fobj.name,
+                offset,
+                count,
+            )
+            return await self._sendfile_object_storage(request, object_stream, count)
+
         # To keep memory usage low, fobj is transferred in chunks
         # controlled by the constructor's chunk_size argument.
 
@@ -53,6 +65,33 @@ class ArtifactResponse(StreamResponse):
 
         await writer.drain()
         return writer
+
+    async def _sendfile_object_storage(self, request, object_stream, count):
+        """Write a blocking provider stream without blocking the content-app loop.
+
+        Object storage SDKs are synchronous. Adapter methods therefore run in a
+        worker thread, while `writer.write` maintains aiohttp backpressure. The
+        adapter is closed even if opening it or writing its response fails.
+        """
+        writer = await super().prepare(request)
+        assert writer is not None
+
+        stream = object_stream
+        try:
+            stream = await asyncio.to_thread(object_stream.open)
+            remaining = count
+            while remaining:
+                chunk = await asyncio.to_thread(stream.read, min(self._chunk_size, remaining))
+                if not chunk:
+                    break
+                if len(chunk) > remaining:
+                    chunk = chunk[:remaining]
+                await writer.write(chunk)
+                remaining -= len(chunk)
+            await writer.drain()
+            return writer
+        finally:
+            await asyncio.to_thread(stream.close)
 
     async def prepare(self, request):
         if self._artifact is None:

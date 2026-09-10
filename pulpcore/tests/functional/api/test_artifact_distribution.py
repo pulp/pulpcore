@@ -11,7 +11,7 @@ OBJECT_STORAGES = (
 )
 
 
-def test_artifact_distribution(random_artifact, pulp_settings):
+def test_artifact_distribution(random_artifact, pulp_settings, distribution_base_url):
     settings = pulp_settings
     artifact_uuid = random_artifact.pulp_href.split("/")[-2]
 
@@ -22,7 +22,7 @@ def test_artifact_distribution(random_artifact, pulp_settings):
     )
     process = subprocess.run(["pulpcore-manager", "shell", "-c", commands], capture_output=True)
     assert process.returncode == 0
-    artifact_url = process.stdout.decode().strip()
+    artifact_url = distribution_base_url(process.stdout.decode().strip())
 
     response = requests.get(artifact_url)
     response.raise_for_status()
