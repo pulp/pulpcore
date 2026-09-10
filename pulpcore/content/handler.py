@@ -76,9 +76,10 @@ class PathNotResolved(HTTPNotFound):
     or the published file could not be found.
     """
 
-    def __init__(self, path, *args, **kwargs):
+    def __init__(self, path, *args, cacheable=False, **kwargs):
         """Initialize the Exception."""
         self.path = path
+        self.cacheable = cacheable
         super().__init__(*args, **kwargs)
 
 
@@ -933,7 +934,11 @@ class Handler:
             )
         else:
             reason = None
-        raise PathNotResolved(path, reason=reason)
+        raise PathNotResolved(
+            path,
+            reason=reason,
+            cacheable=distro.remote is None and any([repository, repo_version, publication]),
+        )
 
     async def _stream_content_artifact(self, request, response, content_artifact):
         """
