@@ -14,6 +14,61 @@ from pulpcore.tests.functional.utils import get_from_url
 
 
 @pytest.mark.parallel
+def test_cacheable_local_404(
+    file_repo_with_auto_publish,
+    basic_manifest_path,
+    file_remote_factory,
+    file_bindings,
+    file_repository_factory,
+    distribution_base_url,
+    file_distribution_factory,
+    monitor_task,
+    redis_status,
+):
+    if not redis_status:
+        pytest.xfail("Could not connect to the Redis server")
+
+    def assert_cache_status(url, expected):
+        first = get_from_url(url)
+        second = get_from_url(url)
+        assert [
+            (first.status, first.headers.get("X-PULP-CACHE")),
+            (second.status, second.headers.get("X-PULP-CACHE")),
+        ] == expected
+
+    # An uncacheable 404 bypasses the content cache, so it has no cache header.
+    distro_empty = file_distribution_factory()
+    url = urljoin(distribution_base_url(distro_empty.base_url), "does-not-exist")
+    first = get_from_url(url)
+    second = get_from_url(url)
+    assert first.status == second.status == 404
+    assert "X-PULP-CACHE" not in first.headers
+    assert "X-PULP-CACHE" not in second.headers
+
+    remote = file_remote_factory(manifest_path=basic_manifest_path, policy="immediate")
+    body = FileRepositorySyncURL(remote=remote.pulp_href)
+    monitor_task(
+        file_bindings.RepositoriesFileApi.sync(file_repo_with_auto_publish.pulp_href, body).task
+    )
+    empty_repo = file_repository_factory()
+    empty_repo_distribution = file_distribution_factory(repository=empty_repo.pulp_href)
+    repository_distribution = file_distribution_factory(
+        repository=file_repo_with_auto_publish.pulp_href
+    )
+    repository_version_distribution = file_distribution_factory(
+        repository_version=file_repo_with_auto_publish.latest_version_href
+    )
+
+    for distribution in (
+        empty_repo_distribution,
+        repository_distribution,
+        repository_version_distribution,
+    ):
+        url = urljoin(distribution_base_url(distribution.base_url), "does-not-exist")
+        assert_cache_status(url, [(404, "MISS"), (404, "HIT")])
+
+
+@pytest.mark.parallel
 def test_full_workflow(
     file_repo_with_auto_publish,
     duplicate_filename_paths,

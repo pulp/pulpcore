@@ -4,12 +4,13 @@ import time
 from functools import wraps
 
 from aiohttp.web import FileResponse, HTTPSuccessful, Request, Response, StreamResponse
-from aiohttp.web_exceptions import HTTPFound
+from aiohttp.web_exceptions import HTTPException, HTTPFound, HTTPNotFound
 from django.conf import settings
 from django.http import FileResponse as ApiFileResponse
 from django.http import HttpResponse, HttpResponseRedirect
 from redis import ConnectionError
 from redis.asyncio import ConnectionError as AConnectionError
+from redis.exceptions import RedisError
 from rest_framework.request import Request as ApiRequest
 from rest_framework.response import Response as ApiResponse
 
@@ -39,7 +40,7 @@ def connection_error_wrapper(func):
         """Handle connection errors, specific to the sync context, raised by the Redis client."""
         try:
             return func(*args, **kwargs)
-        except (ConnectionError, TypeError):
+        except (ConnectionError, RedisError, TypeError):
             # TypeError is raised when an invalid port number for the Redis connection is configured
             return None
 
@@ -54,7 +55,7 @@ def aconnection_error_wrapper(func):
         """Handle connection errors, specific to the async context, raised by the Redis client."""
         try:
             return await func(*args, **kwargs)
-        except (AConnectionError, TypeError):
+        except (AConnectionError, RedisError, TypeError):
             # TypeError is raised when an invalid port number for the Redis connection is configured
             return None
 
@@ -310,6 +311,7 @@ class AsyncContentCache(AsyncCache):
         "ArtifactResponse": ArtifactResponse,
         "Response": Response,
         "Redirect": HTTPFound,
+        "HTTPNotFound": HTTPNotFound,
     }
 
     ADD_TRAILING_SLASH = True
@@ -359,6 +361,8 @@ class AsyncContentCache(AsyncCache):
             elif size := response.headers.get("X-PULP-ARTIFACT-SIZE"):
                 artifacts_size_counter.add(size)
 
+            if isinstance(response, HTTPException):
+                raise response
             return response
 
         return cached_function
@@ -400,7 +404,7 @@ class AsyncContentCache(AsyncCache):
         """Gets the response for the request and try to turn it into a cacheable entry"""
         try:
             response = await handler(*args, **kwargs)
-        except (HTTPSuccessful, HTTPFound) as e:
+        except (HTTPSuccessful, HTTPFound, HTTPNotFound) as e:
             response = e
 
         original_response = response
@@ -409,19 +413,30 @@ class AsyncContentCache(AsyncCache):
                 response = response.future_response
 
         entry = {"headers": dict(response.headers), "status": response.status}
+
         if expires is not None:
             # Redis TTL is not sufficient: https://github.com/pulp/pulpcore/issues/4845
             entry["expires"] = expires + time.time()
         else:
             # Settings allow you to set None to mean "does not expire". Persist.
             entry["expires"] = None
-        response.headers.update({"X-PULP-CACHE": "MISS"})
+
         if isinstance(response, FileResponse):
             entry["path"] = str(response._path)
             entry["type"] = "FileResponse"
         elif isinstance(response, ArtifactResponse):
             entry["artifact_pk"] = str(response._artifact.pk)
             entry["type"] = "ArtifactResponse"
+        elif isinstance(response, HTTPNotFound):
+            if not getattr(response, "cacheable", False):
+                return response
+            entry.pop("status")
+            entry["reason"] = response.reason
+            entry["type"] = "HTTPNotFound"
+        elif isinstance(response, HTTPFound):
+            entry.pop("status")
+            entry["location"] = str(response.location)
+            entry["type"] = "Redirect"
         elif isinstance(response, (Response, HTTPSuccessful)):
             body = response.body
             if isinstance(body, bytes):
@@ -430,14 +445,12 @@ class AsyncContentCache(AsyncCache):
             else:
                 entry["text"] = getattr(body, "_value", body).decode("utf-8")
             entry["type"] = "Response"
-        elif isinstance(response, HTTPFound):
-            entry["location"] = str(response.location)
-            entry["type"] = "Redirect"
         else:
             # We don't cache errors
             return response
 
         # TODO look into smaller format, maybe some compression on the text
+        response.headers.update({"X-PULP-CACHE": "MISS"})
         await self.set(key, json.dumps(entry), expires, base_key=base_key)
         return original_response
 
