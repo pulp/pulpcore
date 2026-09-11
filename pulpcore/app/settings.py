@@ -610,7 +610,7 @@ def saml2_settings_hook(settings):
     if "SAML_CONFIG" in settings:
         data["INSTALLED_APPS"] = ["djangosaml2"]
         data["MIDDLEWARE"] = ["djangosaml2.middleware.SamlSessionMiddleware"]
-        data["AUTHENTICATION_BACKENDS"] = ["djangosaml2.backends.Saml2Backend"]
+        data["AUTHENTICATION_BACKENDS"] = ["pulpcore.saml2.backends.PulpSaml2Backend"]
         if "LOGIN_URL" not in settings:
             data["LOGIN_URL"] = "/saml2/login/"
         if "SESSION_COOKIE_SECURE" not in settings:
