@@ -128,6 +128,69 @@ def test_add_and_remove_content(db, repository, add_content, remove_content, ver
     verify_content_sets(version3, [1, 0, 1, 1, 0], [1, 0, 0, 0, 0], [0, 0, 0, 0, 0], version2)
 
 
+def test_content_artifact_qs_matches_content_membership(db, repository, content_pks):
+    content = Content.objects.filter(pk__in=content_pks)
+    artifacts = [
+        ContentArtifact.objects.create(content=unit, relative_path=f"path/{index}.txt")
+        for index, unit in enumerate(content)
+    ]
+
+    with repository.new_version() as version:
+        version.add_content(content)
+
+    expected = set(
+        ContentArtifact.objects.filter(
+            content__in=version.content, relative_path__startswith="path/"
+        ).values_list("pk", flat=True)
+    )
+    actual = set(
+        version.content_artifact_qs()
+        .filter(relative_path__startswith="path/")
+        .values_list("pk", flat=True)
+    )
+
+    assert actual == expected == {artifact.pk for artifact in artifacts}
+
+
+def test_content_artifact_qs_respects_version_boundaries(
+    db, repository, content_pks, add_content, remove_content
+):
+    content = Content.objects.filter(pk__in=content_pks)
+    for index, unit in enumerate(content):
+        ContentArtifact.objects.create(content=unit, relative_path=f"path/{index}.txt")
+
+    with repository.new_version() as version1:
+        add_content(version1, [1, 1, 0, 0, 0])
+
+    with repository.new_version() as version2:
+        remove_content(version2, [1, 0, 0, 0, 0])
+        add_content(version2, [0, 0, 1, 0, 0])
+
+    assert set(version1.content_artifact_qs().values_list("content_id", flat=True)) == set(
+        content_pks[:2]
+    )
+    assert set(version2.content_artifact_qs().values_list("content_id", flat=True)) == {
+        content_pks[1],
+        content_pks[2],
+    }
+
+
+def test_content_artifact_qs_empty_version(db, repository):
+    version = repository.latest_version()
+
+    assert not version.content_artifact_qs().exists()
+
+
+def test_content_artifact_qs_uses_repository_content_subquery(db, repository, content_pks):
+    with repository.new_version() as version:
+        version.add_content(Content.objects.filter(pk__in=content_pks))
+
+    sql = str(version.content_artifact_qs().query).lower()
+
+    assert "core_repositorycontent" in sql
+    assert "unnest" not in sql
+
+
 def test_add_remove(db, repository, add_content, remove_content, verify_content_sets):
     """Verify that adding and then removing content units is handled properly."""
     version0 = repository.latest_version()
