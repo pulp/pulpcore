@@ -204,6 +204,19 @@ ALLOWED_IMPORT_PATHS = ['/mnt/foo/bar']  # only a subpath is needed
 
 Defaults to `[]`, meaning `file:///` urls are not allowed in any Remote.
 
+### ENVVAR\_HEADER\_CONTENT\_GUARD\_ALLOWED\_VARS
+
+Names of process environment variables that `EnvVarHeaderContentGuard` may read.
+
+```
+ENVVAR_HEADER_CONTENT_GUARD_ALLOWED_VARS = ["SHARED_SECRET"]
+```
+
+Defaults to `[]`, meaning no environment variable may be used. The secret must be present in the
+**content app** process environment (not only the API). Creating this guard type is a privileged
+operation: only names on this list can be referenced, which prevents using the content app as an
+oracle for other process secrets.
+
 ### ANALYTICS
 
 If `True`, Pulp will anonymously post analytics information to

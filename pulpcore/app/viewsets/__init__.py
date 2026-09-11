@@ -59,6 +59,7 @@ from .publication import (
     CompositeContentGuardViewSet,
     ContentRedirectContentGuardViewSet,
     HeaderContentGuardViewSet,
+    EnvVarHeaderContentGuardViewSet,
     ArtifactDistributionViewSet,
 )
 from .reclaim import ReclaimSpaceViewSet

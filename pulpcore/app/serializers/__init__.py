@@ -90,6 +90,7 @@ from .publication import (
     CompositeContentGuardSerializer,
     ContentRedirectContentGuardSerializer,
     HeaderContentGuardSerializer,
+    EnvVarHeaderContentGuardSerializer,
     ArtifactDistributionSerializer,
 )
 from .purge import PurgeSerializer

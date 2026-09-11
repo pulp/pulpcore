@@ -9,6 +9,7 @@ from pulpcore.app.models import (
     ContentGuard,
     ContentRedirectContentGuard,
     Distribution,
+    EnvVarHeaderContentGuard,
     HeaderContentGuard,
     Publication,
     RBACContentGuard,
@@ -20,6 +21,7 @@ from pulpcore.app.serializers import (
     ContentGuardSerializer,
     ContentRedirectContentGuardSerializer,
     DistributionSerializer,
+    EnvVarHeaderContentGuardSerializer,
     HeaderContentGuardSerializer,
     PublicationSerializer,
     RBACContentGuardSerializer,
@@ -409,6 +411,82 @@ class HeaderContentGuardViewSet(ContentGuardViewSet, RolesMixin):
             "core.manage_roles_headercontentguard",
         ],
         "core.headercontentguard_viewer": ["core.view_headercontentguard"],
+    }
+
+
+class EnvVarHeaderContentGuardViewSet(ContentGuardViewSet, RolesMixin):
+    """
+    Content guard that validates a Base64-encoded header against a server-side environment variable.
+    """
+
+    endpoint_name = "envvar_header"
+    queryset = EnvVarHeaderContentGuard.objects.all()
+    serializer_class = EnvVarHeaderContentGuardSerializer
+    queryset_filtering_required_permission = "core.view_envvarheadercontentguard"
+
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["list"],
+                "principal": "authenticated",
+                "effect": "allow",
+            },
+            {
+                "action": ["create"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_model_or_domain_perms:core.add_envvarheadercontentguard",
+            },
+            {
+                "action": ["retrieve", "my_permissions"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": (
+                    "has_model_or_domain_or_obj_perms:core.view_envvarheadercontentguard"
+                ),
+            },
+            {
+                "action": ["update", "partial_update"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": (
+                    "has_model_or_domain_or_obj_perms:core.change_envvarheadercontentguard"
+                ),
+            },
+            {
+                "action": ["destroy"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": (
+                    "has_model_or_domain_or_obj_perms:core.delete_envvarheadercontentguard"
+                ),
+            },
+            {
+                "action": ["list_roles", "add_role", "remove_role"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": (
+                    "has_model_or_domain_or_obj_perms:core.manage_roles_envvarheadercontentguard"
+                ),
+            },
+        ],
+        "creation_hooks": [
+            {
+                "function": "add_roles_for_object_creator",
+                "parameters": {"roles": ["core.envvarheadercontentguard_owner"]},
+            },
+        ],
+        "queryset_scoping": {"function": "scope_queryset"},
+    }
+    LOCKED_ROLES = {
+        "core.envvarheadercontentguard_creator": ["core.add_envvarheadercontentguard"],
+        "core.envvarheadercontentguard_owner": [
+            "core.view_envvarheadercontentguard",
+            "core.change_envvarheadercontentguard",
+            "core.delete_envvarheadercontentguard",
+            "core.manage_roles_envvarheadercontentguard",
+        ],
+        "core.envvarheadercontentguard_viewer": ["core.view_envvarheadercontentguard"],
     }
 
 

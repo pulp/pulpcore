@@ -43,6 +43,7 @@ plugins:
     name: "pulp_certguard"
 pulp_env:
   PULP_CA_BUNDLE: "/etc/pulp/certs/pulp_webserver.crt"
+  ENVVAR_HEADER_GUARD_TEST_SECRET: "functional-test-secret-value"
 pulp_env_azure: {}
 pulp_env_gcp: {}
 pulp_env_s3: {}
@@ -52,6 +53,8 @@ pulp_settings:
     - "/tmp"
   allowed_import_paths:
     - "/tmp"
+  envvar_header_content_guard_allowed_vars:
+    - "ENVVAR_HEADER_GUARD_TEST_SECRET"
   api_root: "/pulp/"
   content_path_prefix: "/somewhere/else/"
   csrf_trusted_origins:

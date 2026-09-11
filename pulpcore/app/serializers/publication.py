@@ -1,5 +1,6 @@
 from gettext import gettext as _
 
+from django.conf import settings
 from django.db.models import Q
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
@@ -171,6 +172,39 @@ class HeaderContentGuardSerializer(ContentGuardSerializer, GetOrCreateSerializer
     class Meta(ContentGuardSerializer.Meta):
         model = models.HeaderContentGuard
         fields = ContentGuardSerializer.Meta.fields + ("header_name", "header_value", "jq_filter")
+
+
+class EnvVarHeaderContentGuardSerializer(ContentGuardSerializer, GetOrCreateSerializerMixin):
+    """
+    A serializer for EnvVarHeaderContentGuard.
+
+    The guard expects the request header named ``header_name`` to carry a Base64-encoded
+    UTF-8 representation of the secret. The plaintext secret is read from ``env_var`` on
+    the server at request time and is never stored in or returned by the API.
+    """
+
+    header_name = serializers.CharField(help_text=_("The header name the guard will check on."))
+    env_var = serializers.CharField(
+        help_text=_(
+            "Name of a content-app environment variable holding the expected secret "
+            "(plaintext UTF-8). Must be listed in ENVVAR_HEADER_CONTENT_GUARD_ALLOWED_VARS. "
+            "The request header must send that value Base64-encoded. "
+            "The value is never stored in or returned by the API."
+        ),
+    )
+
+    def validate_env_var(self, value):
+        if value not in settings.ENVVAR_HEADER_CONTENT_GUARD_ALLOWED_VARS:
+            raise serializers.ValidationError(
+                _(
+                    "Environment variable '{}' is not in ENVVAR_HEADER_CONTENT_GUARD_ALLOWED_VARS."
+                ).format(value)
+            )
+        return value
+
+    class Meta(ContentGuardSerializer.Meta):
+        model = models.EnvVarHeaderContentGuard
+        fields = ContentGuardSerializer.Meta.fields + ("header_name", "env_var")
 
 
 class DistributionSerializer(ModelSerializer):
