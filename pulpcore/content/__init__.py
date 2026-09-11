@@ -22,7 +22,7 @@ from django.db.utils import (  # noqa: E402
 
 from pulpcore.app.apps import pulp_plugin_configs  # noqa: E402
 from pulpcore.app.models import AppStatus  # noqa: E402
-from pulpcore.app.util import get_worker_name  # noqa: E402
+from pulpcore.app.util import _is_read_only_db_error, get_worker_name  # noqa: E402
 
 from .authentication import authenticate, guid  # noqa: E402
 from .handler import Handler  # noqa: E402
@@ -63,6 +63,7 @@ async def _heartbeat():
     )
     versions = {app.label: app.version for app in pulp_plugin_configs()}
 
+    app_status = None
     try:
         app_status = await AppStatus.objects.acreate(
             name=name, app_type="content", versions=versions
@@ -70,9 +71,38 @@ async def _heartbeat():
     except IntegrityError:
         log.error(f"A content app with name {name} already exists in the database.")
         exit(Arbiter.WORKER_BOOT_ERROR)
+    except DatabaseError as e:
+        if _is_read_only_db_error(e):
+            log.warning(
+                f"Content App '{name}' could not register in the database "
+                "(read-only transaction). Heartbeat will retry."
+            )
+        else:
+            raise
+
     try:
         while True:
             await asyncio.sleep(heartbeat_interval)
+
+            if app_status is None:
+                try:
+                    app_status = await AppStatus.objects.acreate(
+                        name=name, app_type="content", versions=versions
+                    )
+                except IntegrityError:
+                    log.error(
+                        f"A content app with name {name} already exists in the database."
+                    )
+                    raise
+                except (InterfaceError, DatabaseError) as e:
+                    if _is_read_only_db_error(e):
+                        await sync_to_async(Handler._reset_db_connection)()
+                        log.debug(
+                            f"Content App '{name}' heartbeat skipped (read-only transaction)."
+                        )
+                        continue
+                    raise
+
             try:
                 await app_status.asave_heartbeat()
                 log.debug(msg)
@@ -82,11 +112,20 @@ async def _heartbeat():
                     await app_status.asave_heartbeat()
                     log.debug(msg)
                 except (InterfaceError, DatabaseError) as e:
+                    if _is_read_only_db_error(e):
+                        log.warning(
+                            f"Content App '{name}' heartbeat skipped "
+                            "(read-only transaction)."
+                        )
+                        continue
                     log.error(f"{fail_msg} Exception: {str(e)}")
                     exit(Arbiter.WORKER_BOOT_ERROR)
     finally:
         if app_status:
-            await app_status.adelete()
+            try:
+                await app_status.adelete()
+            except (InterfaceError, DatabaseError):
+                log.info(f"Content App '{name}' could not clean up its status record.")
 
 
 async def _heartbeat_ctx(app):

@@ -222,3 +222,54 @@ class TestHashingFileWriter(unittest.TestCase):
 
         self.assertEqual(len(writer.results), 4)
         self.assertEqual((self.test_dir / "export.tar.0003").stat().st_size, 5)
+
+
+class TestIsReadOnlyDbError:
+    @staticmethod
+    def _make_cause(pgcode=None, sqlstate=None):
+        cause = Exception("db error")
+        if pgcode is not None:
+            cause.pgcode = pgcode
+        if sqlstate is not None:
+            cause.sqlstate = sqlstate
+        return cause
+
+    def test_pgcode_25006(self):
+        from pulpcore.app.util import _is_read_only_db_error
+
+        cause = self._make_cause(pgcode="25006")
+        exc = Exception("read-only")
+        exc.__cause__ = cause
+        assert _is_read_only_db_error(exc) is True
+
+    def test_sqlstate_25006(self):
+        from pulpcore.app.util import _is_read_only_db_error
+
+        cause = self._make_cause(sqlstate="25006")
+        exc = Exception("read-only")
+        exc.__cause__ = cause
+        assert _is_read_only_db_error(exc) is True
+
+    def test_no_cause(self):
+        from pulpcore.app.util import _is_read_only_db_error
+
+        exc = Exception("connection lost")
+        assert _is_read_only_db_error(exc) is False
+
+    def test_different_pgcode(self):
+        from pulpcore.app.util import _is_read_only_db_error
+
+        cause = self._make_cause(pgcode="08006")
+        exc = Exception("connection failure")
+        exc.__cause__ = cause
+        assert _is_read_only_db_error(exc) is False
+
+    def test_nested_cause(self):
+        from pulpcore.app.util import _is_read_only_db_error
+
+        inner = self._make_cause(pgcode="25006")
+        outer = Exception("wrapper")
+        outer.__cause__ = inner
+        exc = Exception("nested")
+        exc.__cause__ = outer
+        assert _is_read_only_db_error(exc) is True
