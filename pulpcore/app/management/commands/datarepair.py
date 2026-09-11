@@ -4,7 +4,8 @@ import cryptography
 from django.conf import settings
 from django.core.management import BaseCommand, CommandError
 from django.db import connection
-from django.db.models import Q
+from django.db.models import CharField, Q, Value
+from django.db.models.functions import Concat
 from django.utils.encoding import force_bytes, force_str
 
 from pulpcore.app import models
@@ -19,7 +20,12 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         """Set up arguments."""
-        parser.add_argument("issue", help=_("The github issue # of the issue to be fixed."))
+        parser.add_argument(
+            "issue",
+            help=_("The github issue # of the issue to be fixed.")
+            + " "
+            + _("One of: [{}]").format(", ".join(["2327", "7272", "7465", "8067"])),
+        )
         parser.add_argument(
             "--dry-run",
             action="store_true",
@@ -39,6 +45,8 @@ class Command(BaseCommand):
             self.repair_7272(options)
         elif issue == "7465":
             self.repair_7465(options)
+        elif issue == "8067":
+            self.repair_8067(options)
         else:
             raise CommandError(_("Unknown issue: '{}'").format(issue))
 
@@ -236,3 +244,32 @@ class Command(BaseCommand):
                 )
             else:
                 self.stdout.write(f"Finished. ({number_missing} repository versions fixed)")
+
+    def repair_8067(self, options):
+        POSTGRES_INVALID_PATH_REGEX = "[\n\r\s\t\?#]|(/\.{0,2}/)"
+        dry_run = options["dry_run"]
+
+        qs = (
+            models.Distribution.objects.only("base_path")
+            .annotate(
+                slashed_base_path=Concat(
+                    Value("/"), "base_path", Value("/"), output_field=CharField()
+                )
+            )
+            .filter(slashed_base_path__regex=POSTGRES_INVALID_PATH_REGEX)
+        )
+        if qs.exists():
+            self.stdout.write(
+                _("""There are distribution in this installation with improper base-paths.
+Maybe their paths are not normalized. Maybe they contain invalid characters.
+In any case they are dysfunctional and preven a clean upgrade to Pulpcore 3.117.""")
+            )
+            self.stdout.write(_("Distributions with offending base_path:"))
+            for distribution in qs:
+                self.stdout.write(f"{distribution.pk} : '{distribution.base_path}'")
+            if dry_run:
+                self.stdout.write(_("These base_paths must be repaired before upgrading to 3.117."))
+            else:
+                answer = input(_("Delete ALL these entries? [y/N] "))
+                if answer.lower() == "y":
+                    qs.delete()
