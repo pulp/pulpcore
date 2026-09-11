@@ -24,6 +24,7 @@ from .base import (
     SslConnectionError,
     RemoteConnectionError,
     FeatureNotImplementedError,
+    ProtectedResourceError,
 )
 from .validation import (
     ContentOverwriteError,

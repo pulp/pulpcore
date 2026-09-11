@@ -4,6 +4,7 @@ import sys
 from contextlib import contextmanager
 from tempfile import NamedTemporaryFile
 
+import requests
 from django.db import transaction
 from django.db.models import Min
 from pulp_glue.common import __version__ as pulp_glue_version
@@ -14,7 +15,7 @@ from pulpcore.app.apps import PulpAppConfig, pulp_plugin_configs
 from pulpcore.app.models import Distribution, Repository, Task, TaskGroup, UpstreamPulp
 from pulpcore.app.replica import ReplicaContext, distros_lock_uri
 from pulpcore.constants import TASK_STATES
-from pulpcore.exceptions import ExternalServiceError
+from pulpcore.exceptions import ExternalServiceError, ReplicateError
 from pulpcore.tasking.tasks import dispatch
 
 
@@ -144,7 +145,7 @@ def replicate_distributions(server_pk, q_select=None, **kwargs):
                 # a full (non-overridden) replication runs.
                 if q_select is None:
                     replicator.remove_missing(distro_names)
-        except GluePulpException as e:
+        except (GluePulpException, requests.exceptions.RequestException) as e:
             raise ExternalServiceError(service_name=server.base_url, details=str(e))
 
         dispatch(
@@ -165,8 +166,8 @@ def finalize_replication(server_pk, distro_repo_pairs, **kwargs):
         for t in failed_tasks:
             error_desc = t.error.get("description", "unknown error") if t.error else t.state
             details.append(f"  {t.name}: {error_desc}")
-        raise Exception(
-            "Replication failed. {} subtask(s) did not complete successfully:\n{}".format(
+        raise ReplicateError(
+            details="{} subtask(s) did not complete successfully:\n{}".format(
                 failed_tasks.count(), "\n".join(details)
             )
         )
