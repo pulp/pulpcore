@@ -1202,7 +1202,7 @@ class RepositoryVersion(BaseModel):
         with transaction.atomic():
             if to_add:
                 self.content_ids += list(to_add)
-                self.save()
+                self.save(update_fields=["content_ids", "pulp_last_updated"])
 
             # Normalize representation if content has already been removed in this version and
             # is re-added: Undo removal by setting version_removed to None.
@@ -1267,7 +1267,7 @@ class RepositoryVersion(BaseModel):
 
             if to_remove:
                 self.content_ids = list(content_ids - to_remove)
-                self.save()
+                self.save(update_fields=["content_ids", "pulp_last_updated"])
 
     def set_content(self, content):
         """
