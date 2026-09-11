@@ -148,11 +148,61 @@ class Replicator:
 
         return remote
 
-    def repository_extra_fields(self, remote):
-        return {}
+    def _extract_repository_href(self, upstream_distribution):
+        """
+        Extract repository href from upstream distribution.
 
-    def create_or_update_repository(self, remote):
-        repo_fields_dict = self.repository_extra_fields(remote)
+        The distribution may reference a repository directly, or via repository_version,
+        or may only have a publication (in which case we can't get the repo).
+
+        Args:
+            upstream_distribution: Dict containing distribution data from upstream
+
+        Returns:
+            str or None: Repository href if available
+        """
+        if upstream_distribution.get("repository"):
+            return upstream_distribution["repository"]
+        elif upstream_distribution.get("repository_version"):
+            # Extract repo href from repo version href
+            # Format: /pulp/api/v3/repositories/rpm/rpm/{uuid}/versions/{num}/
+            # We want: /pulp/api/v3/repositories/rpm/rpm/{uuid}/
+            return upstream_distribution["repository_version"].rsplit("versions/", 1)[0]
+        return None
+
+    def repository_extra_fields(self, remote, upstream_distribution=None):
+        """
+        Return extra fields to set on the repository during replication.
+
+        Args:
+            remote: The remote object being used for replication
+            upstream_distribution: Optional upstream distribution dict containing repository href
+
+        Returns:
+            dict: Fields to set on the repository
+        """
+        fields = {}
+
+        # Fetch retain_repo_versions from upstream repository if available
+        if upstream_distribution:
+            repo_href = self._extract_repository_href(upstream_distribution)
+            if repo_href:
+                try:
+                    upstream_repo = self.repository_ctx_cls(self.pulp_ctx, repo_href).entity
+                    if "retain_repo_versions" in upstream_repo:
+                        # Copy the value from upstream (None means unlimited, which is valid)
+                        fields["retain_repo_versions"] = upstream_repo["retain_repo_versions"]
+                except Exception as e:
+                    # Log but don't fail - retain_repo_versions is not critical
+                    _logger.warning(
+                        f"Failed to fetch retain_repo_versions from upstream repository "
+                        f"{repo_href}: {e}"
+                    )
+
+        return fields
+
+    def create_or_update_repository(self, remote, upstream_distribution=None):
+        repo_fields_dict = self.repository_extra_fields(remote, upstream_distribution)
         repo_fields_dict["pulp_labels"] = self.labels(remote)
         try:
             repository = self.repository_model_cls.objects.get(

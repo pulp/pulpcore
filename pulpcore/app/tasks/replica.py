@@ -99,7 +99,9 @@ def replicate_distributions(server_pk, q_select=None, **kwargs):
                     # let it fall through the cracks and be cleaned up below.
                     continue
                 # Check if there is already a repository
-                repository = replicator.create_or_update_repository(remote=remote)
+                repository = replicator.create_or_update_repository(
+                    remote=remote, upstream_distribution=distro
+                )
                 if not repository:
                     # No update occurred because server.policy==LABELED and there was
                     # an already existing local repository with the same name
