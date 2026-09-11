@@ -1,6 +1,7 @@
 import os
 import platform
 import sys
+from contextlib import contextmanager
 from tempfile import NamedTemporaryFile
 
 from django.db import transaction
@@ -28,115 +29,130 @@ def user_agent():
     return f"pulpcore/{pulp_version} ({python}, {system}) (pulp-glue {pulp_glue_version})"
 
 
+@contextmanager
+def _ssl_temp_files(server):
+    """Write UpstreamPulp TLS material to temp files that live for this context."""
+    ssl_files = {}
+    try:
+        for key in ["ca_cert", "client_cert", "client_key"]:
+            if value := getattr(server, key):
+                suffix = ".key" if key == "client_key" else ".pem"
+                with NamedTemporaryFile(
+                    dir=".", mode="w", encoding="utf-8", delete=False, suffix=suffix
+                ) as f:
+                    f.write(value)
+                    f.flush()
+                    ssl_files[key] = f.name
+        yield ssl_files
+    finally:
+        for path in ssl_files.values():
+            try:
+                os.unlink(path)
+            except FileNotFoundError:
+                pass
+
+
 def replicate_distributions(server_pk, q_select=None, **kwargs):
     server = UpstreamPulp.objects.get(pk=server_pk)
+    with _ssl_temp_files(server) as ssl_files:
+        verify_ssl = (
+            ssl_files["ca_cert"]
+            if server.tls_validation and "ca_cert" in ssl_files
+            else server.tls_validation
+        )
+        ctx = ReplicaContext.from_config(
+            {
+                "base_url": server.base_url,
+                "api_root": server.api_root,
+                "domain": server.domain,
+                "username": server.username,
+                "password": server.password,
+                "cert": ssl_files.get("client_cert"),
+                "key": ssl_files.get("client_key"),
+                "user_agent": user_agent(),
+                "verify_ssl": verify_ssl,
+                "dry_run": True,  # We only want to read from upstream anyway.
+            }
+        )
 
-    # Write out temporary files related to SSL
-    ssl_files = {}
-    for key in ["ca_cert", "client_cert", "client_key"]:
-        if value := getattr(server, key):
-            f = NamedTemporaryFile(dir=".")
-            f.write(bytes(value, "utf-8"))
-            f.flush()
-            ssl_files[key] = f.name
-
-    if "ca_cert" in ssl_files:
-        os.environ["PULP_CA_BUNDLE"] = ssl_files["ca_cert"]
-
-    ctx = ReplicaContext.from_config(
-        {
-            "base_url": server.base_url,
-            "api_root": server.api_root,
-            "domain": server.domain,
-            "username": server.username,
-            "password": server.password,
-            "cert": ssl_files.get("client_cert"),
-            "key": ssl_files.get("client_key"),
-            "user_agent": user_agent(),
-            "verify_ssl": server.tls_validation,
-            "dry_run": True,  # We only want to read from upstream anyway.
+        remote_settings = {
+            "ca_cert": server.ca_cert,
+            "tls_validation": server.tls_validation,
+            "client_cert": server.client_cert,
+            "client_key": server.client_key,
+            "download_concurrency": server.download_concurrency,
+            "max_retries": server.max_retries,
+            "total_timeout": server.total_timeout,
+            "connect_timeout": server.connect_timeout,
+            "sock_connect_timeout": server.sock_connect_timeout,
+            "sock_read_timeout": server.sock_read_timeout,
         }
-    )
+        try:
+            task_group = TaskGroup.current()
+            supported_replicators = []
+            # Load all the available replicators
+            for config in pulp_plugin_configs():
+                if config.replicator_classes:
+                    for replicator_class in config.replicator_classes:
+                        req = PluginRequirement(
+                            config.label, specifier=replicator_class.required_version
+                        )
+                        if ctx.has_plugin(req):
+                            replicator = replicator_class(ctx, task_group, remote_settings, server)
+                            supported_replicators.append(replicator)
 
-    remote_settings = {
-        "ca_cert": server.ca_cert,
-        "tls_validation": server.tls_validation,
-        "client_cert": server.client_cert,
-        "client_key": server.client_key,
-        "download_concurrency": server.download_concurrency,
-        "max_retries": server.max_retries,
-        "total_timeout": server.total_timeout,
-        "connect_timeout": server.connect_timeout,
-        "sock_connect_timeout": server.sock_connect_timeout,
-        "sock_read_timeout": server.sock_read_timeout,
-    }
+            effective_q_select = q_select if q_select is not None else server.q_select
+            distro_repo_pairs = []
+            for replicator in supported_replicators:
+                distro_names = []
+                pending_distributions = []
+                distros = replicator.upstream_distributions(q=effective_q_select)
+                for distro in distros:
+                    # Create remote
+                    remote = replicator.create_or_update_remote(upstream_distribution=distro)
+                    if not remote:
+                        # The upstream distribution is not serving any content,
+                        # let it fall through the cracks and be cleaned up below.
+                        continue
+                    # Check if there is already a repository
+                    repository = replicator.create_or_update_repository(remote=remote)
+                    if not repository:
+                        # No update occurred because server.policy==LABELED and there was
+                        # an already existing local repository with the same name
+                        continue
 
-    try:
-        task_group = TaskGroup.current()
-        supported_replicators = []
-        # Load all the available replicators
-        for config in pulp_plugin_configs():
-            if config.replicator_classes:
-                for replicator_class in config.replicator_classes:
-                    req = PluginRequirement(
-                        config.label, specifier=replicator_class.required_version
-                    )
-                    if ctx.has_plugin(req):
-                        replicator = replicator_class(ctx, task_group, remote_settings, server)
-                        supported_replicators.append(replicator)
+                    # Dispatch a sync task if needed
+                    if replicator.requires_syncing(distro):
+                        replicator.sync(repository, remote)
 
-        effective_q_select = q_select if q_select is not None else server.q_select
-        distro_repo_pairs = []
-        for replicator in supported_replicators:
-            distro_names = []
-            pending_distributions = []
-            distros = replicator.upstream_distributions(q=effective_q_select)
-            for distro in distros:
-                # Create remote
-                remote = replicator.create_or_update_remote(upstream_distribution=distro)
-                if not remote:
-                    # The upstream distribution is not serving any content,
-                    # let it fall through the cracks and be cleaned up below.
-                    continue
-                # Check if there is already a repository
-                repository = replicator.create_or_update_repository(remote=remote)
-                if not repository:
-                    # No update occurred because server.policy==LABELED and there was
-                    # an already existing local repository with the same name
-                    continue
+                    # Add name to the list of known distribution names
+                    distro_names.append(distro["name"])
+                    distro_repo_pairs.append((distro["name"], str(repository.pk)))
+                    pending_distributions.append((repository, distro))
 
-                # Dispatch a sync task if needed
-                if replicator.requires_syncing(distro):
-                    replicator.sync(repository, remote)
+                # Get or create distributions BEFORE remove_missing so that
+                # create_or_update_distribution can synchronously rename any existing
+                # distribution matched by base_path.  remove_missing then sees the
+                # updated name in the DB and won't schedule it for deletion.
+                for repository, distro in pending_distributions:
+                    replicator.create_or_update_distribution(repository, distro)
 
-                # Add name to the list of known distribution names
-                distro_names.append(distro["name"])
-                distro_repo_pairs.append((distro["name"], str(repository.pk)))
-                pending_distributions.append((repository, distro))
+                # When a per-request q_select override is used, this is a selective sync
+                # of a subset of distributions.  Skipping remove_missing avoids deleting
+                # distributions that simply weren't included in the filter — but it also
+                # means that distributions removed from upstream won't be cleaned up until
+                # a full (non-overridden) replication runs.
+                if q_select is None:
+                    replicator.remove_missing(distro_names)
+        except GluePulpException as e:
+            raise ExternalServiceError(service_name=server.base_url, details=str(e))
 
-            # Get or create distributions BEFORE remove_missing so that
-            # create_or_update_distribution can synchronously rename any existing
-            # distribution matched by base_path.  remove_missing then sees the
-            # updated name in the DB and won't schedule it for deletion.
-            for repository, distro in pending_distributions:
-                replicator.create_or_update_distribution(repository, distro)
-
-            # When a per-request q_select override is used, this is a selective sync
-            # of a subset of distributions.  Skipping remove_missing avoids deleting
-            # distributions that simply weren't included in the filter — but it also
-            # means that distributions removed from upstream won't be cleaned up until
-            # a full (non-overridden) replication runs.
-            if q_select is None:
-                replicator.remove_missing(distro_names)
-    except GluePulpException as e:
-        raise ExternalServiceError(service_name=server.base_url, details=str(e))
-
-    dispatch(
-        finalize_replication,
-        task_group=task_group,
-        exclusive_resources=[server, distros_lock_uri(server.pulp_domain_id)],
-        args=[server.pk, distro_repo_pairs],
-    )
+        dispatch(
+            finalize_replication,
+            task_group=task_group,
+            exclusive_resources=[server, distros_lock_uri(server.pulp_domain_id)],
+            args=[server.pk, distro_repo_pairs],
+        )
 
 
 def finalize_replication(server_pk, distro_repo_pairs, **kwargs):
