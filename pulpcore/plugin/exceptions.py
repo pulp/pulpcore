@@ -6,6 +6,7 @@ from pulpcore.exceptions import (
     HttpResponseError,
     InvalidSignatureError,
     MissingDigestValidationError,
+    ProtectedResourceError,
     PublishError,
     PulpException,
     RemoteConnectionError,
@@ -38,4 +39,5 @@ __all__ = [
     "HttpResponseError",
     "SslConnectionError",
     "RemoteConnectionError",
+    "ProtectedResourceError",
 ]

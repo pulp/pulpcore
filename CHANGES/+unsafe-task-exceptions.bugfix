@@ -1,0 +1,1 @@
+Task failures that previously surfaced as unhandled Python exceptions (deleting an object still referenced by others, replication errors, and failed subtasks) now raise proper Pulp errors, so their messages are preserved and reported clearly.

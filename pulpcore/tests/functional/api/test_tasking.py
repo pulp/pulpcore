@@ -559,7 +559,7 @@ class TestImmediateTaskWithNoResource:
 @pytest.mark.parallel
 def test_failing_immediate_task_error_handling(dispatch_task, monitor_task):
     """
-    GIVEN a task that raises a RuntimeError
+    GIVEN a task that raises a PulpException
     AND the task is an async function
     WHEN dispatching the task as immediate and deferred
     THEN the task fails with the correct error message
@@ -585,7 +585,7 @@ def test_failing_immediate_task_error_handling(dispatch_task, monitor_task):
 @pytest.mark.parallel
 def test_failing_worker_task_error_handling(dispatch_task, monitor_task):
     """
-    GIVEN a task that raises a RuntimeError
+    GIVEN a task that raises a PulpException
     AND the task is a sync function
     WHEN dispatching the task as deferred (executes on worker)
     THEN the task fails with the correct error message
