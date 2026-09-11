@@ -139,6 +139,16 @@ This is because Pulp currently uses coroutines that seem to be incompatible with
 
 Pulp defines the following settings itself:
 
+### ACCESS_POLICIES
+
+!!! note
+    This works only if the _non-default_ permission class `AccessPolicyFromSettings` is used.
+
+A dictionary mapping the urlpattern of a viewset to the full record of the access policy.
+Each entry in this dictionary will overwrite the provided default access policy.
+
+See more in [Access Policies].
+
 ### ALLOWED\_CONTENT\_CHECKSUMS
 
 The list of content-checksums this pulp-instance is **allowed to use**.
@@ -608,6 +618,7 @@ What kafka topic to emit notifications to when tasks start/stop.
 
 Defaults to `pulpcore.tasking.status`.
 
+[Access Policies]: site:pulpcore/docs/admin/guides/configure-pulp/access-policy
 [Database Encryption]: site:pulpcore/docs/admin/guides/configure-pulp/db-encryption
 [django 4.2]: https://docs.djangoproject.com/en/4.2/ref/settings/#default-file-storage
 [Django authentication documentation]: https://docs.djangoproject.com/en/4.2/topics/auth/customizing/#authentication-backends
