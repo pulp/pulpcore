@@ -1170,7 +1170,10 @@ class RepositoryVersion(BaseModel):
         Returns:
             bool: True if the repository version contains the content, False otherwise
         """
-        return content.pk in self.content
+        return RepositoryVersion.objects.filter(
+            pk=self.pk,
+            content_ids__contains=[content.pk],
+        ).exists()
 
     def add_content(self, content):
         """
