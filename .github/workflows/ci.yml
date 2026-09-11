@@ -118,7 +118,7 @@ jobs:
     uses: "./.github/workflows/test.yml"
     with:
       matrix_env: |
-        [{"TEST": "pulp"}, {"TEST": "azure"}, {"TEST": "s3"}, {"TEST": "lowerbounds"}, {"TEST": "multi_db"}]
+        [{"TEST": "pulp"}, {"TEST": "azure"}, {"TEST": "s3"}, {"TEST": "lowerbounds"}]
 
   deprecations:
     runs-on: "ubuntu-latest"

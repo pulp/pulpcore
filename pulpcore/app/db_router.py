@@ -56,6 +56,8 @@ class PulpDomainRouter:
         if self._is_control_plane(model):
             return "default"
 
+        # Use __dict__ / fields_cache, not getattr/hasattr. FK descriptors can
+        # recurse into this router during instance construction or issue an extra query.
         instance = hints.get("instance")
         if instance is not None:
             if "pulp_domain_id" in instance.__dict__:

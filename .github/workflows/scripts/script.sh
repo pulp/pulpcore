@@ -129,10 +129,10 @@ cmd_user_prefix bash -c "django-admin makemigrations file --check --dry-run"
 cmd_user_prefix bash -c "django-admin makemigrations certguard --check --dry-run"
 
 # Run unit tests.
-MULTI_DB_ENV=""
-if [[ "$TEST" == "multi_db" ]]; then
-  MULTI_DB_ENV="PULP_DATABASES__data_1__ENGINE=django.db.backends.postgresql PULP_DATABASES__data_1__NAME=pulp PULP_DATABASES__data_1__USER=postgres PULP_DATABASES__data_1__PASSWORD=postgres PULP_DATABASES__data_1__HOST=postgres-satellite PULP_DATABASES__data_1__PORT=5432 PULP_DATABASE_ROUTERS='[\"pulpcore.app.db_router.PulpDomainRouter\"]'"
-fi
+# data_1 is a second database on the same local postgres server used by "default" -- Django's
+# test runner creates/tears down its own "test_..." database for it, so multi-db unit tests
+# run as part of the normal suite without a dedicated satellite service/CI job.
+MULTI_DB_ENV="PULP_DATABASES__data_1__ENGINE=django.db.backends.postgresql PULP_DATABASES__data_1__NAME=pulp_data_1 PULP_DATABASES__data_1__USER=postgres PULP_DATABASE_ROUTERS='[\"pulpcore.app.db_router.PulpDomainRouter\"]'"
 cmd_user_prefix bash -c "PULP_DATABASES__default__USER=postgres $MULTI_DB_ENV pytest -v -r sx --color=yes --suppress-no-test-exit-code -p no:pulpcore --durations=20 --pyargs pulpcore.tests.unit"
 cmd_user_prefix bash -c "PULP_DATABASES__default__USER=postgres pytest -v -r sx --color=yes --suppress-no-test-exit-code -p no:pulpcore --durations=20 --pyargs pulp_file.tests.unit"
 cmd_user_prefix bash -c "PULP_DATABASES__default__USER=postgres pytest -v -r sx --color=yes --suppress-no-test-exit-code -p no:pulpcore --durations=20 --pyargs pulp_certguard.tests.unit"
