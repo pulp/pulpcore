@@ -206,6 +206,48 @@ class ListContentViewSet(BaseContentViewSet, mixins.ListModelMixin):
         return True
 
 
+class ContentDomainViewSet(BaseContentViewSet, mixins.ListModelMixin):
+    """Endpoint for domain administrators to list all content in a domain.
+
+    Unlike ListContentViewSet, which scopes content to the repositories a user can
+    see, this endpoint returns every content unit in the current domain, including
+    content that is not in any repository. It is restricted to domain administrators
+    (users holding domain-level core.view_content). Filtering, including
+    pulp_label_select, works the same as the standard content list.
+    """
+
+    endpoint_name = "content/domains"
+
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["list"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_model_or_domain_perms:core.view_content",
+            },
+        ],
+        "queryset_scoping": {"function": "scope_queryset"},
+    }
+    LOCKED_ROLES = {
+        "core.content_domain_viewer": ["core.view_content"],
+    }
+
+    @classmethod
+    def routable(cls):
+        """Do not hide from the routers."""
+        return True
+
+    def scope_queryset(self, qs):
+        """Return all content in the current domain.
+
+        Repository-based scoping (BaseContentViewSet.scope_queryset) is intentionally
+        bypassed: the access policy already restricts this endpoint to domain
+        administrators, and get_queryset has filtered to the request's domain.
+        """
+        return qs
+
+
 class ContentViewSet(
     BaseContentViewSet,
     mixins.CreateModelMixin,
