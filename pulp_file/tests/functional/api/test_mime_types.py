@@ -61,7 +61,17 @@ def test_content_types(
             async def get_content_type(extension, content_unit):
                 url = urljoin(distribution_base_url, content_unit.relative_path)
                 async with session.get(url) as response:
-                    return extension, response.headers.get("Content-Type")
+                    hdrs = response.headers
+                    assert hdrs.get("Content-Disposition") and hdrs.get(
+                        "Content-Disposition"
+                    ).startswith("attachment;filename=")
+                    assert hdrs.get("Content-Security-Policy") and "sandbox" in hdrs.get(
+                        "Content-Security-Policy"
+                    )
+                    assert hdrs.get("X-Content-Type-Options") and "nosniff" in hdrs.get(
+                        "X-Content-Type-Options"
+                    )
+                    return extension, hdrs.get("Content-Type")
 
             pairs = await asyncio.gather(
                 *(get_content_type(ext, unit) for ext, unit in files.items())
