@@ -324,8 +324,19 @@ class ReplicateError(PulpException):
 
     error_code = "PLP0018"
 
+    def __init__(self, details=None):
+        """
+        :param details: Additional details about the failure
+        :type details: str or None
+        """
+        super().__init__()
+        self.details = details
+
     def __str__(self):
-        return f"[{self.error_code}] " + _("Replication failed")
+        msg = _("Replication failed")
+        if self.details:
+            msg += f": {self.details}"
+        return f"[{self.error_code}] " + msg
 
 
 class TaskConfigurationError(PulpException):
@@ -445,3 +456,25 @@ class FeatureNotImplementedError(PulpException):
 
     def __str__(self):
         return f"[{self.error_code}] {self.message}"
+
+
+class ProtectedResourceError(PulpException):
+    """
+    Raised when an object cannot be deleted because other objects still reference it.
+    """
+
+    error_code = "PLP0029"
+
+    def __init__(self, details=None):
+        """
+        :param details: Additional details about the protecting references
+        :type details: str or None
+        """
+        super().__init__()
+        self.details = details
+
+    def __str__(self):
+        msg = _("Cannot delete the object because it is still referenced by other objects")
+        if self.details:
+            msg += f": {self.details}"
+        return f"[{self.error_code}] " + msg

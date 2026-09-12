@@ -28,7 +28,7 @@ def good_and_bad_task(
     good_task = monitor_task(dispatch_task("pulpcore.app.tasks.test.sleep", args=(0,)))
     assert good_task.state == "completed"
 
-    bad_task_href = dispatch_task("pulpcore.app.tasks.test.sleep", args=(-1,))
+    bad_task_href = dispatch_task("pulpcore.app.tasks.test.failing_task")
     with pytest.raises(PulpTaskError):
         monitor_task(bad_task_href)
     bad_task = pulpcore_bindings.TasksApi.read(bad_task_href)

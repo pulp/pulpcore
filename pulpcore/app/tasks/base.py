@@ -3,10 +3,12 @@ from logging import getLogger
 
 from asgiref.sync import sync_to_async
 from django.db import transaction
+from django.db.models.deletion import ProtectedError
 
 from pulpcore.app.apps import get_plugin_config
 from pulpcore.app.loggers import deprecation_logger
 from pulpcore.app.models import CreatedResource
+from pulpcore.exceptions import ProtectedResourceError
 from pulpcore.plugin.models import MasterModel
 
 log = getLogger(__name__)
@@ -122,7 +124,10 @@ def general_delete(instance_id, app_label, serializer_name, **kwargs):
         return dict(output)
     if isinstance(instance, MasterModel):
         instance = instance.cast()
-    output.update(instance.delete()[1])
+    try:
+        output.update(instance.delete()[1])
+    except ProtectedError as e:
+        raise ProtectedResourceError(details=str(e))
     return dict(output)
 
 
@@ -159,10 +164,13 @@ def general_multi_delete(instance_ids, **kwargs):
         if isinstance(instance, MasterModel):
             instance = instance.cast()
         instances.append(instance)
-    with transaction.atomic():
-        for instance in instances:
-            for model_label, count in instance.delete()[1].items():
-                counts[model_label] += count
+    try:
+        with transaction.atomic():
+            for instance in instances:
+                for model_label, count in instance.delete()[1].items():
+                    counts[model_label] += count
+    except ProtectedError as e:
+        raise ProtectedResourceError(details=str(e))
     output.update(counts)
     return dict(output)
 
@@ -209,5 +217,8 @@ async def ageneral_delete(instance_id, app_label, serializer_name, **kwargs):
         return dict(output)
     if isinstance(instance, MasterModel):
         instance = await instance.acast()
-    output.update((await instance.adelete())[1])
+    try:
+        output.update((await instance.adelete())[1])
+    except ProtectedError as e:
+        raise ProtectedResourceError(details=str(e))
     return dict(output)

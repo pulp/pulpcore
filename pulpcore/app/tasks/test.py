@@ -7,7 +7,21 @@ import backoff
 
 from pulpcore.app.models import Task, TaskGroup
 from pulpcore.constants import TASK_STATES
+from pulpcore.exceptions import PulpException
 from pulpcore.tasking.tasks import dispatch
+
+
+class PulpTestError(PulpException):
+    """A task error used by the test tasks below."""
+
+    error_code = "PLP0000"
+
+    def __init__(self, message):
+        super().__init__()
+        self.message = message
+
+    def __str__(self):
+        return self.message
 
 
 def dummy_task():
@@ -84,23 +98,23 @@ def missing_worker():
 
 def failing_task(error_message="Task intentionally failed"):
     """
-    A task that always raises a RuntimeError.
+    A task that always raises a PulpTestError.
 
     This task is used for testing error handling in worker task execution.
 
     Args:
-        error_message (str): The error message to include in the RuntimeError
+        error_message (str): The error message to include in the exception
     """
-    raise RuntimeError(error_message)
+    raise PulpTestError(error_message)
 
 
 async def afailing_task(error_message="Task intentionally failed"):
     """
-    An async task that always raises a RuntimeError.
+    An async task that always raises a PulpTestError.
 
     This task is used for testing error handling in immediate task execution.
 
     Args:
-        error_message (str): The error message to include in the RuntimeError
+        error_message (str): The error message to include in the exception
     """
-    raise RuntimeError(error_message)
+    raise PulpTestError(error_message)
