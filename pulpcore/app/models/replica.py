@@ -11,6 +11,8 @@ from django.db import models
 from pulpcore.app.util import get_domain_pk
 from pulpcore.plugin.models import AutoAddObjPermsMixin, BaseModel, EncryptedTextField
 
+from .repository import Remote
+
 
 class UpstreamPulp(BaseModel, AutoAddObjPermsMixin):
     ALL = "all"
@@ -59,6 +61,7 @@ class UpstreamPulp(BaseModel, AutoAddObjPermsMixin):
     sock_read_timeout = models.FloatField(
         null=True, validators=[MinValueValidator(0.0, "Timeout must be >= 0")]
     )
+    remote_policy = models.TextField(choices=Remote.POLICY_CHOICES, null=True)
 
     q_select = models.TextField(null=True)
     policy = models.TextField(choices=POLICY_CHOICES, default=ALL)
