@@ -149,11 +149,14 @@ class _BoundedReader:
 
 @contextmanager
 def open_stream(storage, name, start=0, length=None):
-    """Open a bounded read stream and close it on exit, including after errors.
+    """Open the bounded stream used when Pulp serves an artifact itself.
 
-    Backends with native ranged reads should implement `open_stream`. The
-    Django `open` fallback bounds bytes returned but may still buffer the
-    entire object internally, depending on the installed implementation.
+    ArtifactResponse calls this for artifact distributions and for content
+    responses that Pulp serves instead of redirecting to object storage. Use a
+    backend's native ranged stream when available; otherwise seek on Django's
+    `open()` result and bound returned bytes. The fallback may buffer the full
+    object, depending on the backend. The stream is closed on context exit,
+    including after errors or early termination.
     """
     if start < 0 or (length is not None and length < 0):
         raise ValueError("Stream start and length must be non-negative")

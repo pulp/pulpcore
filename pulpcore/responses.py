@@ -1,4 +1,5 @@
 import asyncio
+from contextlib import asynccontextmanager
 
 from aiohttp import hdrs
 from aiohttp.web import StreamResponse
@@ -12,7 +13,11 @@ from pulpcore.app.storage_backends import open_stream
 
 
 class ArtifactResponse(StreamResponse):
-    """A response object can be used to send artifacts."""
+    """Stream artifacts through Pulp instead of sending clients to storage.
+
+    Used by artifact distributions and by content responses when Pulp must serve
+    bytes from a Domain's storage rather than redirecting to the provider.
+    """
 
     # Heavily borrowed from FileResponse
 
@@ -36,28 +41,47 @@ class ArtifactResponse(StreamResponse):
         self._storage = storage
 
     async def _sendfile(self, request, storage, name, offset, count):
-        # To keep memory usage low, fobj is transferred in chunks
+        """Send artifact bytes in bounded chunks from the selected storage."""
+        # Keep memory usage low by transferring the response in bounded chunks
         # controlled by the constructor's chunk_size argument.
 
         writer = await super().prepare(request)
         assert writer is not None
 
-        loop = asyncio.get_event_loop()
-
-        context = open_stream(storage, name, start=offset, length=count)
-        stream = await loop.run_in_executor(None, context.__enter__)
-        try:
-            while count > 0:
-                chunk = await loop.run_in_executor(None, stream.read, min(self._chunk_size, count))
+        async with self._storage_stream(storage, name, offset, count) as stream:
+            remaining = count
+            while remaining:
+                chunk = await asyncio.to_thread(stream.read, min(self._chunk_size, remaining))
                 if not chunk:
                     break
+                if len(chunk) > remaining:
+                    chunk = chunk[:remaining]
                 await writer.write(chunk)
-                count -= len(chunk)
-        finally:
-            await loop.run_in_executor(None, context.__exit__, None, None, None)
+                remaining -= len(chunk)
 
         await writer.drain()
         return writer
+
+    @staticmethod
+    @asynccontextmanager
+    async def _storage_stream(storage, name, offset, count):
+        """Bridge Pulp's synchronous storage stream to the aiohttp response path.
+
+        `_sendfile()` uses this for artifact distributions and for content served
+        through Pulp when object-storage redirects are disabled. Django storage
+        streams are synchronous, so open and close run in worker threads; reads
+        are dispatched there by `_sendfile()`. Preserve cleanup after errors or
+        early response termination.
+        """
+        context = await asyncio.to_thread(open_stream, storage, name, start=offset, length=count)
+        stream = await asyncio.to_thread(context.__enter__)
+        try:
+            yield stream
+        except BaseException as exc:
+            if not await asyncio.to_thread(context.__exit__, type(exc), exc, exc.__traceback__):
+                raise
+        else:
+            await asyncio.to_thread(context.__exit__, None, None, None)
 
     async def prepare(self, request):
         if self._artifact is None:
