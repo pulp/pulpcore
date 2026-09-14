@@ -2,6 +2,7 @@ import os
 from urllib.parse import urlparse
 
 import aiofiles
+from rest_framework.serializers import ValidationError
 
 from .base import BaseDownloader, DownloadResult
 
@@ -35,6 +36,9 @@ class FileDownloader(BaseDownloader):
 
         RemoteSerializer().validate_url(url)
         p = urlparse(url)
+        if p.scheme != "file":
+            raise ValidationError("Not a valid file url.")
+
         self._path = os.path.abspath(os.path.join(p.netloc, p.path))
         super().__init__(url, *args, **kwargs)
 
