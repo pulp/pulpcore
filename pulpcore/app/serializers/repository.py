@@ -126,24 +126,28 @@ class RemoteSerializer(ModelSerializer, RemoteNetworkConfigSerializer, HiddenFie
                 )
             )
 
-        if not url.lower().startswith("file://"):
-            return url
+        if parsed_url.scheme == "file":
+            user_path = parsed_url.path
+            if not os.path.isabs(user_path):
+                raise serializers.ValidationError(
+                    _("The path '{}' needs to be an absolute pathname.").format(user_path)
+                )
+            if user_path.rstrip("/") != os.path.normpath(user_path):
+                raise serializers.ValidationError(_("The path '{}' is not normalized."))
 
-        user_path = url[7:]
-        if not os.path.isabs(user_path):
-            raise serializers.ValidationError(
-                _("The path '{}' needs to be an absolute pathname.").format(user_path)
-            )
+            user_provided_realpath = os.path.realpath(user_path)
 
-        user_provided_realpath = os.path.realpath(user_path)
+            if not any(
+                user_provided_realpath.startswith(allowed_path)
+                for allowed_path in settings.ALLOWED_IMPORT_PATHS
+            ):
+                raise serializers.ValidationError(
+                    _("The path '{}' does not start with any of the allowed import paths").format(
+                        user_path
+                    )
+                )
 
-        for allowed_path in settings.ALLOWED_IMPORT_PATHS:
-            if user_provided_realpath.startswith(allowed_path):
-                return url
-
-        raise serializers.ValidationError(
-            _("The path '{}' does not start with any of the allowed import paths").format(user_path)
-        )
+        return url
 
     class Meta:
         abstract = True
