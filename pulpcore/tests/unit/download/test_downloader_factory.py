@@ -1,7 +1,14 @@
 import pytest
 
+from pulpcore.app.util import get_domain
 from pulpcore.download.factory import DownloaderFactory
 from pulpcore.plugin.models import Remote
+
+
+@pytest.fixture(autouse=True)
+def mock_default_domain(db):
+    # Cache the domain in synchronous context before starting the tests.
+    get_domain()
 
 
 @pytest.mark.asyncio
