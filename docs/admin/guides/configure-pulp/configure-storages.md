@@ -147,7 +147,7 @@ Comprehensive options for Amazon S3 can be found in
 
 ## S3 Compatible
 
-The same `storages.backends.s3.S3Storage` backend can be used for S3 Compatible API services, such as [Minio](https://min.io/), [Ceph/RADOS](https://docs.ceph.com/en/reef/man/8/rados/) and [Backblaze B2](https://www.backblaze.com/cloud-storage).
+The same `storages.backends.s3.S3Storage` backend can be used for S3 Compatible API services, such as [rustfs](https://rustfs.com/), [Ceph/RADOS](https://docs.ceph.com/en/reef/man/8/rados/) and [Backblaze B2](https://www.backblaze.com/cloud-storage).
 
 The [django-storages](https://django-storages.readthedocs.io/en/latest/backends/s3_compatible/index.html) documentation
 provides a reference for setting up some of these services.

@@ -106,7 +106,7 @@ pulp_settings_s3:
         addressing_style: "path"
         bucket_name: "pulp3"
         default_acl: "@none"
-        endpoint_url: "http://minio:9000"
+        endpoint_url: "http://rustfs:9000"
         region_name: "eu-central-1"
         secret_key: "fqRvjWaPU5o0fCqQuUWbj9Fainj2pVZtBCiDiieS"
         signature_version: "s3v4"
