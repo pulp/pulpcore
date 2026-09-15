@@ -79,6 +79,11 @@ services:
     image: "docker.io/pulp/pulp-fixtures:latest"
     env:
       BASE_URL: "http://pulp-fixtures:8080"
+  - name: "saml2-idp"
+    image: "ghcr.io/pfrest/mock-saml2-idp:latest"
+    env:
+      SP_ENTITY_ID: "http://pulp"
+      SP_ACS_LOCATION: "http://pulp/saml/acs/"
 VARSYAML
 
 if [ "$TEST" = "s3" ]; then
