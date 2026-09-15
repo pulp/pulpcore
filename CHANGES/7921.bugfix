@@ -1,0 +1,1 @@
+Fixed replicas to inherit `retain_repo_versions` setting from the primary Pulp instance during replication.
