@@ -8,6 +8,48 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.118.0 (2026-09-15) {: #3.118.0 }
+
+### REST API {: #3.118.0-rest-api }
+
+#### Features {: #3.118.0-rest-api-feature }
+
+- Added optional `added_between` and `removed_between` filters to the content list endpoints. Each
+  takes two repository versions (by HREF/PRN) as `base,target` and returns the net set of content
+  added or removed going from the base version to the target version, allowing diffs between two
+  arbitrary (possibly non-adjacent) repository versions instead of only the single-step difference
+  against the immediate predecessor.
+  [#7831](https://github.com/pulp/pulpcore/issues/7831)
+
+#### Bugfixes {: #3.118.0-rest-api-bugfix }
+
+- Cache 404s when content doesn't exist in repository
+  [#8078](https://github.com/pulp/pulpcore/issues/8078)
+- Fixed `RepositoryVersion.contains` always returning False.
+- Fixed post-migrate hooks to prevent failing on incomplete or rolled back migrations.
+- Preserve OpenPGP verification compatibility for failed signatures and fix key ID calculation for OpenPGP v6.
+- Revert the migration of relative_paths to the new domain type.
+
+#### Misc {: #3.118.0-rest-api-misc }
+
+- [#7986](https://github.com/pulp/pulpcore/issues/7986)
+
+### Plugin API {: #3.118.0-plugin-api }
+
+#### Deprecations {: #3.118.0-plugin-api-deprecation }
+
+- Deprecated `RepositoryVersion.content_batch_qs`.
+
+### Pulp File {: #3.118.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.118.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.117.2 (2026-09-11) {: #3.117.2 }
 
 ### REST API {: #3.117.2-rest-api }
