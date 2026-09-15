@@ -5,7 +5,7 @@ all:
       hosts:
         pulp:
         pulp-fixtures:
-        minio:
+        rustfs:
         ci-sftp:
       vars:
         ansible_connection: docker
