@@ -82,19 +82,19 @@ services:
 VARSYAML
 
 if [ "$TEST" = "s3" ]; then
-  MINIO_ACCESS_KEY=AKIAIT2Z5TDYPX3ARJBA
-  MINIO_SECRET_KEY=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
+  RUSTFS_ACCESS_KEY=AKIAIT2Z5TDYPX3ARJBA
+  RUSTFS_SECRET_KEY=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
   cat >> .ci/ansible/vars/main.yaml << VARSYAML
-  - name: "minio"
-    image: "minio/minio"
+  - name: "rustfs"
+    image: "rustfs/rustfs"
     env:
-      MINIO_ACCESS_KEY: "${MINIO_ACCESS_KEY}"
-      MINIO_SECRET_KEY: "${MINIO_SECRET_KEY}"
+      RUSTFS_ACCESS_KEY: "${RUSTFS_ACCESS_KEY}"
+      RUSTFS_SECRET_KEY: "${RUSTFS_SECRET_KEY}"
     command: "server /data"
 s3_test: true
-minio_access_key: "${MINIO_ACCESS_KEY}"
-minio_secret_key: "${MINIO_SECRET_KEY}"
-pulp_scenario_settings: {"DISABLED_authentication_backends": "@merge django.contrib.auth.backends.RemoteUserBackend", "DISABLED_authentication_json_header": "HTTP_X_RH_IDENTITY", "DISABLED_authentication_json_header_jq_filter": ".identity.user.username", "DISABLED_authentication_json_header_openapi_security_scheme": {"description": "External OAuth integration", "flows": {"clientCredentials": {"scopes": {"api.console": "grant_access_to_pulp"}, "tokenUrl": "https://your-identity-provider/token/issuer"}}, "type": "oauth2"}, "DISABLED_rest_framework__default_authentication_classes": "@merge pulpcore.app.authentication.JSONHeaderRemoteAuthentication", "ENABLE_V4_API": true, "MEDIA_ROOT": "", "STORAGES": {"default": {"BACKEND": "storages.backends.s3boto3.S3Boto3Storage", "OPTIONS": {"access_key": "AKIAIT2Z5TDYPX3ARJBA", "addressing_style": "path", "bucket_name": "pulp3", "default_acl": "@none", "endpoint_url": "http://minio:9000", "region_name": "eu-central-1", "secret_key": "fqRvjWaPU5o0fCqQuUWbj9Fainj2pVZtBCiDiieS", "signature_version": "s3v4"}}, "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"}}, "api_root": "/rerouted/djnd/", "domain_enabled": true, "hide_guarded_distributions": true, "rest_framework__default_permission_classes": ["pulpcore.plugin.access_policy.AccessPolicyFromSettings"], "spectacular_settings__oas_version": "3.0.3"}
+rustfs_access_key: "${RUSTFS_ACCESS_KEY}"
+rustfs_secret_key: "${RUSTFS_SECRET_KEY}"
+pulp_scenario_settings: {"DISABLED_authentication_backends": "@merge django.contrib.auth.backends.RemoteUserBackend", "DISABLED_authentication_json_header": "HTTP_X_RH_IDENTITY", "DISABLED_authentication_json_header_jq_filter": ".identity.user.username", "DISABLED_authentication_json_header_openapi_security_scheme": {"description": "External OAuth integration", "flows": {"clientCredentials": {"scopes": {"api.console": "grant_access_to_pulp"}, "tokenUrl": "https://your-identity-provider/token/issuer"}}, "type": "oauth2"}, "DISABLED_rest_framework__default_authentication_classes": "@merge pulpcore.app.authentication.JSONHeaderRemoteAuthentication", "ENABLE_V4_API": true, "MEDIA_ROOT": "", "STORAGES": {"default": {"BACKEND": "storages.backends.s3boto3.S3Boto3Storage", "OPTIONS": {"access_key": "AKIAIT2Z5TDYPX3ARJBA", "addressing_style": "path", "bucket_name": "pulp3", "default_acl": "@none", "endpoint_url": "http://rustfs:9000", "region_name": "eu-central-1", "secret_key": "fqRvjWaPU5o0fCqQuUWbj9Fainj2pVZtBCiDiieS", "signature_version": "s3v4"}}, "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"}}, "api_root": "/rerouted/djnd/", "domain_enabled": true, "hide_guarded_distributions": true, "rest_framework__default_permission_classes": ["pulpcore.plugin.access_policy.AccessPolicyFromSettings"], "spectacular_settings__oas_version": "3.0.3"}
 # MinIO omits 100-continue on 0-byte PUTs; stock botocore hangs without this (boto/botocore#3123).
 pulp_scenario_env: {"BOTO_EXPERIMENTAL__NO_EMPTY_CONTINUE": "true"}
 VARSYAML
