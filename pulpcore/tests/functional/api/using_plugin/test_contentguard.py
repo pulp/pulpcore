@@ -46,7 +46,14 @@ def test_rbac_content_guard_full_workflow(
             else:
                 auth = None
             response = get_from_url(distribution_base_url(distro.base_url), auth=auth)
-            expected_status = 404 if user in authorized_users else 403
+            if user in authorized_users:
+                expected_status = 404
+            elif user is anonymous_user:
+                # No credentials at all -> Unauthorized, not Forbidden.
+                expected_status = 401
+            else:
+                # Authenticated, but not permitted.
+                expected_status = 403
             assert response.status == expected_status, f"Failed on {user.username=}"
 
     # Make sure all users can access the distribution URL without a content guard
