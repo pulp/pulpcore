@@ -1,4 +1,5 @@
 import hashlib
+import hmac
 import json
 import logging
 import os
@@ -566,6 +567,77 @@ class HeaderContentGuard(ContentGuard, AutoAddObjPermsMixin):
             (
                 "manage_roles_headercontentguard",
                 "Can manage role assignments on header content guard",
+            ),
+        )
+
+
+class EnvVarHeaderContentGuard(ContentGuard, AutoAddObjPermsMixin):
+    """
+    Content guard that validates a Base64-encoded header against a server-side environment variable.
+
+    Clients and proxies must send the expected secret as a Base64-encoded UTF-8 string in
+    ``header_name``. Pulp decodes the header, then compares the result to the value of
+    ``os.environ[env_var]`` using a timing-safe comparison.
+
+    ``env_var`` must be listed in ``settings.ENVVAR_HEADER_CONTENT_GUARD_ALLOWED_VARS``.
+    The expected secret is read from the content-app process environment at request time
+    so rotation only requires updating the environment and redeploying.
+    """
+
+    TYPE = "envvar_header"
+
+    header_name = models.TextField()
+    env_var = models.TextField()
+
+    def permit(self, request):
+        if self.env_var not in settings.ENVVAR_HEADER_CONTENT_GUARD_ALLOWED_VARS:
+            _logger.debug(
+                "Access not allowed. Environment variable %s is not in "
+                "ENVVAR_HEADER_CONTENT_GUARD_ALLOWED_VARS.",
+                self.env_var,
+            )
+            raise PermissionError(_("Access denied."))
+
+        header_content = request.headers.get(self.header_name)
+        if not header_content:
+            _logger.debug("Access not allowed. Header %s not found.", self.header_name)
+            raise PermissionError(_("Access denied."))
+
+        try:
+            header_decoded_content = b64decode(header_content, validate=True)
+        except Base64DecodeError:
+            _logger.debug("Access not allowed - Header content is not Base64 encoded.")
+            raise PermissionError(_("Access denied.")) from None
+
+        try:
+            header_value = header_decoded_content.decode("utf-8")
+        except UnicodeDecodeError:
+            _logger.debug("Access not allowed - Header content is not valid UTF-8.")
+            raise PermissionError(_("Access denied.")) from None
+
+        expected = os.environ.get(self.env_var)
+        if expected is None or expected.rstrip("\r\n") == "":
+            _logger.warning(
+                "Access not allowed. Environment variable %s is unset or empty.", self.env_var
+            )
+            raise PermissionError(_("Access denied."))
+
+        expected_stripped = expected.rstrip("\r\n")
+        if not hmac.compare_digest(
+            header_value.encode("utf-8"),
+            expected_stripped.encode("utf-8"),
+        ):
+            _logger.debug("Access not allowed. Header value does not match environment variable.")
+            raise PermissionError(_("Access denied."))
+
+        return
+
+    class Meta:
+        default_related_name = "%(app_label)s_%(model_name)s"
+        permissions = (
+            (
+                "manage_roles_envvarheadercontentguard",
+                "Can manage role assignments on EnvVar Header content guard",
             ),
         )
 

@@ -1,11 +1,50 @@
 import json
+import os
 import re
 from base64 import b64encode
 from unittest.mock import Mock
 
 import pytest
+from rest_framework.serializers import ValidationError
 
-from pulpcore.app.models import ContentRedirectContentGuard, HeaderContentGuard
+from pulpcore.app.models import (
+    ContentRedirectContentGuard,
+    EnvVarHeaderContentGuard,
+    HeaderContentGuard,
+)
+from pulpcore.app.serializers import EnvVarHeaderContentGuardSerializer
+
+ENVVAR_HEADER = "X-Test-Content-Guard-Header"
+ENVVAR_NAME = "ENVVAR_HEADER_GUARD_TEST_SECRET"
+
+
+def _encode_envvar_secret(secret):
+    return b64encode(secret.encode("utf-8")).decode("ascii")
+
+
+def _envvar_guard(env_var=ENVVAR_NAME):
+    return EnvVarHeaderContentGuard(
+        name="envvar_header_guard",
+        header_name=ENVVAR_HEADER,
+        env_var=env_var,
+    )
+
+
+def _envvar_request(header_value=None, header_name=ENVVAR_HEADER):
+    request = Mock()
+    headers = {}
+    if header_value is not None:
+        headers[header_name] = header_value
+    request.headers = headers
+    return request
+
+
+@pytest.fixture
+def envvar_header_secret():
+    secret = os.environ.get(ENVVAR_NAME)
+    if secret is None or secret.rstrip("\r\n") == "":
+        pytest.skip(f"{ENVVAR_NAME} not set")
+    return secret.rstrip("\r\n")
 
 
 def test_preauthenticate_urls():
@@ -142,3 +181,52 @@ def test_header_content_guard(db):
     encoded_value = b64encode(b"somevalue")
     request.headers = {"x-header-name": encoded_value}
     assert not content_guard_without_jq_filter.permit(request)
+
+
+def test_envvar_header_content_guard_allows_matching_header(db, envvar_header_secret):
+    _envvar_guard().permit(_envvar_request(_encode_envvar_secret(envvar_header_secret)))
+
+
+def test_envvar_header_content_guard_denies_missing_header(db, envvar_header_secret):
+    with pytest.raises(PermissionError):
+        _envvar_guard().permit(_envvar_request())
+
+
+def test_envvar_header_content_guard_denies_wrong_header_name(db, envvar_header_secret):
+    with pytest.raises(PermissionError):
+        _envvar_guard().permit(
+            _envvar_request(
+                _encode_envvar_secret(envvar_header_secret), header_name="X-Other-Header"
+            )
+        )
+
+
+def test_envvar_header_content_guard_denies_invalid_base64(db, envvar_header_secret):
+    with pytest.raises(PermissionError):
+        _envvar_guard().permit(_envvar_request("!!!c3VwZXItc2VjcmV0LXZhbHVl!!!"))
+
+
+def test_envvar_header_content_guard_denies_non_base64_header(db, envvar_header_secret):
+    with pytest.raises(PermissionError):
+        _envvar_guard().permit(_envvar_request("A"))
+
+
+def test_envvar_header_content_guard_denies_invalid_utf8(db, envvar_header_secret):
+    with pytest.raises(PermissionError):
+        _envvar_guard().permit(_envvar_request(b64encode(b"\xff\xfe").decode("ascii")))
+
+
+def test_envvar_header_content_guard_denies_wrong_value(db, envvar_header_secret):
+    with pytest.raises(PermissionError):
+        _envvar_guard().permit(_envvar_request(_encode_envvar_secret("wrong-value")))
+
+
+def test_envvar_header_content_guard_denies_env_var_not_in_allowlist(db):
+    with pytest.raises(PermissionError):
+        _envvar_guard(env_var="HOME").permit(_envvar_request())
+
+
+def test_envvar_header_content_guard_serializer_rejects_disallowed_env_var(db):
+    serializer = EnvVarHeaderContentGuardSerializer()
+    with pytest.raises(ValidationError):
+        serializer.validate_env_var("DJANGO_SECRET_KEY")

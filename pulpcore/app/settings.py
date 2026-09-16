@@ -321,6 +321,10 @@ ALLOWED_IMPORT_PATHS = []
 
 ALLOWED_EXPORT_PATHS = []
 
+# Process environment variable names EnvVarHeaderContentGuard may read.
+# Empty list means no variable is allowed.
+ENVVAR_HEADER_CONTENT_GUARD_ALLOWED_VARS = []
+
 # https://docs.djangoproject.com/en/5.2/ref/settings/#std-setting-CACHES
 CACHES = {
     "default": {
