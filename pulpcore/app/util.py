@@ -715,7 +715,14 @@ def normalize_http_status(status):
         return ""
 
 
-def check_request_was_modified(request, last_modified):
+def check_request_was_modified(request, last_modified, etag=None):
+    if_none_match = request.headers.get("If-None-Match")
+    if if_none_match is not None:
+        for client_etag in if_none_match.split(","):
+            if client_etag.strip() == etag:
+                return False
+        return True
+
     if not last_modified:
         return True
 

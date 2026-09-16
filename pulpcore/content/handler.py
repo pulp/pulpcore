@@ -1220,8 +1220,10 @@ class Handler:
         Returns:
             The [aiohttp.web.FileResponse][] for the file.
         """
-        artifact_file = content_artifact.artifact.file
+        artifact = content_artifact.artifact
+        artifact_file = artifact.file
         content_length = artifact_file.size
+        headers["ETag"] = f'"{artifact.sha256}"'
 
         try:
             range_start, range_stop = request.http_range.start, request.http_range.stop
@@ -1237,8 +1239,12 @@ class Handler:
 
         response = self._build_response_from_content_artifact(content_artifact, headers, request)
 
-        if not check_request_was_modified(request, last_modified=headers.get("Last-Modified")):
-            nmod_response = HTTPNotModified(headers={"Cache-Control": EDGE_CACHE_CONTROL})
+        if not check_request_was_modified(
+            request, last_modified=headers.get("Last-Modified"), etag=headers.get("ETag")
+        ):
+            nmod_response = HTTPNotModified(
+                headers={key: headers[key] for key in ("Cache-Control", "ETag") if key in headers}
+            )
             if settings.CACHE_ENABLED:
                 nmod_response.future_response = response
             raise nmod_response

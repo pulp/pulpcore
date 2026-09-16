@@ -400,9 +400,11 @@ class AsyncContentCache(AsyncCache):
 
         headers = entry.get("headers", {})
         if request and not check_request_was_modified(
-            request, last_modified=headers.get("Last-Modified")
+            request, last_modified=headers.get("Last-Modified"), etag=headers.get("ETag")
         ):
-            response = HTTPNotModified(headers={"Cache-Control": headers.get("Cache-Control")})
+            response = HTTPNotModified(
+                headers={key: headers[key] for key in ("Cache-Control", "ETag") if key in headers}
+            )
         else:
             response = self.RESPONSE_TYPES[response_type](**entry)
         response.headers.update({"X-PULP-CACHE": "HIT"})

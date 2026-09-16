@@ -1,6 +1,6 @@
-"""Tests for If-Modified-Since / 304 Not Modified on the content app.
+"""Tests for conditional requests / 304 Not Modified on the content app.
 
-When a client already has a copy of a file it can send an If-Modified-Since header
+When a client already has a copy of a file it can send an If-Modified-Since or If-None-Match header
 asking the content app to reply "304 Not Modified" (an empty body) instead of
 re-sending the whole file. These tests cover that conversation.
 """
@@ -184,3 +184,17 @@ def test_cache_still_honors_conditional_requests(
     fresh = requests.get(url, allow_redirects=False)
     assert_full_response(fresh)
     assert fresh.headers.get("X-PULP-CACHE") == "HIT"
+
+
+@pytest.mark.parallel
+def test_etag_revalidation(distribution_url, assert_full_response):
+    """A client reuses the response ETag to avoid downloading unchanged content."""
+    url = urljoin(distribution_url, "1.iso")
+
+    first = requests.get(url, allow_redirects=False)
+    assert_full_response(first)
+    etag = first.headers["ETag"]
+
+    reused = requests.get(url, headers={"If-None-Match": etag}, allow_redirects=False)
+    assert_not_modified(reused)
+    assert reused.headers["ETag"] == etag
