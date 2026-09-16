@@ -717,18 +717,14 @@ def normalize_http_status(status):
 
 def check_request_was_modified(request, last_modified, etag=None):
     if_none_match = request.headers.get("If-None-Match")
-    if if_none_match is not None:
-        for client_etag in if_none_match.split(","):
-            if client_etag.strip() == etag:
-                return False
-        return True
-
-    if not last_modified:
-        return True
-
     if_modified_since = request.headers.get("If-Modified-Since")
-    if not if_modified_since:
+
+    if not if_none_match and not (last_modified and if_modified_since):
         return True
+
+    if if_none_match:
+        client_etags = [etag == client_etag.strip() for client_etag in if_none_match.split(",")]
+        return not any(client_etags)
 
     try:
         last_modified_ts = parse_http_date(last_modified)
