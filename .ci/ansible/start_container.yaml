@@ -64,9 +64,9 @@
             from botocore.exceptions import ClientError
             client = boto3.client(
                 "s3",
-                aws_access_key_id="{{ minio_access_key }}",
-                aws_secret_access_key="{{ minio_secret_key }}",
-                endpoint_url="http://minio:9000",
+                aws_access_key_id="{{ rustfs_access_key }}",
+                aws_secret_access_key="{{ rustfs_secret_key }}",
+                endpoint_url="http://rustfs:9000",
                 region_name="eu-central-1",
             )
             try:
