@@ -4,6 +4,7 @@ import os
 import re
 import socket
 import struct
+from contextvars import ContextVar
 from datetime import datetime, timedelta
 from datetime import timezone as dt_timezone
 from gettext import gettext as _
@@ -66,6 +67,7 @@ from pulpcore.exceptions import (  # noqa: E402
 from pulpcore.metrics import artifacts_size_counter  # noqa: E402
 
 log = logging.getLogger(__name__)
+_current_distribution = ContextVar("current_distribution", default=None)
 
 
 class PathNotResolved(HTTPNotFound):
@@ -239,9 +241,11 @@ class Handler:
         if index_p1:
             return cache_key(base_paths[index_p1 - 1])
         else:
-            distro = await sync_to_async(cls._match_distribution)(
-                path, add_trailing_slash=cached.ADD_TRAILING_SLASH
-            )
+            if not (distro := _current_distribution.get()):
+                distro = await sync_to_async(cls._match_distribution)(
+                    path, add_trailing_slash=cached.ADD_TRAILING_SLASH
+                )
+                _current_distribution.set(distro)
             return cache_key(distro.base_path)
 
     @classmethod
@@ -258,9 +262,11 @@ class Handler:
         present = await cached.get(guard_key, base_key=base_key)
         if present == b"True" or present is None:
             path = request.match_info["path"]
-            distro = await sync_to_async(cls._match_distribution)(
-                path, add_trailing_slash=cached.ADD_TRAILING_SLASH
-            )
+            if not (distro := _current_distribution.get()):
+                distro = await sync_to_async(cls._match_distribution)(
+                    path, add_trailing_slash=cached.ADD_TRAILING_SLASH
+                )
+                _current_distribution.set(distro)
             try:
                 guard = await sync_to_async(cls._permit)(request, distro)
             except HTTPForbidden:
@@ -343,6 +349,11 @@ class Handler:
                     "remote",
                     "pulp_domain",
                     "publication__repository_version",
+                    "publication__repository_version__repository",
+                )
+                .defer(
+                    "repository_version__content_ids",
+                    "publication__repository_version__content_ids",
                 )
                 .get(base_path__in=base_paths)
                 .cast()
@@ -696,7 +707,9 @@ class Handler:
             [aiohttp.web.StreamResponse][] or [aiohttp.web.FileResponse][]: The response
                 streamed back to the client.
         """
-        distro = await sync_to_async(self._match_distribution)(path)
+        if not (distro := _current_distribution.get()):
+            distro = await sync_to_async(self._match_distribution)(path)
+            _current_distribution.set(distro)
 
         await sync_to_async(self._permit)(request, distro)
 
