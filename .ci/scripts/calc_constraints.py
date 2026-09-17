@@ -26,10 +26,14 @@ CORE_TEMPLATE_URL = "https://raw.githubusercontent.com/pulp/pulpcore/main/templa
 def fetch_pulpcore_upper_bound(requirement):
     with urllib.request.urlopen(CORE_TEMPLATE_URL) as f:
         template = yaml.safe_load(f.read())
-    supported_versions = template["supported_release_branches"]
-    supported_versions.append(template["latest_release_branch"])
+    supported_branches = [
+        *template["supported_release_branches"],
+        template["latest_release_branch"],
+    ]
     applicable_versions = sorted(
-        requirement.specifier.filter((Version(v) for v in supported_versions))
+        Version(branch)
+        for branch in supported_branches
+        if requirement.specifier.contains(Version(f"{branch}.999999"))
     )
     if len(applicable_versions) == 0:
         raise Exception("No supported pulpcore version in required range.")
