@@ -48,6 +48,7 @@ pulp upstream-pulp create \
 | `tls_validation` | Whether to verify the upstream server's TLS certificate. Defaults to `True`. |
 | `q_select` | A filter expression to select which upstream distributions to replicate. See [Filtering Distributions](#filtering-distributions-with-q_select). |
 | `policy` | Controls how replication manages local objects. One of `all`, `labeled`, or `nodelete`. See [Replication Policies](#replication-policies). Defaults to `all`. |
+| `remote_policy` | Download policy for remotes created during replication. One of `immediate`, `on_demand`, or `streamed`. Distinct from `policy`. When unset, remotes use Pulp's default (`immediate`). |
 
 ## Running Replication
 
@@ -151,7 +152,8 @@ pulp upstream-pulp replicate --upstream-pulp "my-upstream"
 ## Replication Policies
 
 The `policy` field controls how replication handles local objects, particularly when upstream
-distributions are removed or no longer match a `q_select` filter.
+distributions are removed or no longer match a `q_select` filter. It is not the same as a remote's
+download policy (`immediate`, `on_demand`, or `streamed`); set that with `remote_policy`.
 
 ### `all` (default)
 

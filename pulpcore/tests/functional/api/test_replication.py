@@ -252,6 +252,7 @@ def test_replication_remote_settings_propagation(
     assert remote.sock_read_timeout == 45.0
     assert remote.download_concurrency == 5
     assert remote.max_retries == 7
+    assert remote.policy == "immediate"
 
     # Update all settings and re-replicate to verify propagation on update
     pulpcore_bindings.UpstreamPulpsApi.partial_update(
@@ -279,6 +280,95 @@ def test_replication_remote_settings_propagation(
     assert remote.sock_read_timeout == 20.0
     assert remote.download_concurrency == 3
     assert remote.max_retries == 2
+
+
+@pytest.mark.parallel
+def test_replication_remote_policy(
+    domain_factory,
+    bindings_cfg,
+    pulpcore_bindings,
+    file_bindings,
+    monitor_task,
+    monitor_task_group,
+    pulp_settings,
+    gen_object_with_cleanup,
+    file_distribution_factory,
+    file_publication_factory,
+    file_repository_factory,
+    tmp_path,
+    add_domain_objects_to_cleanup,
+):
+    """Remotes created by replicate() inherit UpstreamPulp.remote_policy when set."""
+    source_domain = domain_factory()
+    add_domain_objects_to_cleanup(source_domain)
+
+    repository = file_repository_factory(pulp_domain=source_domain.name)
+    file_path = tmp_path / "file.txt"
+    file_path.write_text("DEADBEEF")
+    monitor_task(
+        file_bindings.ContentFilesApi.create(
+            file=str(file_path),
+            relative_path="file.txt",
+            repository=repository.pulp_href,
+            pulp_domain=source_domain.name,
+        ).task
+    )
+    publication = file_publication_factory(
+        pulp_domain=source_domain.name, repository=repository.pulp_href
+    )
+    file_distribution_factory(pulp_domain=source_domain.name, publication=publication.pulp_href)
+
+    replica_domain = domain_factory()
+    add_domain_objects_to_cleanup(replica_domain)
+
+    upstream_pulp_body = {
+        "name": str(uuid.uuid4()),
+        "base_url": bindings_cfg.host,
+        "api_root": pulp_settings.API_ROOT,
+        "domain": source_domain.name,
+        "username": bindings_cfg.username,
+        "password": bindings_cfg.password,
+        "remote_policy": "on_demand",
+    }
+    upstream_pulp = gen_object_with_cleanup(
+        pulpcore_bindings.UpstreamPulpsApi, upstream_pulp_body, pulp_domain=replica_domain.name
+    )
+
+    response = pulpcore_bindings.UpstreamPulpsApi.replicate(
+        upstream_pulp.pulp_href, pulpcore_bindings.module.UpstreamPulpReplicate()
+    )
+    monitor_task_group(response.task_group)
+
+    result = file_bindings.RemotesFileApi.list(pulp_domain=replica_domain.name)
+    assert result.count == 1
+    remote = result.results[0]
+    assert remote.policy == "on_demand"
+
+    pulpcore_bindings.UpstreamPulpsApi.partial_update(
+        upstream_pulp.pulp_href, {"remote_policy": "streamed"}
+    )
+    response = pulpcore_bindings.UpstreamPulpsApi.replicate(
+        upstream_pulp.pulp_href, pulpcore_bindings.module.UpstreamPulpReplicate()
+    )
+    monitor_task_group(response.task_group)
+
+    remote = file_bindings.RemotesFileApi.list(pulp_domain=replica_domain.name).results[0]
+    assert remote.policy == "streamed"
+
+    # Model class needed: raw dict {"remote_policy": None} is dropped by the client.
+    pulpcore_bindings.UpstreamPulpsApi.partial_update(
+        upstream_pulp.pulp_href,
+        pulpcore_bindings.module.PatchedUpstreamPulp(remote_policy=None),
+    )
+    upstream_pulp = pulpcore_bindings.UpstreamPulpsApi.read(upstream_pulp.pulp_href)
+    assert upstream_pulp.remote_policy is None
+    response = pulpcore_bindings.UpstreamPulpsApi.replicate(
+        upstream_pulp.pulp_href, pulpcore_bindings.module.UpstreamPulpReplicate()
+    )
+    monitor_task_group(response.task_group)
+
+    remote = file_bindings.RemotesFileApi.list(pulp_domain=replica_domain.name).results[0]
+    assert remote.policy == "immediate"
 
 
 @pytest.mark.parallel

@@ -3,8 +3,9 @@ from types import SimpleNamespace
 
 import pytest
 
+from pulpcore.app.models import Remote
 from pulpcore.app.tasks import replica
-from pulpcore.app.tasks.replica import _ssl_temp_files
+from pulpcore.app.tasks.replica import _build_remote_settings, _ssl_temp_files
 
 
 def test_ssl_temp_files_keep_all_certs_until_context_exits(tmp_path, monkeypatch):
@@ -76,6 +77,7 @@ def test_replicate_distributions_sets_verify_ssl(
         connect_timeout=5,
         sock_connect_timeout=5,
         sock_read_timeout=5,
+        remote_policy=None,
         q_select=None,
         pulp_domain_id="domain-id",
         pk="server-pk",
@@ -118,3 +120,35 @@ def test_replicate_distributions_sets_verify_ssl(
         assert isinstance(captured["config"]["verify_ssl"], str)
     else:
         assert captured["config"]["verify_ssl"] is False
+
+
+def _fake_server(**overrides):
+    base = {
+        "ca_cert": "api-ca",
+        "tls_validation": True,
+        "client_cert": "api-cert",
+        "client_key": "api-key",
+        "download_concurrency": 10,
+        "max_retries": 3,
+        "total_timeout": 30,
+        "connect_timeout": 5,
+        "sock_connect_timeout": 5,
+        "sock_read_timeout": 5,
+        "remote_policy": None,
+    }
+    base.update(overrides)
+    return SimpleNamespace(**base)
+
+
+def test_build_remote_settings_defaults_to_immediate_when_unset():
+    settings = _build_remote_settings(_fake_server())
+
+    assert settings["policy"] == Remote.IMMEDIATE
+    assert settings["ca_cert"] == "api-ca"
+    assert settings["download_concurrency"] == 10
+
+
+def test_build_remote_settings_includes_policy_when_set():
+    settings = _build_remote_settings(_fake_server(remote_policy="on_demand"))
+
+    assert settings["policy"] == "on_demand"
