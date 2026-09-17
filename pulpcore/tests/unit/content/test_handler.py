@@ -1,16 +1,24 @@
+import asyncio
 import uuid
 from datetime import timedelta
 from unittest.mock import AsyncMock, Mock
 
 import pytest
 import pytest_asyncio
+from aiohttp import web
+from aiohttp.test_utils import make_mocked_request
 from aiohttp.web_exceptions import HTTPMovedPermanently
 from django.db import IntegrityError
 from django_guid import clear_guid, set_guid
 
 from pulpcore.app.models import AppStatus
 from pulpcore.constants import TASK_STATES
-from pulpcore.content.handler import CheckpointListings, Handler, PathNotResolved
+from pulpcore.content.handler import (
+    CheckpointListings,
+    Handler,
+    PathNotResolved,
+    _current_distribution,
+)
 from pulpcore.plugin.models import (
     Artifact,
     Content,
@@ -155,7 +163,61 @@ def remote123(db):
 
 @pytest.fixture
 def request123():
-    return Mock(match_info={"path": "c123"})
+    return make_mocked_request("GET", "/c123", match_info={"path": "c123"})
+
+
+@pytest.mark.asyncio
+async def test_distribution_cache_is_request_scoped(aiohttp_client, monkeypatch, fake_domain):
+    """Concurrent requests reuse their own distribution without leaking it to later requests."""
+    distributions = {name: Distribution(name=name, base_path=name) for name in ("first", "second")}
+    match_distribution = Mock(side_effect=lambda path, **kwargs: distributions[path.split("/")[0]])
+    monkeypatch.setattr(Handler, "_match_distribution", match_distribution)
+    monkeypatch.setattr(
+        Distribution, "content_handler", lambda self, path: web.Response(text=self.base_path)
+    )
+
+    def permit(request, distribution):
+        assert distribution.base_path == request.match_info["path"].split("/")[0]
+        assert _current_distribution.get() is distribution
+        return False
+
+    monkeypatch.setattr(Handler, "_permit", Mock(side_effect=permit))
+    barrier = asyncio.Barrier(2)
+
+    async def get_guard(*args, **kwargs):
+        await asyncio.wait_for(barrier.wait(), timeout=5)
+        return None
+
+    cached = Mock(
+        ADD_TRAILING_SLASH=True,
+        exists=AsyncMock(return_value=0),
+        get=AsyncMock(side_effect=get_guard),
+        set=AsyncMock(),
+    )
+    content_handler = Handler()
+
+    async def handle(request):
+        base_key = await Handler.find_base_path_cached(request, cached)
+        await Handler.auth_cached(request, cached, base_key)
+        return await content_handler._match_and_stream(request.match_info["path"], request)
+
+    app = web.Application()
+    app.router.add_get("/{path:.+}", handle)
+    client = await aiohttp_client(app)
+
+    async def fetch(name):
+        async with client.get(f"/{name}/c123") as response:
+            assert response.status == 200
+            assert await response.text() == name
+
+    await asyncio.gather(*(fetch(name) for name in distributions))
+    assert match_distribution.call_count == 2
+    assert _current_distribution.get() is None
+
+    cached.get = AsyncMock(return_value=None)
+    for name in distributions:
+        await fetch(name)
+    assert match_distribution.call_count == 4
 
 
 # pytest-django fixtures does not work when testing async code
