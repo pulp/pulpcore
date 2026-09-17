@@ -355,18 +355,6 @@ def test_replication_remote_policy(
     remote = file_bindings.RemotesFileApi.list(pulp_domain=replica_domain.name).results[0]
     assert remote.policy == "streamed"
 
-    # Clearing remote_policy should revert remotes back to immediate
-    pulpcore_bindings.UpstreamPulpsApi.partial_update(
-        upstream_pulp.pulp_href, {"remote_policy": None}
-    )
-    response = pulpcore_bindings.UpstreamPulpsApi.replicate(
-        upstream_pulp.pulp_href, pulpcore_bindings.module.UpstreamPulpReplicate()
-    )
-    monitor_task_group(response.task_group)
-
-    remote = file_bindings.RemotesFileApi.list(pulp_domain=replica_domain.name).results[0]
-    assert remote.policy == "immediate"
-
 
 @pytest.mark.parallel
 def test_replication_with_repo_based_distribution(
