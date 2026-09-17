@@ -355,10 +355,13 @@ def test_replication_remote_policy(
     remote = file_bindings.RemotesFileApi.list(pulp_domain=replica_domain.name).results[0]
     assert remote.policy == "streamed"
 
-    # Clearing remote_policy should revert remotes back to immediate
+    # Model class needed: raw dict {"remote_policy": None} is dropped by the client.
     pulpcore_bindings.UpstreamPulpsApi.partial_update(
-        upstream_pulp.pulp_href, {"remote_policy": None}
+        upstream_pulp.pulp_href,
+        pulpcore_bindings.module.PatchedUpstreamPulp(remote_policy=None),
     )
+    upstream_pulp = pulpcore_bindings.UpstreamPulpsApi.read(upstream_pulp.pulp_href)
+    assert upstream_pulp.remote_policy is None
     response = pulpcore_bindings.UpstreamPulpsApi.replicate(
         upstream_pulp.pulp_href, pulpcore_bindings.module.UpstreamPulpReplicate()
     )
