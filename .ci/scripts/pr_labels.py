@@ -1,4 +1,10 @@
 #!/bin/env python3
+# /// script
+# requires-python = ">=3.12"
+# dependencies = [
+#     "gitpython>=3.1.62",
+# ]
+# ///
 
 # This script is running with elevated privileges from the main branch against pull requests.
 
