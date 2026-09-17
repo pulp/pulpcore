@@ -1,6 +1,14 @@
 # This file is managed by the plugin template.
 # Do not edit.
 
+# /// script
+# requires-python = ">=3.12"
+# dependencies = [
+#     "pygithub",
+#     "pyyaml",
+# ]
+# ///
+
 import os
 import re
 import subprocess
