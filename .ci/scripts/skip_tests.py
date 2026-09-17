@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.12"
+# dependencies = [
+#     "gitpython>=3.1.62",
+# ]
+# ///
 """
 skip_tests.py - Check if only documentation files were changed in a git branch
 
