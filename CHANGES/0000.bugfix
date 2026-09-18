@@ -1,0 +1,3 @@
+API and content workers now tolerate a read-only database by skipping heartbeat writes
+instead of crash-looping. Workers continue serving read traffic and resume normal
+heartbeats once the database becomes writable.
