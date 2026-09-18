@@ -8,6 +8,28 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.118.1 (2026-09-17) {: #3.118.1 }
+
+### REST API {: #3.118.1-rest-api }
+
+#### Bugfixes {: #3.118.1-rest-api-bugfix }
+
+- Reduce the number and size of queries made for each content app request.
+
+### Plugin API {: #3.118.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.118.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.118.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.118.0 (2026-09-15) {: #3.118.0 }
 
 ### REST API {: #3.118.0-rest-api }
