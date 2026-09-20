@@ -161,7 +161,6 @@ replace = "version = \"{new_version}\""
 [[tool.bumpversion.files]]
 filename = "./setup.py"
 
-
 [tool.ruff]
 # This section is managed by the plugin template. Do not edit manually.
 line-length = 100
