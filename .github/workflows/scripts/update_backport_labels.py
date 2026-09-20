@@ -5,6 +5,16 @@
 #
 # For more info visit https://github.com/pulp/plugin_template
 
+# /// script
+# requires-python = ">=3.12"
+# dependencies = [
+#     "pyyaml",
+#     "requests",
+# ]
+# ///
+
+# This script is running with elevated privileges from the main branch against pull requests.
+
 import os
 import random
 
