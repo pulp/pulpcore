@@ -30,16 +30,12 @@ jobs:
           path: "pulpcore"
       - uses: "actions/setup-python@v6"
         with:
-          python-version: "3.11"
+          python-version: "3.12"
       - name: "Install uv"
         uses: "astral-sh/setup-uv@v7"
         with:
           enable-cache: true
-      - name: "Install python dependencies"
-        run: |
-          uv pip install requests pygithub pyyaml
       - name: "Check commit message"
-        if: github.event_name == 'pull_request'
         env:
           PY_COLORS: "1"
           ANSIBLE_FORCE_COLOR: "1"
@@ -67,10 +63,6 @@ jobs:
         with:
           enable-cache: true
 
-      - name: "Install python dependencies"
-        run: |
-          uv pip install gitpython
-
       - name: "Analyze changed files"
         id: "check"
         shell: "bash"
@@ -86,7 +78,7 @@ jobs:
           BASE_REF=${{ github.event.pull_request.base.sha }}
           echo "Checking against:"
           git name-rev $BASE_REF
-          python3 .ci/scripts/skip_tests.py . $BASE_REF
+          uv run --script .ci/scripts/skip_tests.py . $BASE_REF
           exit_code=$?
           if [ $exit_code -ne 0 ] && [ $exit_code -ne 1 ]; then
             echo "Error: skip_tests.py returned unexpected exit code $exit_code"
