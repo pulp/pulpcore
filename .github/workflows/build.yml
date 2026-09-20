@@ -33,20 +33,18 @@ jobs:
           path: "pulp-openapi-generator"
       - uses: "actions/setup-python@v6"
         with:
-          python-version: "3.11"
+          python-version: "3.9"
       - name: "Install uv"
         uses: "astral-sh/setup-uv@v7"
         with:
           enable-cache: true
-      - name: "Install python dependencies"
-        run: |
-          uv pip install build packaging twine wheel mkdocs jq
       - name: "Build package"
         run: |
-          python3 -m build
-          twine check dist/*
+          uv build
+          uvx twine check dist/*
       - name: "Install built packages"
         run: |
+          # This seems to be the only way to inject the constraints file.
           uv pip install dist/pulpcore-*-py3-none-any.whl -c .ci/assets/ci_constraints.txt
       - name: "Generate api specs"
         run: |
@@ -91,17 +89,6 @@ jobs:
             pulpcore/core-python-client.tar
             pulpcore/file-python-client.tar
             pulpcore/certguard-python-client.tar
-          if-no-files-found: "error"
-          retention-days: 5
-          overwrite: true
-      - name: "Upload python client docs"
-        uses: "actions/upload-artifact@v7"
-        with:
-          name: "python-client-docs.tar"
-          path: |
-            pulpcore/core-python-client-docs.tar
-            pulpcore/file-python-client-docs.tar
-            pulpcore/certguard-python-client-docs.tar
           if-no-files-found: "error"
           retention-days: 5
           overwrite: true
