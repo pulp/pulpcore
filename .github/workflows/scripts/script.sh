@@ -72,7 +72,7 @@ pushd ../pulp-openapi-generator
       rm -rf "./${PACKAGE}-client"
       ./gen-client.sh "${COMPONENT}-api.json" "${COMPONENT}" python "${PACKAGE}"
       pushd "${PACKAGE}-client"
-        python -m build
+        uv build
       popd
     else
       if [ ! -f "${PACKAGE}-client/dist/${PACKAGE}_client-${VERSION}-py3-none-any.whl" ]
