@@ -14,5 +14,5 @@ set -euv
 
 for SHA in $(curl -H "Authorization: token $GITHUB_TOKEN" "$GITHUB_CONTEXT" | jq -r '.[].sha')
 do
-  python3 .ci/scripts/validate_commit_message.py "$SHA"
+  uv run --script .ci/scripts/validate_commit_message.py "$SHA"
 done
