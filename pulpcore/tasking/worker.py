@@ -345,9 +345,7 @@ class PulpcoreWorker:
         self.wakeup_unblock = False
         result = self._unblock_tasks()
         if result is not None and (
-            Task.objects.filter(
-                state__in=[TASK_STATES.WAITING, TASK_STATES.CANCELING], app_lock=None
-            )
+            Task.objects.filter(state__in=TASK_INCOMPLETE_STATES, app_lock=None)
             .exclude(unblocked_at=None)
             .exists()
         ):
