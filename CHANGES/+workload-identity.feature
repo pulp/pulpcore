@@ -1,0 +1,1 @@
+Added workload identity authentication, so a CI job can authenticate with a short-lived OIDC token instead of a stored secret and receive per-request roles computed from the `WORKLOAD_IDENTITY` setting.
