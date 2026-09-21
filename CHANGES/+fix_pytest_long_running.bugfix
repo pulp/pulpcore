@@ -1,0 +1,3 @@
+Fixed the `long_running` pytest-mark, so that it correctly applies even when "nightly"
+is selected. This includes fixing a window in the task-cleanup path, where a missing
+worker's jobs were not getting cleaned up until a new task entered the system.

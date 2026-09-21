@@ -43,15 +43,7 @@ except ImportError:
         )
 
     def pytest_collection_modifyitems(config, items):
-        # Skip nightly tests by default
         # https://docs.pytest.org/en/7.1.x/example/simple.html#control-skipping-of-tests-according-to-command-line-option
-        if config.getoption("--nightly"):
-            # Run all tests unmodified
-            return
-        skip_nightly = pytest.mark.skip(reason="need --nightly option to run")
-        for item in items:
-            if "nightly" in item.keywords:
-                item.add_marker(skip_nightly)
 
         # Skip long_running tests if --timeout is below 600
         timeout = config.getoption("--timeout", default=None)
@@ -60,6 +52,13 @@ except ImportError:
             for item in items:
                 if "long_running" in item.keywords:
                     item.add_marker(skip_long)
+
+        # Skip anything labeled "nightly" unless --nightly specified
+        if not config.getoption("--nightly"):
+            skip_nightly = pytest.mark.skip(reason="need --nightly option to run")
+            for item in items:
+                if "nightly" in item.keywords:
+                    item.add_marker(skip_nightly)
 
 
 class PulpTaskTimeoutError(Exception):
