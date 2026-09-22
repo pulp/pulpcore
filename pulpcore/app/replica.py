@@ -107,7 +107,7 @@ class Replicator:
     def url(self, upstream_distribution):
         return upstream_distribution["base_url"]
 
-    def remote_extra_fields(self, upstream_distribution):
+    def remote_extra_fields(self, upstream_distribution, **kwargs):
         return {}
 
     def create_or_update_remote(self, upstream_distribution):
@@ -148,7 +148,7 @@ class Replicator:
 
         return remote
 
-    def repository_extra_fields(self, remote):
+    def repository_extra_fields(self, remote, **kwargs):
         return {}
 
     def create_or_update_repository(self, remote):
@@ -175,7 +175,7 @@ class Replicator:
             repository.save()
         return repository
 
-    def distribution_extra_fields(self, repository, upstream_distribution):
+    def distribution_extra_fields(self, repository, upstream_distribution, **kwargs):
         """
         Return the fields that need to be updated/cleared on distributions for idempotence.
 
