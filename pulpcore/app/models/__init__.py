@@ -51,6 +51,7 @@ from .importer import (
 )
 
 from .publication import (
+    AuthenticationRequired,
     ContentGuard,
     Distribution,
     DistributedPublication,
@@ -139,6 +140,7 @@ __all__ = [
     "Importer",
     "PulpImport",
     "PulpImporter",
+    "AuthenticationRequired",
     "ContentGuard",
     "Distribution",
     "DistributedPublication",
