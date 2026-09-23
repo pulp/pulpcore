@@ -74,8 +74,7 @@ class DomainResolvedGenericRelation:
                 _logger.warning(
                     "content_object for %s (pk=%s) not found on alias '%s' "
                     "(content_type_id=%s, object_id=%s). The referenced object may have been "
-                    "deleted, or Domain replication for this row's domain may be stale -- run "
-                    "'pulpcore-manager sync-domains' to check.",
+                    "deleted, or this row's domain may not be replicated to that alias.",
                     self._meta.label,
                     self.pk,
                     alias,

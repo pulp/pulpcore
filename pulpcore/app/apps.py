@@ -390,7 +390,7 @@ def _ensure_domains_replicated(sender, **kwargs):
         logging.getLogger(__name__).error(
             "Reconciling Domain rows to alias '%s' failed during migration. Data-plane objects "
             "created on this alias by later migrations/post_migrate hooks that FK to Domain may "
-            "fail until 'pulpcore-manager sync-domains' is run.",
+            "fail until Domain rows are reconciled to this alias.",
             using,
             exc_info=True,
         )

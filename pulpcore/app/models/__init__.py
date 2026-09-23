@@ -84,10 +84,6 @@ from .task import (
 
 from .analytics import SystemID
 
-from .migration_status import MigrationStatus
-
-from .domain_move import DomainMove
-
 from .upload import (
     Upload,
     UploadChunk,
@@ -165,8 +161,6 @@ __all__ = [
     "TaskGroup",
     "TaskSchedule",
     "SystemID",
-    "MigrationStatus",
-    "DomainMove",
     "Upload",
     "UploadChunk",
     "GroupProgressReport",

@@ -123,7 +123,7 @@ def _replicate_one_save(alias, pulp_id, defaults, attempts):
                 delay *= 2
     logger.error(
         "Domain replication to alias '%s' failed after %d attempts for domain %s. "
-        "Run 'pulpcore-manager sync-domains' to reconcile.",
+        "Data-plane writes for this domain on that alias will fail until it is reconciled.",
         alias,
         attempts,
         pulp_id,
@@ -152,7 +152,7 @@ def _replicate_one_delete(alias, pulp_id, attempts):
                 delay *= 2
     logger.error(
         "Domain delete-replication to alias '%s' failed after %d attempts for domain %s. "
-        "Run 'pulpcore-manager sync-domains' to reconcile.",
+        "A stale copy of this domain may remain on that alias until it is reconciled.",
         alias,
         attempts,
         pulp_id,

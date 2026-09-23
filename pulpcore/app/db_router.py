@@ -23,8 +23,6 @@ CONTROL_PLANE_LABELS = frozenset(
         "core.grouprole",
         "core.progressreport",
         "core.groupprogressreport",
-        "core.migrationstatus",
-        "core.domainmove",
         "core.profileartifact",
         "core.signingservice",
         "core.asciiarmoreddetachedsigningservice",
