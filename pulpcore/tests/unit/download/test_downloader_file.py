@@ -12,10 +12,10 @@ def import_paths(settings):
 @pytest.mark.parametrize(
     "url",
     [
-        "file:///var/www",
-        "file:///var/www/",
-        "file:///var/www/a",
-        "file:///var/www/a/",
+        "file:///tmp/www",
+        "file:///tmp/www/",
+        "file:///tmp/www/a",
+        "file:///tmp/www/a/",
     ],
 )
 def test_file_downloader_accepts_regular_file_urls(url, import_paths):
