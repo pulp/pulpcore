@@ -89,7 +89,27 @@ class FileRepository(Repository, AutoAddObjPermsMixin):
     CONTENT_TYPES = [FileContent]
     REMOTE_TYPES = [FileRemote, FileGitRemote]
 
+    # Constants for the ChoiceField 'sha256sums'
+    SHA256SUMS_DISABLED = "disabled"
+    SHA256SUMS_ROOT = "root"
+    SHA256SUMS_DIRECTORY = "directory"
+
+    SHA256SUMS_CHOICES = (
+        (SHA256SUMS_DISABLED, "Do not generate SHA256SUMS files."),
+        (
+            SHA256SUMS_ROOT,
+            "Generate a single SHA256SUMS at the root of the repository, listing every file "
+            "by its path relative to the root.",
+        ),
+        (
+            SHA256SUMS_DIRECTORY,
+            "Generate a SHA256SUMS in every directory of the repository, each listing every "
+            "file below it by its path relative to that directory.",
+        ),
+    )
+
     manifest = models.TextField(default="PULP_MANIFEST", null=True)
+    sha256sums = models.TextField(choices=SHA256SUMS_CHOICES, default=SHA256SUMS_DISABLED)
     autopublish = models.BooleanField(default=False)
     last_sync_details = models.JSONField(default=dict)
 
@@ -117,6 +137,7 @@ class FileRepository(Repository, AutoAddObjPermsMixin):
         if self.autopublish:
             tasks.publish(
                 manifest=self.manifest,
+                sha256sums=self.sha256sums,
                 repository_version_pk=version.pk,
             )
 
@@ -144,6 +165,9 @@ class FilePublication(Publication, AutoAddObjPermsMixin):
     TYPE = "file"
 
     manifest = models.TextField(null=True)
+    sha256sums = models.TextField(
+        choices=FileRepository.SHA256SUMS_CHOICES, default=FileRepository.SHA256SUMS_DISABLED
+    )
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
