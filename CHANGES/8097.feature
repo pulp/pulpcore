@@ -1,0 +1,1 @@
+Added a `sha256sums` option to file repositories that publishes SHA256SUMS files alongside the content, either one at the root of the repository or one in every directory. Each file lists every file below it in the format read by `sha256sum -c`.
