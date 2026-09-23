@@ -8,6 +8,30 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.105.20 (2026-09-23) {: #3.105.20 }
+
+### REST API {: #3.105.20-rest-api }
+
+#### Bugfixes {: #3.105.20-rest-api-bugfix }
+
+- Fixed file downloader path sanitation. CVE-2026-90959
+- Fixed post-migrate hooks to prevent failing on incomplete or rolled back migrations.
+- Reduce the number and size of queries made for each content app request.
+
+### Plugin API {: #3.105.20-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.105.20-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.105.20-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.105.19 (2026-09-02) {: #3.105.19 }
 
 ### REST API {: #3.105.19-rest-api }
