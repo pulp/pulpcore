@@ -41,8 +41,6 @@ fi
 
 # Compose the scenario definition.
 mkdir -p .ci/ansible/vars
-ENVVAR_HEADER_GUARD_TEST_SECRET="$(python3 -c 'import secrets; print(secrets.token_urlsafe(50))')"
-export ENVVAR_HEADER_GUARD_TEST_SECRET
 
 cat > .ci/ansible/vars/main.yaml << VARSYAML
 ---
@@ -51,7 +49,7 @@ plugin_name: "pulpcore"
 legacy_component_name: "pulpcore"
 component_name: "core"
 component_version: "${COMPONENT_VERSION}"
-pulp_env: {"ENVVAR_HEADER_GUARD_TEST_SECRET": "${ENVVAR_HEADER_GUARD_TEST_SECRET}", "PULP_CA_BUNDLE": "/etc/pulp/certs/pulp_webserver.crt"}
+pulp_env: {"PULP_CA_BUNDLE": "/etc/pulp/certs/pulp_webserver.crt"}
 pulp_settings: {"allowed_export_paths": ["/tmp"], "allowed_import_paths": ["/tmp"], "api_root": "/pulp/", "content_path_prefix": "/somewhere/else/", "csrf_trusted_origins": ["https://pulp:443"], "distributed_publication_retention_period": 3, "envvar_header_content_guard_allowed_vars": ["ENVVAR_HEADER_GUARD_TEST_SECRET"], "orphan_protection_time": 0, "task_diagnostics": ["memory"], "task_protection_time": 10, "tmpfile_protection_time": 10, "upload_protection_time": 10}
 pulp_scheme: "https"
 image:
