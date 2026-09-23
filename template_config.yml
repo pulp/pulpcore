@@ -25,7 +25,7 @@ extra_files:
   - destination: "/etc/nginx/pulp/api_root_rewrite.conf"
     origin: "pulpcore/pulpcore/tests/functional/assets/api_root_rewrite.conf"
 github_org: "pulp"
-latest_release_branch: "3.118"
+latest_release_branch: "3.119"
 lint_ignore:
   - "./pulpcore/app/protobuf/*"
 lint_requirements: true
@@ -52,13 +52,13 @@ pulp_settings:
     - "/tmp"
   allowed_import_paths:
     - "/tmp"
-  envvar_header_content_guard_allowed_vars:
-    - "ENVVAR_HEADER_GUARD_TEST_SECRET"
   api_root: "/pulp/"
   content_path_prefix: "/somewhere/else/"
   csrf_trusted_origins:
     - "https://pulp:443"
   distributed_publication_retention_period: 3
+  envvar_header_content_guard_allowed_vars:
+    - "ENVVAR_HEADER_GUARD_TEST_SECRET"
   orphan_protection_time: 0
   task_diagnostics:
     - "memory"
@@ -147,3 +147,4 @@ test_performance: false
 test_s3: true
 use_issue_template: true
 ...
+
