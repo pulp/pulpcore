@@ -792,9 +792,10 @@ class Distribution(MasterModel):
                 try:
                     publication = (
                         Publication.objects.filter(
-                            repository_version__in=repository.versions.all(), complete=True
+                            repository_version__repository=repository, complete=True
                         )
                         .select_related("repository_version")
+                        .defer("repository_version__content_ids")
                         .latest("repository_version", "pulp_created")
                         .cast()
                     )
