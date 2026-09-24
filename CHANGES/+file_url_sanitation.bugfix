@@ -1,1 +1,0 @@
-Fixed file downloader path sanitation. CVE-2026-90959
