@@ -8,6 +8,59 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.119.1 (2026-09-23) {: #3.119.1 }
+
+### REST API {: #3.119.1-rest-api }
+
+#### Bugfixes {: #3.119.1-rest-api-bugfix }
+
+- Fixed file downloader path sanitation. CVE-2026-90959
+
+### Plugin API {: #3.119.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.119.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.119.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.119.0 (2026-09-23) {: #3.119.0 }
+
+### REST API {: #3.119.0-rest-api }
+
+#### Features {: #3.119.0-rest-api-feature }
+
+- Added ``EnvVarHeaderContentGuard`` to validate a Base64-encoded header against a content-app environment variable listed in ``ENVVAR_HEADER_CONTENT_GUARD_ALLOWED_VARS``.
+  [#8007](https://github.com/pulp/pulpcore/issues/8007)
+
+#### Bugfixes {: #3.119.0-rest-api-bugfix }
+
+- Add a management command to help remove distributions with a dysfunctional base_path that prevents upgrading to 3.117.
+  [#8067](https://github.com/pulp/pulpcore/issues/8067)
+- Fixed replicate() deleting temporary TLS files before pulp-glue could use them, and stopped leaking PULP_CA_BUNDLE into later worker tasks.
+- Reduce the number and size of queries made for each content app request.
+- Task failures that previously surfaced as unhandled Python exceptions (deleting an object still referenced by others, replication errors, and failed subtasks) now raise proper Pulp errors, so their messages are preserved and reported clearly.
+
+### Plugin API {: #3.119.0-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.119.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.119.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.118.1 (2026-09-17) {: #3.118.1 }
 
 ### REST API {: #3.118.1-rest-api }
@@ -1128,6 +1181,30 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.106.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.105.20 (2026-09-23) {: #3.105.20 }
+
+### REST API {: #3.105.20-rest-api }
+
+#### Bugfixes {: #3.105.20-rest-api-bugfix }
+
+- Fixed file downloader path sanitation. CVE-2026-90959
+- Fixed post-migrate hooks to prevent failing on incomplete or rolled back migrations.
+- Reduce the number and size of queries made for each content app request.
+
+### Plugin API {: #3.105.20-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.105.20-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.105.20-pulp-cert-guard }
 
 No significant changes.
 
@@ -2570,6 +2647,29 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.86.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.85.31 (2026-09-23) {: #3.85.31 }
+
+### REST API {: #3.85.31-rest-api }
+
+#### Bugfixes {: #3.85.31-rest-api-bugfix }
+
+- Fixed file downloader path sanitation. CVE-2026-90959
+- Fixed post-migrate hooks to prevent failing on incomplete or rolled back migrations.
+
+### Plugin API {: #3.85.31-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.85.31-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.31-pulp-cert-guard }
 
 No significant changes.
 
