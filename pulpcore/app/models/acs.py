@@ -30,7 +30,7 @@ class AlternateContentSource(MasterModel):
 
     name = models.TextField(db_index=True)
     last_refreshed = models.DateTimeField(null=True)
-    remote = models.ForeignKey("Remote", null=True, on_delete=models.PROTECT)
+    remote = models.ForeignKey("Remote", null=True, on_delete=models.CASCADE)
     pulp_domain = models.ForeignKey("Domain", default=get_domain_pk, on_delete=models.PROTECT)
 
     class Meta:
