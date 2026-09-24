@@ -8,6 +8,28 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.49.71 (2026-09-24) {: #3.49.71 }
+
+### REST API {: #3.49.71-rest-api }
+
+#### Bugfixes {: #3.49.71-rest-api-bugfix }
+
+- Fixed file downloader path sanitation. CVE-2026-90959
+
+### Plugin API {: #3.49.71-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.71-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.71-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.49.70 (2026-09-02) {: #3.49.70 }
 
 ### REST API {: #3.49.70-rest-api }
