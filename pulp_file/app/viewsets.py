@@ -574,8 +574,15 @@ class FilePublicationViewSet(PublicationViewSet, RolesMixin):
         repository_version = serializer.validated_data.get("repository_version")
         manifest = serializer.validated_data.get("manifest")
         checkpoint = serializer.validated_data.get("checkpoint")
+        sha256sums = serializer.validated_data.get("sha256sums")
+        if sha256sums is None:
+            sha256sums = repository_version.repository.cast().sha256sums
 
-        task_kwargs = {"repository_version_pk": str(repository_version.pk), "manifest": manifest}
+        task_kwargs = {
+            "repository_version_pk": str(repository_version.pk),
+            "manifest": manifest,
+            "sha256sums": sha256sums,
+        }
 
         if checkpoint:
             task_kwargs["checkpoint"] = True

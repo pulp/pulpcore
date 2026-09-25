@@ -143,13 +143,29 @@ class FileRepositorySerializer(RepositorySerializer):
         allow_null=True,
     )
 
+    sha256sums = serializers.ChoiceField(
+        help_text=_(
+            "Whether to generate SHA256SUMS files, and where to place them. 'root' writes a "
+            "single file at the root of the repository, 'directory' writes one in every "
+            "directory. Each file lists every file below it, with paths relative to itself."
+        ),
+        choices=FileRepository.SHA256SUMS_CHOICES,
+        default=FileRepository.SHA256SUMS_DISABLED,
+        required=False,
+    )
+
     last_sync_details = serializers.JSONField(
         help_text=_("Details about the last sync of this repository."),
         read_only=True,
     )
 
     class Meta:
-        fields = RepositorySerializer.Meta.fields + ("autopublish", "manifest", "last_sync_details")
+        fields = RepositorySerializer.Meta.fields + (
+            "autopublish",
+            "manifest",
+            "sha256sums",
+            "last_sync_details",
+        )
         model = FileRepository
 
 
@@ -218,11 +234,24 @@ class FilePublicationSerializer(PublicationSerializer):
         required=False,
         allow_null=True,
     )
+    sha256sums = serializers.ChoiceField(
+        help_text=_(
+            "Whether to generate SHA256SUMS files, and where to place them. Defaults to the "
+            "setting on the repository being published."
+        ),
+        choices=FileRepository.SHA256SUMS_CHOICES,
+        required=False,
+    )
     checkpoint = serializers.BooleanField(required=False)
 
     class Meta:
         model = FilePublication
-        fields = PublicationSerializer.Meta.fields + ("distributions", "manifest", "checkpoint")
+        fields = PublicationSerializer.Meta.fields + (
+            "distributions",
+            "manifest",
+            "sha256sums",
+            "checkpoint",
+        )
 
 
 class FileDistributionSerializer(DistributionSerializer):
