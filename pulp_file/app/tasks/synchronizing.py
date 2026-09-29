@@ -7,7 +7,6 @@ from gettext import gettext as _
 from hashlib import sha256
 from urllib.parse import quote, urlparse, urlunparse
 
-from django.conf import settings
 from django.core.files import File
 
 from pulpcore.plugin.exceptions import SyncError
@@ -112,8 +111,6 @@ def synchronize(remote_pk, repository_pk, mirror, optimize=False, url=None, **kw
 
     remote = Remote.objects.get(pk=remote_pk).cast()
     repository = FileRepository.objects.get(pk=repository_pk)
-
-    optimize = optimize or settings.FILE_SYNC_OPTIMIZATION
 
     if not remote.url:
         raise SyncError(_("A remote must have a url specified to synchronize."))
