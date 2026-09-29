@@ -1,0 +1,1 @@
+Fixed a bug where filesystem export trying to use local on demand files can be tricked breaking out of `ALLOWED_IMPORT_PATHS`.
