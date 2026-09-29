@@ -7,7 +7,7 @@ import tarfile
 from gettext import gettext as _
 from glob import glob
 from pathlib import Path
-from urllib.parse import unquote, urlparse
+from urllib.parse import urlparse
 
 from django.conf import settings
 
@@ -97,7 +97,12 @@ def _validate_fs_export(content_artifacts):
 def _local_path_from_file_url(url):
     """Convert a file:// URL to an absolute local filesystem path."""
     parsed = urlparse(url)
-    return os.path.abspath(os.path.join(parsed.netloc, unquote(parsed.path)))
+    if parsed.netloc not in ["", "localhost"]:
+        raise UnexportableArtifactException()
+    path = Path(parsed.path).resolve()
+    if not any(path.is_relative_to(allowed) for allowed in settings.ALLOWED_IMPORT_PATHS):
+        raise UnexportableArtifactException()
+    return str(path)
 
 
 def _file_url_local_paths(content_artifacts):
