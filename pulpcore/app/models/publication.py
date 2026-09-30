@@ -883,6 +883,7 @@ class Distribution(MasterModel):
             .filter(distribution=self)
             .order_by("-pulp_created")
             .select_related("publication__repository_version")
+            .defer("publication__repository_version__content_ids")
         )
         for dp in recent_dp.iterator():
             pub = dp.publication
