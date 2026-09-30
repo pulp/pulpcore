@@ -1,0 +1,1 @@
+Avoid loading repository version content IDs when serving fallback content during the grace period.
