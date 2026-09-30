@@ -3,7 +3,7 @@ from gettext import gettext as _
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
-from pulpcore.app.models import UpstreamPulp
+from pulpcore.app.models import Remote, UpstreamPulp
 from pulpcore.app.serializers import (
     HiddenFieldsMixin,
     IdentityField,
@@ -122,6 +122,16 @@ class UpstreamPulpSerializer(ModelSerializer, HiddenFieldsMixin):
         ),
         min_value=0.0,
     )
+    remote_policy = serializers.ChoiceField(
+        choices=Remote.POLICY_CHOICES,
+        help_text=_(
+            "Download policy for remotes created during replication. One of 'immediate', "
+            "'on_demand', or 'streamed'. Distinct from 'policy', which controls how replicate "
+            "manages local objects. Defaults to the Remote default ('immediate') when unset."
+        ),
+        required=False,
+        allow_null=True,
+    )
 
     pulp_last_updated = serializers.DateTimeField(
         help_text="Timestamp of the most recent update of the remote.", read_only=True
@@ -178,6 +188,7 @@ class UpstreamPulpSerializer(ModelSerializer, HiddenFieldsMixin):
             "connect_timeout",
             "sock_connect_timeout",
             "sock_read_timeout",
+            "remote_policy",
             "pulp_last_updated",
             "hidden_fields",
             "q_select",
