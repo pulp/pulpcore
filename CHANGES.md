@@ -8,6 +8,62 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.120.0 (2026-09-29) {: #3.120.0 }
+
+### REST API {: #3.120.0-rest-api }
+
+#### Features {: #3.120.0-rest-api-feature }
+
+- Added workload identity authentication, so a CI job can authenticate with a short-lived OIDC token instead of a stored secret and receive per-request roles computed from the `WORKLOAD_IDENTITY` setting.
+
+#### Bugfixes {: #3.120.0-rest-api-bugfix }
+
+- Improved the performance of the latest publication lookup when serving content
+  from a repository-backed distribution.
+  [#1995](https://github.com/pulp/pulpcore/issues/1995)
+- Fixed file downloader path sanitation. CVE-2026-90959
+- Fixed the `long_running` pytest-mark, so that it correctly applies even when "nightly"
+  is selected. This includes fixing a window in the task-cleanup path, where a missing
+  worker's jobs were not getting cleaned up until a new task entered the system.
+
+### Plugin API {: #3.120.0-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.120.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.120.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.119.2 (2026-09-29) {: #3.119.2 }
+
+### REST API {: #3.119.2-rest-api }
+
+#### Bugfixes {: #3.119.2-rest-api-bugfix }
+
+- Improved the performance of the latest publication lookup when serving content
+  from a repository-backed distribution.
+  [#1995](https://github.com/pulp/pulpcore/issues/1995)
+
+### Plugin API {: #3.119.2-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.119.2-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.119.2-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.119.1 (2026-09-23) {: #3.119.1 }
 
 ### REST API {: #3.119.1-rest-api }
