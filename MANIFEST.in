@@ -2,6 +2,7 @@ graft pulpcore/etc
 graft pulp_certguard/tests/functional/artifacts
 exclude .gitleaks.toml
 include LICENSE
+include pulpcore/vendor/storages/LICENSE
 include pyproject.toml
 include CHANGES.md
 include COMMITMENT

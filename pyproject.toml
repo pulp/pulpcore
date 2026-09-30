@@ -68,9 +68,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-s3 = ["django-storages[boto3] @ git+https://github.com/dralley/django-storages.git@open-stream"]
-google = ["django-storages[google] @ git+https://github.com/dralley/django-storages.git@open-stream"]
-azure = ["django-storages[azure] @ git+https://github.com/dralley/django-storages.git@open-stream"]
+s3 = ["django-storages[boto3]==1.14.6"]
+google = ["django-storages[google]==1.14.6"]
+azure = ["django-storages[azure]==1.14.6"]
 prometheus = ["django-prometheus"]
 saml2 = ["djangosaml2>=1.12.0,<1.14"]
 kafka = [
