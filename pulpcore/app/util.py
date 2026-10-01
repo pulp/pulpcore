@@ -466,9 +466,9 @@ def gpg_verify(public_keys, signature, detached_data=None):
             result = verify(file=detached_data, store=store, signature=sig)
         else:
             result = verify(bytes=sig_data, store=store)
-    except Exception:
-        message = _("The signature is not valid.")
-        raise InvalidSignatureError(message, verified=VerifyResult(status=message)) from None
+    except Exception as e:
+        message = _("The signature is not valid: {}").format(e)
+        raise InvalidSignatureError(message, verified=VerifyResult(status=message))
 
     return VerifyResult(result)
 
