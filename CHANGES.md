@@ -8,6 +8,28 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.105.21 (2026-10-01) {: #3.105.21 }
+
+### REST API {: #3.105.21-rest-api }
+
+#### Bugfixes {: #3.105.21-rest-api-bugfix }
+
+- Preserve OpenPGP verification compatibility for failed signatures and fix key ID calculation for OpenPGP v6.
+
+### Plugin API {: #3.105.21-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.105.21-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.105.21-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.105.20 (2026-09-23) {: #3.105.20 }
 
 ### REST API {: #3.105.20-rest-api }
