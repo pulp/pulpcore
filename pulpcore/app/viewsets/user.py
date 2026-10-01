@@ -15,6 +15,7 @@ from rest_framework.permissions import SAFE_METHODS
 from rest_framework.response import Response
 from rest_framework.serializers import ValidationError
 
+from pulpcore.app.contexts import with_domain
 from pulpcore.app.models import Group
 from pulpcore.app.models.role import GroupRole, Role, UserRole
 from pulpcore.app.serializers import (
@@ -27,6 +28,7 @@ from pulpcore.app.serializers import (
     UserRoleSerializer,
     UserSerializer,
 )
+from pulpcore.app.util import get_default_domain
 from pulpcore.app.viewsets import NAME_FILTER_OPTIONS, NamedModelViewSet, RolesMixin
 from pulpcore.filters import BaseFilterSet, HyperlinkRelatedFilter
 
@@ -330,6 +332,21 @@ class _CharInFilter(filters.BaseInFilter, filters.CharFilter):
     pass
 
 
+def _grant_domain(content_object, domain):
+    """The domain context a UserRole/GroupRole grant should be created under, or None to leave
+    ambient context alone. An object-level grant resolves to the target object's own domain and a
+    domain-wide grant to the domain itself, since ambient context can't be trusted the way it can
+    for an object-scoped request (see pulpcore.app.role_util.assign_role). A grant tied to
+    neither just lives wherever the request creating it is already scoped -- no override needed.
+    Some object-level targets (e.g. Domain itself) are control-plane and have no pulp_domain at
+    all -- those always live on 'default', the same place the object itself does."""
+    if content_object is not None:
+        return getattr(content_object, "pulp_domain", None) or get_default_domain()
+    if domain is not None:
+        return domain
+    return None
+
+
 class NestedRoleFilter(BaseFilterSet):
     """
     FilterSet for Roles nested under users / groups.
@@ -393,6 +410,23 @@ class UserRoleViewSet(
     queryset = UserRole.objects.all()
     ordering = ("-pulp_created",)
 
+    def perform_create(self, serializer):
+        grant_domain = _grant_domain(
+            serializer.validated_data.get("content_object"),
+            serializer.validated_data.get("domain"),
+        )
+        if grant_domain is not None:
+            with with_domain(grant_domain):
+                serializer.save()
+        else:
+            serializer.save()
+
+    def perform_destroy(self, instance):
+        # Delete on whichever alias the instance was actually loaded from -- it must be correct,
+        # since get_object() already found it there -- rather than re-deriving it from
+        # content_object (an extra lazy fetch with its own routing to get right).
+        instance.delete(using=instance._state.db)
+
 
 class GroupRoleFilter(NestedRoleFilter):
     """
@@ -423,6 +457,20 @@ class GroupRoleViewSet(
     serializer_class = GroupRoleSerializer
     queryset = GroupRole.objects.all()
     ordering = ("-pulp_created",)
+
+    def perform_create(self, serializer):
+        grant_domain = _grant_domain(
+            serializer.validated_data.get("content_object"),
+            serializer.validated_data.get("domain"),
+        )
+        if grant_domain is not None:
+            with with_domain(grant_domain):
+                serializer.save()
+        else:
+            serializer.save()
+
+    def perform_destroy(self, instance):
+        instance.delete(using=instance._state.db)
 
 
 class LoginViewSet(generics.CreateAPIView):
