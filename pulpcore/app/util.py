@@ -260,14 +260,21 @@ def get_viewset_for_model(model_obj, ignore_error=False):
     # go through the viewset registry to find the viewset for the passed-in model
     for app in pulp_plugin_configs():
         for model, viewsets in app.named_viewsets.items():
-            # There may be multiple viewsets for a model. In this
-            # case, we can't reverse the mapping.
             if len(viewsets) == 1:
                 viewset = viewsets[0]
-                _model_viewset_cache.setdefault(model, viewset)
-                if model is model_class:
-                    model_viewset = viewset
-                    break
+            else:
+                # Multiple viewsets for the same model (e.g. RepositoryVersionViewSet
+                # and OpenPGPKeyringVersionViewSet both use RepositoryVersion).
+                # Prefer the base class — subclass viewsets exist for URL routing
+                # and custom access policies, not for model-to-viewset reverse lookups.
+                bases = [vs for vs in viewsets if all(issubclass(other, vs) for other in viewsets)]
+                if len(bases) != 1:
+                    continue
+                viewset = bases[0]
+            _model_viewset_cache.setdefault(model, viewset)
+            if model is model_class:
+                model_viewset = viewset
+                break
         if model_viewset is not None:
             break
 
