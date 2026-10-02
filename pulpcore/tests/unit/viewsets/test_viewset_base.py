@@ -7,6 +7,34 @@ from pytest_django.asserts import assertQuerySetEqual
 from pulpcore.app import models, serializers, viewsets
 
 
+def test_get_object_is_cached():
+    viewset = viewsets.NamedModelViewSet()
+    expected = object()
+
+    with unittest.mock.patch(
+        "rest_framework.generics.GenericAPIView.get_object", return_value=expected
+    ) as get_object:
+        assert viewset.get_object() is expected
+        # The second lookup should reuse the object retrieved by the first lookup.
+        assert viewset.get_object() is expected
+
+    get_object.assert_called_once_with()
+
+
+def test_get_object_errors_are_not_cached():
+    viewset = viewsets.NamedModelViewSet()
+    expected = object()
+
+    with unittest.mock.patch(
+        "rest_framework.generics.GenericAPIView.get_object", side_effect=[Http404, expected]
+    ) as get_object:
+        with pytest.raises(Http404):
+            viewset.get_object()
+        assert viewset.get_object() is expected
+
+    assert get_object.call_count == 2
+
+
 @pytest.mark.django_db
 def test_adds_filters():
     """
