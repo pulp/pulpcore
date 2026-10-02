@@ -312,6 +312,12 @@ class NamedModelViewSet(viewsets.GenericViewSet):
             self.get_parent_field_and_object()
         super().initial(request, *args, **kwargs)
 
+    def get_object(self):
+        """Return the object cached for the lifetime of this view instance."""
+        if not hasattr(self, "_pulp_cached_object"):
+            self._pulp_cached_object = super().get_object()
+        return self._pulp_cached_object
+
     def get_queryset(self):
         """
         Gets a QuerySet based on the current request.
