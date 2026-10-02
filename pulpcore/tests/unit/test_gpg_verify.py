@@ -247,3 +247,64 @@ class TestGpgVerifyErrorHandling:
 
         with pytest.raises(InvalidSignatureError):
             gpg_verify(pubkey, str(sig_file), detached_data=str(data_file))
+
+    def test_exception_message_includes_original_error(self, tmp_path):
+        """Test that InvalidSignatureError includes the original pysequoia exception message.
+
+        Regression test: previously the original exception was discarded via `from None`,
+        making failures like SHA-1 key rejection impossible to diagnose from the error message.
+        """
+        from unittest.mock import patch
+
+        tsk = Tsk.generate("Test <test@example.com>", profile=Profile.RFC9580)
+        pubkey = str(tsk.extract_certificate())
+
+        data = b"test data"
+        sig_bytes = sign(tsk.signer(), data, mode=SignatureMode.DETACHED)
+
+        sig_file = tmp_path / "sig.asc"
+        sig_file.write_bytes(sig_bytes)
+
+        data_file = tmp_path / "data.txt"
+        data_file.write_bytes(data)
+
+        original_message = (
+            "No binding signature at time 2026-10-01T15:31:26Z: "
+            "Policy rejected non-revocation signature (PositiveCertification) "
+            "requiring second pre-image resistance: "
+            "SHA1 is not considered secure since 2023-02-01T00:00:00Z"
+        )
+
+        with patch("pysequoia.verify", side_effect=RuntimeError(original_message)):
+            with pytest.raises(InvalidSignatureError) as exc_info:
+                gpg_verify(pubkey, str(sig_file), detached_data=str(data_file))
+
+        assert original_message in str(exc_info.value)
+
+    def test_exception_chain_not_suppressed(self, tmp_path):
+        """Test that the original exception is accessible via the exception chain.
+
+        Regression test: previously `from None` suppressed __context__, hiding the
+        root cause from callers inspecting the exception chain.
+        """
+        from unittest.mock import patch
+
+        tsk = Tsk.generate("Test <test@example.com>", profile=Profile.RFC9580)
+        pubkey = str(tsk.extract_certificate())
+
+        data = b"test data"
+        sig_bytes = sign(tsk.signer(), data, mode=SignatureMode.DETACHED)
+
+        sig_file = tmp_path / "sig.asc"
+        sig_file.write_bytes(sig_bytes)
+
+        data_file = tmp_path / "data.txt"
+        data_file.write_bytes(data)
+
+        with patch("pysequoia.verify", side_effect=RuntimeError("original error")):
+            with pytest.raises(InvalidSignatureError) as exc_info:
+                gpg_verify(pubkey, str(sig_file), detached_data=str(data_file))
+
+        assert not exc_info.value.__suppress_context__
+        assert exc_info.value.__context__ is not None
+        assert isinstance(exc_info.value.__context__, RuntimeError)
