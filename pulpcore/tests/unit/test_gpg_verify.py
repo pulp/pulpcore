@@ -1,8 +1,12 @@
 """Unit tests for gpg_verify covering OpenPGP v4, v6, classical, and PQC algorithms."""
 
+import importlib
+
 import pytest
 from pysequoia import CipherSuite, Profile, SignatureMode, Tsk, sign
+from pysequoia.packet import HashAlgorithm
 
+import pulpcore.app.util as util
 from pulpcore.app.util import VerifyResult, gpg_verify, openpgp_key_id
 from pulpcore.exceptions.validation import InvalidSignatureError
 
@@ -112,6 +116,37 @@ class TestGpgVerify:
         assert result.pubkey_fingerprint.upper() == fixture["fingerprint"].upper()
         assert result.key_id == openpgp_key_id(result.fingerprint)
         assert result.data == fixture["data"]
+
+    def test_system_sequoia_policy_is_used(self, tmp_path, monkeypatch):
+        """Reject a SHA-512 signature when the system policy disables SHA-512."""
+        config = tmp_path / "sequoia.config"
+        config.write_text('[hash_algorithms]\nsha512 = "never"\n')
+        tsk = Tsk.generate("Test <test@example.com>")
+        data = b"test data"
+        signature = sign(
+            tsk.signer(),
+            data,
+            mode=SignatureMode.DETACHED,
+            hash_algorithm=HashAlgorithm.SHA512,
+        )
+        signature_path = tmp_path / "signature.asc"
+        signature_path.write_bytes(signature)
+        data_path = tmp_path / "data"
+        data_path.write_bytes(data)
+
+        try:
+            with monkeypatch.context() as context:
+                context.setenv("SEQUOIA_CRYPTO_POLICY", str(config))
+                importlib.reload(util)
+
+                with pytest.raises(InvalidSignatureError):
+                    util.gpg_verify(
+                        str(tsk.extract_certificate()),
+                        str(signature_path),
+                        detached_data=str(data_path),
+                    )
+        finally:
+            importlib.reload(util)
 
 
 class TestVerifyResultAPI:
