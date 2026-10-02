@@ -1,4 +1,5 @@
 import hashlib
+import logging
 import os
 import socket
 import zlib
@@ -18,6 +19,7 @@ from django.conf import settings
 from django.db import connection
 from django.db.models import Model, UUIDField
 from django.utils.http import parse_http_date
+from pysequoia import StandardPolicy
 from rest_framework.reverse import reverse as drf_reverse
 from rest_framework.serializers import ValidationError
 
@@ -29,6 +31,18 @@ from pulpcore.exceptions.validation import InvalidSignatureError
 
 # a little cache so viewset_for_model doesn't have to iterate over every app every time
 _model_viewset_cache = {}
+
+_logger = logging.getLogger(__name__)
+
+
+try:
+    # Read the system sequoia config file at "/etc/crypto-policies/back-ends/sequoia.config" for any policy tweaks
+    SEQUOIA_POLICY = StandardPolicy.from_system_config()
+    _logger.info("System Sequoia policy discovered and active")
+except Exception:
+    # Use defaults
+    SEQUOIA_POLICY = StandardPolicy()
+    _logger.info("System Sequoia policy not discovered, defaults active")
 
 
 @lru_cache(maxsize=None)
@@ -465,9 +479,9 @@ def gpg_verify(public_keys, signature, detached_data=None):
     try:
         if detached_data is not None:
             sig = Sig.from_bytes(sig_data)
-            result = verify(file=detached_data, store=store, signature=sig)
+            result = verify(file=detached_data, store=store, signature=sig, policy=SEQUOIA_POLICY)
         else:
-            result = verify(bytes=sig_data, store=store)
+            result = verify(bytes=sig_data, store=store, policy=SEQUOIA_POLICY)
     except Exception:
         message = _("The signature is not valid.")
         raise InvalidSignatureError(message, verified=VerifyResult(status=message)) from None
