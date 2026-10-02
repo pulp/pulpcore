@@ -345,6 +345,8 @@ class NamedModelViewSet(viewsets.GenericViewSet):
             if settings.DOMAIN_ENABLED:
                 if hasattr(qs.model, "pulp_domain"):
                     qs = qs.filter(pulp_domain=request.pulp_domain)
+                    # Inform get_objects_for_user that the queryset has already been filtered by domain.
+                    setattr(qs, "filtered_domain", request.pulp_domain)
 
             for permission_class in self.get_permissions():
                 if hasattr(permission_class, "scope_queryset"):
