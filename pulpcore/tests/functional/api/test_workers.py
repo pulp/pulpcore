@@ -127,7 +127,7 @@ def test_task_schedule(task_schedule, pulpcore_bindings):
 
 
 @pytest.mark.parallel
-def test_task_schedule_domain(domain_factory, pulpcore_bindings):
+def test_task_schedule_domain(domain_factory, pulpcore_bindings, monitor_task):
     """Test that a scheduled task dispatches in the TaskSchedule's domain, not the default."""
     domain = domain_factory()
     domain_name = domain.name
@@ -163,6 +163,7 @@ def test_task_schedule_domain(domain_factory, pulpcore_bindings):
         ts = task_schedules.results[0]
         assert f"/{domain_name}/" in ts.pulp_href
         assert f"/{domain_name}/" in ts.last_task
+        monitor_task(ts.last_task)
         task = pulpcore_bindings.TasksApi.read(ts.last_task)
         assert task.state == "completed"
         assert f"/{domain_name}/" in task.pulp_href
