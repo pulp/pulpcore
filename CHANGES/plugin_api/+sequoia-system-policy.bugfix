@@ -1,0 +1,1 @@
+Pulp's `gpg_verify()` function now respects the system policy for the sequoia crypto library in `/etc/crypto-policies/back-ends/sequoia.config` (or the path set by the environment variable `SEQUOIA_CRYPTO_POLICY`).

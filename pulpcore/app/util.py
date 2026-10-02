@@ -1,4 +1,5 @@
 import hashlib
+import logging
 import os
 import socket
 import zlib
@@ -19,6 +20,7 @@ from django.db import connection
 from django.db.models import Model, UUIDField
 from django.urls import Resolver404, resolve
 from django.utils.http import parse_http_date
+from pysequoia import Policy
 from rest_framework.reverse import reverse as drf_reverse
 from rest_framework.serializers import ValidationError
 
@@ -30,6 +32,18 @@ from pulpcore.exceptions.validation import InvalidSignatureError
 
 # a little cache so viewset_for_model doesn't have to iterate over every app every time
 _model_viewset_cache = {}
+
+_logger = logging.getLogger(__name__)
+
+
+try:
+    # Read the system sequoia config file at "/etc/crypto-policies/back-ends/sequoia.config" for any policy tweaks
+    SEQUOIA_POLICY = Policy.from_sequoia_config_file()
+    _logger.info("System Sequoia policy discovered and active")
+except Exception:
+    # Use defaults
+    SEQUOIA_POLICY = Policy.default()
+    _logger.info("System Sequoia policy not discovered, defaults active")
 
 
 @lru_cache(maxsize=None)
@@ -462,7 +476,7 @@ def gpg_verify(public_keys, signature, detached_data=None):
     """
     from pysequoia import Cert, Sig, verify
 
-    certs = Cert.split_bytes(public_keys.encode("utf8"))
+    certs = Cert.split_bytes(public_keys.encode("utf8"), policy=SEQUOIA_POLICY)
 
     def store(key_ids):
         return certs
@@ -478,9 +492,9 @@ def gpg_verify(public_keys, signature, detached_data=None):
     try:
         if detached_data is not None:
             sig = Sig.from_bytes(sig_data)
-            result = verify(file=detached_data, store=store, signature=sig)
+            result = verify(file=detached_data, store=store, signature=sig, policy=SEQUOIA_POLICY)
         else:
-            result = verify(bytes=sig_data, store=store)
+            result = verify(bytes=sig_data, store=store, policy=SEQUOIA_POLICY)
     except Exception as e:
         message = _("The signature is not valid: {}").format(e)
         raise InvalidSignatureError(message, verified=VerifyResult(status=message))
