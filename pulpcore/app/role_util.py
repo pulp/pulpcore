@@ -137,22 +137,33 @@ def get_objects_for_user_roles(
     ).values_list("object_id", flat=True)
     final_q = Q(pk_str__in=user_role_pks)
     if accept_domain_perms and hasattr(qs.model, "pulp_domain"):
-        domains = list(
-            user.object_roles.filter(
+        # Optimization used by get_queryset in NamedModelViewSet
+        if filtered_domain := getattr(qs, "filtered_domain", None):
+            if user.object_roles.filter(
+                domain=filtered_domain, role__permissions=permission
+            ).exists():
+                return qs
+            if (
+                use_groups
+                and GroupRole.objects.filter(
+                    group__in=user.groups.all(),
+                    domain=filtered_domain,
+                    role__permissions=permission,
+                ).exists()
+            ):
+                return qs
+        else:
+            user_domains = user.object_roles.filter(
                 domain__isnull=False, role__permissions=permission
             ).values_list("domain_id", flat=True)
-        )
-        if use_groups:
-            domains.extend(
-                GroupRole.objects.filter(
+            final_q |= Q(pulp_domain_id__in=user_domains)
+            if use_groups:
+                group_domains = GroupRole.objects.filter(
                     group__in=user.groups.all(),
                     domain__isnull=False,
                     role__permissions=permission,
                 ).values_list("domain_id", flat=True)
-            )
-        final_q |= Q(
-            pk_str__in=list(qs.filter(pulp_domain_id__in=domains).values_list("pk", flat=True))
-        )
+                final_q |= Q(pulp_domain_id__in=group_domains)
 
     if use_groups:
         group_role_pks = GroupRole.objects.filter(
