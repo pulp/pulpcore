@@ -1,4 +1,5 @@
 import asyncio
+from contextlib import asynccontextmanager
 
 from aiohttp import hdrs
 from aiohttp.web import StreamResponse
@@ -8,6 +9,15 @@ from aiohttp.web_exceptions import (
 )
 
 from pulpcore.app.models import Artifact
+
+STREAMING_STORAGE_CLASSES = frozenset(
+    (
+        "storages.backends.s3.S3Storage",
+        "storages.backends.s3boto3.S3Boto3Storage",
+        "storages.backends.azure_storage.AzureStorage",
+        "storages.backends.gcloud.GoogleCloudStorage",
+    )
+)
 
 
 class ArtifactResponse(StreamResponse):
@@ -33,6 +43,12 @@ class ArtifactResponse(StreamResponse):
         self._chunk_size = chunk_size
 
     async def _sendfile(self, request, fobj, offset, count):
+        if self._artifact.pulp_domain.storage_class in STREAMING_STORAGE_CLASSES:
+            storage = self._artifact.pulp_domain.get_storage()
+            return await self._sendfile_storage_stream(
+                request, storage.open_stream, fobj.name, offset, count
+            )
+
         # To keep memory usage low, fobj is transferred in chunks
         # controlled by the constructor's chunk_size argument.
 
@@ -50,6 +66,56 @@ class ArtifactResponse(StreamResponse):
             if count <= 0:
                 break
             chunk = await loop.run_in_executor(None, fobj.read, min(self._chunk_size, count))
+
+        await writer.drain()
+        return writer
+
+    @staticmethod
+    @asynccontextmanager
+    async def _storage_stream(stream_opener, name, offset, count):
+        """Bridge django-storages' synchronous streaming context manager.
+
+        The django-storages fork supplies ``open_stream()`` on the remote
+        backends selected above. Its provider I/O, including opening and
+        closing the context, must stay off the content app's event loop.
+        Propagate exception details to the synchronous context manager so it
+        retains normal ``with`` semantics. Once django-storages releases this
+        API upstream, replace the forked dependency with that release.
+        """
+
+        stream_context = await asyncio.to_thread(stream_opener, name, start=offset, length=count)
+        stream = await asyncio.to_thread(stream_context.__enter__)
+        try:
+            yield stream
+        except BaseException as exc:
+            if not await asyncio.to_thread(
+                stream_context.__exit__, type(exc), exc, exc.__traceback__
+            ):
+                raise
+        else:
+            await asyncio.to_thread(stream_context.__exit__, None, None, None)
+
+    async def _sendfile_storage_stream(self, request, stream_opener, name, offset, count):
+        """Write an ``open_stream()`` response in bounded chunks.
+
+        The storage API is synchronous while aiohttp writes are asynchronous.
+        Bound each provider read to the remaining HTTP range and use aiohttp's
+        normal backpressure for every write.
+        """
+
+        writer = await super().prepare(request)
+        assert writer is not None
+
+        async with self._storage_stream(stream_opener, name, offset, count) as stream:
+            remaining = count
+            while remaining:
+                chunk = await asyncio.to_thread(stream.read, min(self._chunk_size, remaining))
+                if not chunk:
+                    break
+                if len(chunk) > remaining:
+                    chunk = chunk[:remaining]
+                await writer.write(chunk)
+                remaining -= len(chunk)
 
         await writer.drain()
         return writer
