@@ -185,27 +185,31 @@ class Sha256Sums:
             dict: The relative path to publish each file at, mapped to its path on disk.
 
         """
+        written = {}
         open_files = {}
         try:
-            for entry in entries:
+            # Sorting keeps each directory's entries contiguous, so its file can be closed on the way out.
+            for entry in sorted(entries, key=lambda entry: entry.relative_path):
                 if not entry.digest:
                     continue
-                for directory in self._directories(entry.relative_path):
-                    sums_path = os.path.join(directory, self.FILENAME)
-                    if sums_path not in open_files:
-                        open_files[sums_path] = NamedTemporaryFile(
-                            mode="w", dir=dest_dir, delete=False
-                        )
+                directories = list(self._directories(entry.relative_path))
+                for directory in set(open_files).difference(directories):
+                    open_files.pop(directory).close()
+                for directory in directories:
+                    if directory not in open_files:
+                        fp = NamedTemporaryFile(mode="w", dir=dest_dir, delete=False)
+                        open_files[directory] = fp
+                        written[os.path.join(directory, self.FILENAME)] = fp.name
                     if directory:
                         name = entry.relative_path[len(directory) + 1 :]
                     else:
                         name = entry.relative_path
-                    open_files[sums_path].write(f"{entry.digest}  {name}\n")
+                    open_files[directory].write(f"{entry.digest}  {name}\n")
         finally:
             for fp in open_files.values():
                 fp.close()
 
-        return {sums_path: fp.name for sums_path, fp in open_files.items()}
+        return written
 
     def _directories(self, relative_path):
         """

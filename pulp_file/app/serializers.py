@@ -29,6 +29,23 @@ from pulp_file.app.models import (
     FileRemote,
     FileRepository,
 )
+from pulp_file.manifest import Sha256Sums
+
+
+def validate_manifest_sha256sums(manifest, sha256sums):
+    """
+    Validate that the manifest filename does not collide with a generated SHA256SUMS file.
+
+    Raises:
+        serializers.ValidationError: If the manifest would be published at a generated path.
+
+    """
+    if sha256sums != FileRepository.SHA256SUMS_DISABLED and manifest == Sha256Sums.FILENAME:
+        raise serializers.ValidationError(
+            _("The manifest cannot be named {name} while SHA256SUMS files are generated.").format(
+                name=Sha256Sums.FILENAME
+            )
+        )
 
 
 class FileContentSerializer(SingleArtifactContentUploadSerializer, ContentChecksumSerializer):
@@ -158,6 +175,20 @@ class FileRepositorySerializer(RepositorySerializer):
         help_text=_("Details about the last sync of this repository."),
         read_only=True,
     )
+
+    def validate(self, data):
+        """Validate the FileRepository data."""
+        data = super().validate(data)
+
+        validate_manifest_sha256sums(
+            data.get("manifest", getattr(self.instance, "manifest", None)),
+            data.get(
+                "sha256sums",
+                getattr(self.instance, "sha256sums", FileRepository.SHA256SUMS_DISABLED),
+            ),
+        )
+
+        return data
 
     class Meta:
         fields = RepositorySerializer.Meta.fields + (

@@ -55,6 +55,7 @@ from .serializers import (
     FileRemoteSerializer,
     FileRepositorySerializer,
     FileRepositorySyncURLSerializer,
+    validate_manifest_sha256sums,
 )
 
 
@@ -577,6 +578,7 @@ class FilePublicationViewSet(PublicationViewSet, RolesMixin):
         sha256sums = serializer.validated_data.get("sha256sums")
         if sha256sums is None:
             sha256sums = repository_version.repository.cast().sha256sums
+        validate_manifest_sha256sums(manifest, sha256sums)
 
         task_kwargs = {
             "repository_version_pk": str(repository_version.pk),

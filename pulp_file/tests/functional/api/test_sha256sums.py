@@ -89,3 +89,28 @@ def test_publication_defaults_to_repository(
 
     publication = file_publication_factory(repository=repository.pulp_href)
     assert publication.sha256sums == "directory"
+
+
+@pytest.mark.parallel
+def test_repository_manifest_cannot_collide(file_bindings, file_repository_factory):
+    with pytest.raises(file_bindings.ApiException) as exc:
+        file_repository_factory(manifest="SHA256SUMS", sha256sums="root")
+    assert exc.value.status == 400
+
+    repository = file_repository_factory(sha256sums="root")
+    with pytest.raises(file_bindings.ApiException) as exc:
+        file_bindings.RepositoriesFileApi.partial_update(
+            repository.pulp_href, {"manifest": "SHA256SUMS"}
+        )
+    assert exc.value.status == 400
+
+
+@pytest.mark.parallel
+def test_publication_manifest_cannot_collide(file_bindings, file_repository_factory):
+    repository = file_repository_factory(sha256sums="root")
+
+    with pytest.raises(file_bindings.ApiException) as exc:
+        file_bindings.PublicationsFileApi.create(
+            {"repository": repository.pulp_href, "manifest": "SHA256SUMS"}
+        )
+    assert exc.value.status == 400

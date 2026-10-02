@@ -130,3 +130,7 @@ http POST :/pulp/api/v3/publications/file/file/ repository=$REPO_HREF sha256sums
 Consumers verify what they downloaded by running `sha256sum -c SHA256SUMS` in the directory they
 downloaded it into. Content that Pulp has not downloaded yet has no digest to publish and is left
 out.
+
+The generated files take the `SHA256SUMS` paths for themselves, so the manifest cannot be named
+`SHA256SUMS` while they are generated, and a repository already holding content at one of those
+paths cannot be published.

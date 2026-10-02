@@ -1,5 +1,6 @@
 import pytest
 
+from pulp_file import manifest as manifest_module
 from pulp_file.manifest import Entry, Sha256Sums
 
 ENTRIES = [
@@ -18,9 +19,9 @@ def test_root(tmp_path):
 
     assert read_written(written) == {
         "SHA256SUMS": (
-            f"{'a' * 64}  release.iso\n"
-            f"{'b' * 64}  docs/intro.md\n"
             f"{'c' * 64}  docs/api/reference.md\n"
+            f"{'b' * 64}  docs/intro.md\n"
+            f"{'a' * 64}  release.iso\n"
         )
     }
 
@@ -30,11 +31,11 @@ def test_per_directory(tmp_path):
 
     assert read_written(written) == {
         "SHA256SUMS": (
-            f"{'a' * 64}  release.iso\n"
-            f"{'b' * 64}  docs/intro.md\n"
             f"{'c' * 64}  docs/api/reference.md\n"
+            f"{'b' * 64}  docs/intro.md\n"
+            f"{'a' * 64}  release.iso\n"
         ),
-        "docs/SHA256SUMS": f"{'b' * 64}  intro.md\n{'c' * 64}  api/reference.md\n",
+        "docs/SHA256SUMS": f"{'c' * 64}  api/reference.md\n{'b' * 64}  intro.md\n",
         "docs/api/SHA256SUMS": f"{'c' * 64}  reference.md\n",
     }
 
@@ -50,3 +51,36 @@ def test_entries_without_digest_are_skipped(tmp_path):
     written = Sha256Sums(per_directory=True).write(entries, str(tmp_path))
 
     assert "ondemand.md" not in read_written(written)["docs/SHA256SUMS"]
+
+
+def test_open_files_are_bound_by_depth(tmp_path, monkeypatch):
+    entries = [
+        Entry(relative_path=f"dir{n}/sub/file.txt", digest=f"{n:064}", size=1) for n in range(100)
+    ]
+    open_files = 0
+    high_water_mark = 0
+    named_temporary_file = manifest_module.NamedTemporaryFile
+
+    def counting_named_temporary_file(*args, **kwargs):
+        nonlocal open_files, high_water_mark
+        fp = named_temporary_file(*args, **kwargs)
+        close = fp.close
+        open_files += 1
+        high_water_mark = max(high_water_mark, open_files)
+
+        def counting_close():
+            nonlocal open_files
+            if not fp.closed:
+                open_files -= 1
+            close()
+
+        fp.close = counting_close
+        return fp
+
+    monkeypatch.setattr(manifest_module, "NamedTemporaryFile", counting_named_temporary_file)
+
+    written = Sha256Sums(per_directory=True).write(entries, str(tmp_path))
+
+    assert len(written) == 201
+    assert open_files == 0
+    assert high_water_mark == 3
