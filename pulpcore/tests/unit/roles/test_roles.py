@@ -3,8 +3,10 @@ from uuid import uuid4
 import pytest
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 
-from pulpcore.app.models import Group, Remote, Repository
+from pulpcore.app.models import Domain, Group, Remote, Repository
 from pulpcore.app.models.role import Role
 from pulpcore.app.role_util import (
     assign_role,
@@ -129,6 +131,34 @@ def test_combination_role(user, group, repository, repository2, remote, remote2,
     ) == {remote.pk, remote2.pk}
     remove_role("role2", group)
     remove_role("role1", user, repository)
+
+
+def test_domain_role_queryset_scoping(user, role1):
+    domain_a = Domain.objects.create(
+        name=uuid4(),
+        storage_class="pulpcore.app.models.storage.FileSystem",
+        storage_settings={"base_path": "/foo"},
+    )
+    domain_b = Domain.objects.create(
+        name=uuid4(),
+        storage_class="pulpcore.app.models.storage.FileSystem",
+        storage_settings={"base_path": "/foo"},
+    )
+    repository_a = Repository.objects.create(name="prod", pulp_domain=domain_a)
+    Repository.objects.create(name="prod", pulp_domain=domain_b)
+    assign_role("role1", user, domain=domain_a)
+
+    repositories = Repository.objects.filter(name="prod")
+    with CaptureQueriesContext(connection) as queries:
+        scoped = get_objects_for_user(user, "core.view_repository", repositories)
+
+    assert not any('FROM "core_repository"' in query["sql"] for query in queries)
+    assert set(scoped.values_list("pk", flat=True)) == {repository_a.pk}
+
+    domain_scoped = repositories.filter(pulp_domain=domain_a)
+    domain_scoped.filtered_domain = domain_a
+    scoped = get_objects_for_user(user, "core.view_repository", domain_scoped)
+    assert set(scoped.values_list("pk", flat=True)) == {repository_a.pk}
 
 
 def test_get_users_with_perms_attached_roles(user, group, repository, role1):
