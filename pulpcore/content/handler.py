@@ -664,6 +664,13 @@ class Handler:
             Set of strings representing the files and directories in the directory listing.
         """
 
+        def update_date(dates, name, timestamp):
+            current_date = dates.get(name, None)
+            if current_date is None:
+                dates[name] = timestamp
+            elif current_date < timestamp:
+                dates[name] = timestamp
+
         def file_or_directory_name(directory_path, relative_path):
             result = re.match(r"({})([^\/]*)(\/*)".format(re.escape(directory_path)), relative_path)
             return "{}{}".format(result.groups()[1], result.groups()[2])
@@ -687,12 +694,13 @@ class Handler:
                 for pa in pas:
                     name = file_or_directory_name(path, pa.relative_path)
                     directory_list.add(name)
-                    dates[name] = pa.pulp_created
+                    update_date(dates, name, pa.pulp_created)
                     content_to_find[pa.content_artifact.content_id] = name
-                    if pa.content_artifact.artifact:
-                        sizes[name] = pa.content_artifact.artifact.size
-                    else:
-                        artifacts_to_find[pa.content_artifact.pk] = name
+                    if not name.endswith("/"):
+                        if pa.content_artifact.artifact:
+                            sizes[name] = pa.content_artifact.artifact.size
+                        else:
+                            artifacts_to_find[pa.content_artifact.pk] = name
 
             if repo_version or publication.pass_through:
                 cas = ContentArtifact.objects.select_related("artifact").filter(
@@ -701,22 +709,20 @@ class Handler:
                 for ca in cas:
                     name = file_or_directory_name(path, ca.relative_path)
                     directory_list.add(name)
-                    dates[name] = ca.pulp_created
+                    update_date(dates, name, ca.pulp_created)
                     content_to_find[ca.content_id] = name
-                    if ca.artifact:
-                        sizes[name] = ca.artifact.size
-                    else:
-                        artifacts_to_find[ca.pk] = name
+                    if not name.endswith("/"):
+                        if ca.artifact:
+                            sizes[name] = ca.artifact.size
+                        else:
+                            artifacts_to_find[ca.pk] = name
 
             if directory_list:
                 # Find the dates the content got added to the repository
-                dates.update(
-                    {
-                        content_to_find[rc.content_id]: rc.pulp_created
-                        for rc in content_repo_ver._content_relationships()
-                        if rc.content_id in content_to_find
-                    }
-                )
+                for rc in content_repo_ver._content_relationships():
+                    if rc.content_id in content_to_find:
+                        update_date(dates, content_to_find[rc.content_id], rc.pulp_created)
+
                 # Find the sizes for on_demand artifacts
                 r_artifacts = RemoteArtifact.objects.filter(
                     content_artifact__in=artifacts_to_find.keys(), size__isnull=False
