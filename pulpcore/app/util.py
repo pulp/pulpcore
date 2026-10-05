@@ -2,7 +2,7 @@ import hashlib
 import os
 import socket
 import zlib
-from contextlib import ExitStack
+from contextlib import ExitStack, contextmanager
 from datetime import timedelta
 from functools import lru_cache
 from gettext import gettext as _
@@ -15,7 +15,7 @@ from uuid import UUID
 
 from django.apps import apps
 from django.conf import settings
-from django.db import connection
+from django.db import connections
 from django.db.models import Model, UUIDField
 from django.urls import Resolver404, resolve
 from django.utils.http import parse_http_date
@@ -24,7 +24,12 @@ from rest_framework.serializers import ValidationError
 
 from pulpcore.app import models
 from pulpcore.app.apps import pulp_plugin_configs
-from pulpcore.app.contexts import _current_domain, _current_user_func, current_pulp_api_version
+from pulpcore.app.contexts import (
+    _current_domain,
+    _current_user_func,
+    current_pulp_api_version,
+    with_domain,
+)
 from pulpcore.app.loggers import deprecation_logger
 from pulpcore.exceptions.validation import InvalidSignatureError
 
@@ -681,7 +686,7 @@ def get_domain_pk():
     if default_domain:
         return default_domain.pk
     # If we haven't cached the default_domain then use raw SQL to get its PK
-    with connection.cursor() as cursor:
+    with connections["default"].cursor() as cursor:
         cursor.execute("SELECT pulp_id FROM core_domain WHERE name = 'default'")
         row = cursor.fetchone()
         return row[0]
@@ -691,6 +696,18 @@ def set_domain(new_domain):
     # Deprecated
     _current_domain.set(new_domain)
     return new_domain
+
+
+@contextmanager
+def domain_db(domain):
+    with with_domain(domain):
+        yield domain.database_alias
+
+
+def for_each_domain(callback):
+    for domain in models.Domain.objects.all():
+        with domain_db(domain) as alias:
+            callback(domain, alias)
 
 
 def cache_key(base_path, domain=None):
