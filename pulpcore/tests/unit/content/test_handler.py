@@ -1,5 +1,6 @@
 import uuid
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
 
 import pytest
@@ -192,6 +193,79 @@ async def create_distribution(remote, repository=None):
     return await Distribution.objects.acreate(
         name=name, base_path=name, remote=remote, repository=repository
     )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("use_publication", (False, True))
+async def test_list_directory_metadata(monkeypatch, use_publication):
+    """Directory metadata is derived from its descendants without a directory size."""
+    old_timestamp = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    new_timestamp = datetime(2026, 1, 2, tzinfo=timezone.utc)
+
+    directory_content = SimpleNamespace(
+        relative_path="directory/old.rpm",
+        pulp_created=old_timestamp,
+        content_id=uuid.uuid4(),
+        artifact=None,
+        pk=uuid.uuid4(),
+    )
+    newer_directory_content = SimpleNamespace(
+        relative_path="directory/new.rpm",
+        pulp_created=new_timestamp,
+        content_id=uuid.uuid4(),
+        artifact=SimpleNamespace(size=20),
+        pk=uuid.uuid4(),
+    )
+    file_content = SimpleNamespace(
+        relative_path="file.rpm",
+        pulp_created=old_timestamp,
+        content_id=uuid.uuid4(),
+        artifact=SimpleNamespace(size=10),
+        pk=uuid.uuid4(),
+    )
+    content_artifacts = [directory_content, newer_directory_content, file_content]
+
+    content_artifact_manager = Mock()
+    content_artifact_manager.select_related.return_value.filter.return_value = content_artifacts
+    monkeypatch.setattr(
+        "pulpcore.content.handler.ContentArtifact",
+        SimpleNamespace(objects=content_artifact_manager),
+    )
+
+    remote_artifact_manager = Mock()
+    remote_artifact_manager.filter.return_value.values_list.return_value = []
+    monkeypatch.setattr(
+        "pulpcore.content.handler.RemoteArtifact",
+        SimpleNamespace(objects=remote_artifact_manager),
+    )
+
+    repo_version = SimpleNamespace(content=[], _content_relationships=lambda: [])
+
+    if use_publication:
+        publication_manager = Mock()
+        publication_manager.select_related.return_value.filter.return_value = [
+            SimpleNamespace(
+                relative_path=entry.relative_path,
+                pulp_created=entry.pulp_created,
+                content_artifact=entry,
+            )
+            for entry in content_artifacts
+        ]
+        publication = SimpleNamespace(
+            repository_version=repo_version,
+            pass_through=False,
+            published_artifact=publication_manager,
+        )
+        source = (None, publication)
+    else:
+        source = (repo_version, None)
+
+    directory_list, dates, sizes = await Handler().list_directory(*source, "")
+
+    assert directory_list == {"directory/", "file.rpm"}
+    assert dates["directory/"] == new_timestamp
+    assert "directory/" not in sizes
+    assert sizes["file.rpm"] == file_content.artifact.size
 
 
 @pytest.mark.asyncio
