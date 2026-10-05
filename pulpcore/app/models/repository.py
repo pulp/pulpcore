@@ -1029,6 +1029,12 @@ class RepositoryVersion(BaseModel):
         if content_qs is None:
             content_qs = Content.objects
 
+        # Default keeps the legacy ``unnest(content_ids)`` subquery. Set
+        # ``USE_INTERVAL_CONTENT_QUERY=True`` (env ``PULP_USE_INTERVAL_CONTENT_QUERY``)
+        # to switch to the ``core_repositorycontent`` interval join, so the rewritten
+        # path can be benchmarked against the baseline without code changes.
+        if getattr(settings, "USE_INTERVAL_CONTENT_QUERY", False):
+            return content_qs.filter(pk__in=self.content_pks_subquery())
         return content_qs.filter(pk__in=self.content_ids_subquery())
 
     def content_ids_subquery(self):
@@ -1047,6 +1053,22 @@ class RepositoryVersion(BaseModel):
             .annotate(cids=Func(F("content_ids"), function="unnest"))
             .values_list("cids", flat=True)
         )
+
+    def content_pks_subquery(self):
+        """
+        Return this version's content UUIDs as a subquery over the interval table.
+
+        Joins ``core_repositorycontent`` on its ``(version_added, version_removed)`` interval
+        instead of ``unnest(content_ids)``. PostgreSQL then plans against real btree indexes
+        and statistics on ordinary tables rather than a hard-coded ``rows=10`` estimate for the
+        array ``unnest``, so cost scales with the matching ``repositorycontent`` rows instead of
+        the full version content array. Content is present in this version when
+        ``version_added.number <= number`` and it has not been removed at or before this version.
+
+        Returns:
+            django.db.models.QuerySet: A values queryset yielding the content unit UUIDs.
+        """
+        return self._content_relationships().values_list("content_id", flat=True)
 
     @property
     def content(self):
