@@ -100,9 +100,13 @@ $ pulpcore-manager collectstatic
 
 ## Analytics Collection
 
-By default, Pulp installations post anonymous analytics data every 24 hours which is summarized on
-[https://analytics.pulpproject.org/](https://analytics.pulpproject.org/) and aids in project decision making. This is enabled by
-default but can be disabled by setting `ANALYTICS=False` in your settings.
+Analytics and user feedback are valuable to guide the project and aid
+community decision making.  By default, Pulp analytics are disabled but we
+encourage everyone to enable analytics on their Pulp installation.  When
+analytics are enabled, Pulp installations post anonymous analytics data every
+24 hours which is summarized on
+[https://analytics.pulpproject.org/](https://analytics.pulpproject.org/).
+Analytics can be enabled by setting `ANALYTICS=True` in your settings.
 
 Here is the list of exactly what is collected along with an example below:
 

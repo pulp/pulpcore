@@ -404,7 +404,7 @@ TASK_DIAGNOSTICS = []  # ["memory", "pyinstrument", "memray", "logs", "debug-log
 # For immediate tasks that can be deferred, always defer them to a worker.
 TASK_PREFER_DEFER = False
 
-ANALYTICS = True
+ANALYTICS = False
 
 HIDE_GUARDED_DISTRIBUTIONS = False
 
