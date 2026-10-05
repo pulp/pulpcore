@@ -15,9 +15,11 @@ from django.contrib.postgres.fields import ArrayField, HStoreField
 from django.core.validators import MinValueValidator
 from django.db import models, transaction
 from django.db.models import F, Func, Q, Value
+from django_guid import get_guid
 from django_lifecycle import AFTER_UPDATE, BEFORE_CREATE, BEFORE_DELETE, hook
 from rest_framework.exceptions import APIException
 
+from pulpcore.app.experiments import run_experiment
 from pulpcore.app.loggers import deprecation_logger
 from pulpcore.app.util import (
     batch_qs,
@@ -1029,12 +1031,20 @@ class RepositoryVersion(BaseModel):
         if content_qs is None:
             content_qs = Content.objects
 
-        # Default keeps the legacy ``unnest(content_ids)`` subquery. Set
-        # ``USE_INTERVAL_CONTENT_QUERY=True`` (env ``PULP_USE_INTERVAL_CONTENT_QUERY``)
-        # to switch to the ``core_repositorycontent`` interval join, so the rewritten
-        # path can be benchmarked against the baseline without code changes.
-        if getattr(settings, "USE_INTERVAL_CONTENT_QUERY", False):
-            return content_qs.filter(pk__in=self.content_pks_subquery())
+        # A/B experiment "PULP-XXXX": variant A is the legacy unnest(content_ids)
+        # subquery, variant B is the core_repositorycontent interval join. The
+        # dispatch probability is read from EXPERIMENT_CONTENT_QUERY_P_CANDIDATE
+        # (env PULP_EXPERIMENT_CONTENT_QUERY_P_CANDIDATE); 0 (default) keeps
+        # variant A for every call, 1 runs only variant B.
+        p_candidate = float(getattr(settings, "EXPERIMENT_CONTENT_QUERY_P_CANDIDATE", 0.0))
+        if p_candidate:
+            return run_experiment(
+                "PULP-XXXX",
+                control=lambda: content_qs.filter(pk__in=self.content_ids_subquery()),
+                candidate=lambda: content_qs.filter(pk__in=self.content_pks_subquery()),
+                p_candidate=p_candidate,
+                correlation_id=get_guid(),
+            )
         return content_qs.filter(pk__in=self.content_ids_subquery())
 
     def content_ids_subquery(self):
@@ -1050,7 +1060,14 @@ class RepositoryVersion(BaseModel):
         """
         return (
             RepositoryVersion.objects.filter(pk=self.pk)
-            .annotate(cids=Func(F("content_ids"), function="unnest"))
+            .annotate(
+                cids=Func(
+                    F("content_ids"),
+                    function="unnest",
+                    # Marker so variant A is identifiable in RDS Performance Insights Top SQL
+                    template="unnest(%(expressions)s) /* pexp=PULP-XXXX v=A */",
+                )
+            )
             .values_list("cids", flat=True)
         )
 
@@ -1068,7 +1085,14 @@ class RepositoryVersion(BaseModel):
         Returns:
             django.db.models.QuerySet: A values queryset yielding the content unit UUIDs.
         """
-        return self._content_relationships().values_list("content_id", flat=True)
+        return (
+            self._content_relationships()
+            .annotate(
+                # Marker so variant B is identifiable in RDS Performance Insights Top SQL
+                cid=Func(F("content_id"), template="%(expressions)s /* pexp=PULP-XXXX v=B */")
+            )
+            .values_list("cid", flat=True)
+        )
 
     @property
     def content(self):

@@ -788,3 +788,60 @@ def test_batch_operations_preserve_correctness(repository, db):
     assert rvcd_qs.get(count_type=RepositoryVersionContentDetails.PRESENT).count == 40
     assert rvcd_qs.filter(count_type=RepositoryVersionContentDetails.ADDED).first() is None
     assert rvcd_qs.get(count_type=RepositoryVersionContentDetails.REMOVED).count == 60
+
+
+def test_content_query_variants_select_same_content(
+    repository, content_pks, add_content, remove_content
+):
+    """
+    Both content query experiment variants must select identical content UUIDs.
+
+    Prerequisite for running the A/B experiment: variant A (unnest of
+    content_ids) and variant B (core_repositorycontent interval) agree with an
+    independently tracked expected set across versions with adds and removes.
+    """
+    c0, c1, c2, c3, c4 = content_pks
+    expected = set()
+
+    versions = [repository.latest_version()]
+    expected_by_version = [set(expected)]
+
+    with repository.new_version() as version:
+        add_content(version, (1, 1, 0, 1, 0))
+    expected |= {c0, c1, c3}
+    versions.append(version)
+    expected_by_version.append(set(expected))
+
+    with repository.new_version() as version:
+        remove_content(version, (0, 1, 0, 0, 0))
+    expected -= {c1}
+    versions.append(version)
+    expected_by_version.append(set(expected))
+
+    with repository.new_version() as version:
+        add_content(version, (0, 0, 1, 0, 1))
+    expected |= {c2, c4}
+    versions.append(version)
+    expected_by_version.append(set(expected))
+
+    for version, expected_ids in zip(versions, expected_by_version):
+        variant_a = set(version.content_ids_subquery())
+        variant_b = set(version.content_pks_subquery())
+        assert variant_a == expected_ids
+        assert variant_b == expected_ids
+
+
+def test_get_content_experiment_dispatch(repository, content_pks, add_content, settings):
+    """get_content() routes through the A/B dispatcher when the probability is set."""
+    with repository.new_version() as version:
+        add_content(version, (1, 0, 1, 0, 1))
+
+    expected = {content_pks[0], content_pks[2], content_pks[4]}
+
+    # Probability 0: only the control (A) subquery runs.
+    settings.EXPERIMENT_CONTENT_QUERY_P_CANDIDATE = 0.0
+    assert {content.pk for content in version.get_content()} == expected
+
+    # Probability 1: only the candidate (B) subquery runs, same result.
+    settings.EXPERIMENT_CONTENT_QUERY_P_CANDIDATE = 1.0
+    assert {content.pk for content in version.get_content()} == expected
