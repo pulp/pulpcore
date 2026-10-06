@@ -104,7 +104,7 @@ class OpenPGPKeyringViewSet(RepositoryViewSet, ModifyRepositoryActionMixin, Role
     DEFAULT_ACCESS_POLICY = {
         "statements": [
             {
-                "action": ["list", "my_permissions"],
+                "action": ["list", "retrieve", "my_permissions"],
                 "principal": "authenticated",
                 "effect": "allow",
             },
@@ -115,12 +115,6 @@ class OpenPGPKeyringViewSet(RepositoryViewSet, ModifyRepositoryActionMixin, Role
                 "condition": [
                     "has_model_or_domain_perms:core.add_openpgpkeyring",
                 ],
-            },
-            {
-                "action": ["retrieve"],
-                "principal": "authenticated",
-                "effect": "allow",
-                "condition": "has_model_or_domain_or_obj_perms:core.view_openpgpkeyring",
             },
             {
                 "action": ["destroy"],
