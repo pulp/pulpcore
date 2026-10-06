@@ -200,6 +200,25 @@ def test_upload_owner(pulpcore_bindings, gen_user, gen_object_with_cleanup):
         }
 
 
+def test_upload_queryset_scoping(pulpcore_bindings, gen_user, gen_object_with_cleanup):
+    size = uuid.uuid4().int % (2**31)
+    alice = gen_user(model_roles=["core.upload_creator"])
+    bob = gen_user(model_roles=["core.upload_creator"])
+
+    with alice:
+        alice_upload = gen_object_with_cleanup(pulpcore_bindings.UploadsApi, {"size": size})
+    with bob:
+        bob_upload = gen_object_with_cleanup(pulpcore_bindings.UploadsApi, {"size": size})
+
+    with alice:
+        uploads = pulpcore_bindings.UploadsApi.list(size=size)
+        assert [upload.pulp_href for upload in uploads.results] == [alice_upload.pulp_href]
+        pulpcore_bindings.UploadsApi.read(alice_upload.pulp_href)
+        with pytest.raises(ApiException) as exc:
+            pulpcore_bindings.UploadsApi.read(bob_upload.pulp_href)
+        assert exc.value.status == 404
+
+
 @pytest.mark.parallel
 def test_upload_duplicate_chunk(
     pulpcore_bindings,
