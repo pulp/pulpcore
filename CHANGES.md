@@ -8,6 +8,37 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.121.0 (2026-10-06) {: #3.121.0 }
+
+### REST API {: #3.121.0-rest-api }
+
+#### Features {: #3.121.0-rest-api-feature }
+
+- Added `ETag`/`If-None-Match` and `Last-Modified`/`If-Modified-Since` (`304 Not Modified`) support on content-app responses so edge caches can revalidate without re-downloading.
+  [#7929](https://github.com/pulp/pulpcore/issues/7929)
+
+#### Bugfixes {: #3.121.0-rest-api-bugfix }
+
+- Avoid loading repository version content IDs when serving fallback content during the grace period.
+- Fixed vulnerability report rescans to update existing reports.
+
+### Plugin API {: #3.121.0-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.121.0-pulp-file }
+
+#### Bugfixes {: #3.121.0-pulp-file-bugfix }
+
+- Fixed `optimize` in file sync to honor the value `False`.
+  [#8141](https://github.com/pulp/pulpcore/issues/8141)
+
+### Pulp Cert Guard {: #3.121.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.120.0 (2026-09-29) {: #3.120.0 }
 
 ### REST API {: #3.120.0-rest-api }
