@@ -30,6 +30,7 @@ class UploadViewSet(
 
     endpoint_name = "uploads"
     queryset = Upload.objects.all()
+    queryset_filtering_required_permission = "core.view_upload"
     http_method_names = ["get", "post", "head", "put", "delete"]
     filterset_fields = {"size": ["exact", "gt", "lt", "range"]}
 
@@ -45,7 +46,7 @@ class UploadViewSet(
     DEFAULT_ACCESS_POLICY = {
         "statements": [
             {
-                "action": ["list"],
+                "action": ["list", "retrieve", "my_permissions"],
                 "principal": "authenticated",
                 "effect": "allow",
             },
@@ -54,12 +55,6 @@ class UploadViewSet(
                 "principal": "authenticated",
                 "effect": "allow",
                 "condition": "has_model_or_domain_perms:core.add_upload",
-            },
-            {
-                "action": ["retrieve", "my_permissions"],
-                "principal": "authenticated",
-                "effect": "allow",
-                "condition": "has_model_or_domain_or_obj_perms:core.view_upload",
             },
             {
                 "action": ["update", "partial_update", "commit"],
