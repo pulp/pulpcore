@@ -204,7 +204,7 @@ class RBACContentGuardViewSet(ContentGuardViewSet, RolesMixin):
     DEFAULT_ACCESS_POLICY = {
         "statements": [
             {
-                "action": ["list"],
+                "action": ["list", "retrieve", "my_permissions"],
                 "principal": "authenticated",
                 "effect": "allow",
             },
@@ -213,12 +213,6 @@ class RBACContentGuardViewSet(ContentGuardViewSet, RolesMixin):
                 "principal": "authenticated",
                 "effect": "allow",
                 "condition": "has_model_or_domain_perms:core.add_rbaccontentguard",
-            },
-            {
-                "action": ["retrieve", "my_permissions"],
-                "principal": "authenticated",
-                "effect": "allow",
-                "condition": "has_model_or_domain_or_obj_perms:core.view_rbaccontentguard",
             },
             {
                 "action": ["update", "partial_update"],
@@ -281,7 +275,7 @@ class ContentRedirectContentGuardViewSet(ContentGuardViewSet, RolesMixin):
     DEFAULT_ACCESS_POLICY = {
         "statements": [
             {
-                "action": ["list"],
+                "action": ["list", "retrieve", "my_permissions"],
                 "principal": "authenticated",
                 "effect": "allow",
             },
@@ -290,13 +284,6 @@ class ContentRedirectContentGuardViewSet(ContentGuardViewSet, RolesMixin):
                 "principal": "authenticated",
                 "effect": "allow",
                 "condition": "has_model_or_domain_perms:core.add_contentredirectcontentguard",
-            },
-            {
-                "action": ["retrieve", "my_permissions"],
-                "principal": "authenticated",
-                "effect": "allow",
-                "condition": "has_model_or_domain_or_obj_perms:core."
-                "view_contentredirectcontentguard",
             },
             {
                 "action": ["update", "partial_update"],
@@ -356,7 +343,7 @@ class HeaderContentGuardViewSet(ContentGuardViewSet, RolesMixin):
     DEFAULT_ACCESS_POLICY = {
         "statements": [
             {
-                "action": ["list"],
+                "action": ["list", "retrieve", "my_permissions"],
                 "principal": "authenticated",
                 "effect": "allow",
             },
@@ -365,12 +352,6 @@ class HeaderContentGuardViewSet(ContentGuardViewSet, RolesMixin):
                 "principal": "authenticated",
                 "effect": "allow",
                 "condition": "has_model_or_domain_perms:core.add_headercontentguard",
-            },
-            {
-                "action": ["retrieve", "my_permissions"],
-                "principal": "authenticated",
-                "effect": "allow",
-                "condition": "has_model_or_domain_or_obj_perms:core.view_headercontentguard",
             },
             {
                 "action": ["update", "partial_update"],
@@ -426,7 +407,7 @@ class CompositeContentGuardViewSet(ContentGuardViewSet, RolesMixin):
     DEFAULT_ACCESS_POLICY = {
         "statements": [
             {
-                "action": ["list"],
+                "action": ["list", "retrieve", "my_permissions"],
                 "principal": "authenticated",
                 "effect": "allow",
             },
@@ -435,12 +416,6 @@ class CompositeContentGuardViewSet(ContentGuardViewSet, RolesMixin):
                 "principal": "authenticated",
                 "effect": "allow",
                 "condition": "has_model_or_domain_perms:core.add_compositecontentguard",
-            },
-            {
-                "action": ["retrieve", "my_permissions"],
-                "principal": "authenticated",
-                "effect": "allow",
-                "condition": "has_model_or_domain_or_obj_perms:core.view_compositecontentguard",
             },
             {
                 "action": ["update", "partial_update"],

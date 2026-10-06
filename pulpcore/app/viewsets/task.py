@@ -98,12 +98,10 @@ class TaskViewSet(
 
     DEFAULT_ACCESS_POLICY = {
         "statements": [
-            {"action": ["list"], "principal": "authenticated", "effect": "allow"},
             {
-                "action": ["retrieve", "my_permissions"],
+                "action": ["list", "retrieve", "my_permissions"],
                 "principal": "authenticated",
                 "effect": "allow",
-                "condition": "has_model_or_domain_or_obj_perms:core.view_task",
             },
             {
                 "action": ["profile_artifacts"],
@@ -416,12 +414,10 @@ class TaskScheduleViewSet(
 
     DEFAULT_ACCESS_POLICY = {
         "statements": [
-            {"action": ["list"], "principal": "authenticated", "effect": "allow"},
             {
-                "action": ["retrieve", "my_permissions"],
+                "action": ["list", "retrieve", "my_permissions"],
                 "principal": "authenticated",
                 "effect": "allow",
-                "condition": "has_model_or_domain_or_obj_perms:core.view_taskschedule",
             },
             {
                 "action": ["list_roles", "add_role", "remove_role"],
