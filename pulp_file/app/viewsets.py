@@ -158,7 +158,7 @@ class FileRepositoryViewSet(RepositoryViewSet, ModifyRepositoryActionMixin, Role
     DEFAULT_ACCESS_POLICY = {
         "statements": [
             {
-                "action": ["list", "my_permissions"],
+                "action": ["list", "retrieve", "my_permissions"],
                 "principal": "authenticated",
                 "effect": "allow",
             },
@@ -170,12 +170,6 @@ class FileRepositoryViewSet(RepositoryViewSet, ModifyRepositoryActionMixin, Role
                     "has_model_or_domain_perms:file.add_filerepository",
                     "has_remote_param_model_or_domain_or_obj_perms:file.view_fileremote",
                 ],
-            },
-            {
-                "action": ["retrieve"],
-                "principal": "authenticated",
-                "effect": "allow",
-                "condition": "has_model_or_domain_or_obj_perms:file.view_filerepository",
             },
             {
                 "action": ["destroy"],
@@ -335,7 +329,7 @@ class FileRemoteViewSet(RemoteViewSet, RolesMixin):
     DEFAULT_ACCESS_POLICY = {
         "statements": [
             {
-                "action": ["list", "my_permissions"],
+                "action": ["list", "retrieve", "my_permissions"],
                 "principal": "authenticated",
                 "effect": "allow",
             },
@@ -344,12 +338,6 @@ class FileRemoteViewSet(RemoteViewSet, RolesMixin):
                 "principal": "authenticated",
                 "effect": "allow",
                 "condition": "has_model_or_domain_perms:file.add_fileremote",
-            },
-            {
-                "action": ["retrieve"],
-                "principal": "authenticated",
-                "effect": "allow",
-                "condition": "has_model_or_domain_or_obj_perms:file.view_fileremote",
             },
             {
                 "action": ["update", "partial_update", "set_label", "unset_label"],
@@ -413,7 +401,7 @@ class FileGitRemoteViewSet(RemoteViewSet, RolesMixin):
     DEFAULT_ACCESS_POLICY = {
         "statements": [
             {
-                "action": ["list", "my_permissions"],
+                "action": ["list", "retrieve", "my_permissions"],
                 "principal": "authenticated",
                 "effect": "allow",
             },
@@ -422,12 +410,6 @@ class FileGitRemoteViewSet(RemoteViewSet, RolesMixin):
                 "principal": "authenticated",
                 "effect": "allow",
                 "condition": "has_model_or_domain_perms:file.add_filegitremote",
-            },
-            {
-                "action": ["retrieve"],
-                "principal": "authenticated",
-                "effect": "allow",
-                "condition": "has_model_or_domain_or_obj_perms:file.view_filegitremote",
             },
             {
                 "action": ["update", "partial_update", "set_label", "unset_label"],
@@ -492,7 +474,7 @@ class FilePublicationViewSet(PublicationViewSet, RolesMixin):
     DEFAULT_ACCESS_POLICY = {
         "statements": [
             {
-                "action": ["list", "my_permissions"],
+                "action": ["list", "retrieve", "my_permissions"],
                 "principal": "authenticated",
                 "effect": "allow",
             },
@@ -505,12 +487,6 @@ class FilePublicationViewSet(PublicationViewSet, RolesMixin):
                     "has_repo_or_repo_ver_param_model_or_domain_or_obj_perms:"
                     "file.view_filerepository",
                 ],
-            },
-            {
-                "action": ["retrieve"],
-                "principal": "authenticated",
-                "effect": "allow",
-                "condition": "has_model_or_domain_or_obj_perms:file.view_filepublication",
             },
             {
                 "action": ["destroy"],
@@ -593,7 +569,7 @@ class FileDistributionViewSet(DistributionViewSet, RolesMixin):
     DEFAULT_ACCESS_POLICY = {
         "statements": [
             {
-                "action": ["list", "my_permissions"],
+                "action": ["list", "retrieve", "my_permissions"],
                 "principal": "authenticated",
                 "effect": "allow",
             },
@@ -607,12 +583,6 @@ class FileDistributionViewSet(DistributionViewSet, RolesMixin):
                     "file.view_filerepository",
                     "has_publication_param_model_or_domain_or_obj_perms:file.view_filepublication",
                 ],
-            },
-            {
-                "action": ["retrieve"],
-                "principal": "authenticated",
-                "effect": "allow",
-                "condition": "has_model_or_domain_or_obj_perms:file.view_filedistribution",
             },
             {
                 "action": ["update", "partial_update", "set_label", "unset_label"],
@@ -677,7 +647,7 @@ class FileAlternateContentSourceViewSet(AlternateContentSourceViewSet, RolesMixi
     DEFAULT_ACCESS_POLICY = {
         "statements": [
             {
-                "action": ["list", "my_permissions"],
+                "action": ["list", "retrieve", "my_permissions"],
                 "principal": "authenticated",
                 "effect": "allow",
             },
@@ -689,13 +659,6 @@ class FileAlternateContentSourceViewSet(AlternateContentSourceViewSet, RolesMixi
                     "has_model_or_domain_perms:file.add_filealternatecontentsource",
                     "has_remote_param_model_or_domain_or_obj_perms:file.view_fileremote",
                 ],
-            },
-            {
-                "action": ["retrieve"],
-                "principal": "authenticated",
-                "effect": "allow",
-                "condition": "has_model_or_domain_or_obj_perms:"
-                "file.view_filealternatecontentsource",
             },
             {
                 "action": ["update", "partial_update"],

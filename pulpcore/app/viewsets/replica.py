@@ -40,7 +40,7 @@ class UpstreamPulpViewSet(
     DEFAULT_ACCESS_POLICY = {
         "statements": [
             {
-                "action": ["list", "my_permissions"],
+                "action": ["list", "retrieve", "my_permissions"],
                 "principal": "authenticated",
                 "effect": "allow",
             },
@@ -51,12 +51,6 @@ class UpstreamPulpViewSet(
                 "condition": [
                     "has_model_or_domain_perms:core.add_upstreampulp",
                 ],
-            },
-            {
-                "action": ["retrieve"],
-                "principal": "authenticated",
-                "effect": "allow",
-                "condition": "has_model_or_domain_or_obj_perms:core.view_upstreampulp",
             },
             {
                 "action": ["destroy"],

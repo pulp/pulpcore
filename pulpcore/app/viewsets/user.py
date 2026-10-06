@@ -86,7 +86,7 @@ class GroupViewSet(
     DEFAULT_ACCESS_POLICY = {
         "statements": [
             {
-                "action": ["list"],
+                "action": ["list", "retrieve", "my_permissions"],
                 "principal": "authenticated",
                 "effect": "allow",
             },
@@ -95,12 +95,6 @@ class GroupViewSet(
                 "principal": "authenticated",
                 "effect": "allow",
                 "condition": "has_model_perms:core.add_group",
-            },
-            {
-                "action": ["retrieve", "my_permissions"],
-                "principal": "authenticated",
-                "effect": "allow",
-                "condition": "has_model_or_obj_perms:core.view_group",
             },
             {
                 "action": ["update", "partial_update"],
