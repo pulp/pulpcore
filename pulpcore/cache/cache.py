@@ -3,8 +3,8 @@ import json
 import time
 from functools import wraps
 
-from aiohttp.web import FileResponse, HTTPSuccessful, Request, Response
-from aiohttp.web_exceptions import HTTPException, HTTPFound, HTTPNotFound, HTTPNotModified
+from aiohttp.web import FileResponse, HTTPSuccessful, Request, Response, StreamResponse
+from aiohttp.web_exceptions import HTTPException, HTTPFound, HTTPNotFound
 from django.conf import settings
 from django.http import FileResponse as ApiFileResponse
 from django.http import HttpResponse, HttpResponseRedirect
@@ -18,7 +18,6 @@ from pulpcore.app.redis_connection import (
     get_async_redis_connection,
     get_redis_connection,
 )
-from pulpcore.app.util import check_request_was_modified
 from pulpcore.metrics import artifacts_size_counter
 from pulpcore.responses import ArtifactResponse
 
@@ -353,7 +352,7 @@ class AsyncContentCache(AsyncCache):
                 await self.auth(request, self, bk)
             key = self.make_key(request)
             # Check cache
-            response = await self.make_response(key, bk, request)
+            response = await self.make_response(key, bk)
             if response is None:
                 # Cache miss, create new entry
                 response = await self.make_entry(
@@ -374,7 +373,7 @@ class AsyncContentCache(AsyncCache):
             if isinstance(arg, Request):
                 return arg
 
-    async def make_response(self, key, base_key, request=None):
+    async def make_response(self, key, base_key):
         """Tries to find the cached entry and turn it into a proper response"""
         entry = await self.get(key, base_key)
         if not entry:
@@ -397,16 +396,7 @@ class AsyncContentCache(AsyncCache):
             # Bad entry, delete from cache
             await self.delete(key, base_key)
             return None
-
-        headers = entry.get("headers", {})
-        if request and not check_request_was_modified(
-            request, last_modified=headers.get("Last-Modified"), etag=headers.get("ETag")
-        ):
-            response = HTTPNotModified(
-                headers={key: headers[key] for key in ("Cache-Control", "ETag") if key in headers}
-            )
-        else:
-            response = self.RESPONSE_TYPES[response_type](**entry)
+        response = self.RESPONSE_TYPES[response_type](**entry)
         response.headers.update({"X-PULP-CACHE": "HIT"})
         return response
 
@@ -414,12 +404,13 @@ class AsyncContentCache(AsyncCache):
         """Gets the response for the request and try to turn it into a cacheable entry"""
         try:
             response = await handler(*args, **kwargs)
-        except (HTTPSuccessful, HTTPFound, HTTPNotFound, HTTPNotModified) as e:
+        except (HTTPSuccessful, HTTPFound, HTTPNotFound) as e:
             response = e
 
         original_response = response
-        if hasattr(response, "future_response"):
-            response = response.future_response
+        if isinstance(response, StreamResponse):
+            if hasattr(response, "future_response"):
+                response = response.future_response
 
         entry = {"headers": dict(response.headers), "status": response.status}
 
