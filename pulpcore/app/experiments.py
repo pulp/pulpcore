@@ -28,11 +28,15 @@ def run_experiment(exp_id, control, candidate, *, p_candidate=0.5, correlation_i
     result = func()
     duration_ms = (time.monotonic() - start) * 1000
 
-    logger.info(json.dumps({
-        "event": "ab_experiment",
-        "exp_id": exp_id,
-        "variant": variant,
-        "duration_ms": round(duration_ms, 3),
-        "correlation_id": correlation_id,
-    }))
+    logger.info(
+        json.dumps(
+            {
+                "event": "ab_experiment",
+                "exp_id": exp_id,
+                "variant": variant,
+                "duration_ms": round(duration_ms, 3),
+                "correlation_id": correlation_id,
+            }
+        )
+    )
     return result

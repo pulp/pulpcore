@@ -1085,7 +1085,10 @@ class RepositoryVersion(BaseModel):
             self._content_relationships()
             .annotate(
                 # Marker so variant B is identifiable in RDS Performance Insights Top SQL
-                cid=Func(F("content_id"), template="%(expressions)s /* pexp=PULP-1996-CONTENT-MEMBERSHIP v=B */")
+                cid=Func(
+                    F("content_id"),
+                    template="%(expressions)s /* pexp=PULP-1996-CONTENT-MEMBERSHIP v=B */",
+                )
             )
             .values_list("cid", flat=True)
         )
