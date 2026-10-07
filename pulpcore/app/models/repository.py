@@ -1031,21 +1031,17 @@ class RepositoryVersion(BaseModel):
         if content_qs is None:
             content_qs = Content.objects
 
-        # A/B experiment "PULP-XXXX": variant A is the legacy unnest(content_ids)
-        # subquery, variant B is the core_repositorycontent interval join. The
-        # dispatch probability is read from EXPERIMENT_CONTENT_QUERY_P_CANDIDATE
-        # (env PULP_EXPERIMENT_CONTENT_QUERY_P_CANDIDATE); 0 (default) keeps
-        # variant A for every call, 1 runs only variant B.
-        p_candidate = float(getattr(settings, "EXPERIMENT_CONTENT_QUERY_P_CANDIDATE", 0.0))
-        if p_candidate:
-            return run_experiment(
-                "PULP-XXXX",
-                control=lambda: content_qs.filter(pk__in=self.content_ids_subquery()),
-                candidate=lambda: content_qs.filter(pk__in=self.content_pks_subquery()),
-                p_candidate=p_candidate,
-                correlation_id=get_guid(),
-            )
-        return content_qs.filter(pk__in=self.content_ids_subquery())
+        # A/B experiment "PULP-1996-CONTENT-MEMBERSHIP": variant A is the legacy
+        # unnest(content_ids) subquery, variant B is the core_repositorycontent
+        # interval join. run_experiment() picks one variant per call, times it,
+        # and logs one structured line.
+        return run_experiment(
+            "PULP-1996-CONTENT-MEMBERSHIP",
+            control=lambda: content_qs.filter(pk__in=self.content_ids_subquery()),
+            candidate=lambda: content_qs.filter(pk__in=self.content_pks_subquery()),
+            p_candidate=0.5,
+            correlation_id=get_guid(),
+        )
 
     def content_ids_subquery(self):
         """
@@ -1065,7 +1061,7 @@ class RepositoryVersion(BaseModel):
                     F("content_ids"),
                     function="unnest",
                     # Marker so variant A is identifiable in RDS Performance Insights Top SQL
-                    template="unnest(%(expressions)s) /* pexp=PULP-XXXX v=A */",
+                    template="unnest(%(expressions)s) /* pexp=PULP-1996-CONTENT-MEMBERSHIP v=A */",
                 )
             )
             .values_list("cids", flat=True)
@@ -1089,7 +1085,7 @@ class RepositoryVersion(BaseModel):
             self._content_relationships()
             .annotate(
                 # Marker so variant B is identifiable in RDS Performance Insights Top SQL
-                cid=Func(F("content_id"), template="%(expressions)s /* pexp=PULP-XXXX v=B */")
+                cid=Func(F("content_id"), template="%(expressions)s /* pexp=PULP-1996-CONTENT-MEMBERSHIP v=B */")
             )
             .values_list("cid", flat=True)
         )

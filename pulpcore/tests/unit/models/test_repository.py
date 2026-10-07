@@ -856,17 +856,15 @@ def test_content_query_variants_for_empty_version(repository):
     assert not set(version.content_pks_subquery())
 
 
-def test_get_content_experiment_dispatch(repository, content_pks, add_content, settings):
-    """get_content() routes through the A/B dispatcher when the probability is set."""
+def test_get_content_experiment_dispatch(repository, content_pks, add_content, monkeypatch):
+    """get_content() routes through the A/B dispatcher and both variants agree."""
     with repository.new_version() as version:
         add_content(version, (1, 0, 1, 0, 1))
 
     expected = {content_pks[0], content_pks[2], content_pks[4]}
 
-    # Probability 0: only the control (A) subquery runs.
-    settings.EXPERIMENT_CONTENT_QUERY_P_CANDIDATE = 0.0
+    # Force variant B (candidate) and variant A (control); both must return the same content.
+    monkeypatch.setattr("pulpcore.app.experiments.random.random", lambda: 0.9)
     assert {content.pk for content in version.get_content()} == expected
-
-    # Probability 1: only the candidate (B) subquery runs, same result.
-    settings.EXPERIMENT_CONTENT_QUERY_P_CANDIDATE = 1.0
+    monkeypatch.setattr("pulpcore.app.experiments.random.random", lambda: 0.1)
     assert {content.pk for content in version.get_content()} == expected
