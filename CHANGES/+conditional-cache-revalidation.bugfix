@@ -1,0 +1,2 @@
+Reverted support for returning 304 responses to content requests with conditional headers
+because of a breaking change in the internal plugin's API.
