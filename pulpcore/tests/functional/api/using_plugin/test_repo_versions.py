@@ -71,6 +71,14 @@ def test_repository_filter(
     assert contents.count == 3
     contents = file_bindings.ContentFilesApi.list(repository_version=base_repo.prn)
     assert contents.count == 3
+    added = file_bindings.ContentFilesApi.list(
+        repository_version_added=base_repo.latest_version_href
+    )
+    assert added.count == 3
+    removed = file_bindings.ContentFilesApi.list(
+        repository_version_removed=base_repo.latest_version_href
+    )
+    assert removed.count == 0
 
 
 @pytest.mark.parallel
