@@ -344,10 +344,10 @@ class TestDistributedPublication:
 @pytest.mark.django_db
 class TestGetFallbackCa:
     def test_returns_ca_when_content_in_publication(self, version_with_content, expected_ca):
-        """Returns the content artifact and its version when the publication contains it."""
+        """Returns the content artifact when the served publication contains the content."""
         pub_with_a = pub_factory(version_with_content, pass_through=True)
         dist = dist_factory(pub=pub_with_a)
-        assert dist.get_fallback_ca(self.content_path) == (expected_ca, version_with_content)
+        assert dist.get_fallback_ca(self.content_path) == expected_ca
 
     def test_returns_none_when_content_not_in_publication(self, version_without_content):
         """Returns None when the served publication does not contain the content."""
@@ -364,27 +364,28 @@ class TestGetFallbackCa:
     def test_returns_ca_when_content_accessible_via_published_artifact(
         self, version_with_content, expected_ca
     ):
-        """Returns the content artifact and version reached through a PublishedArtifact."""
+        """Returns the content artifact reachable through a PublishedArtifact (non-pass-through)."""
         pub_with_a = pub_factory(version_with_content, pass_through=False, create_pa=True)
         dist = dist_factory(pub=pub_with_a)
-        assert dist.get_fallback_ca(self.content_path) == (expected_ca, version_with_content)
+        assert dist.get_fallback_ca(self.content_path) == expected_ca
 
     def test_returns_ca_when_content_only_in_superseded_publication(
         self, version_with_content, version_without_content, expected_ca
     ):
-        """Returns the content artifact and version from a retained superseded publication."""
+        """Returns the content artifact from a superseded (expiring) publication still within
+        the retention window."""
         pub_with_a = pub_factory(version_with_content, pass_through=True)
         dist = dist_factory(pub=pub_with_a)
         pub_without_a = pub_factory(version_without_content, pass_through=True)
         update_dist(dist, pub=pub_without_a)
-        assert dist.get_fallback_ca(self.content_path) == (expected_ca, version_with_content)
+        assert dist.get_fallback_ca(self.content_path) == expected_ca
 
     def test_returns_none_when_repository_unset(self, version_with_content, expected_ca):
         """Returns None once the distribution's repository is cleared."""
         repo = version_with_content.repository
         pub_factory(version_with_content, pass_through=True)
         dist = dist_factory(repo=repo)
-        assert dist.get_fallback_ca(self.content_path) == (expected_ca, version_with_content)
+        assert dist.get_fallback_ca(self.content_path) == expected_ca
 
         update_dist(dist, repo=None)
         assert dist.get_fallback_ca(self.content_path) is None
@@ -393,7 +394,7 @@ class TestGetFallbackCa:
         """Returns None once the distribution's repository_version is cleared."""
         pub_factory(version_with_content, pass_through=True)
         dist = dist_factory(repover=version_with_content)
-        assert dist.get_fallback_ca(self.content_path) == (expected_ca, version_with_content)
+        assert dist.get_fallback_ca(self.content_path) == expected_ca
 
         update_dist(dist, repover=None)
         assert dist.get_fallback_ca(self.content_path) is None
@@ -402,7 +403,7 @@ class TestGetFallbackCa:
         """Returns None once the distribution's publication is cleared."""
         pub = pub_factory(version_with_content, pass_through=True)
         dist = dist_factory(pub=pub)
-        assert dist.get_fallback_ca(self.content_path) == (expected_ca, version_with_content)
+        assert dist.get_fallback_ca(self.content_path) == expected_ca
 
         update_dist(dist, pub=None)
         assert dist.get_fallback_ca(self.content_path) is None
