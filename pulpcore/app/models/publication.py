@@ -868,7 +868,7 @@ class Distribution(MasterModel):
 
     def get_fallback_ca(self, path):
         """
-        Return the ContentArtifact and RepositoryVersion for path from publication history, or None.
+        Return a ContentArtifact for path from the grace-period publication history, or None.
 
         Iterates DistributedPublication records for this distribution from newest to oldest,
         trying each publication until the path is found.  Handles both pass-through and
@@ -894,7 +894,7 @@ class Distribution(MasterModel):
                     .first()
                 )
                 if ca is not None:
-                    return ca, pub.repository_version
+                    return ca
             else:
                 pa = (
                     pub.published_artifact.select_related(
@@ -905,7 +905,7 @@ class Distribution(MasterModel):
                     .first()
                 )
                 if pa is not None:
-                    return pa.content_artifact, pub.repository_version
+                    return pa.content_artifact
         return None
 
     @hook(BEFORE_CREATE)
