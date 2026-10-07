@@ -831,6 +831,31 @@ def test_content_query_variants_select_same_content(
         assert variant_b == expected_ids
 
 
+def test_content_query_variants_do_not_cross_repository_or_domain(
+    repository, content_pks, add_content
+):
+    """The interval query must only return membership for this repository."""
+    other_repository = Repository.objects.create(name=uuid4())
+    other_repository.CONTENT_TYPES = [Content]
+
+    with repository.new_version() as version:
+        add_content(version, (1, 0, 0, 0, 0))
+
+    with other_repository.new_version() as other_version:
+        other_version.add_content(Content.objects.filter(pk__in=content_pks[1:]))
+
+    assert set(version.content_ids_subquery()) == set(version.content_pks_subquery())
+    assert set(other_version.content_ids_subquery()) == set(other_version.content_pks_subquery())
+
+
+def test_content_query_variants_for_empty_version(repository):
+    """Both content query variants return no content for an empty repository version."""
+    version = repository.latest_version()
+
+    assert not set(version.content_ids_subquery())
+    assert not set(version.content_pks_subquery())
+
+
 def test_get_content_experiment_dispatch(repository, content_pks, add_content, settings):
     """get_content() routes through the A/B dispatcher when the probability is set."""
     with repository.new_version() as version:
