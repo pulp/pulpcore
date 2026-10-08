@@ -1119,3 +1119,25 @@ def test_content_in_repository_version_view(
         pulpcore_bindings.RepositoryVersionsApi.list(content__in=contents)
 
     assert e.value.status == 400
+
+
+@pytest.mark.parallel
+def test_modify_task_result_is_new_version_href(
+    file_bindings, file_repository_factory, file_9_contents, monitor_task
+):
+    """The modify task reports the serialized newly created repository version as its result."""
+    repo = file_repository_factory()
+    content = next(iter(file_9_contents.values()))
+    body = {"add_content_units": [content.pulp_href]}
+
+    task = monitor_task(file_bindings.RepositoriesFileApi.modify(repo.pulp_href, body).task)
+    repo = file_bindings.RepositoriesFileApi.read(repo.pulp_href)
+    version = file_bindings.RepositoriesFileVersionsApi.read(repo.latest_version_href)
+    assert task.result["pulp_href"] == version.pulp_href == f"{repo.pulp_href}versions/1/"
+    assert task.result["number"] == 1
+    assert task.result["repository"] == repo.pulp_href
+    assert task.result["content_summary"]["added"]["file.file"]["count"] == 1
+
+    # Nothing changes, so no version is created and there is no result.
+    task = monitor_task(file_bindings.RepositoriesFileApi.modify(repo.pulp_href, body).task)
+    assert task.result is None

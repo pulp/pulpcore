@@ -10,6 +10,7 @@ from django.db import transaction
 
 from pulpcore.app import models
 from pulpcore.app.models import ProgressReport
+from pulpcore.app.serializers import RepositoryVersionSerializer
 from pulpcore.app.util import get_domain
 from pulpcore.exceptions.base import RepositoryVersionDeleteError
 
@@ -198,6 +199,14 @@ def repair_all_artifacts(verify_checksums, **kwargs):
     loop.run_until_complete(_repair_artifacts_for_content(verify_checksums=verify_checksums))
 
 
+def _serialize_version(version):
+    """Serialize `version` if it was created (i.e. not discarded as a no-op) else return None."""
+    if not version.complete:
+        return None
+    # The hyperlinked fields require the "request" key in the context, but hrefs are relative.
+    return RepositoryVersionSerializer(version, context={"request": None}).data
+
+
 def add_and_remove(
     repository_pk,
     add_content_units,
@@ -220,6 +229,10 @@ def add_and_remove(
             as the initial set of content for our new RepositoryVersion
         overwrite (bool): When False, raise ContentOverwriteError if any content being added
             conflicts with existing content based on repo_key_fields. Defaults to True.
+
+    Returns:
+        dict: The serialized newly created RepositoryVersion, or None if nothing changed and no
+            version was created.
     """
     repository = models.Repository.objects.get(pk=repository_pk).cast()
 
@@ -247,11 +260,13 @@ def add_and_remove(
         new_version.remove_content(models.Content.objects.filter(pk__in=remove_content_units))
         new_version.add_content(models.Content.objects.filter(pk__in=add_content_units))
 
+    return _serialize_version(new_version)
+
 
 async def aadd_and_remove(
     repository_pk, add_content_units, remove_content_units, base_version_pk=None, **kwargs
 ):
-    """Aynsc version of add_and_remove."""
+    """Async version of add_and_remove."""
     repository = await models.Repository.objects.aget(pk=repository_pk)
     repository = await repository.acast()
 
@@ -271,5 +286,6 @@ async def aadd_and_remove(
         with repository.new_version(base_version=base_version) as new_version:
             new_version.remove_content(models.Content.objects.filter(pk__in=remove_content_units))
             new_version.add_content(models.Content.objects.filter(pk__in=add_content_units))
+        return _serialize_version(new_version)
 
-    await sync_to_async(add_to_repository)()
+    return await sync_to_async(add_to_repository)()
