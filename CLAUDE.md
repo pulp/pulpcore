@@ -38,6 +38,13 @@ pulpcore & pulp-file functional tests require both client bindings to be install
 
 **Always** use the `oci-env` to run the functional and unit tests.
 
+The active OCI profile may mount this checkout at `/src/pulpcore`, while `oci-env test -p core`
+expects `/src/core`. If that wrapper cannot find `/src/core`, run the focused test with
+`oci-env exec pytest /src/pulpcore/<test-path>` instead.
+
+`ArtifactDistribution` is matched within its `pulp_domain`. Its generated artifact URL includes
+the artifact domain, so test-created artifact distributions must use that same domain.
+
 ## Modifying template_config.yml
 
 Use the `plugin-template` tool after any changes made to `template_config.yml`.
