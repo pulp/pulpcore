@@ -1,1 +1,0 @@
-Optimized `scope_queryset` SQL queries when using a domain scoped endpoint. 
