@@ -1,4 +1,49 @@
+import re
+import uuid
+
 import pytest
+import requests
+
+from pulpcore.pytest_plugin import (
+    KEY_V4_ED25519_PRIVATE,
+    KEY_V4_ED25519_PUBLIC,
+    KEY_V4_RSA2K_PUBLIC,
+    KEY_V4_RSA4K_PUBLIC,
+    KEY_V6_ED25519_PRIVATE,
+    KEY_V6_ED25519_PUBLIC,
+    KEY_V6_MLDSA65_ED25519_PUBLIC,
+    KEY_V6_MLDSA87_ED448_PUBLIC,
+    KEY_V6_RSA4K_PUBLIC,
+)
+from pulpcore.tests.functional.utils import PulpTaskError
+
+
+def _download_key(url):
+    response = requests.get(url)
+    response.raise_for_status()
+    return response.content
+
+
+def _upload_key(tmpdir, pulpcore_bindings, monitor_task, key_data, keyring):
+    key_path = tmpdir / f"{uuid.uuid4()}.asc"
+    if isinstance(key_data, str):
+        key_path.write_text(key_data, "UTF-8")
+    else:
+        key_path.write_binary(key_data)
+    result = pulpcore_bindings.ContentOpenpgpPublickeyApi.create(
+        file=str(key_path), repository=keyring.pulp_href
+    )
+    monitor_task(result.task)
+    keyring = pulpcore_bindings.RepositoriesOpenpgpKeyringApi.read(keyring.pulp_href)
+    return keyring
+
+
+def _upload_key_from_url(tmpdir, pulpcore_bindings, monitor_task, url, keyring):
+    key_data = _download_key(url)
+    return _upload_key(tmpdir, pulpcore_bindings, monitor_task, key_data, keyring)
+
+
+# ── Sample keys from IETF OpenPGP samples draft ──────────────────────────
 
 ALICE_PUB = """
 -----BEGIN PGP PUBLIC KEY BLOCK-----
@@ -18,7 +63,6 @@ DAAKCRDyMVUMT0fjjlnQAQDFHUs6TIcxrNTtEZFjUFm1M0PJ1Dng/cDW4xN80fsn
 -----END PGP PUBLIC KEY BLOCK-----
 """
 
-
 ALICE_REVOCATION = """
 -----BEGIN PGP PUBLIC KEY BLOCK-----
 Comment: Alice's revocation certificate
@@ -30,7 +74,6 @@ O6TozOS7C9lwIHwwdHdAxgf5BzuhLT9iuAM=
 =Tm8h
 -----END PGP PUBLIC KEY BLOCK-----
 """
-
 
 ALICE_REVOKED = """
 -----BEGIN PGP PUBLIC KEY BLOCK-----
@@ -50,7 +93,6 @@ Pnn+We1aTBhaGa86AQ==
 =W1yt
 -----END PGP PUBLIC KEY BLOCK-----
 """
-
 
 BOB_PUB = """
 -----BEGIN PGP PUBLIC KEY BLOCK-----
@@ -117,29 +159,407 @@ aU6V3zld/x/1
 -----END PGP PUBLIC KEY BLOCK-----
 """
 
+# Known fingerprints for the IETF sample keys above
+ALICE_FINGERPRINT = "EB85BB5FA33A75E15E944E63F231550C4F47E38E"
+BOB_FINGERPRINT = "D1A66E1A23B182C9980F788CFBFCC82A015E7330"
+
 
 @pytest.mark.parallel
-def test_key_upload(tmpdir, openpgp_keyring_factory, pulpcore_bindings, monitor_task):
-    keyring = openpgp_keyring_factory()
+class TestOpenPGPKeyUpload:
+    """Test uploading various OpenPGP key types."""
 
-    alice_pub = tmpdir / "alice.pub"
-    alice_pub.write_text(ALICE_PUB, "UTF-8")
-
-    alice_revoked = tmpdir / "alice.revoked"
-    alice_revoked.write_text(ALICE_REVOKED, "UTF-8")
-
-    bob_pub = tmpdir / "bob.pub"
-    bob_pub.write_text(BOB_PUB, "UTF-8")
-
-    result = pulpcore_bindings.ContentOpenpgpPublickeyApi.create(
-        file=str(alice_pub), repository=keyring.pulp_href
+    @pytest.mark.parametrize(
+        "key_url,fingerprint_len",
+        [
+            (KEY_V4_RSA2K_PUBLIC, 40),
+            (KEY_V4_RSA4K_PUBLIC, 40),
+            (KEY_V4_ED25519_PUBLIC, 40),
+            (KEY_V6_ED25519_PUBLIC, 64),
+            (KEY_V6_RSA4K_PUBLIC, 64),
+            (KEY_V6_MLDSA65_ED25519_PUBLIC, 64),
+            (KEY_V6_MLDSA87_ED448_PUBLIC, 64),
+        ],
+        ids=[
+            "v4-rsa2k",
+            "v4-rsa4k",
+            "v4-ed25519",
+            "v6-ed25519",
+            "v6-rsa4k",
+            "pqc-mldsa65",
+            "pqc-mldsa87",
+        ],
     )
-    monitor_task(result.task)
-    result = pulpcore_bindings.ContentOpenpgpPublickeyApi.create(
-        file=str(bob_pub), repository=keyring.pulp_href
+    def test_upload_key(
+        self,
+        tmpdir,
+        openpgp_keyring_factory,
+        pulpcore_bindings,
+        monitor_task,
+        key_url,
+        fingerprint_len,
+    ):
+        keyring = openpgp_keyring_factory()
+        keyring = _upload_key_from_url(tmpdir, pulpcore_bindings, monitor_task, key_url, keyring)
+
+        keys = pulpcore_bindings.ContentOpenpgpPublickeyApi.list(
+            repository_version=keyring.latest_version_href
+        )
+        assert keys.count == 1
+        key = keys.results[0]
+        assert len(key.fingerprint) == fingerprint_len
+        assert re.fullmatch(rf"[0-9A-F]{{{fingerprint_len}}}", key.fingerprint)
+
+        user_ids = pulpcore_bindings.ContentOpenpgpUseridApi.list(
+            repository_version=keyring.latest_version_href
+        )
+        assert user_ids.count >= 1
+
+        signatures = pulpcore_bindings.ContentOpenpgpSignatureApi.list(
+            repository_version=keyring.latest_version_href
+        )
+        assert signatures.count >= 1
+
+    def test_reject_private_key_upload(
+        self, tmpdir, openpgp_keyring_factory, pulpcore_bindings, monitor_task
+    ):
+        keyring = openpgp_keyring_factory()
+        key_data = _download_key(KEY_V4_ED25519_PRIVATE)
+        key_path = tmpdir / "private.key"
+        key_path.write_binary(key_data)
+
+        result = pulpcore_bindings.ContentOpenpgpPublickeyApi.create(
+            file=str(key_path), repository=keyring.pulp_href
+        )
+        with pytest.raises(PulpTaskError) as exc_info:
+            monitor_task(result.task)
+        assert exc_info.value.task.state == "failed"
+
+
+@pytest.mark.parallel
+class TestOpenPGPKeyContent:
+    """Test content listing, filtering, and structure."""
+
+    def test_multiple_keys_in_keyring(
+        self, tmpdir, openpgp_keyring_factory, pulpcore_bindings, monitor_task
+    ):
+        keyring = openpgp_keyring_factory()
+
+        for url in [KEY_V4_RSA2K_PUBLIC, KEY_V4_ED25519_PUBLIC, KEY_V6_ED25519_PUBLIC]:
+            keyring = _upload_key_from_url(tmpdir, pulpcore_bindings, monitor_task, url, keyring)
+
+        keys = pulpcore_bindings.ContentOpenpgpPublickeyApi.list(
+            repository_version=keyring.latest_version_href
+        )
+        assert keys.count == 3
+
+        v4_keys = [k for k in keys.results if len(k.fingerprint) == 40]
+        v6_keys = [k for k in keys.results if len(k.fingerprint) == 64]
+        assert len(v4_keys) == 2
+        assert len(v6_keys) == 1
+
+    def test_filter_public_key_by_fingerprint(
+        self, tmpdir, openpgp_keyring_factory, pulpcore_bindings, monitor_task
+    ):
+        keyring = openpgp_keyring_factory()
+        keyring = _upload_key(tmpdir, pulpcore_bindings, monitor_task, ALICE_PUB, keyring)
+        keyring = _upload_key(tmpdir, pulpcore_bindings, monitor_task, BOB_PUB, keyring)
+
+        alice_results = pulpcore_bindings.ContentOpenpgpPublickeyApi.list(
+            fingerprint=ALICE_FINGERPRINT
+        )
+        assert alice_results.count == 1
+        assert alice_results.results[0].fingerprint == ALICE_FINGERPRINT
+
+        bob_results = pulpcore_bindings.ContentOpenpgpPublickeyApi.list(fingerprint=BOB_FINGERPRINT)
+        assert bob_results.count == 1
+        assert bob_results.results[0].fingerprint == BOB_FINGERPRINT
+
+    def test_filter_signature_by_issuer(
+        self, tmpdir, openpgp_keyring_factory, pulpcore_bindings, monitor_task
+    ):
+        keyring = openpgp_keyring_factory()
+        keyring = _upload_key(tmpdir, pulpcore_bindings, monitor_task, ALICE_PUB, keyring)
+
+        alice_keyid = ALICE_FINGERPRINT[-16:]
+        sigs = pulpcore_bindings.ContentOpenpgpSignatureApi.list(
+            repository_version=keyring.latest_version_href, issuer=alice_keyid
+        )
+        assert sigs.count >= 1
+        for sig in sigs.results:
+            assert sig.issuer == alice_keyid
+
+    def test_user_id_content(
+        self, tmpdir, openpgp_keyring_factory, pulpcore_bindings, monitor_task
+    ):
+        keyring = openpgp_keyring_factory()
+        keyring = _upload_key(tmpdir, pulpcore_bindings, monitor_task, ALICE_PUB, keyring)
+
+        user_ids = pulpcore_bindings.ContentOpenpgpUseridApi.list(
+            repository_version=keyring.latest_version_href
+        )
+        assert user_ids.count == 1
+        assert "Alice Lovelace" in user_ids.results[0].user_id
+
+    def test_subkey_content(self, tmpdir, openpgp_keyring_factory, pulpcore_bindings, monitor_task):
+        keyring = openpgp_keyring_factory()
+        keyring = _upload_key(tmpdir, pulpcore_bindings, monitor_task, ALICE_PUB, keyring)
+
+        subkeys = pulpcore_bindings.ContentOpenpgpPublicsubkeyApi.list(
+            repository_version=keyring.latest_version_href
+        )
+        assert subkeys.count >= 1
+        for subkey in subkeys.results:
+            assert len(subkey.fingerprint) == 40
+            assert re.fullmatch(r"[0-9A-F]{40}", subkey.fingerprint)
+
+    def test_idempotent_upload(
+        self, tmpdir, openpgp_keyring_factory, pulpcore_bindings, monitor_task
+    ):
+        keyring = openpgp_keyring_factory()
+        keyring = _upload_key(tmpdir, pulpcore_bindings, monitor_task, ALICE_PUB, keyring)
+        keyring = _upload_key(tmpdir, pulpcore_bindings, monitor_task, ALICE_PUB, keyring)
+        keys = pulpcore_bindings.ContentOpenpgpPublickeyApi.list(
+            repository_version=keyring.latest_version_href
+        )
+        assert keys.count == 1
+        assert keys.results[0].fingerprint == ALICE_FINGERPRINT
+
+    def test_key_revocation_merged(
+        self, tmpdir, openpgp_keyring_factory, pulpcore_bindings, monitor_task
+    ):
+        """Upload a key, then upload the same key with a revocation signature merged in."""
+        keyring = openpgp_keyring_factory()
+        keyring = _upload_key(tmpdir, pulpcore_bindings, monitor_task, ALICE_PUB, keyring)
+        keyring = _upload_key(tmpdir, pulpcore_bindings, monitor_task, ALICE_REVOKED, keyring)
+        keys = pulpcore_bindings.ContentOpenpgpPublickeyApi.list(
+            repository_version=keyring.latest_version_href
+        )
+        assert keys.count == 1
+        assert keys.results[0].fingerprint == ALICE_FINGERPRINT
+
+        sigs = pulpcore_bindings.ContentOpenpgpSignatureApi.list(
+            repository_version=keyring.latest_version_href
+        )
+        sig_types = {sig.signature_type for sig in sigs.results}
+        assert 0x20 in sig_types, "Expected a key revocation signature (type 0x20)"
+
+    @pytest.mark.parametrize(
+        "pub_data,revocation_data",
+        [
+            (ALICE_PUB, ALICE_REVOCATION),
+            (BOB_PUB, BOB_REVOCATION),
+        ],
+        ids=["alice-ed25519", "bob-rsa"],
     )
-    monitor_task(result.task)
-    result = pulpcore_bindings.ContentOpenpgpPublickeyApi.create(
-        file=str(alice_revoked), repository=keyring.pulp_href
+    def test_standalone_revocation_certificate(
+        self,
+        tmpdir,
+        openpgp_keyring_factory,
+        pulpcore_bindings,
+        monitor_task,
+        pub_data,
+        revocation_data,
+    ):
+        """Upload a standalone revocation certificate (no public key, just the signature)."""
+        keyring = openpgp_keyring_factory()
+        keyring = _upload_key(tmpdir, pulpcore_bindings, monitor_task, pub_data, keyring)
+
+        key_path = tmpdir / f"{uuid.uuid4()}.asc"
+        key_path.write_text(revocation_data, "UTF-8")
+        result = pulpcore_bindings.ContentOpenpgpPublickeyApi.create(
+            file=str(key_path), repository=keyring.pulp_href
+        )
+        with pytest.raises(PulpTaskError):
+            monitor_task(result.task)
+
+
+@pytest.mark.parallel
+class TestOpenPGPKeySerialization:
+    """Test key serialization via distribution and round-trip integrity."""
+
+    def _create_distribution(
+        self, pulpcore_bindings, monitor_task, gen_object_with_cleanup, keyring
+    ):
+        body = {
+            "base_path": str(uuid.uuid4()),
+            "name": str(uuid.uuid4()),
+            "repository": keyring.pulp_href,
+        }
+        return gen_object_with_cleanup(pulpcore_bindings.DistributionsOpenpgpApi, body)
+
+    @pytest.mark.parametrize(
+        "key_url",
+        [KEY_V4_RSA2K_PUBLIC, KEY_V6_ED25519_PUBLIC, KEY_V6_MLDSA65_ED25519_PUBLIC],
+        ids=["v4-rsa2k", "v6-ed25519", "pqc-mldsa65"],
     )
-    monitor_task(result.task)
+    def test_key_serialization_roundtrip(
+        self,
+        tmpdir,
+        openpgp_keyring_factory,
+        pulpcore_bindings,
+        monitor_task,
+        gen_object_with_cleanup,
+        http_get,
+        distribution_base_url,
+        key_url,
+    ):
+        from pysequoia import Cert
+
+        keyring = openpgp_keyring_factory()
+        keyring = _upload_key_from_url(tmpdir, pulpcore_bindings, monitor_task, key_url, keyring)
+
+        keys = pulpcore_bindings.ContentOpenpgpPublickeyApi.list(
+            repository_version=keyring.latest_version_href
+        )
+        uploaded_fingerprint = keys.results[0].fingerprint
+
+        distro = self._create_distribution(
+            pulpcore_bindings, monitor_task, gen_object_with_cleanup, keyring
+        )
+
+        keyid = uploaded_fingerprint[-16:]
+        download_url = distribution_base_url(distro.base_url) + f"/{keyid}.pub"
+        downloaded_key = http_get(download_url)
+
+        cert = Cert.from_bytes(downloaded_key)
+        assert cert.fingerprint.upper() == uploaded_fingerprint
+
+    def test_distribution_lists_keys(
+        self,
+        tmpdir,
+        openpgp_keyring_factory,
+        pulpcore_bindings,
+        monitor_task,
+        gen_object_with_cleanup,
+        http_get,
+        distribution_base_url,
+    ):
+        keyring = openpgp_keyring_factory()
+        keyring = _upload_key(tmpdir, pulpcore_bindings, monitor_task, ALICE_PUB, keyring)
+        keyring = _upload_key(tmpdir, pulpcore_bindings, monitor_task, BOB_PUB, keyring)
+
+        distro = self._create_distribution(
+            pulpcore_bindings, monitor_task, gen_object_with_cleanup, keyring
+        )
+
+        listing_url = distribution_base_url(distro.base_url) + "/"
+        listing = http_get(listing_url)
+        listing_text = listing.decode("utf-8")
+
+        alice_keyid = ALICE_FINGERPRINT[-16:]
+        bob_keyid = BOB_FINGERPRINT[-16:]
+        listing_lower = listing_text.lower()
+        assert f"{alice_keyid.lower()}.pub" in listing_lower
+        assert f"{bob_keyid.lower()}.pub" in listing_lower
+
+
+@pytest.mark.parallel
+class TestOpenPGPSignatureVerification:
+    """Test that keys from the keyring can verify signatures."""
+
+    def _create_distribution(
+        self, pulpcore_bindings, monitor_task, gen_object_with_cleanup, keyring
+    ):
+        body = {
+            "base_path": str(uuid.uuid4()),
+            "name": str(uuid.uuid4()),
+            "repository": keyring.pulp_href,
+        }
+        return gen_object_with_cleanup(pulpcore_bindings.DistributionsOpenpgpApi, body)
+
+    @pytest.mark.parametrize(
+        "private_url,public_url",
+        [
+            (KEY_V4_ED25519_PRIVATE, KEY_V4_ED25519_PUBLIC),
+            (KEY_V6_ED25519_PRIVATE, KEY_V6_ED25519_PUBLIC),
+        ],
+        ids=["v4-ed25519", "v6-ed25519"],
+    )
+    def test_verify_signature(
+        self,
+        tmpdir,
+        openpgp_keyring_factory,
+        pulpcore_bindings,
+        monitor_task,
+        gen_object_with_cleanup,
+        http_get,
+        distribution_base_url,
+        private_url,
+        public_url,
+    ):
+        from pysequoia import Cert, Sig, SignatureMode, sign, verify
+
+        secret_data = _download_key(private_url)
+        cert = Cert.from_bytes(secret_data)
+        fingerprint = cert.fingerprint.upper()
+        signer = cert.secrets.signer()
+
+        test_data = b"Hello, OpenPGP!\n"
+        sig_bytes = sign(signer, test_data, mode=SignatureMode.DETACHED)
+
+        pub_data = _download_key(public_url)
+        keyring = openpgp_keyring_factory()
+        keyring = _upload_key(tmpdir, pulpcore_bindings, monitor_task, pub_data, keyring)
+
+        distro = self._create_distribution(
+            pulpcore_bindings, monitor_task, gen_object_with_cleanup, keyring
+        )
+
+        keyid = fingerprint[-16:]
+        download_url = distribution_base_url(distro.base_url) + f"/{keyid}.pub"
+        served_key = http_get(download_url)
+
+        served_certs = Cert.split_bytes(served_key)
+        sig = Sig.from_bytes(sig_bytes.encode() if isinstance(sig_bytes, str) else sig_bytes)
+        result = verify(bytes=test_data, store=lambda key_ids: served_certs, signature=sig)
+        assert result.valid_sigs
+
+    def test_verify_signature_multiple_keys_in_keyring(
+        self,
+        tmpdir,
+        openpgp_keyring_factory,
+        pulpcore_bindings,
+        monitor_task,
+        gen_object_with_cleanup,
+        http_get,
+        distribution_base_url,
+    ):
+        """Sign with one key, verify against a keyring containing multiple keys."""
+        from pysequoia import Cert, Sig, SignatureMode, sign, verify
+
+        secret_data = _download_key(KEY_V4_ED25519_PRIVATE)
+        cert = Cert.from_bytes(secret_data)
+        fingerprint = cert.fingerprint.upper()
+        signer = cert.secrets.signer()
+
+        test_data = b"Hello, OpenPGP!\n"
+        sig_bytes = sign(signer, test_data, mode=SignatureMode.DETACHED)
+
+        keyring = openpgp_keyring_factory()
+
+        pub_data = _download_key(KEY_V4_ED25519_PUBLIC)
+        keyring = _upload_key(tmpdir, pulpcore_bindings, monitor_task, pub_data, keyring)
+        keyring = _upload_key_from_url(
+            tmpdir, pulpcore_bindings, monitor_task, KEY_V4_RSA2K_PUBLIC, keyring
+        )
+        keyring = _upload_key_from_url(
+            tmpdir, pulpcore_bindings, monitor_task, KEY_V6_ED25519_PUBLIC, keyring
+        )
+
+        keys = pulpcore_bindings.ContentOpenpgpPublickeyApi.list(
+            repository_version=keyring.latest_version_href
+        )
+        assert keys.count == 3
+
+        distro = self._create_distribution(
+            pulpcore_bindings, monitor_task, gen_object_with_cleanup, keyring
+        )
+
+        keyid = fingerprint[-16:]
+        download_url = distribution_base_url(distro.base_url) + f"/{keyid}.pub"
+        served_key = http_get(download_url)
+
+        served_certs = Cert.split_bytes(served_key)
+        sig = Sig.from_bytes(sig_bytes.encode() if isinstance(sig_bytes, str) else sig_bytes)
+        result = verify(bytes=test_data, store=lambda key_ids: served_certs, signature=sig)
+        assert result.valid_sigs
