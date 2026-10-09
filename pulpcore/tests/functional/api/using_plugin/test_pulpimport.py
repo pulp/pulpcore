@@ -166,7 +166,9 @@ def generate_export(pulpcore_bindings, monitor_task):
             body = {}
 
         export_response = pulpcore_bindings.ExportersPulpExportsApi.create(exporter.pulp_href, body)
-        export_href = monitor_task(export_response.task).created_resources[0]
+        task = monitor_task(export_response.task)
+        export_href = task.created_resources[0]
+        assert task.result["pulp_href"] == export_href
         export = pulpcore_bindings.ExportersPulpExportsApi.read(export_href)
 
         return export
@@ -190,6 +192,15 @@ def perform_import(pulpcore_bindings, monitor_task_group):
 
         import_response = pulpcore_bindings.ImportersPulpImportsApi.create(importer.pulp_href, body)
         task_group = monitor_task_group(import_response.task_group)
+
+        for task in task_group.tasks:
+            task = pulpcore_bindings.TasksApi.read(task.pulp_href)
+            if task.created_resources:
+                if isinstance(task.result, list):
+                    result_hrefs = [result["pulp_href"] for result in task.result]
+                else:
+                    result_hrefs = [task.result["pulp_href"]]
+                assert set(result_hrefs) == set(task.created_resources)
 
         return task_group
 

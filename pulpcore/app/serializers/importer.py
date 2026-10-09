@@ -47,7 +47,7 @@ class ImportSerializer(ModelSerializer):
     )
 
     class Meta:
-        model = models.Importer
+        model = models.Import
         fields = ModelSerializer.Meta.fields + ("task", "params")
 
 
