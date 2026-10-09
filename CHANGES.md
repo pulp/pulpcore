@@ -8,6 +8,54 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.121.2 (2026-10-08) {: #3.121.2 }
+
+### REST API {: #3.121.2-rest-api }
+
+#### Bugfixes {: #3.121.2-rest-api-bugfix }
+
+- Optimized `scope_queryset` SQL queries when using a domain scoped endpoint.
+
+### Plugin API {: #3.121.2-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.121.2-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.121.2-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.121.1 (2026-10-08) {: #3.121.1 }
+
+### REST API {: #3.121.1-rest-api }
+
+#### Bugfixes {: #3.121.1-rest-api-bugfix }
+
+- Fixed an issue where users were able to list (but not modify) uploads they didn't have permissions to view.
+- Removed parent directory sizes and fixed wrong last modified timestamp in content app listings.
+- Repeated object lookups in a single API request now reuse the retrieved object.
+- Reverted support for returning 304 responses to content requests with conditional headers
+  because of a breaking change in the internal plugin's API.
+
+### Plugin API {: #3.121.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.121.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.121.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.121.0 (2026-10-06) {: #3.121.0 }
 
 ### REST API {: #3.121.0-rest-api }
