@@ -1,15 +1,20 @@
+from pathlib import Path
 from uuid import uuid4
 
 import pytest
 from cryptography.fernet import InvalidToken
+from django.conf import settings
 from django.core.management import call_command
 from django.db import connection
 
+from pulpcore.app.contexts import with_domain
 from pulpcore.app.models import Domain, Remote
 from pulpcore.app.models.fields import EncryptedTextField, _fernet
 
 TEST_KEY1 = b"hPCIFQV/upbvPRsEpgS7W32XdFA2EQgXnMtyNAekebQ="
 TEST_KEY2 = b"6Xyv+QezAQ+4R870F5qsgKcngzmm46caDB2gyo9qnpc="
+
+SATELLITE_ALIAS = "data_1"
 
 
 @pytest.fixture
@@ -50,27 +55,61 @@ def test_encrypted_proxy_password(fake_fernet):
     assert proxy_password == "test"
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db(databases=list(settings.DATABASES))
 def test_rotate_db_key(fake_fernet):
     remote = Remote.objects.create(name=uuid4(), proxy_password="test")
     domain = Domain.objects.create(name=uuid4(), storage_settings={"base_path": "/foo"})
 
-    next(fake_fernet)  # new + old key
+    satellite_remote = None
+    satellite_domain = None
+    if SATELLITE_ALIAS in settings.DATABASES:
+        satellite_domain = Domain.objects.create(
+            name=uuid4(),
+            storage_class="pulpcore.app.models.storage.FileSystem",
+            storage_settings={"base_path": "/satellite"},
+            database_alias=SATELLITE_ALIAS,
+        )
+        with with_domain(satellite_domain):
+            satellite_remote = Remote.objects.create(
+                name=uuid4(), proxy_password="satellite-secret"
+            )
+        assert not Remote.objects.using("default").filter(pk=satellite_remote.pk).exists()
+        assert Remote.objects.using(SATELLITE_ALIAS).filter(pk=satellite_remote.pk).exists()
 
-    call_command("rotate-db-key")
+    try:
+        next(fake_fernet)  # new + old key
 
-    next(fake_fernet)  # new key
+        call_command("rotate-db-key")
 
-    del remote.proxy_password
-    assert remote.proxy_password == "test"
-    del domain.storage_settings
-    assert domain.storage_settings == {"base_path": "/foo"}
+        next(fake_fernet)  # new key
 
-    next(fake_fernet)  # old key
+        del remote.proxy_password
+        assert remote.proxy_password == "test"
+        del domain.storage_settings
+        assert domain.storage_settings == {"base_path": "/foo"}
 
-    del remote.proxy_password
-    with pytest.raises(InvalidToken):
-        remote.proxy_password
-    del domain.storage_settings
-    with pytest.raises(InvalidToken):
-        domain.storage_settings
+        if satellite_remote is not None:
+            satellite_remote = Remote.objects.using(SATELLITE_ALIAS).get(pk=satellite_remote.pk)
+            assert satellite_remote.proxy_password == "satellite-secret"
+
+        next(fake_fernet)  # old key
+
+        del remote.proxy_password
+        with pytest.raises(InvalidToken):
+            remote.proxy_password
+        del domain.storage_settings
+        with pytest.raises(InvalidToken):
+            domain.storage_settings
+
+        if satellite_remote is not None:
+            with pytest.raises(InvalidToken):
+                Remote.objects.using(SATELLITE_ALIAS).get(pk=satellite_remote.pk)
+    finally:
+        if satellite_remote is not None or satellite_domain is not None:
+            key_file = Path(settings.DB_ENCRYPTION_KEY)
+            key_file.write_bytes(TEST_KEY2 + b"\n" + TEST_KEY1)
+            _fernet.cache_clear()
+        if satellite_remote is not None:
+            Remote.objects.using(SATELLITE_ALIAS).filter(pk=satellite_remote.pk).delete()
+        if satellite_domain is not None:
+            satellite_domain.delete()
