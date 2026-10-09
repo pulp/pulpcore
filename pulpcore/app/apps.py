@@ -1,3 +1,4 @@
+import logging
 import random
 from collections import defaultdict
 from contextlib import suppress
@@ -7,8 +8,8 @@ from importlib import import_module
 from django import apps
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.db import ProgrammingError, connection, transaction
-from django.db.models.signals import post_migrate, pre_migrate
+from django.db import ProgrammingError, connection, connections, transaction
+from django.db.models.signals import post_delete, post_migrate, post_save, pre_migrate
 from django.utils.module_loading import module_has_submodule
 
 from pulpcore.exceptions.plugin import MissingPlugin
@@ -253,6 +254,16 @@ class PulpAppConfig(PulpPluginAppConfig):
         post_migrate.connect(
             _ensure_default_domain, sender=self, dispatch_uid="ensure_default_domain"
         )
+
+        # Connect this before _populate_system_id/_populate_artifact_serving_distribution below:
+        # post_migrate receivers fire in connection order, and those two create rows whose
+        # pulp_domain FK defaults to the 'default' alias's Domain row, which doesn't exist yet on
+        # a freshly-migrated satellite until _ensure_domains_replicated backfills it there.
+        from pulpcore.app.db_router import is_multi_db_routing_active
+
+        if is_multi_db_routing_active():
+            self._connect_multi_db_signals()
+
         post_migrate.connect(
             _populate_system_id, sender=self, dispatch_uid="populate_system_id_identifier"
         )
@@ -262,8 +273,60 @@ class PulpAppConfig(PulpPluginAppConfig):
             dispatch_uid="populate_artifact_serving_distribution_identifier",
         )
 
+    def _connect_multi_db_signals(self):
+        """Wire up the Domain/User/Group/Role replication signals. Only called when
+        PulpDomainRouter is actually configured, so a single-database Pulp instance never pays
+        for connecting (and firing, on every save/delete of these models) signal receivers it has
+        no use for. UserRole/GroupRole grants aren't replicated at all -- see
+        pulpcore.app.rbac_sync's module docstring -- so they don't need signals here. RBAC
+        (User/Group/Role) replication isn't wired here either -- see
+        ensure_rbac_replicated_for_alias's docstring for why it has to run from the migrate
+        command instead of a post_migrate signal."""
+        post_migrate.connect(
+            _ensure_domains_replicated,
+            sender=self,
+            dispatch_uid="ensure_domains_replicated_identifier",
+        )
+
+        # Must stay a local import, not module-level: this module is reachable from
+        # pulpcore.plugin.__init__ before Django settings/dynaconf have initialized (e.g. via
+        # pytest's pytest11 entry-point loading), and django.contrib.auth caches a reference to
+        # whatever settings object exists at its own import time -- a module-level import here
+        # would permanently wire it to a stale pre-dynaconf settings object.
+        from django.contrib.auth import get_user_model
+
+        from pulpcore.app.domain_sync import on_domain_post_delete, on_domain_post_save
+        from pulpcore.app.models import Domain, Group
+        from pulpcore.app.models.role import Role
+        from pulpcore.app.rbac_sync import (
+            on_group_post_delete,
+            on_group_post_save,
+            on_role_post_delete,
+            on_role_post_save,
+            on_user_post_delete,
+            on_user_post_save,
+        )
+
+        post_save.connect(
+            on_domain_post_save, sender=Domain, dispatch_uid="replicate_domain_post_save"
+        )
+        post_delete.connect(
+            on_domain_post_delete, sender=Domain, dispatch_uid="replicate_domain_post_delete"
+        )
+
+        User = get_user_model()
+        for model, save_fn, delete_fn, prefix in (
+            (User, on_user_post_save, on_user_post_delete, "replicate_user"),
+            (Group, on_group_post_save, on_group_post_delete, "replicate_group"),
+            (Role, on_role_post_save, on_role_post_delete, "replicate_role"),
+        ):
+            post_save.connect(save_fn, sender=model, dispatch_uid=f"{prefix}_post_save")
+            post_delete.connect(delete_fn, sender=model, dispatch_uid=f"{prefix}_post_delete")
+
 
 def _clean_app_status(sender, apps, verbosity, **kwargs):
+    if kwargs.get("using", "default") != "default":
+        return
     from django.contrib.postgres.functions import TransactionNow
     from django.db.models import F
 
@@ -277,6 +340,9 @@ def _clean_app_status(sender, apps, verbosity, **kwargs):
 
 
 def _populate_access_policies(sender, apps, verbosity, **kwargs):
+    if kwargs.get("using", "default") != "default":
+        return
+
     from pulpcore.app.util import get_view_urlpattern
     from pulpcore.app.viewsets import LoginViewSet
 
@@ -321,6 +387,8 @@ def _populate_access_policies(sender, apps, verbosity, **kwargs):
 
 
 def _populate_system_id(sender, apps, verbosity, **kwargs):
+    if kwargs.get("using", "default") != "default":
+        return
     with suppress(LookupError):
         SystemID = apps.get_model("core", "SystemID")
         if not SystemID.objects.exists():
@@ -328,6 +396,8 @@ def _populate_system_id(sender, apps, verbosity, **kwargs):
 
 
 def _ensure_default_domain(sender, apps, **kwargs):
+    if kwargs.get("using", "default") != "default":
+        return
     # This is a post migrate hook.
     # But on rolling back the database may not match what this function expects.
     with suppress(LookupError, ProgrammingError):
@@ -348,7 +418,55 @@ def _ensure_default_domain(sender, apps, **kwargs):
                 default.save(skip_hooks=True)
 
 
+def _ensure_domains_replicated(sender, **kwargs):
+    using = kwargs.get("using", "default")
+    if using == "default":
+        return
+    if "core_domain" not in connections[using].introspection.table_names():
+        return
+    from pulpcore.app.domain_sync import reconcile_domains_to_alias
+
+    try:
+        reconcile_domains_to_alias(using)
+    except Exception:
+        logging.getLogger(__name__).error(
+            "Reconciling Domain rows to alias '%s' failed during migration. Data-plane objects "
+            "created on this alias by later migrations/post_migrate hooks that FK to Domain may "
+            "fail until Domain rows are reconciled to this alias.",
+            using,
+            exc_info=True,
+        )
+
+
+def ensure_rbac_replicated_for_alias(using):
+    """Backfill Users/Groups/Roles (with their permissions) onto a satellite alias.
+
+    Called explicitly from the migrate command after it finishes, not from a post_migrate signal:
+    replicating a Role's permissions needs every app's Permission rows to already exist on this
+    alias, but post_migrate fires once per app in installed-app order, and plugin apps are
+    appended after pulpcore.app -- a signal scoped to this app's sender would run before plugin
+    apps have created their own permissions here yet, failing with a Permission FK violation.
+    """
+    if using == "default":
+        return
+    if "auth_user" not in connections[using].introspection.table_names():
+        return
+    from pulpcore.app.rbac_sync import ensure_replicated_on_alias
+
+    try:
+        ensure_replicated_on_alias(using)
+    except Exception:
+        logging.getLogger(__name__).error(
+            "Replicating Users/Groups/Roles to alias '%s' failed during migration. Object-level "
+            "role grants created on this alias may fail to validate until it is reconciled.",
+            using,
+            exc_info=True,
+        )
+
+
 def _populate_roles(sender, apps, verbosity, **kwargs):
+    if kwargs.get("using", "default") != "default":
+        return
     role_prefix = f"{sender.label}."
     # collect all plugin defined roles
     desired_roles = {}
@@ -408,6 +526,7 @@ def adjust_roles(apps, role_prefix, desired_roles, verbosity=1):
 
 
 def _populate_artifact_serving_distribution(sender, apps, verbosity, **kwargs):
+    alias = kwargs.get("using", "default")
     if (
         settings.STORAGES["default"]["BACKEND"] == "pulpcore.app.models.storage.FileSystem"
         or not settings.REDIRECT_TO_OBJECT_STORAGE
@@ -420,15 +539,17 @@ def _populate_artifact_serving_distribution(sender, apps, verbosity, **kwargs):
                 print(_("ArtifactDistribution model does not exist. Skipping initialization."))
             return
         try:
-            ArtifactDistribution.objects.get()
+            ArtifactDistribution.objects.using(alias).get()
         except ArtifactDistribution.DoesNotExist:
             name = f"{random.getrandbits(256):x}"
-            with transaction.atomic():
-                content_guard, _created = ContentRedirectContentGuard.objects.get_or_create(
+            with transaction.atomic(using=alias):
+                content_guard, _created = ContentRedirectContentGuard.objects.using(
+                    alias
+                ).get_or_create(
                     name=name,
                     pulp_type="core.content_redirect",
                 )
-                _dist, _created = ArtifactDistribution.objects.get_or_create(
+                _dist, _created = ArtifactDistribution.objects.using(alias).get_or_create(
                     name=name,
                     pulp_type="core.artifact",
                     defaults={"base_path": name, "content_guard": content_guard},
