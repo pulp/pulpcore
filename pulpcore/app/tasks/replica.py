@@ -5,13 +5,13 @@ from contextlib import contextmanager
 from tempfile import NamedTemporaryFile
 
 import requests
-from django.db import transaction
 from django.db.models import Min
 from pulp_glue.common import __version__ as pulp_glue_version
 from pulp_glue.common.context import PluginRequirement
 from pulp_glue.common.exceptions import PulpException as GluePulpException
 
 from pulpcore.app.apps import PulpAppConfig, pulp_plugin_configs
+from pulpcore.app.db_router import atomic
 from pulpcore.app.models import Distribution, Repository, Task, TaskGroup, UpstreamPulp
 from pulpcore.app.replica import ReplicaContext, distros_lock_uri
 from pulpcore.constants import TASK_STATES
@@ -174,7 +174,7 @@ def finalize_replication(server_pk, distro_repo_pairs, **kwargs):
 
     # Atomically update all managed distributions to point to their repo's latest version,
     # clearing any previous repository or publication references.
-    with transaction.atomic():
+    with atomic():
         for distro_name, repo_pk in distro_repo_pairs:
             distro = Distribution.objects.get(name=distro_name, pulp_domain=server.pulp_domain)
             repo = Repository.objects.get(pk=repo_pk)

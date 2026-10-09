@@ -2,10 +2,10 @@ from collections import defaultdict
 from logging import getLogger
 
 from asgiref.sync import sync_to_async
-from django.db import transaction
 from django.db.models.deletion import ProtectedError
 
 from pulpcore.app.apps import get_plugin_config
+from pulpcore.app.db_router import atomic
 from pulpcore.app.loggers import deprecation_logger
 from pulpcore.app.models import CreatedResource
 from pulpcore.exceptions import ProtectedResourceError
@@ -165,7 +165,7 @@ def general_multi_delete(instance_ids, **kwargs):
             instance = instance.cast()
         instances.append(instance)
     try:
-        with transaction.atomic():
+        with atomic():
             for instance in instances:
                 for model_label, count in instance.delete()[1].items():
                     counts[model_label] += count

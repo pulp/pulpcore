@@ -41,11 +41,11 @@ from django.db import (  # noqa: E402
     IntegrityError,
     connection,
     models,
-    transaction,
 )
 from jinja2 import Template  # noqa: E402
 
 from pulpcore.app import mime_types  # noqa: E402
+from pulpcore.app.db_router import atomic  # noqa: E402
 from pulpcore.app.models import (  # noqa: E402
     Artifact,
     ArtifactDistribution,
@@ -1040,9 +1040,9 @@ class Handler:
         remote = remote_artifact.remote
         artifact = Artifact(**download_result.artifact_attributes, file=download_result.path)
         cas = []
-        with transaction.atomic():
+        with atomic():
             try:
-                with transaction.atomic():
+                with atomic():
                     artifact.save()
             except IntegrityError:
                 try:
@@ -1070,7 +1070,7 @@ class Handler:
                 if isinstance(content, tuple):
                     content, artifacts = content
                 try:
-                    with transaction.atomic():
+                    with atomic():
                         content.save()
                         for relative_path, c_artifact in artifacts.items():
                             new_ca = ContentArtifact(
@@ -1100,7 +1100,7 @@ class Handler:
                     if url := remote.get_remote_artifact_url(ca.relative_path, request=request):
                         ra = RemoteArtifact(remote=remote, content_artifact=ca, url=url)
                         try:
-                            with transaction.atomic():
+                            with atomic():
                                 ra.save()
                         except IntegrityError:
                             # Remote artifact must have already been saved during a parallel request

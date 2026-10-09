@@ -6,9 +6,9 @@ from gettext import gettext as _
 from logging import getLogger
 
 from asgiref.sync import sync_to_async
-from django.db import transaction
 
 from pulpcore.app import models
+from pulpcore.app.db_router import atomic
 from pulpcore.app.models import ProgressReport
 from pulpcore.app.util import get_domain
 from pulpcore.exceptions.base import RepositoryVersionDeleteError
@@ -36,7 +36,7 @@ def delete_version(pk, **kwargs):
             TODO: something more friendly
         ValidationError: if there's one repo version
     """
-    with transaction.atomic():
+    with atomic():
         try:
             version = models.RepositoryVersion.objects.get(pk=pk)
         except models.RepositoryVersion.DoesNotExist:

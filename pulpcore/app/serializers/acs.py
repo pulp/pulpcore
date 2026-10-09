@@ -1,10 +1,10 @@
 from gettext import gettext as _
 
-from django.db import transaction
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError as DRFValidationError
 
 from pulpcore.app import models
+from pulpcore.app.db_router import atomic
 from pulpcore.app.serializers import (
     DetailIdentityField,
     DetailRelatedField,
@@ -73,18 +73,18 @@ class AlternateContentSourceSerializer(ModelSerializer):
             )
         return remote
 
-    @transaction.atomic
     def create(self, validated_data):
         """Create Alternate Content Source and its path if specified."""
         paths = validated_data.pop("paths", [])
-        acs = super().create(validated_data)
+        with atomic():
+            acs = super().create(validated_data)
 
-        try:
-            self._update_paths(acs, paths)
-        except DRFValidationError as exc:
-            acs.delete()
-            raise exc
-        return acs
+            try:
+                self._update_paths(acs, paths)
+            except DRFValidationError as exc:
+                acs.delete()
+                raise exc
+            return acs
 
     def _update_paths(self, acs, paths):
         """Update Alternate Content Source paths."""
@@ -128,7 +128,7 @@ class AlternateContentSourceSerializer(ModelSerializer):
         instance.name = validated_data.get("name", instance.name)
         instance.remote = validated_data.get("remote", instance.remote)
         paths = validated_data.get("paths")
-        with transaction.atomic():
+        with atomic():
             self._update_paths(instance, paths)
             instance.save()
         return instance
