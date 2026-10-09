@@ -1,10 +1,11 @@
 from gettext import gettext as _
 
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
 from pulpcore.app import models
+from pulpcore.app.db_router import atomic
 from pulpcore.app.serializers import (
     ContentArtifactChecksumField,
     ContentArtifactsField,
@@ -101,7 +102,7 @@ class NoArtifactContentSerializer(ModelSerializer):
             content.touch()
         else:
             try:
-                with transaction.atomic():
+                with atomic():
                     content = self.Meta.model.objects.create(**validated_data)
                     for relative_path, artifact in artifacts.items():
                         models.ContentArtifact.objects.create(

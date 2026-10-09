@@ -15,12 +15,13 @@ from aiohttp.web_exceptions import HTTPNotFound
 from django.conf import settings
 from django.contrib.postgres.fields import HStoreField
 from django.contrib.postgres.indexes import OpClass, SpGistIndex
-from django.db import DatabaseError, IntegrityError, models, transaction
+from django.db import DatabaseError, IntegrityError, models
 from django.utils import timezone
 from django_lifecycle import AFTER_CREATE, AFTER_UPDATE, BEFORE_CREATE, BEFORE_DELETE, hook
 from rest_framework.exceptions import APIException
 from url_normalize import url_normalize
 
+from pulpcore.app.db_router import atomic
 from pulpcore.app.files import PulpTemporaryUploadedFile
 from pulpcore.app.models import AutoAddObjPermsMixin
 from pulpcore.app.models.fields import RelativePathField
@@ -127,7 +128,7 @@ class Publication(MasterModel):
         Notes:
             Adds a Task.created_resource for the publication.
         """
-        with transaction.atomic():
+        with atomic():
             publication = cls(
                 pass_through=pass_through,
                 repository_version=repository_version,
@@ -196,8 +197,8 @@ class Publication(MasterModel):
             if base_paths:
                 Cache().delete(base_key=cache_key(base_paths))
 
-        with transaction.atomic():
-            CreatedResource.objects.filter(object_id=self.pk).delete()
+        CreatedResource.objects.filter(object_id=self.pk).delete()
+        with atomic():
             return super().delete(**kwargs)
 
     def finalize_new_publication(self):
@@ -331,7 +332,7 @@ class PublishedMetadata(Content):
                 A saved instance of PublishedMetadata.
         """
         domain = publication.pulp_domain
-        with transaction.atomic():
+        with atomic(using=domain.database_alias):
             temp_file = PulpTemporaryUploadedFile.from_file(file)
             artifact = Artifact.init_and_validate(file=temp_file)
             # if artifact already exists, let's use it
@@ -345,7 +346,7 @@ class PublishedMetadata(Content):
                 artifact.touch()
             except (Artifact.DoesNotExist, DatabaseError):
                 try:
-                    with transaction.atomic():
+                    with atomic(using=domain.database_alias):
                         artifact.save()
                 except IntegrityError:
                     artifact = Artifact.objects.get(sha256=artifact.sha256, pulp_domain=domain)
@@ -953,7 +954,7 @@ class Distribution(MasterModel):
         # than the DP row because the DP may not exist yet, and SELECT FOR UPDATE cannot lock
         # a nonexistent row -- without this, two concurrent writers could both insert an active
         # DP, violating the "at most one active DP per distribution" invariant.
-        with transaction.atomic():
+        with atomic():
             Distribution.objects.select_for_update().get(pk=self.pk)
 
             dp = DistributedPublication.objects.filter(distribution=self, publication=pub).first()

@@ -18,6 +18,7 @@ from django.db.models import F, Func, Q, Value
 from django_lifecycle import AFTER_UPDATE, BEFORE_CREATE, BEFORE_DELETE, hook
 from rest_framework.exceptions import APIException
 
+from pulpcore.app.db_router import atomic
 from pulpcore.app.loggers import deprecation_logger
 from pulpcore.app.util import (
     batch_qs,
@@ -132,26 +133,25 @@ class Repository(MasterModel):
             args (list): list of positional arguments for Model.save()
             kwargs (dict): dictionary of keyword arguments to pass to Model.save()
         """
-        with transaction.atomic():
-            adding = self._state.adding
+        adding = self._state.adding
+        with atomic():
             super().save(*args, **kwargs)
             if adding:
                 self.create_initial_version()
 
-                # lock the repository if it was created from within a running task
-                task_id = Task.current_id()
-                if task_id is None:
-                    return
+        if not adding:
+            return
 
-                repository_prn = Value(get_prn(instance=self))
-                update_func = Func(
-                    F("reserved_resources_record"), repository_prn, function="ARRAY_APPEND"
-                )
-                updated = Task.objects.filter(pk=task_id).update(
-                    reserved_resources_record=update_func
-                )
-                if not updated:
-                    raise RuntimeError(f"The repository '{self.name}' could not be locked")
+        # lock the repository if it was created from within a running task
+        task_id = Task.current_id()
+        if task_id is None:
+            return
+
+        repository_prn = Value(get_prn(instance=self))
+        update_func = Func(F("reserved_resources_record"), repository_prn, function="ARRAY_APPEND")
+        updated = Task.objects.filter(pk=task_id).update(reserved_resources_record=update_func)
+        if not updated:
+            raise RuntimeError(f"The repository '{self.name}' could not be locked")
 
     def create_initial_version(self):
         """
@@ -178,7 +178,7 @@ class Repository(MasterModel):
         Returns:
             pulpcore.app.models.RepositoryVersion: The Created RepositoryVersion
         """
-        with transaction.atomic():
+        with atomic():
             latest_version = self.versions.latest()
             if not latest_version.complete:
                 latest_version.delete()
@@ -544,7 +544,7 @@ class Repository(MasterModel):
         # first, to make the cascade delete managable.
         #
         # [0] https://docs.djangoproject.com/en/4.2/ref/models/querysets/#delete
-        with transaction.atomic():
+        with atomic():
             repo_contents = RepositoryContent.objects.filter(repository=self)
 
             # Materialize publication PKs to avoid nested IN subqueries that
@@ -1180,7 +1180,7 @@ class RepositoryVersion(BaseModel):
 
         repo_content = []
         to_add = set(content.values_list("pk", flat=True)) - set(self.content_ids)
-        with transaction.atomic():
+        with atomic():
             if to_add:
                 self.content_ids += list(to_add)
                 self.save(update_fields=["content_ids", "pulp_last_updated"])
@@ -1231,7 +1231,7 @@ class RepositoryVersion(BaseModel):
         )
         content_ids = set(self.content_ids)
         to_remove = set(content.values_list("pk", flat=True))
-        with transaction.atomic():
+        with atomic():
             # Normalize representation if content has already been added in this version.
             # Undo addition by deleting the RepositoryContent.
             RepositoryContent.objects.filter(
@@ -1391,7 +1391,7 @@ class RepositoryVersion(BaseModel):
 
             # Handle the manipulation of the repository version content and its final deletion in
             # the same transaction.
-            with transaction.atomic():
+            with atomic():
                 repo_relations = RepositoryContent.objects.filter(
                     repository=self.repository
                 ).select_for_update()
@@ -1412,10 +1412,10 @@ class RepositoryVersion(BaseModel):
                 return super().delete(**kwargs)
 
         else:
-            with transaction.atomic():
+            CreatedResource.objects.filter(object_id=self.pk).delete()
+            with atomic():
                 RepositoryContent.objects.filter(version_added=self).delete()
                 RepositoryContent.objects.filter(version_removed=self).update(version_removed=None)
-                CreatedResource.objects.filter(object_id=self.pk).delete()
                 return super().delete(**kwargs)
 
     def _compute_counts(self):
@@ -1426,7 +1426,7 @@ class RepositoryVersion(BaseModel):
         This method deletes existing [pulpcore.app.models.RepositoryVersionContentDetails][]
         objects and makes new ones with each call.
         """
-        with transaction.atomic():
+        with atomic():
             # relatively inexpensive sanity check for memoization
             if self.content_ids:
                 assert len(self.content_ids) == self._content_relationships().count()
@@ -1495,7 +1495,7 @@ class RepositoryVersion(BaseModel):
 
                     self.complete = True
                     self.repository.next_version = self.number + 1
-                    with transaction.atomic():
+                    with atomic():
                         self.repository.save()
                         self.save()
                         self._compute_counts()

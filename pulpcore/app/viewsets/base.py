@@ -5,7 +5,6 @@ from urllib.parse import urlparse
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldError, ValidationError
-from django.db import transaction
 from django.db.models.expressions import RawSQL
 from django.urls import Resolver404, resolve
 from drf_spectacular.utils import extend_schema, inline_serializer
@@ -17,6 +16,7 @@ from rest_framework.serializers import CharField, ListField
 from rest_framework.serializers import ValidationError as DRFValidationError
 
 from pulpcore.app import tasks
+from pulpcore.app.db_router import atomic
 from pulpcore.app.models import MasterModel
 from pulpcore.app.models.role import GroupRole, UserRole
 from pulpcore.app.response import OperationPostponedResponse
@@ -613,7 +613,7 @@ class RolesMixin:
             data=request.data, context={"request": request, "content_object": obj, "assign": True}
         )
         serializer.is_valid(raise_exception=True)
-        with transaction.atomic():
+        with atomic():
             if serializer.validated_data["users"]:
                 UserRole.objects.bulk_create(
                     [
@@ -650,7 +650,7 @@ class RolesMixin:
             data=request.data, context={"request": request, "content_object": obj, "assign": False}
         )
         serializer.is_valid(raise_exception=True)
-        with transaction.atomic():
+        with atomic():
             UserRole.objects.filter(pk__in=serializer.user_role_pks).delete()
             GroupRole.objects.filter(pk__in=serializer.group_role_pks).delete()
         return Response(serializer.data, status=201)
