@@ -26,9 +26,11 @@ from pulpcore.plugin.models import (
     ContentArtifact,
     Distribution,
     Publication,
+    PublishedArtifact,
     Remote,
     RemoteArtifact,
     Repository,
+    RepositoryContent,
     RepositoryVersion,
 )
 
@@ -332,6 +334,49 @@ async def test_list_directory_metadata(monkeypatch, use_publication):
     assert dates["directory/"] == new_timestamp
     assert "directory/" not in sizes
     assert sizes["file.rpm"] == file_content.artifact.size
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db
+async def test_publication_listing_uses_repository_content_date():
+    """Publication dates fall back to repo dates, aggregated across directory children."""
+    older_repository_date = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    newer_repository_date = datetime(2026, 1, 3, tzinfo=timezone.utc)
+    publication_date = datetime(2026, 1, 4, tzinfo=timezone.utc)
+    repository = await create_repository()
+    repo_version = await RepositoryVersion.objects.acreate(repository=repository, number=1)
+    publication = await Publication.objects.acreate(repository_version=repo_version)
+
+    for path, repository_date in (
+        ("packages/file.rpm", older_repository_date),
+        ("packages/nested/file.rpm", newer_repository_date),
+    ):
+        content = await create_content()
+        content_artifact = await create_content_artifact(content)
+        membership = await RepositoryContent.objects.acreate(
+            content=content, repository=repository, version_added=repo_version
+        )
+        membership.pulp_created = repository_date
+        await membership.asave(update_fields=("pulp_created",))
+
+        published_artifact = await PublishedArtifact.objects.acreate(
+            publication=publication,
+            content_artifact=content_artifact,
+            relative_path=path,
+        )
+        published_artifact.pulp_created = publication_date
+        await published_artifact.asave(update_fields=("pulp_created",))
+
+    directory_list, dates, _ = await Handler().list_directory(None, publication, "")
+
+    assert directory_list == {"packages/"}
+    assert dates["packages/"] == newer_repository_date
+
+    child_list, child_dates, _ = await Handler().list_directory(None, publication, "packages/")
+
+    assert child_list == {"file.rpm", "nested/"}
+    assert child_dates["file.rpm"] == older_repository_date
+    assert child_dates["nested/"] == newer_repository_date
 
 
 @pytest.mark.asyncio
