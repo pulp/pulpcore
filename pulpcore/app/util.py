@@ -17,6 +17,7 @@ from django.apps import apps
 from django.conf import settings
 from django.db import connection
 from django.db.models import Model, UUIDField
+from django.urls import Resolver404, resolve
 from rest_framework.reverse import reverse as drf_reverse
 from rest_framework.serializers import ValidationError
 
@@ -162,6 +163,18 @@ def resolve_prn(prn):
             raise ValidationError(_("PK invalid: {}").format(pk))
 
     return model, pk
+
+
+def resolve_repository_version_href(uri):
+    """Return route parameters from a numbered repository-version href."""
+    try:
+        kwargs = resolve(urlparse(uri).path).kwargs
+    except Resolver404:
+        raise ValidationError(detail=_("URI not valid: {u}").format(u=uri))
+    if "repository_pk" not in kwargs or "number" not in kwargs:
+        raise ValidationError(detail=_("URI not valid: {u}").format(u=uri))
+    kwargs["number"] = int(kwargs["number"])
+    return kwargs
 
 
 def extract_pk(uri, only_prn=False):

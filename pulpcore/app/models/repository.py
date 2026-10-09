@@ -983,6 +983,24 @@ class RepositoryVersion(BaseModel):
         get_latest_by = "number"
         ordering = ("number",)
 
+    def _get_count(self, content_type, count_type):
+        counts = self.counts.filter(count_type=count_type)
+        if content_type is not None:
+            counts = counts.filter(content_type=content_type)
+        return counts.aggregate(total=models.Sum("count"))["total"] or 0
+
+    def count(self, content_type=None):
+        """Return the number of present content units, optionally by type."""
+        return self._get_count(content_type, RepositoryVersionContentDetails.PRESENT)
+
+    def added_count(self, content_type=None):
+        """Return the number of content units added, optionally by type."""
+        return self._get_count(content_type, RepositoryVersionContentDetails.ADDED)
+
+    def removed_count(self, content_type=None):
+        """Return the number of content units removed, optionally by type."""
+        return self._get_count(content_type, RepositoryVersionContentDetails.REMOVED)
+
     def _content_relationships(self):
         """
         Returns a set of repository_content for a repository version
