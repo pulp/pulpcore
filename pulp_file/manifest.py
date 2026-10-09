@@ -1,6 +1,8 @@
+import os
 from collections import namedtuple
 from gettext import gettext as _
 from re import fullmatch
+from tempfile import NamedTemporaryFile
 
 Line = namedtuple("Line", ("number", "content"))
 
@@ -143,3 +145,85 @@ class Manifest:
                 line = str(entry)
                 fp.write(line)
                 fp.write("\n")
+
+
+class Sha256Sums:
+    """
+    A set of sha256sum files describing the files in a repository.
+
+    Every file lists each file below it as `<digest>  <path relative to the file>`, the format
+    read by `sha256sum -c`.
+
+    Attributes:
+        per_directory (bool): Write a file in every directory instead of only at the root.
+
+    """
+
+    FILENAME = "SHA256SUMS"
+
+    def __init__(self, per_directory=False):
+        """
+        Create a new set of sha256sum files.
+
+        Args:
+            per_directory (bool): Write a file in every directory instead of only at the root.
+
+        """
+        self.per_directory = per_directory
+
+    def write(self, entries, dest_dir):
+        """
+        Write the files.
+
+        Entries without a digest are skipped, since on-demand content may not have one.
+
+        Args:
+            entries (iterable): The entries to be listed.
+            dest_dir (str): An existing directory to write the files into.
+
+        Returns:
+            dict: The relative path to publish each file at, mapped to its path on disk.
+
+        """
+        written = {}
+        open_files = {}
+        try:
+            # Sorting keeps each directory's entries contiguous, so its file can be closed on the way out.
+            for entry in sorted(entries, key=lambda entry: entry.relative_path):
+                if not entry.digest:
+                    continue
+                directories = list(self._directories(entry.relative_path))
+                for directory in set(open_files).difference(directories):
+                    open_files.pop(directory).close()
+                for directory in directories:
+                    if directory not in open_files:
+                        fp = NamedTemporaryFile(mode="w", dir=dest_dir, delete=False)
+                        open_files[directory] = fp
+                        written[os.path.join(directory, self.FILENAME)] = fp.name
+                    if directory:
+                        name = entry.relative_path[len(directory) + 1 :]
+                    else:
+                        name = entry.relative_path
+                    open_files[directory].write(f"{entry.digest}  {name}\n")
+        finally:
+            for fp in open_files.values():
+                fp.close()
+
+        return written
+
+    def _directories(self, relative_path):
+        """
+        Yield the directories whose file should list `relative_path`, outermost first.
+
+        Args:
+            relative_path (str): A relative path.
+
+        Yields:
+            str: A directory, relative to the root of the repository.
+
+        """
+        yield ""
+        if self.per_directory:
+            parts = relative_path.split("/")[:-1]
+            for depth in range(1, len(parts) + 1):
+                yield "/".join(parts[:depth])
