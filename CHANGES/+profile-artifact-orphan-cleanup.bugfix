@@ -1,0 +1,1 @@
+Orphan cleanup now preserves artifacts referenced by task profile data.

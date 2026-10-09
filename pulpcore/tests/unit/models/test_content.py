@@ -1,8 +1,12 @@
 from collections import namedtuple
+from datetime import timedelta
 
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.utils import timezone
 
+from pulpcore.app.models import ProfileArtifact
+from pulpcore.constants import TASK_STATES
 from pulpcore.plugin.exceptions import (
     MissingDigestValidationError,
     UnsupportedDigestValidationError,
@@ -14,6 +18,7 @@ from pulpcore.plugin.models import (
     PulpTemporaryFile,
     Remote,
     RemoteArtifact,
+    Task,
 )
 
 
@@ -36,6 +41,29 @@ def test_create_read_delete_content(tmp_path):
 
     Content.objects.filter(pk=content.pk).delete()
     assert not Content.objects.filter(pk=content.pk).exists()
+
+
+@pytest.mark.django_db
+def test_profile_artifacts_are_excluded_from_orphaned(tmp_path):
+    profile_path = tmp_path / "profile"
+    profile_path.write_bytes(b"profile")
+    profile_artifact = Artifact.init_and_validate(str(profile_path))
+    profile_artifact.save()
+
+    orphan_path = tmp_path / "orphan"
+    orphan_path.write_bytes(b"orphan")
+    orphan_artifact = Artifact.init_and_validate(str(orphan_path))
+    orphan_artifact.save()
+
+    task = Task.objects.create(name="test", state=TASK_STATES.COMPLETED)
+    ProfileArtifact.objects.create(task=task, artifact=profile_artifact, name="memory_profile")
+
+    expiration = timezone.now() - timedelta(minutes=1)
+    Artifact.objects.filter(pk__in=[profile_artifact.pk, orphan_artifact.pk]).update(
+        timestamp_of_interest=expiration
+    )
+
+    assert set(Artifact.objects.orphaned(0).values_list("pk", flat=True)) == {orphan_artifact.pk}
 
 
 @pytest.mark.django_db

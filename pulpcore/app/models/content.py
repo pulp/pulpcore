@@ -184,6 +184,7 @@ class ArtifactQuerySet(BulkTouchQuerySet):
         expiration = now() - datetime.timedelta(minutes=orphan_protection_time)
         return self.filter(
             content_memberships__isnull=True,
+            profileartifact__isnull=True,
             timestamp_of_interest__lt=expiration,
             pulp_domain=domain_pk,
         )
