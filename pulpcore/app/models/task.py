@@ -442,6 +442,18 @@ class CreatedResource(GenericRelationModel):
         Task, related_name="created_resources", default=Task.current, on_delete=models.CASCADE
     )
 
+    def save(self, *args, **kwargs):
+        from pulpcore.app.db_router import is_multi_db_routing_active
+
+        if is_multi_db_routing_active():
+            # content_object is a plain, unmodified GenericForeignKey (intentionally -- see
+            # pulpcore.app.models.generic) and can point at a data-plane object living on a
+            # different database than this (control-plane) row. Rather than allow that cross-
+            # database generic relationship, just don't persist created-resource tracking while
+            # multi-db routing is active.
+            return
+        super().save(*args, **kwargs)
+
 
 class TaskSchedule(BaseModel):
     name = models.TextField(null=False)

@@ -132,26 +132,32 @@ class Repository(MasterModel):
             args (list): list of positional arguments for Model.save()
             kwargs (dict): dictionary of keyword arguments to pass to Model.save()
         """
-        with transaction.atomic():
-            adding = self._state.adding
+        # Local import to avoid a circular import (db_router -> util -> models).
+        from pulpcore.app.db_router import atomic
+
+        adding = self._state.adding
+        # The repository and its initial version both live on the same (possibly non-default)
+        # alias, so they belong in one real atomic block. The Task update below is a separate,
+        # always-'default' control-plane write -- transaction.atomic() can't make it atomic
+        # together with the lines above anyway, since Django has no cross-database transactions.
+        with atomic():
             super().save(*args, **kwargs)
             if adding:
                 self.create_initial_version()
 
-                # lock the repository if it was created from within a running task
-                task_id = Task.current_id()
-                if task_id is None:
-                    return
+        if not adding:
+            return
 
-                repository_prn = Value(get_prn(instance=self))
-                update_func = Func(
-                    F("reserved_resources_record"), repository_prn, function="ARRAY_APPEND"
-                )
-                updated = Task.objects.filter(pk=task_id).update(
-                    reserved_resources_record=update_func
-                )
-                if not updated:
-                    raise RuntimeError(f"The repository '{self.name}' could not be locked")
+        # lock the repository if it was created from within a running task
+        task_id = Task.current_id()
+        if task_id is None:
+            return
+
+        repository_prn = Value(get_prn(instance=self))
+        update_func = Func(F("reserved_resources_record"), repository_prn, function="ARRAY_APPEND")
+        updated = Task.objects.filter(pk=task_id).update(reserved_resources_record=update_func)
+        if not updated:
+            raise RuntimeError(f"The repository '{self.name}' could not be locked")
 
     def create_initial_version(self):
         """
