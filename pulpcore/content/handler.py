@@ -606,6 +606,11 @@ class Handler:
             elif current_date < timestamp:
                 dates[name] = timestamp
 
+        def update_content_date(content_dates, content_id, timestamp):
+            current_date = content_dates.get(content_id, None)
+            if current_date is None or current_date < timestamp:
+                content_dates[content_id] = timestamp
+
         def file_or_directory_name(directory_path, relative_path):
             result = re.match(r"({})([^\/]*)(\/*)".format(re.escape(directory_path)), relative_path)
             return "{}{}".format(result.groups()[1], result.groups()[2])
@@ -619,6 +624,7 @@ class Handler:
             directory_list = set()
             dates = {}
             content_to_find = {}
+            content_dates = {}
             sizes = {}
             artifacts_to_find = {}
 
@@ -629,8 +635,9 @@ class Handler:
                 for pa in pas:
                     name = file_or_directory_name(path, pa.relative_path)
                     directory_list.add(name)
-                    update_date(dates, name, pa.pulp_created)
-                    content_to_find[pa.content_artifact.content_id] = name
+                    content_id = pa.content_artifact.content_id
+                    update_content_date(content_dates, content_id, pa.pulp_created)
+                    content_to_find.setdefault(content_id, set()).add(name)
                     if not name.endswith("/"):
                         if pa.content_artifact.artifact:
                             sizes[name] = pa.content_artifact.artifact.size
@@ -644,8 +651,8 @@ class Handler:
                 for ca in cas:
                     name = file_or_directory_name(path, ca.relative_path)
                     directory_list.add(name)
-                    update_date(dates, name, ca.pulp_created)
-                    content_to_find[ca.content_id] = name
+                    update_content_date(content_dates, ca.content_id, ca.pulp_created)
+                    content_to_find.setdefault(ca.content_id, set()).add(name)
                     if not name.endswith("/"):
                         if ca.artifact:
                             sizes[name] = ca.artifact.size
@@ -656,7 +663,12 @@ class Handler:
                 # Find the dates the content got added to the repository
                 for rc in content_repo_ver._content_relationships():
                     if rc.content_id in content_to_find:
-                        update_date(dates, content_to_find[rc.content_id], rc.pulp_created)
+                        content_dates[rc.content_id] = rc.pulp_created
+
+                # Prefer repository membership dates, then aggregate the newest date per entry.
+                for content_id, names in content_to_find.items():
+                    for name in names:
+                        update_date(dates, name, content_dates[content_id])
 
                 # Find the sizes for on_demand artifacts
                 r_artifacts = RemoteArtifact.objects.filter(
