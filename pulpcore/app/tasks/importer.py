@@ -34,6 +34,7 @@ from pulpcore.app.models import (
     Task,
     TaskGroup,
 )
+from pulpcore.app.serializers import ImportSerializer, RepositoryVersionSerializer
 from pulpcore.app.util import (
     Crc32Hasher,
     compute_file_hash,
@@ -412,6 +413,7 @@ def import_repository_version(
             pass
 
         content_count = 0
+        created_versions = []
         if mapping:
             # use the content mapping to map content to repos
             for repo_name, content_ids in mapping.items():
@@ -421,6 +423,8 @@ def import_repository_version(
                 content_count += len(content_ids)
                 with dest_repo.new_version() as new_version:
                     new_version.set_content(content)
+                if new_version.complete:
+                    created_versions.append(new_version)
         else:
             # just map all the content to our destination repo
             dest_repo = Repository.objects.get(pk=dest_repo_pk)
@@ -428,6 +432,8 @@ def import_repository_version(
             content_count += len(resulting_content_ids)
             with dest_repo.new_version() as new_version:
                 new_version.set_content(content)
+            if new_version.complete:
+                created_versions.append(new_version)
 
         pb.total = content_count
         pb.done = content_count
@@ -436,6 +442,10 @@ def import_repository_version(
 
     gpr = TaskGroup.current().group_progress_reports.filter(code="import.repo.versions")
     gpr.update(done=F("done") + 1)
+    return [
+        RepositoryVersionSerializer(version, context={"request": None}).data
+        for version in created_versions
+    ]
 
 
 def pulp_import(importer_pk, path, toc, create_repositories, **kwargs):
@@ -602,3 +612,5 @@ def pulp_import(importer_pk, path, toc, create_repositories, **kwargs):
                     ),
                     task_group=task_group,
                 )
+
+    return ImportSerializer(the_import, context={"request": None}).data
