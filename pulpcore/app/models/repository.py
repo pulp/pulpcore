@@ -15,9 +15,11 @@ from django.contrib.postgres.fields import ArrayField, HStoreField
 from django.core.validators import MinValueValidator
 from django.db import models, transaction
 from django.db.models import F, Func, Q, Value
+from django_guid import get_guid
 from django_lifecycle import AFTER_UPDATE, BEFORE_CREATE, BEFORE_DELETE, hook
 from rest_framework.exceptions import APIException
 
+from pulpcore.app.experiments import run_experiment
 from pulpcore.app.loggers import deprecation_logger
 from pulpcore.app.util import (
     batch_qs,
@@ -1029,7 +1031,17 @@ class RepositoryVersion(BaseModel):
         if content_qs is None:
             content_qs = Content.objects
 
-        return content_qs.filter(pk__in=self.content_ids_subquery())
+        # A/B experiment "PULP-1996-CONTENT-MEMBERSHIP": variant A is the legacy
+        # unnest(content_ids) subquery, variant B is the core_repositorycontent
+        # interval join. run_experiment() picks one variant per call, times it,
+        # and logs one structured line.
+        return run_experiment(
+            "PULP-1996-CONTENT-MEMBERSHIP",
+            control=lambda: content_qs.filter(pk__in=self.content_ids_subquery()),
+            candidate=lambda: content_qs.filter(pk__in=self.content_pks_subquery()),
+            p_candidate=0.5,
+            correlation_id=get_guid(),
+        )
 
     def content_ids_subquery(self):
         """
@@ -1044,8 +1056,41 @@ class RepositoryVersion(BaseModel):
         """
         return (
             RepositoryVersion.objects.filter(pk=self.pk)
-            .annotate(cids=Func(F("content_ids"), function="unnest"))
+            .annotate(
+                cids=Func(
+                    F("content_ids"),
+                    function="unnest",
+                    # Marker so variant A is identifiable in RDS Performance Insights Top SQL
+                    template="unnest(%(expressions)s) /* pexp=PULP-1996-CONTENT-MEMBERSHIP v=A */",
+                )
+            )
             .values_list("cids", flat=True)
+        )
+
+    def content_pks_subquery(self):
+        """
+        Return this version's content UUIDs as a subquery over the interval table.
+
+        Joins ``core_repositorycontent`` on its ``(version_added, version_removed)`` interval
+        instead of ``unnest(content_ids)``. PostgreSQL then plans against real btree indexes
+        and statistics on ordinary tables rather than a hard-coded ``rows=10`` estimate for the
+        array ``unnest``, so cost scales with the matching ``repositorycontent`` rows instead of
+        the full version content array. Content is present in this version when
+        ``version_added.number <= number`` and it has not been removed at or before this version.
+
+        Returns:
+            django.db.models.QuerySet: A values queryset yielding the content unit UUIDs.
+        """
+        return (
+            self._content_relationships()
+            .annotate(
+                # Marker so variant B is identifiable in RDS Performance Insights Top SQL
+                cid=Func(
+                    F("content_id"),
+                    template="%(expressions)s /* pexp=PULP-1996-CONTENT-MEMBERSHIP v=B */",
+                )
+            )
+            .values_list("cid", flat=True)
         )
 
     @property
