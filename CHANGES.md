@@ -8,6 +8,28 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.121.3 (2026-10-09) {: #3.121.3 }
+
+### REST API {: #3.121.3-rest-api }
+
+#### Bugfixes {: #3.121.3-rest-api-bugfix }
+
+- Fixed directory listings for published content displaying publication time instead of repository added date.
+
+### Plugin API {: #3.121.3-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.121.3-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.121.3-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.121.2 (2026-10-08) {: #3.121.2 }
 
 ### REST API {: #3.121.2-rest-api }
