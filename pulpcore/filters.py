@@ -10,7 +10,7 @@ from django.core.exceptions import FieldDoesNotExist
 from django.db import models
 from django.forms.utils import ErrorList
 from django.urls import Resolver404, resolve
-from django_filters.constants import EMPTY_VALUES
+from django_filters.constants import EMPTY_VALUES as STANDARD_EMPTY_VALUES
 from django_filters.rest_framework import BaseInFilter, DjangoFilterBackend, filters, filterset
 from drf_spectacular.contrib.django_filters import DjangoFilterExtension
 from drf_spectacular.plumbing import build_basic_type
@@ -20,7 +20,7 @@ from rest_framework import serializers
 
 from pulpcore.app.util import extract_pk, get_domain_pk, resolve_prn
 
-EMPTY_VALUES = (*EMPTY_VALUES, "null")
+EMPTY_VALUES = (*STANDARD_EMPTY_VALUES, "null")
 UPMatch = namedtuple("UPMatch", ("model", "pk"))
 
 
@@ -185,6 +185,23 @@ class PulpTypeInFilter(BaseInFilter, PulpTypeFilter):
 
 
 class ExpressionFilterField(forms.CharField):
+    """Parse and compile a ``q=`` complex-filter expression into a queryset transform.
+
+    Each parsed node (leaf ``_FilterAction`` and the ``NOT``/``AND``/``OR`` combinators) implements
+    a two-method protocol:
+
+    * ``as_flat_q()`` -> ``Q | None``: a pure, side-effect-free attempt to represent the *whole*
+      subtree as a single flat ``Q`` object. It returns ``None`` if any operand is "opaque" (a
+      filter with a custom ``.filter()`` override, a ``method``, or ``.distinct()``) and therefore
+      cannot be expressed as a plain ``WHERE`` condition.
+    * ``evaluate(qs)`` -> ``QuerySet``: applies the subtree to ``qs``. It uses ``as_flat_q()`` when
+      the subtree is fully reducible (one flat ``WHERE``) and otherwise falls back to composing the
+      opaque operands as ``pk__in`` semi-/anti-join subqueries.
+
+    ``evaluate()`` is the sole external entry point: :meth:`ExpressionFilter.filter` calls
+    ``value.evaluate(qs)`` on the outermost node.
+    """
+
     class _FilterAction:
         def __init__(self, filterset, tokens):
             key = tokens[0].key
@@ -206,7 +223,35 @@ class ExpressionFilterField(forms.CharField):
             self.value = form.cleaned_data[key]
             self.complexity = 1
 
+        def as_flat_q(self):
+            """Return this leaf as a flat ``Q``, or ``None`` if the filter is opaque.
+
+            A leaf reduces to a plain ``WHERE`` condition only when it is a standard django-filter
+            ``Filter``: no custom ``.filter()`` override, no ``method``, and no ``.distinct()``.
+            Anything else (href/prn resolvers, ``repository_version``, method filters, ...) is
+            opaque and must be applied via its own queryset transform in :meth:`evaluate`.
+            """
+            f = self.filter
+            if (
+                type(f).filter is not filters.Filter.filter
+                or getattr(f, "method", None) is not None
+                or getattr(f, "distinct", False)
+            ):
+                return None
+            # Mirror filters.Filter.filter exactly: an empty/unspecified value means the filter is
+            # not applied (identity Q), not "IS NULL". Use django-filter's own EMPTY_VALUES rather
+            # than the module-augmented set so the sentinel "null" is not swallowed here; null-aware
+            # filters override .filter() and are handled on the opaque evaluate() path above.
+            if self.value in STANDARD_EMPTY_VALUES:
+                return models.Q()
+            q = models.Q(**{f"{f.field_name}__{f.lookup_expr}": self.value})
+            return ~q if f.exclude else q
+
         def evaluate(self, qs):
+            """Apply the leaf: a flat ``Q`` when reducible, else the filter's own transform."""
+            q = self.as_flat_q()
+            if q is not None:
+                return qs.filter(q)
             return self.filter.filter(qs, self.value)
 
     class _NotAction:
@@ -214,28 +259,79 @@ class ExpressionFilterField(forms.CharField):
             self.expr = tokens[0][0]
             self.complexity = self.expr.complexity + 1
 
+        def as_flat_q(self):
+            """Negate the child's flat ``Q``; ``None`` if the child is opaque."""
+            child = self.expr.as_flat_q()
+            return None if child is None else ~child
+
         def evaluate(self, qs):
-            return qs.difference(self.expr.evaluate(qs))
+            """Apply ``NOT``: negate a flat ``Q`` when reducible, else anti-join the operand."""
+            q = self.as_flat_q()
+            if q is not None:
+                return qs.filter(q)
+            # Opaque operand: anti-join via a NOT IN subquery.
+            return qs.exclude(pk__in=self.expr.evaluate(qs).values("pk"))
 
     class _AndAction:
         def __init__(self, tokens):
             self.exprs = tokens[0]
             self.complexity = sum((expr.complexity for expr in self.exprs)) + 1
 
+        def as_flat_q(self):
+            """AND every child's flat ``Q`` into one; ``None`` if any child is opaque."""
+            children = [expr.as_flat_q() for expr in self.exprs]
+            if any(child is None for child in children):
+                return None
+            query = models.Q()
+            for child in children:
+                query &= child
+            return query
+
         def evaluate(self, qs):
-            return (
-                self.exprs[0]
-                .evaluate(qs)
-                .intersection(*[expr.evaluate(qs) for expr in self.exprs[1:]])
-            )
+            """Apply ``AND``: fold reducible operands into one flat ``WHERE``, semi-join the rest."""
+            # Fold every Q-reducible operand into a single flat WHERE, and apply only the
+            # genuinely opaque operands as pk__in semi-join subqueries.
+            result = qs
+            combined = models.Q()
+            has_q = False
+            for expr in self.exprs:
+                child = expr.as_flat_q()
+                if child is not None:
+                    combined &= child
+                    has_q = True
+                else:
+                    result = result.filter(pk__in=expr.evaluate(qs).values("pk"))
+            if has_q:
+                result = result.filter(combined)
+            return result
 
     class _OrAction:
         def __init__(self, tokens):
             self.exprs = tokens[0]
             self.complexity = sum((expr.complexity for expr in self.exprs)) + 1
 
+        def as_flat_q(self):
+            """OR every child's flat ``Q`` into one; ``None`` if any child is opaque."""
+            children = [expr.as_flat_q() for expr in self.exprs]
+            if any(child is None for child in children):
+                return None
+            query = children[0]
+            for child in children[1:]:
+                query |= child
+            return query
+
         def evaluate(self, qs):
-            return self.exprs[0].evaluate(qs).union(*[expr.evaluate(qs) for expr in self.exprs[1:]])
+            """Apply ``OR``: reducible operands stay flat, opaque ones contribute ``pk__in``."""
+            # Reducible operands stay as flat OR'd conditions; opaque operands contribute a
+            # pk__in subquery. Both are combined in a single WHERE clause.
+            query = models.Q()
+            for expr in self.exprs:
+                child = expr.as_flat_q()
+                if child is not None:
+                    query |= child
+                else:
+                    query |= models.Q(pk__in=expr.evaluate(qs).values("pk"))
+            return qs.filter(query)
 
     def __init__(self, *args, **kwargs):
         self.filterset = kwargs.pop("filter").parent
