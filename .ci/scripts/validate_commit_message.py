@@ -13,9 +13,9 @@ import os
 import re
 import subprocess
 import sys
+import tomllib
 from pathlib import Path
 
-import tomllib
 import yaml
 from github import Github
 
