@@ -12,10 +12,10 @@ import argparse
 import os
 import re
 import sys
+import tomllib
 import typing as t
 from pathlib import Path
 
-import tomllib
 import yaml
 from git import Repo
 from packaging.version import Version
