@@ -5,9 +5,9 @@
 #
 # For more info visit https://github.com/pulp/plugin_template
 
+import tomllib
 import warnings
 
-import tomllib
 from packaging.requirements import Requirement
 
 CHECK_MATRIX = [
