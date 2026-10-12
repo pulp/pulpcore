@@ -69,8 +69,14 @@ def atomic(using=None, **kwargs):
 
 class PulpDomainRouter:
     def _is_control_plane(self, model):
-        label = f"{model._meta.app_label}.{model._meta.model_name}"
-        return label in CONTROL_PLANE_LABELS or model._meta.app_label in CONTROL_PLANE_APPS
+        # Resolve through proxy models to their concrete model before classifying: a proxy's
+        # own app_label/model_name needn't match its concrete model's (e.g. pulpcore.app.models.
+        # Group is a proxy over django.contrib.auth.models.Group labeled "core.group", not
+        # "auth.group" -- checking the proxy's own label would miss it even though it shares
+        # auth_group's table and must live wherever the rest of the "auth" app lives).
+        concrete = model._meta.concrete_model or model
+        label = f"{concrete._meta.app_label}.{concrete._meta.model_name}"
+        return label in CONTROL_PLANE_LABELS or concrete._meta.app_label in CONTROL_PLANE_APPS
 
     def _resolve_db(self, model, **hints):
         if model._meta.apps is not django_apps:
