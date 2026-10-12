@@ -679,14 +679,15 @@ def set_domain(new_domain):
     return new_domain
 
 
-def cache_key(base_path):
-    """Returns the base-key(s) used in the Cache for the passed base_path(s)."""
+def cache_key(base_path, domain=None):
+    """Return the cache base key or keys for the passed base path or paths."""
     if settings.DOMAIN_ENABLED:
-        domain = get_domain()
+        domain = domain or get_domain()
+        domain_name = domain if isinstance(domain, str) else domain.name
         if isinstance(base_path, str):
-            base_path = f"{domain.name}:{base_path}"
+            base_path = f"{domain_name}:{base_path}"
         else:
-            base_path = [f"{domain.name}:{path}" for path in base_path]
+            base_path = [f"{domain_name}:{path}" for path in base_path]
 
     return base_path
 

@@ -247,6 +247,7 @@ This makes the V3 API by default serve from `/pulp/api/v3/`.
 ### CACHE\_ENABLED
 
 Store cached responses from the content app into Redis.
+
 This setting improves the performance of the content app under heavy load for similar requests.
 
 Defaults to `False`.
@@ -255,6 +256,13 @@ Defaults to `False`.
     The entire response is not stored in the cache.
     Only the location of the file needed to recreate the response is stored.
     This reduces database queries and allows for many responses to be stored inside the cache.
+
+!!! note
+    Cached responses can be cleared with `pulpcore-manager clear-cache`. To clear responses for a
+    specific repository, pass `--repository <name-or-prn>`; to clear a distribution, pass
+    `--distribution <name-or-prn>`; or to clear a base path directly, pass
+    `--base-path <base-path>`. With domains enabled, direct base paths also require
+    `--domain <domain-name>`. The command only deletes content-cache entries.
 
 ### CACHE\_SETTINGS
 
