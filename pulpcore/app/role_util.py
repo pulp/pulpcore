@@ -58,10 +58,20 @@ def assign_role(rolename, entity, obj=None, domain=None):
     # Every grant has exactly one home, and pulpcore.app.rbac_sync never replicates any of them.
     # A domain-wide grant resolves explicitly to that domain's own alias, since ambient context
     # can't be trusted the way it can for an object-scoped request (someone can grant access to a
-    # different domain than the one they're currently acting in). Everything else -- object-level
-    # grants, and grants tied to neither an object nor a domain -- trusts ambient routing: it
-    # lands wherever the request creating it is already scoped, and only ever applies there.
-    using = domain.database_alias if domain is not None else None
+    # different domain than the one they're currently acting in). An object-level grant resolves
+    # explicitly to its target object's own alias instead, for the same reason -- and critically,
+    # because the target may be a control-plane model (Task, TaskSchedule, Group, ...) that always
+    # lives in 'default' regardless of the ambient domain the grant is being created from; ambient
+    # routing would otherwise land the grant on a satellite the target object was never on, making
+    # it invisible to any query scoped to the target's own alias. Only a grant tied to neither an
+    # object nor a domain trusts ambient routing: it lands wherever the request creating it is
+    # already scoped, and only ever applies there.
+    if domain is not None:
+        using = domain.database_alias
+    elif obj is not None:
+        using = obj._state.db
+    else:
+        using = None
     if isinstance(entity, Group):
         return GroupRole.objects.using(using).create(
             role=role, group=entity, content_object=obj, domain=domain
@@ -91,7 +101,12 @@ def remove_role(rolename, entity, obj=None, domain=None):
     except Role.DoesNotExist:
         raise BadRequest(_("The role '{}' does not exist.").format(rolename))
     # See assign_role for why each grant kind resolves to a different alias.
-    using = domain.database_alias if domain is not None else None
+    if domain is not None:
+        using = domain.database_alias
+    elif obj is not None:
+        using = obj._state.db
+    else:
+        using = None
     if isinstance(entity, Group):
         qs = GroupRole.objects.using(using).filter(role=role, group=entity)
     else:
