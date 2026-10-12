@@ -91,6 +91,20 @@ class PulpDomainRouter:
         # recurse into this router during instance construction or issue an extra query.
         instance = hints.get("instance")
         if instance is not None:
+            # A persisted instance's own db takes priority over ambient context. This covers
+            # two cases Django routes through this same `instance` hint: (1) instance.save()
+            # on an object loaded via .using(alias) outside any domain context -- falling back
+            # to ambient routing here would silently insert a duplicate on the ambient alias
+            # instead of updating the row where it actually lives; (2) traversing a forward FK
+            # *from* a loaded data-plane instance (e.g. repository_version.repository) -- Django
+            # passes the child instance as the hint when resolving the parent model's alias, and
+            # the parent has no pulp_domain of its own to check below, so without this the lookup
+            # falls through to ambient context and 404s against the wrong alias.
+            # `_state.adding` excludes not-yet-saved instances (_state.db is None anyway for
+            # those), so this doesn't affect creation routing, which still falls through to the
+            # pulp_domain-cache check below.
+            if not instance._state.adding and instance._state.db is not None:
+                return instance._state.db
             if "pulp_domain_id" in instance.__dict__:
                 domain = instance._state.fields_cache.get("pulp_domain")
                 if domain is not None:
