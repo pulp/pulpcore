@@ -488,6 +488,10 @@ class NestedRoleSerializer(serializers.Serializer):
         if "assign" in self.context:
             obj = self.context["content_object"]
             obj_type = ContentType.objects.get_for_model(obj, for_concrete_model=False)
+            # Object-level grants live on the target object's own database (role_util.
+            # assign_role), which may differ from the ambient alias this request happens to be
+            # scoped to.
+            alias = obj._state.db
 
             if not data["role"].permissions.filter(content_type__pk=obj_type.id).exists():
                 raise serializers.ValidationError(
@@ -496,7 +500,7 @@ class NestedRoleSerializer(serializers.Serializer):
 
             self.user_role_pks = []
             for user in data["users"]:
-                qs = UserRole.objects.filter(
+                qs = UserRole.objects.using(alias).filter(
                     content_type_id=obj_type.id, object_id=obj.pk, user=user, role=data["role"]
                 )
                 if self.context["assign"]:
@@ -517,7 +521,7 @@ class NestedRoleSerializer(serializers.Serializer):
 
             self.group_role_pks = []
             for group in data["groups"]:
-                qs = GroupRole.objects.filter(
+                qs = GroupRole.objects.using(alias).filter(
                     content_type_id=obj_type.id, object_id=obj.pk, group=group, role=data["role"]
                 )
                 if self.context["assign"]:

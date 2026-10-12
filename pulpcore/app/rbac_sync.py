@@ -230,3 +230,24 @@ def on_role_post_save(sender, instance, using, **kwargs):
 
 def on_role_post_delete(sender, instance, using, **kwargs):
     remove_replicated_role(instance, using=using)
+
+
+def on_group_permissions_changed(sender, instance, action, reverse, using, **kwargs):
+    # Group.permissions is an M2M: .set()/.add()/.remove()/.clear() change membership without
+    # saving the Group row itself, so on_group_post_save's post_save hook never fires for them.
+    # Without this, a newly created group reaches satellites with no permissions at all (the
+    # initial post_save replicates before .permissions.set() runs), and revoking a permission
+    # never reaches satellites either, leaving it live there indefinitely. `reverse` is True when
+    # the change came from the Permission side (permission.group_set.add(...)); that's not a
+    # thing Pulp does and Permission is control-plane anyway, so there's nothing to replicate.
+    if reverse or action not in ("post_add", "post_remove", "post_clear"):
+        return
+    replicate_group(instance, using=using)
+
+
+def on_role_permissions_changed(sender, instance, action, reverse, using, **kwargs):
+    """Role.permissions counterpart to on_group_permissions_changed -- same M2M-bypasses-
+    post_save gap, same fix."""
+    if reverse or action not in ("post_add", "post_remove", "post_clear"):
+        return
+    replicate_role(instance, using=using)

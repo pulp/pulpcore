@@ -9,7 +9,7 @@ from django import apps
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db import ProgrammingError, connection, connections, transaction
-from django.db.models.signals import post_delete, post_migrate, post_save, pre_migrate
+from django.db.models.signals import m2m_changed, post_delete, post_migrate, post_save, pre_migrate
 from django.utils.module_loading import module_has_submodule
 
 from pulpcore.exceptions.plugin import MissingPlugin
@@ -299,8 +299,10 @@ class PulpAppConfig(PulpPluginAppConfig):
         from pulpcore.app.models import Domain, Group
         from pulpcore.app.models.role import Role
         from pulpcore.app.rbac_sync import (
+            on_group_permissions_changed,
             on_group_post_delete,
             on_group_post_save,
+            on_role_permissions_changed,
             on_role_post_delete,
             on_role_post_save,
             on_user_post_delete,
@@ -322,6 +324,20 @@ class PulpAppConfig(PulpPluginAppConfig):
         ):
             post_save.connect(save_fn, sender=model, dispatch_uid=f"{prefix}_post_save")
             post_delete.connect(delete_fn, sender=model, dispatch_uid=f"{prefix}_post_delete")
+
+        # permissions is M2M: membership changes (.set()/.add()/.remove()/.clear(), e.g. from
+        # RoleSerializer) don't save the Group/Role row itself, so post_save above never fires
+        # for them -- see on_*_permissions_changed's docstrings.
+        m2m_changed.connect(
+            on_group_permissions_changed,
+            sender=Group.permissions.through,
+            dispatch_uid="replicate_group_permissions_changed",
+        )
+        m2m_changed.connect(
+            on_role_permissions_changed,
+            sender=Role.permissions.through,
+            dispatch_uid="replicate_role_permissions_changed",
+        )
 
 
 def _clean_app_status(sender, apps, verbosity, **kwargs):
