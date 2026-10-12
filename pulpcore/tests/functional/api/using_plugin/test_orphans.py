@@ -135,18 +135,24 @@ def test_cleanup_specific_orphans(
     pulpcore_bindings,
     file_bindings,
     file_content_unit_with_name_factory,
+    random_artifact,
     monitor_task,
 ):
     content_unit_1 = file_content_unit_with_name_factory("1.iso")
     content_unit_2 = file_content_unit_with_name_factory("2.iso")
+    content_artifact_href = content_unit_1.artifact
     cleanup_dict = {"content_hrefs": [content_unit_1.pulp_href], "orphan_protection_time": 0}
     monitor_task(pulpcore_bindings.OrphansCleanupApi.cleanup(cleanup_dict).task)
 
-    # Assert that content_unit_2 is gone and content_unit_1 is present
+    # Assert that content_unit_1 is removed, while content_unit_2 remains.
     with pytest.raises(file_bindings.ApiException) as exc:
         file_bindings.ContentFilesApi.read(content_unit_1.pulp_href)
     assert exc.value.status == 404
     assert file_bindings.ContentFilesApi.read(content_unit_2.pulp_href).pulp_href
+    with pytest.raises(pulpcore_bindings.ApiException) as exc:
+        pulpcore_bindings.ArtifactsApi.read(content_artifact_href)
+    assert exc.value.status == 404
+    assert pulpcore_bindings.ArtifactsApi.read(random_artifact.pulp_href).pulp_href
 
     # Test whether the `content_hrefs` param raises a ValidationError with [] as the value
     content_hrefs_dict = {"content_hrefs": []}

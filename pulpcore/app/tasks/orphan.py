@@ -8,6 +8,7 @@ from django.utils import timezone
 from pulpcore.app.models import (
     Artifact,
     Content,
+    ContentArtifact,
     ProgressReport,
     PublishedMetadata,
     PulpTemporaryFile,
@@ -47,9 +48,19 @@ def orphan_cleanup(
     This task removes Artifact files from the filesystem as well.
 
     Kwargs:
-        content_pks (list): A list of content pks. If specified, only remove these orphans.
+        content_pks (list): If specified, only remove these orphan content units and their orphaned
+            artifacts.
 
     """
+    artifact_pks = None
+    if content_pks:
+        # Content deletion removes these memberships, so capture the artifacts first.
+        artifact_pks = list(
+            ContentArtifact.objects.filter(content_id__in=content_pks, artifact__isnull=False)
+            .values_list("artifact_id", flat=True)
+            .distinct()
+        )
+
     content = Content.objects.orphaned(orphan_protection_time, content_pks).exclude(
         pulp_type=PublishedMetadata.get_pulp_type()
     )
@@ -86,6 +97,8 @@ def orphan_cleanup(
 
     # delete the artifacts that don't belong to any content
     artifacts = Artifact.objects.orphaned(orphan_protection_time)
+    if artifact_pks is not None:
+        artifacts = artifacts.filter(pk__in=artifact_pks)
 
     skipped_artifact = 0
     with ProgressReport(
