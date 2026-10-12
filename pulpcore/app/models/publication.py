@@ -17,7 +17,14 @@ from django.contrib.postgres.fields import HStoreField
 from django.contrib.postgres.indexes import OpClass, SpGistIndex
 from django.db import DatabaseError, IntegrityError, models
 from django.utils import timezone
-from django_lifecycle import AFTER_CREATE, AFTER_UPDATE, BEFORE_CREATE, BEFORE_DELETE, hook
+from django_lifecycle import (
+    AFTER_CREATE,
+    AFTER_SAVE,
+    AFTER_UPDATE,
+    BEFORE_CREATE,
+    BEFORE_DELETE,
+    hook,
+)
 from rest_framework.exceptions import APIException
 from url_normalize import url_normalize
 
@@ -410,6 +417,33 @@ class ContentGuard(MasterModel):
             base_paths = self.distribution_set.values_list("base_path", flat=True)
             if base_paths:
                 Cache().delete(base_key=cache_key(base_paths))
+
+    @hook(AFTER_SAVE)
+    def _resync_default_content_guard_replica(self):
+        # Inherited by every concrete subclass (RBACContentGuard, HeaderContentGuard, ...), same
+        # as invalidate_cache above. Keeps a guard's 'default' replica (see content_guard_sync.py)
+        # up to date if it's ever edited after being assigned as some domain's
+        # default_content_guard; a no-op for the vast majority of guards, which have no replica.
+        from pulpcore.app.db_router import is_multi_db_routing_active
+
+        if not is_multi_db_routing_active():
+            return
+        from pulpcore.app.content_guard_sync import on_content_guard_saved
+
+        on_content_guard_saved(self)
+
+    @hook(BEFORE_DELETE)
+    def _remove_default_content_guard_replica(self):
+        # BEFORE_DELETE, not AFTER_DELETE: Django's own Model.delete() clears self.pk to None
+        # right after the row is actually deleted, before django-lifecycle's AFTER_DELETE hooks
+        # run -- an AFTER_DELETE hook here would always see pk=None and silently no-op.
+        from pulpcore.app.db_router import is_multi_db_routing_active
+
+        if not is_multi_db_routing_active():
+            return
+        from pulpcore.app.content_guard_sync import on_content_guard_deleted
+
+        on_content_guard_deleted(self)
 
     class Meta:
         unique_together = ("name", "pulp_domain")

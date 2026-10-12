@@ -80,6 +80,26 @@ class Domain(BaseModel, AutoAddObjPermsMixin):
         raise models.ProtectedError("Default domain can not be updated/deleted.", [self])
 
     @hook(BEFORE_CREATE)
+    @hook(BEFORE_UPDATE, when="default_content_guard_id", has_changed=True)
+    def _replicate_default_content_guard(self):
+        # default_content_guard is a real FK, and Domain rows always live in 'default' (it's
+        # control-plane -- see db_router.CONTROL_PLANE_LABELS), so the referenced ContentGuard
+        # needs a local row in 'default' too, or this FK violates the moment this Domain row is
+        # written. self.default_content_guard is expected to already be cached on this instance
+        # (assigned as an object, not just a bare _id, by whatever creates/updates this Domain) --
+        # fetching it fresh here would resolve via ambient routing, not necessarily the alias it
+        # actually lives on.
+        if self.default_content_guard_id is None:
+            return
+        from pulpcore.app.db_router import is_multi_db_routing_active
+
+        if not is_multi_db_routing_active():
+            return
+        from pulpcore.app.content_guard_sync import replicate_content_guard_to_default
+
+        replicate_content_guard_to_default(self.default_content_guard)
+
+    @hook(BEFORE_CREATE)
     @hook(BEFORE_UPDATE, when="database_alias", has_changed=True)
     def _validate_database_alias(self):
         if self.database_alias not in settings.DATABASES:
