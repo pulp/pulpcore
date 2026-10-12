@@ -476,7 +476,9 @@ class Repository(MasterModel):
     def _cleanup_old_versions_hook(self):
         # Do not attempt to clean up anything, while there is a transaction involving repo versions
         # still in flight.
-        transaction.on_commit(self.cleanup_old_versions)
+        # using=self._state.db: on_commit defaults to the 'default' alias's commit queue, not
+        # whatever alias this repository's own (possibly satellite) transaction is actually on.
+        transaction.on_commit(self.cleanup_old_versions, using=self._state.db)
 
     def cleanup_old_versions(self):
         """Cleanup old repository versions based on retain_repo_versions."""
@@ -500,7 +502,7 @@ class Repository(MasterModel):
 
     @hook(AFTER_UPDATE, when="retain_checkpoints", has_changed=True)
     def _cleanup_old_checkpoints_hook(self):
-        transaction.on_commit(self.cleanup_old_checkpoints)
+        transaction.on_commit(self.cleanup_old_checkpoints, using=self._state.db)
 
     def cleanup_old_checkpoints(self):
         """Unmark old checkpoint publications based on retain_checkpoints."""

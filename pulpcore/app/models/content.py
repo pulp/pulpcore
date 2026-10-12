@@ -172,9 +172,16 @@ class HandleTempFilesMixin:
             args (list): list of positional arguments for Model.delete()
             kwargs (dict): dictionary of keyword arguments to pass to Model.delete()
         """
+        # Capture before super().delete(): on_commit defaults to the 'default' alias's commit
+        # queue, not whatever alias this row's (possibly satellite) transaction is actually on.
+        # Registering the file deletion against the wrong alias's queue means it can fire on that
+        # alias's next commit (or immediately, if that alias has no open transaction) instead of
+        # waiting on *this* row's transaction -- a rollback here then restores the DB row while
+        # the file it points to is already gone.
+        using = kwargs.get("using") or self._state.db
         delete_result = super().delete(*args, **kwargs)
         # In case of rollback, we want the artifact to stay connected with it's file.
-        transaction.on_commit(partial(self.file.delete, save=False))
+        transaction.on_commit(partial(self.file.delete, save=False), using=using)
         return delete_result
 
 
