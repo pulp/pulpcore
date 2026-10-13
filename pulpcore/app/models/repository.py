@@ -983,6 +983,41 @@ class RepositoryVersion(BaseModel):
         get_latest_by = "number"
         ordering = ("number",)
 
+    def _summary_counts(self):
+        """Return cached summary counts, loading all rows at most once."""
+        if not hasattr(self, "_repository_version_summary_counts"):
+            self._repository_version_summary_counts = {
+                (item.content_type, item.count_type): item.count for item in self.counts.all()
+            }
+        return self._repository_version_summary_counts
+
+    def _get_count(self, content_type, count_type):
+        """Return a count for one content type or sum counts across all types."""
+        counts = self._summary_counts()
+        if content_type is not None:
+            return counts.get((content_type, count_type), 0)
+        return sum(
+            value
+            for (item_type, item_count_type), value in counts.items()
+            if item_count_type == count_type
+        )
+
+    def has_count(self, content_type, count_type):
+        """Return whether a persisted summary exists for a content type and count type."""
+        return (content_type, count_type) in self._summary_counts()
+
+    def count(self, content_type=None):
+        """Return the number of present content units, optionally by type."""
+        return self._get_count(content_type, RepositoryVersionContentDetails.PRESENT)
+
+    def added_count(self, content_type=None):
+        """Return the number of content units added, optionally by type."""
+        return self._get_count(content_type, RepositoryVersionContentDetails.ADDED)
+
+    def removed_count(self, content_type=None):
+        """Return the number of content units removed, optionally by type."""
+        return self._get_count(content_type, RepositoryVersionContentDetails.REMOVED)
+
     def _content_relationships(self):
         """
         Returns a set of repository_content for a repository version

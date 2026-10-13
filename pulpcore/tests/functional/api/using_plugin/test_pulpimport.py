@@ -529,16 +529,25 @@ def exported_version(
 
     # copy files from repositories[0] into new, one file at a time
     results = file_list.results
+    first_created_version = None
     for a_file in results:
         href = a_file.pulp_href
         modify_response = file_bindings.RepositoriesFileApi.modify(
             file_repo.pulp_href, {"add_content_units": [href]}
         )
-        monitor_task(modify_response.task)
-    # get all versions of that repo
+        task_report = monitor_task(modify_response.task)
+        if first_created_version is None:
+            first_created_version = task_report.created_resources[0]
+
     versions = file_bindings.RepositoriesFileVersionsApi.list(
         file_repo.pulp_href, ordering=["number"]
     )
+    assert versions.results[1].pulp_href == first_created_version, (
+        f"Task created {first_created_version}, but versions list returned "
+        f"{versions.results[1].pulp_href} at index 1"
+    )
+
+    initial_version = f"{file_repo.pulp_href}versions/0/"
 
     body = {
         "name": str(uuid.uuid4()),
@@ -549,8 +558,8 @@ def exported_version(
 
     # export from version-0 to version-1, last=v1
     body = {
-        "start_versions": [versions.results[0].pulp_href],
-        "versions": [versions.results[1].pulp_href],
+        "start_versions": [initial_version],
+        "versions": [first_created_version],
         "full": False,
     }
     export = generate_export(exporter, body)

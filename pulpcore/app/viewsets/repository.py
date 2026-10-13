@@ -1,9 +1,7 @@
 from collections import defaultdict
 from gettext import gettext as _
-from urllib.parse import urlparse
 
 from django.db.models import Max, Q
-from django.urls.base import Resolver404, resolve
 from django_filters import Filter
 from drf_spectacular.utils import extend_schema
 from rest_framework import mixins, serializers
@@ -27,7 +25,7 @@ from pulpcore.app.serializers import (
     RepositorySerializer,
     RepositoryVersionSerializer,
 )
-from pulpcore.app.util import resolve_prn
+from pulpcore.app.util import resolve_prn, resolve_repository_version_href
 from pulpcore.app.viewsets import (
     AsyncRemoveMixin,
     AsyncUpdateMixin,
@@ -205,14 +203,12 @@ class RepositoryVersionFilter(BaseFilterSet):
                 repo_version_pks.append(pk)
             else:
                 try:
-                    href_match = resolve(urlparse(uri).path).kwargs
-                except Resolver404:
-                    href_match = {}
-                if "repository_pk" not in href_match or "number" not in href_match:
+                    href_match = resolve_repository_version_href(uri)
+                except serializers.ValidationError:
                     raise serializers.ValidationError(
                         _("Invalid RepositoryVersion HREF: {}").format(uri)
                     )
-                repo_versions[href_match["repository_pk"]].append(int(href_match["number"]))
+                repo_versions[href_match["repository_pk"]].append(href_match["number"])
 
         filter_Q = Q()
         if repo_version_pks:

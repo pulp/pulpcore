@@ -71,6 +71,55 @@ def test_repository_filter(
     assert contents.count == 3
     contents = file_bindings.ContentFilesApi.list(repository_version=base_repo.prn)
     assert contents.count == 3
+    contents = file_bindings.ContentFilesApi.list(repository_version=base_repo.pulp_href)
+    assert contents.count == 3
+    filtered = file_bindings.ContentFilesApi.list(
+        repository_version=base_repo.latest_version_href,
+        relative_path="does-not-exist",
+    )
+    assert filtered.count == 0
+    added = file_bindings.ContentFilesApi.list(
+        repository_version_added=base_repo.latest_version_href
+    )
+    assert added.count == 3
+    removed = file_bindings.ContentFilesApi.list(
+        repository_version_removed=base_repo.latest_version_href
+    )
+    assert removed.count == 0
+
+
+@pytest.mark.parallel
+def test_repository_filter_rbac_scope(
+    file_bindings,
+    file_remote_ssl_factory,
+    file_repository_factory,
+    basic_manifest_path,
+    monitor_task,
+    gen_user,
+):
+    """Repository summary counts respect repository RBAC scoping."""
+    remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="on_demand")
+    repo = file_repository_factory()
+    monitor_task(
+        file_bindings.RepositoriesFileApi.sync(repo.pulp_href, {"remote": remote.pulp_href}).task
+    )
+    repo = file_bindings.RepositoriesFileApi.read(repo.pulp_href)
+
+    viewer = gen_user(object_roles=[("file.filerepository_viewer", repo.pulp_href)])
+    stranger = gen_user()
+
+    with viewer:
+        assert (
+            file_bindings.ContentFilesApi.list(repository_version=repo.latest_version_href).count
+            == 3
+        )
+    with stranger:
+        # Summary contains three units, but RBAC-scoped queryset is empty.
+        # This catches leaking repository-wide summary count to unauthorized users.
+        assert (
+            file_bindings.ContentFilesApi.list(repository_version=repo.latest_version_href).count
+            == 0
+        )
 
 
 @pytest.mark.parallel
