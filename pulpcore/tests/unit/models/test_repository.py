@@ -3,9 +3,34 @@ from uuid import uuid4
 
 import pytest
 
-from pulpcore.app.models import RepositoryVersionContentDetails
+from pulpcore.app.models import RepositoryVersion, RepositoryVersionContentDetails
 from pulpcore.plugin.models import Artifact, Content, ContentArtifact, Repository
 from pulpcore.plugin.repo_version_utils import validate_version_paths
+
+
+def test_repository_version_count_helpers(db, repository):
+    version = RepositoryVersion.objects.create(repository=repository, number=1, complete=True)
+    RepositoryVersionContentDetails.objects.bulk_create(
+        [
+            RepositoryVersionContentDetails(
+                repository_version=version, content_type="core.one", count_type="P", count=3
+            ),
+            RepositoryVersionContentDetails(
+                repository_version=version, content_type="core.two", count_type="P", count=4
+            ),
+            RepositoryVersionContentDetails(
+                repository_version=version, content_type="core.one", count_type="A", count=5
+            ),
+            RepositoryVersionContentDetails(
+                repository_version=version, content_type="core.two", count_type="R", count=6
+            ),
+        ]
+    )
+
+    assert version.count() == 7
+    assert version.count("core.one") == 3
+    assert version.added_count() == 5
+    assert version.removed_count() == 6
 
 
 def pks_of_next_qs(qs_generator):

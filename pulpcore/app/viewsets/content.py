@@ -17,6 +17,7 @@ from pulpcore.app.util import get_viewset_for_model
 from pulpcore.app.viewsets.base import LabelsMixin, NamedModelViewSet
 from pulpcore.app.viewsets.custom_filters import LabelFilter
 from pulpcore.filters import BaseFilterSet
+from pulpcore.pagination import RepositoryVersionSummaryPagination
 
 from .custom_filters import (
     ArtifactRepositoryVersionFilter,
@@ -160,6 +161,8 @@ class BaseContentViewSet(NamedModelViewSet):
     It ensures that 'content/' is a part of endpoint, sets a default filter class and provides
     a default `scope_queryset` method.
     """
+
+    pagination_class = RepositoryVersionSummaryPagination
 
     endpoint_name = "content"
     filterset_class = ContentFilter
