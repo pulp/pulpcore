@@ -1,1 +1,0 @@
-Orphan cleanup with `content_hrefs` now deletes only artifacts associated with the selected content.

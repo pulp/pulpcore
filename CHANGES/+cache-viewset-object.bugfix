@@ -1,1 +1,0 @@
-Repeated object lookups in a single API request now reuse the retrieved object.
