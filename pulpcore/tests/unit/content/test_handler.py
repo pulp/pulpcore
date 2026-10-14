@@ -20,7 +20,7 @@ from pulpcore.content.handler import (
     PathNotResolved,
     _current_distribution,
 )
-from pulpcore.plugin.exceptions import ContentGuardRequiresAuthentication
+from pulpcore.plugin.exceptions import AuthenticationError
 from pulpcore.plugin.models import (
     Artifact,
     Content,
@@ -814,7 +814,7 @@ def _distribution_for_guard_error(error):
 def test_permit_maps_authentication_error_to_401():
     request = Mock(path="/content/test")
     distribution = _distribution_for_guard_error(
-        ContentGuardRequiresAuthentication("Authentication required.", challenge="Basic")
+        AuthenticationError("Authentication required.", challenge="Basic")
     )
 
     with pytest.raises(HTTPUnauthorized) as exc_info:

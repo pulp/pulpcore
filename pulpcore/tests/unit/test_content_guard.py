@@ -14,7 +14,7 @@ from pulpcore.app.models import (
     HeaderContentGuard,
 )
 from pulpcore.app.serializers import EnvVarHeaderContentGuardSerializer
-from pulpcore.plugin.exceptions import ContentGuardRequiresAuthentication
+from pulpcore.plugin.exceptions import AuthenticationError
 
 ENVVAR_HEADER = "X-Test-Content-Guard-Header"
 ENVVAR_NAME = "ENVVAR_HEADER_GUARD_TEST_SECRET"
@@ -269,13 +269,11 @@ def _detail_guard(name, error=None):
 
 
 def test_content_guard_authentication_error_is_not_permission_error():
-    assert not issubclass(ContentGuardRequiresAuthentication, PermissionError)
+    assert not issubclass(AuthenticationError, PermissionError)
 
 
 def test_content_guard_authentication_error_carries_challenge():
-    error = ContentGuardRequiresAuthentication(
-        "Authentication required.", challenge='Basic realm="example"'
-    )
+    error = AuthenticationError("Authentication required.", challenge='Basic realm="example"')
 
     assert str(error) == "Authentication required."
     assert error.challenge == 'Basic realm="example"'
@@ -284,7 +282,7 @@ def test_content_guard_authentication_error_carries_challenge():
 def test_composite_authentication_error_does_not_short_circuit_later_success(monkeypatch):
     authentication_guard = _detail_guard(
         "identity",
-        ContentGuardRequiresAuthentication("Authentication required.", challenge="Basic"),
+        AuthenticationError("Authentication required.", challenge="Basic"),
     )
     allowing_guard = _detail_guard("origin")
     composite = _composite(authentication_guard, allowing_guard)
@@ -301,7 +299,7 @@ def test_composite_authentication_error_does_not_short_circuit_later_success(mon
 def test_composite_authentication_error_wins_when_all_guards_deny(monkeypatch):
     authentication_guard = _detail_guard(
         "identity",
-        ContentGuardRequiresAuthentication("Authentication required.", challenge="Basic"),
+        AuthenticationError("Authentication required.", challenge="Basic"),
     )
     denying_guard = _detail_guard("feature", PermissionError("Access denied."))
     composite = _composite(authentication_guard, denying_guard)
@@ -309,7 +307,7 @@ def test_composite_authentication_error_wins_when_all_guards_deny(monkeypatch):
         "pulpcore.app.models.publication.get_url", lambda *_args, **_kwargs: "/guard/"
     )
 
-    with pytest.raises(ContentGuardRequiresAuthentication) as exc_info:
+    with pytest.raises(AuthenticationError) as exc_info:
         CompositeContentGuard.permit(composite, MagicMock())
 
     assert exc_info.value.challenge == "Basic"
@@ -326,4 +324,4 @@ def test_composite_permission_error_when_no_guard_requires_authentication(monkey
     with pytest.raises(PermissionError) as exc_info:
         CompositeContentGuard.permit(composite, MagicMock())
 
-    assert not isinstance(exc_info.value, ContentGuardRequiresAuthentication)
+    assert not isinstance(exc_info.value, AuthenticationError)

@@ -62,7 +62,7 @@ from pulpcore.app.util import (  # noqa: E402
 )
 from pulpcore.cache import AsyncContentCache  # noqa: E402
 from pulpcore.exceptions import (  # noqa: E402
-    ContentGuardRequiresAuthentication,
+    AuthenticationError,
     DigestValidationError,
     UnsupportedDigestValidationError,
 )
@@ -512,7 +512,7 @@ class Handler:
             return False
         try:
             guard.cast().permit(request)
-        except ContentGuardRequiresAuthentication as ae:
+        except AuthenticationError as ae:
             log.debug(
                 'Path: %(p)s requires authentication for guard: "%(g)s" reason: %(r)s',
                 {"p": request.path, "g": guard.name, "r": str(ae)},

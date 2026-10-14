@@ -26,7 +26,7 @@ from pulpcore.app.models import AutoAddObjPermsMixin
 from pulpcore.app.models.fields import RelativePathField
 from pulpcore.app.util import cache_key, get_domain_pk, get_url, retain_distributed_pub_enabled
 from pulpcore.cache import Cache
-from pulpcore.exceptions import ContentGuardRequiresAuthentication
+from pulpcore.exceptions import AuthenticationError
 from pulpcore.responses import ArtifactResponse
 
 from .base import BaseModel, MasterModel
@@ -401,7 +401,7 @@ class ContentGuard(MasterModel):
 
         Raises:
             PermissionError: When not authorized.
-            ContentGuardRequiresAuthentication: When client authentication is required.
+            AuthenticationError: When client authentication is required.
         """
         raise NotImplementedError()
 
@@ -677,7 +677,7 @@ class CompositeContentGuard(ContentGuard, AutoAddObjPermsMixin):
             try:
                 detail_guard.permit(request)
                 return  # success on first-pass
-            except ContentGuardRequiresAuthentication as pe:
+            except AuthenticationError as pe:
                 if authentication_error is None:
                     authentication_error = pe
                 guard_error = _("Guard: '{}', HREF: '{}', class: '{}', denial: [{}].").format(

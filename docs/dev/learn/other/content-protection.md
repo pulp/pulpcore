@@ -9,9 +9,9 @@ To allow fine-grained customization of how content is protected, a plugin writer
 The [`ContentGuard`][ContentGuard] is a Master/Detail object.
 
 In your plugin code, subclass `ContentGuard` and optionally add additional fields as necessary to define how authentication and authorization are to be performed.
-Then overwrite the `permit` method so that it returns `None` if access is granted. It can throw a `PermissionError` when authorization is denied, or a `ContentGuardRequiresAuthentication` when the client must authenticate before access can be evaluated.
+Then overwrite the `permit` method so that it returns `None` if access is granted. It can throw a `PermissionError` when authorization is denied, or an `AuthenticationError` when the client must authenticate before access can be evaluated.
 
-`ContentGuardRequiresAuthentication` is available from `pulpcore.plugin.exceptions` and requires a `challenge` value containing the HTTP `WWW-Authenticate` header value. The content app maps it to `401 Unauthorized` and preserves the challenge. A `PermissionError` remains `403 Forbidden`.
+`AuthenticationError` is available from `pulpcore.plugin.exceptions` and requires a `challenge` value containing the HTTP `WWW-Authenticate` header value. The content app maps it to `401 Unauthorized` and preserves the challenge. A `PermissionError` remains `403 Forbidden`.
 
 Composite content guards retain OR semantics: a successful guard grants access immediately. If every guard denies access and at least one requires authentication, the authentication-required exception is returned; otherwise the composite raises the aggregate `PermissionError`.
 As with all [Master/Detail] objects a `TYPE` class attribute is needed which is then used to construct the URL:
@@ -36,7 +36,7 @@ The secret both authenticates the user and authorizes them for this Content.
 ```python
 # in pulp_my_plugin/app/models.py
 
-from pulpcore.plugin.exceptions import ContentGuardRequiresAuthentication
+from pulpcore.plugin.exceptions import AuthenticationError
 from pulpcore.plugin.models import EncryptedTextField, ContentGuard
 
 class SecretStringContentGuard(ContentGuard):
@@ -55,11 +55,11 @@ class SecretStringContentGuard(ContentGuard):
 
         Raises:
             PermissionError: When the request cannot be authorized.
-            ContentGuardRequiresAuthentication: When the client must authenticate.
+            AuthenticationError: When the client must authenticate.
         """
         provided_string = request.headers.get("SECRET_STRING")
         if provided_string is None:
-            raise ContentGuardRequiresAuthentication("Authentication required.", challenge="Basic")
+            raise AuthenticationError("Authentication required.", challenge="Basic")
         if provided_string != self.secret_string:
             raise PermissionError("Welcome to the real world!")
 

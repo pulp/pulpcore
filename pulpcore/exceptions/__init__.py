@@ -37,4 +37,4 @@ from .validation import (
     DuplicateContentInRepositoryError,
 )
 from .plugin import MissingPlugin
-from .content_guard import ContentGuardRequiresAuthentication
+from .content_guard import AuthenticationError
