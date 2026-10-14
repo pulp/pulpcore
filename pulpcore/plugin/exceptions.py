@@ -1,4 +1,5 @@
 from pulpcore.exceptions import (
+    ContentGuardRequiresAuthentication,
     ContentOverwriteError,
     DigestValidationError,
     ExternalServiceError,
@@ -21,6 +22,7 @@ from pulpcore.exceptions import (
 )
 
 __all__ = [
+    "ContentGuardRequiresAuthentication",
     "ContentOverwriteError",
     "ValidationError",
     "DigestValidationError",
