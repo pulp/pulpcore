@@ -8,6 +8,31 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.105.22 (2026-10-14) {: #3.105.22 }
+
+### REST API {: #3.105.22-rest-api }
+
+#### Bugfixes {: #3.105.22-rest-api-bugfix }
+
+- Fixed an issue where users were able to list (but not modify) uploads they didn't have permissions to view.
+- Fixed vulnerability report rescans to update existing reports.
+- Optimized `scope_queryset` SQL queries when using a domain scoped endpoint.
+- Repeated object lookups in a single API request now reuse the retrieved object.
+
+### Plugin API {: #3.105.22-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.105.22-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.105.22-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.105.21 (2026-10-01) {: #3.105.21 }
 
 ### REST API {: #3.105.21-rest-api }
