@@ -8,6 +8,30 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.85.32 (2026-10-14) {: #3.85.32 }
+
+### REST API {: #3.85.32-rest-api }
+
+#### Bugfixes {: #3.85.32-rest-api-bugfix }
+
+- Fixed directory listings for published content displaying publication time instead of repository added date.
+- Fixed vulnerability report rescans to update existing reports.
+- Removed parent directory sizes and fixed wrong last modified timestamp in content app listings.
+
+### Plugin API {: #3.85.32-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.85.32-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.32-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.85.31 (2026-09-23) {: #3.85.31 }
 
 ### REST API {: #3.85.31-rest-api }
