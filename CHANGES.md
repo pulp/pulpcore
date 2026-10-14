@@ -8,6 +8,49 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.122.0 (2026-10-14) {: #3.122.0 }
+
+### REST API {: #3.122.0-rest-api }
+
+#### Features {: #3.122.0-rest-api-feature }
+
+- Added `ETag`/`If-None-Match` and `Last-Modified`/`If-Modified-Since` (`304 Not Modified`) support on content-app responses so edge caches can revalidate without re-downloading.
+  [#7929](https://github.com/pulp/pulpcore/issues/7929)
+- Added a `pulpcore-manager clear-cache` command to clear cached content responses globally or by repository, distribution, or base path.
+  [#8165](https://github.com/pulp/pulpcore/issues/8165)
+- Added `UpstreamPulp.remote_policy` so remotes created during replication can use `on_demand` or `streamed` instead of defaulting to `immediate`.
+- Added an authentication backend for SAML2 attribute based authorization.
+
+#### Bugfixes {: #3.122.0-rest-api-bugfix }
+
+- Use repository-version summaries to speed unfiltered content-list pagination counts.
+  [#PULP-1996](https://github.com/pulp/pulpcore/issues/PULP-1996)
+- Fixed a bug where filesystem export trying to use local on demand files can be tricked breaking out of `ALLOWED_IMPORT_PATHS`.
+- Fixed an issue where users were able to list (but not modify) uploads they didn't have permissions to view.
+- Fixed directory listings for published content displaying publication time instead of repository added date.
+- Optimized `scope_queryset` SQL queries when using a domain scoped endpoint.
+- Orphan cleanup with `content_hrefs` now deletes only artifacts associated with the selected content.
+- Removed parent directory sizes and fixed wrong last modified timestamp in content app listings.
+- Repeated object lookups in a single API request now reuse the retrieved object.
+- Reverted support for returning 304 responses to content requests with conditional headers
+  because of a breaking change in the internal plugin's API.
+
+### Plugin API {: #3.122.0-plugin-api }
+
+#### Features {: #3.122.0-plugin-api-feature }
+
+- Made `add_and_remove` and `aadd_and_remove` return the serialized newly created repository version as the task result.
+
+### Pulp File {: #3.122.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.122.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.121.3 (2026-10-09) {: #3.121.3 }
 
 ### REST API {: #3.121.3-rest-api }
