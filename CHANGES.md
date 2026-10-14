@@ -218,6 +218,34 @@ No significant changes.
 
 ---
 
+## 3.118.2 (2026-10-13) {: #3.118.2 }
+
+### REST API {: #3.118.2-rest-api }
+
+#### Bugfixes {: #3.118.2-rest-api-bugfix }
+
+- Avoid loading repository version content IDs when serving fallback content during the grace period.
+- Fixed an issue where users were able to list (but not modify) uploads they didn't have permissions to view.
+- Fixed directory listings for published content displaying publication time instead of repository added date.
+- Fixed vulnerability report rescans to update existing reports.
+- Optimized `scope_queryset` SQL queries when using a domain scoped endpoint.
+- Removed parent directory sizes and fixed wrong last modified timestamp in content app listings.
+- Repeated object lookups in a single API request now reuse the retrieved object.
+
+### Plugin API {: #3.118.2-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.118.2-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.118.2-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.118.1 (2026-09-17) {: #3.118.1 }
 
 ### REST API {: #3.118.1-rest-api }
