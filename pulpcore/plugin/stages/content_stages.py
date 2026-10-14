@@ -2,9 +2,10 @@ from collections import defaultdict
 
 from asgiref.sync import sync_to_async
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError
 from django.db.models import Q
 
+from pulpcore.app.db_router import atomic
 from pulpcore.plugin.models import Content, ContentArtifact, ProgressReport
 from pulpcore.plugin.sync import sync_to_async_iterable
 
@@ -152,7 +153,7 @@ class ContentSaver(Stage):
                 to_update_ca_query = ContentArtifact.objects.none()
                 to_update_ca_bulk = []
                 to_update_ca_artifact = {}
-                with transaction.atomic():
+                with atomic():
                     self._pre_save(batch)
                     # Process the batch in dc.content.natural_keys order.
                     # This prevents deadlocks when we're processing the same/similar content
@@ -163,7 +164,7 @@ class ContentSaver(Stage):
                         content_already_saved = not d_content.content._state.adding
                         if not content_already_saved:
                             try:
-                                with transaction.atomic():
+                                with atomic():
                                     d_content.content.save()
                             except IntegrityError as e:
                                 try:
