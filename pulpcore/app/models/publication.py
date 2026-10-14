@@ -677,11 +677,11 @@ class CompositeContentGuard(ContentGuard, AutoAddObjPermsMixin):
             try:
                 detail_guard.permit(request)
                 return  # success on first-pass
-            except AuthenticationError as pe:
+            except AuthenticationError as ae:
                 if authentication_error is None:
-                    authentication_error = pe
+                    authentication_error = ae
                 guard_error = _("Guard: '{}', HREF: '{}', class: '{}', denial: [{}].").format(
-                    detail_guard.name, get_url(detail_guard), type(detail_guard), str(pe)
+                    detail_guard.name, get_url(detail_guard), type(detail_guard), str(ae)
                 )
                 errors.append(guard_error)
             except PermissionError as pe:
