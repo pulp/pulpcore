@@ -58,18 +58,18 @@ async def _heartbeat():
     msg = "Content App '{name}' heartbeat written, sleeping for '{interarrival}' seconds".format(
         name=name, interarrival=heartbeat_interval
     )
-    fail_msg = ("Content App '{name}' failed to write a heartbeat to the database.").format(
-        name=name
-    )
+    fail_msg = f"Content App '{name}' failed to register or write a heartbeat to the database."
     versions = {app.label: app.version for app in pulp_plugin_configs()}
-
     try:
         app_status = await AppStatus.objects.acreate(
             name=name, app_type="content", versions=versions
         )
     except IntegrityError:
         log.error(f"A content app with name {name} already exists in the database.")
-        exit(Arbiter.WORKER_BOOT_ERROR)
+        os._exit(Arbiter.WORKER_BOOT_ERROR)
+    except (InterfaceError, DatabaseError) as e:
+        log.error(f"Content App '{name}' failed to register with the database. Exception: {str(e)}")
+        os._exit(Arbiter.WORKER_BOOT_ERROR)
     try:
         while True:
             await asyncio.sleep(heartbeat_interval)
@@ -83,7 +83,7 @@ async def _heartbeat():
                     log.debug(msg)
                 except (InterfaceError, DatabaseError) as e:
                     log.error(f"{fail_msg} Exception: {str(e)}")
-                    exit(Arbiter.WORKER_BOOT_ERROR)
+                    os._exit(Arbiter.WORKER_BOOT_ERROR)
     finally:
         if app_status:
             await app_status.adelete()
