@@ -1,0 +1,1 @@
+Fixed repository version serialization failing with `LookupError` when the version contains a content type that has no registered viewset.
