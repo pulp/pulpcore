@@ -8,6 +8,28 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.122.1 (2026-10-15) {: #3.122.1 }
+
+### REST API {: #3.122.1-rest-api }
+
+#### Bugfixes {: #3.122.1-rest-api-bugfix }
+
+- Fixed repository version serialization failing with `LookupError` when the version contains a content type that has no registered viewset.
+
+### Plugin API {: #3.122.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.122.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.122.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.122.0 (2026-10-14) {: #3.122.0 }
 
 ### REST API {: #3.122.0-rest-api }
