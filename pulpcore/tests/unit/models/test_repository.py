@@ -813,3 +813,22 @@ def test_batch_operations_preserve_correctness(repository, db):
     assert rvcd_qs.get(count_type=RepositoryVersionContentDetails.PRESENT).count == 40
     assert rvcd_qs.filter(count_type=RepositoryVersionContentDetails.ADDED).first() is None
     assert rvcd_qs.get(count_type=RepositoryVersionContentDetails.REMOVED).count == 60
+
+
+def test_get_content_href_without_viewset(db, repository, monkeypatch):
+    """A content type with no registered viewset yields no href instead of raising."""
+
+    def no_viewset(model_obj, view_action):
+        raise LookupError(f"Could not determine ViewSet base name for model {model_obj}")
+
+    monkeypatch.setattr(Repository, "CONTENT_TYPES", [Content])
+    monkeypatch.setattr("pulpcore.app.models.repository.get_view_name_for_model", no_viewset)
+    version = RepositoryVersion.objects.create(repository=repository, number=1, complete=True)
+    count_detail = RepositoryVersionContentDetails.objects.create(
+        repository_version=version,
+        content_type=Content.get_pulp_type(),
+        count_type=RepositoryVersionContentDetails.ADDED,
+        count=1,
+    )
+
+    assert count_detail.get_content_href() is None

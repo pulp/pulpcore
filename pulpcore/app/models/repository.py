@@ -1579,10 +1579,10 @@ class RepositoryVersionContentDetails(models.Model):
         )
         ctypes = {c.get_pulp_type(): c for c in repository_model.CONTENT_TYPES}
         ctype_model = ctypes[self.content_type]
-        ctype_view = get_view_name_for_model(ctype_model, "list")
         try:
+            ctype_view = get_view_name_for_model(ctype_model, "list")
             ctype_url = reverse(ctype_view, request=request)
-        except django.urls.exceptions.NoReverseMatch:
+        except (LookupError, django.urls.exceptions.NoReverseMatch):
             # We've hit a content type for which there is no viewset.
             # There's nothing we can do here, except to skip it.
             return
