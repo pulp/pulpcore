@@ -8,6 +8,26 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.122.2 (2026-10-15) {: #3.122.2 }
+
+### REST API {: #3.122.2-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.122.2-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.122.2-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.122.2-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.122.1 (2026-10-15) {: #3.122.1 }
 
 ### REST API {: #3.122.1-rest-api }
