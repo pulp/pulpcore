@@ -2,8 +2,9 @@
 
 django-storages file objects are seekable Django file objects. Opening one for
 reading downloads the complete object into a temporary file, which is unsuitable
-for the content app's bounded response loop. These adapters expose only the
-synchronous `open/read/close` interface needed by :mod:`pulpcore.responses`.
+for the content app's bounded response loop. These adapters use the configured
+provider clients to expose only the synchronous `open/read/close` interface
+needed by :mod:`pulpcore.responses`.
 
 Remove these adapters when django-storages provides a stable, cross-backend,
 streaming-read API that Pulp can use instead.
@@ -85,6 +86,8 @@ class S3Stream:
             Range=f"bytes={self.offset}-{self.offset + self.count - 1}",
         )
         response = self.storage.connection.meta.client.get_object(**params)
+        # boto3 returns a StreamingBody. Its bounded `read` consumes the HTTP
+        # response without materializing the complete object.
         self.body = response["Body"]
         return self
 
@@ -114,6 +117,8 @@ class AzureStream:
         path = self.storage._get_valid_path(self.name)
         self.downloader = self.storage.client.download_blob(
             path,
+            # Azure applies `length` relative to `offset`, bounding the
+            # provider request to the HTTP response range.
             offset=self.offset,
             length=self.count,
             timeout=self.storage.timeout,

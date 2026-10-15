@@ -34,6 +34,12 @@ class ArtifactResponse(StreamResponse):
         self._chunk_size = chunk_size
 
     async def _sendfile(self, request, fobj, offset, count):
+        """Send an artifact range without opening a supported object-storage file.
+
+        At this point `fobj` is a Django FieldFile wrapper. Reading its `name`
+        does not open the storage object. Supported object-storage backends are
+        selected before the generic file-object path can trigger `Storage.open`.
+        """
         storage_class = self._artifact.pulp_domain.storage_class
         if storage_class in STREAMING_STORAGE_CLASSES:
             object_stream = get_stream(
@@ -45,8 +51,8 @@ class ArtifactResponse(StreamResponse):
             )
             return await self._sendfile_object_storage(request, object_stream, count)
 
-        # To keep memory usage low, fobj is transferred in chunks
-        # controlled by the constructor's chunk_size argument.
+        # Preserve the generic file-object behavior. Chunking applies after a
+        # backend opens its file object and cannot change that open behavior.
 
         writer = await super().prepare(request)
         assert writer is not None
@@ -76,12 +82,15 @@ class ArtifactResponse(StreamResponse):
         writer = await super().prepare(request)
         assert writer is not None
 
+        loop = asyncio.get_event_loop()
         stream = object_stream
         try:
-            stream = await asyncio.to_thread(object_stream.open)
+            stream = await loop.run_in_executor(None, object_stream.open)
             remaining = count
             while remaining:
-                chunk = await asyncio.to_thread(stream.read, min(self._chunk_size, remaining))
+                chunk = await loop.run_in_executor(
+                    None, stream.read, min(self._chunk_size, remaining)
+                )
                 if not chunk:
                     break
                 if len(chunk) > remaining:
@@ -91,7 +100,7 @@ class ArtifactResponse(StreamResponse):
             await writer.drain()
             return writer
         finally:
-            await asyncio.to_thread(stream.close)
+            await loop.run_in_executor(None, stream.close)
 
     async def prepare(self, request):
         if self._artifact is None:

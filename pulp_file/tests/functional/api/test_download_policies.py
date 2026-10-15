@@ -21,6 +21,10 @@ OBJECT_STORAGES = (
     "storages.backends.s3boto3.S3Boto3Storage",
     "storages.backends.azure_storage.AzureStorage",
 )
+PROXIED_OBJECT_STORAGES = (
+    "storages.backends.s3.S3Storage",
+    *OBJECT_STORAGES,
+)
 
 
 def _do_range_request_download_and_assert(url, range_header, expected_bytes):
@@ -41,16 +45,7 @@ def _do_range_request_download_and_assert(url, range_header, expected_bytes):
     )
 
 
-@pytest.mark.parametrize(
-    "storage_class",
-    (
-        pytest.param("storages.backends.s3.S3Storage", id="s3"),
-        pytest.param("storages.backends.s3boto3.S3Boto3Storage", id="s3boto3"),
-        pytest.param("storages.backends.azure_storage.AzureStorage", id="azure"),
-    ),
-)
 def test_proxied_object_storage_artifact_streaming(
-    storage_class,
     pulp_settings,
     domain_factory,
     file_bindings,
@@ -62,8 +57,9 @@ def test_proxied_object_storage_artifact_streaming(
     tmp_path,
 ):
     """Proxy object-storage content served by a distribution without redirecting."""
-    if pulp_settings.STORAGES["default"]["BACKEND"] != storage_class:
-        pytest.skip("The functional environment does not provide this object-storage configuration")
+    storage_class = pulp_settings.STORAGES["default"]["BACKEND"]
+    if storage_class not in PROXIED_OBJECT_STORAGES:
+        pytest.skip("The functional environment does not provide object-storage streaming")
 
     domain = domain_factory(storage_class=storage_class, redirect_to_object_storage=False)
     payload = uuid.uuid4().bytes + uuid.uuid4().bytes
