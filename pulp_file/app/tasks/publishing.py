@@ -11,42 +11,65 @@ from pulpcore.plugin.models import (
     RepositoryVersion,
 )
 
-from pulp_file.app.models import FilePublication
+from pulp_file.app.models import FilePublication, FileRepository
 from pulp_file.app.serializers import FilePublicationSerializer
-from pulp_file.manifest import Entry, Manifest
+from pulp_file.manifest import Entry, Manifest, Sha256Sums
 
 log = logging.getLogger(__name__)
 
 
-def publish(manifest, repository_version_pk, checkpoint=False, **kwargs):
+def publish(
+    manifest,
+    repository_version_pk,
+    sha256sums=FileRepository.SHA256SUMS_DISABLED,
+    checkpoint=False,
+    **kwargs,
+):
     """
     Create a Publication based on a RepositoryVersion.
 
     Args:
         manifest (str): Filename to use for manifest file.
         repository_version_pk (str): Create a publication from this repository version.
+        sha256sums (str): Whether to generate SHA256SUMS files, and where to place them.
         checkpoint (bool): Whether to create a checkpoint publication.
 
     """
     repo_version = RepositoryVersion.objects.get(pk=repository_version_pk)
 
     log.info(
-        _("Publishing: repository={repo}, version={ver}, manifest={manifest}").format(
-            repo=repo_version.repository.name, ver=repo_version.number, manifest=manifest
+        _(
+            "Publishing: repository={repo}, version={ver}, manifest={manifest}, "
+            "sha256sums={sha256sums}"
+        ).format(
+            repo=repo_version.repository.name,
+            ver=repo_version.number,
+            manifest=manifest,
+            sha256sums=sha256sums,
         )
     )
 
-    with tempfile.TemporaryDirectory(dir="."):
+    with tempfile.TemporaryDirectory(dir=".") as temp_dir:
         with FilePublication.create(
             repo_version, pass_through=True, checkpoint=checkpoint
         ) as publication:
             publication.manifest = manifest
+            publication.sha256sums = sha256sums
             if manifest:
                 manifest = Manifest(manifest)
                 manifest.write(yield_entries_for_version(repo_version))
                 PublishedMetadata.create_from_file(
                     file=File(open(manifest.relative_path, "rb")), publication=publication
                 )
+            if sha256sums != FileRepository.SHA256SUMS_DISABLED:
+                sums = Sha256Sums(per_directory=sha256sums == FileRepository.SHA256SUMS_DIRECTORY)
+                written = sums.write(yield_entries_for_version(repo_version), temp_dir)
+                for relative_path, local_path in written.items():
+                    PublishedMetadata.create_from_file(
+                        file=File(open(local_path, "rb")),
+                        relative_path=relative_path,
+                        publication=publication,
+                    )
 
         log.info(_("Publication: {publication} created").format(publication=publication.pk))
 
