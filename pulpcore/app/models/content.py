@@ -814,7 +814,7 @@ class SigningService(BaseModel):
             env.update(env_vars)
         return {**os.environ, **env}
 
-    def sign(self, filename, env_vars=None):
+    def sign(self, filename, env_vars=None, pubkey_fingerprint=None):
         """
         Signs the file provided via 'filename' by invoking an external script (or executable).
 
@@ -825,6 +825,8 @@ class SigningService(BaseModel):
         Args:
             filename (str): A relative path to a file which is intended to be signed.
             env_vars (dict): dictionary of environment variables
+            pubkey_fingerprint (str): fingerprint of the key to sign with. Defaults to the
+                signing service's own key.
 
         Raises:
             RuntimeError: If the return code of the script is not equal to 0.
@@ -832,6 +834,9 @@ class SigningService(BaseModel):
         Returns:
             A dictionary as validated by the validate() method.
         """
+        if pubkey_fingerprint:
+            env_vars = {**(env_vars or {}), "PULP_SIGNING_KEY_FINGERPRINT": pubkey_fingerprint}
+
         completed_process = subprocess.run(
             [self.script, filename],
             env=self._env_variables(env_vars),
@@ -849,8 +854,11 @@ class SigningService(BaseModel):
 
         return return_value
 
-    async def asign(self, filename, env_vars=None):
+    async def asign(self, filename, env_vars=None, pubkey_fingerprint=None):
         """Async version of sign."""
+        if pubkey_fingerprint:
+            env_vars = {**(env_vars or {}), "PULP_SIGNING_KEY_FINGERPRINT": pubkey_fingerprint}
+
         process = await asyncio.create_subprocess_exec(
             self.script,
             filename,
