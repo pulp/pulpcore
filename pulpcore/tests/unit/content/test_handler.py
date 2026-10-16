@@ -20,6 +20,7 @@ from pulpcore.content.handler import (
     PathNotResolved,
     _current_distribution,
 )
+from pulpcore.exceptions import DigestValidationError
 from pulpcore.plugin.models import (
     Artifact,
     Content,
@@ -788,3 +789,78 @@ async def test_async_pull_through_add(ca1, monkeypatch, app_status):
         await repo.adelete()
         if task:
             await task.adelete()
+
+
+@pytest.fixture
+def digest_failure_downloader(monkeypatch):
+    class FailingDownloader:
+        path = None
+
+        async def handle_data(self, data):
+            pass
+
+        async def finalize(self):
+            pass
+
+        async def run(self, extra_data=None):
+            raise DigestValidationError("actual", "expected", url="https://123/c123")
+
+    monkeypatch.setattr(Remote, "get_downloader", lambda self, **kwargs: FailingDownloader())
+    close_mock = Mock()
+    monkeypatch.setattr("pulpcore.content.handler.close_tcp_connection", close_mock)
+    return close_mock
+
+
+def _failing_stream_args():
+    request = Mock(match_info={"path": "c123"}, http_range=Mock(start=None, stop=None))
+    response = web.StreamResponse()
+    response.write_eof = AsyncMock()
+    return request, response
+
+
+def _assert_not_completed_cleanly(close_mock, request, response):
+    """The connection is force-closed and the response is never finished for the client."""
+    close_mock.assert_called_once_with(request.transport._sock)
+    response.write_eof.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db
+async def test_pull_through_digest_failure_new_content_artifact(digest_failure_downloader):
+    """A failed digest on a first-time pull-through raises the checksum error, not IntegrityError."""
+    remote = await create_remote()
+    ca = ContentArtifact(relative_path="c123")
+    ra = RemoteArtifact(remote=remote, url="https://123/c123", content_artifact=ca, sha256="bad")
+    request, response = _failing_stream_args()
+
+    try:
+        with pytest.raises(RuntimeError, match="failed checksum validation"):
+            await Handler()._stream_remote_artifact(request, response, ra, save_artifact=True)
+        _assert_not_completed_cleanly(digest_failure_downloader, request, response)
+        assert ra.failed_at is None
+        assert not await RemoteArtifact.objects.filter(url="https://123/c123").aexists()
+    finally:
+        await remote.adelete()
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db
+async def test_pull_through_digest_failure_existing_content_artifact(digest_failure_downloader):
+    """A failed digest on an existing ContentArtifact still records failed_at."""
+    content = await create_content()
+    ca = await create_content_artifact(content)
+    remote = await create_remote()
+    ra = await RemoteArtifact.objects.acreate(
+        remote=remote, url="https://123/c123", content_artifact=ca, sha256="bad"
+    )
+    request, response = _failing_stream_args()
+
+    try:
+        with pytest.raises(RuntimeError, match="failed checksum validation"):
+            await Handler()._stream_remote_artifact(request, response, ra, save_artifact=True)
+        _assert_not_completed_cleanly(digest_failure_downloader, request, response)
+        await ra.arefresh_from_db()
+        assert ra.failed_at is not None
+    finally:
+        await content.adelete()
+        await remote.adelete()
