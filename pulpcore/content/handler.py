@@ -1352,8 +1352,11 @@ class Handler:
                 extra_data={"disable_retry_list": (DigestValidationError,)}
             )
         except DigestValidationError:
-            remote_artifact.failed_at = timezone.now()
-            await remote_artifact.asave()
+            # First-time pull-through RAs point at an unsaved ContentArtifact, so saving would
+            # violate the foreign key.
+            if not remote_artifact.content_artifact._state.adding:
+                remote_artifact.failed_at = timezone.now()
+                await remote_artifact.asave()
             close_tcp_connection(request.transport._sock)
             REMOTE_CONTENT_FETCH_FAILURE_COOLDOWN = settings.REMOTE_CONTENT_FETCH_FAILURE_COOLDOWN
             raise RuntimeError(
