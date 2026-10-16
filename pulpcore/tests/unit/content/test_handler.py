@@ -8,7 +8,7 @@ import pytest
 import pytest_asyncio
 from aiohttp import web
 from aiohttp.test_utils import make_mocked_request
-from aiohttp.web_exceptions import HTTPMovedPermanently
+from aiohttp.web_exceptions import HTTPForbidden, HTTPMovedPermanently, HTTPUnauthorized
 from django.db import IntegrityError
 from django_guid import clear_guid, set_guid
 
@@ -20,6 +20,7 @@ from pulpcore.content.handler import (
     PathNotResolved,
     _current_distribution,
 )
+from pulpcore.plugin.exceptions import AuthenticationError
 from pulpcore.plugin.models import (
     Artifact,
     Content,
@@ -788,3 +789,76 @@ async def test_async_pull_through_add(ca1, monkeypatch, app_status):
         await repo.adelete()
         if task:
             await task.adelete()
+
+
+class _GuardCache:
+    ADD_TRAILING_SLASH = False
+
+    def __init__(self):
+        self.writes = []
+
+    async def get(self, *_args, **_kwargs):
+        return None
+
+    async def set(self, *args, **kwargs):
+        self.writes.append((args, kwargs))
+
+
+def _distribution_for_guard_error(error):
+    distribution = Mock()
+    distribution.content_guard.name = "test"
+    distribution.content_guard.cast.return_value.permit.side_effect = error
+    return distribution
+
+
+def test_permit_maps_authentication_error_to_401():
+    request = Mock(path="/content/test")
+    distribution = _distribution_for_guard_error(
+        AuthenticationError("Authentication required.", challenge="Basic")
+    )
+
+    with pytest.raises(HTTPUnauthorized) as exc_info:
+        Handler._permit(request, distribution)
+
+    assert exc_info.value.status == 401
+    assert exc_info.value.headers["WWW-Authenticate"] == "Basic"
+
+
+def test_permit_keeps_permission_error_as_403():
+    request = Mock(path="/content/test")
+    distribution = _distribution_for_guard_error(PermissionError("Access denied."))
+
+    with pytest.raises(HTTPForbidden) as exc_info:
+        Handler._permit(request, distribution)
+
+    assert exc_info.value.status == 403
+    assert "WWW-Authenticate" not in exc_info.value.headers
+
+
+@pytest.mark.asyncio
+async def test_auth_cached_marks_401_guard_as_present(monkeypatch):
+    request = Mock(match_info={"path": "test"})
+    cached = _GuardCache()
+
+    monkeypatch.setattr(Handler, "_match_distribution", Mock(return_value=Mock()))
+    monkeypatch.setattr(Handler, "_permit", Mock(side_effect=HTTPUnauthorized()))
+
+    with pytest.raises(HTTPUnauthorized):
+        await Handler.auth_cached(request, cached, "base")
+
+    assert cached.writes[0][0][0] == "DISTRO#GUARD#PRESENT"
+    assert cached.writes[0][0][1] == "True"
+
+
+@pytest.mark.asyncio
+async def test_auth_cached_does_not_write_after_unexpected_error(monkeypatch):
+    request = Mock(match_info={"path": "test"})
+    cached = _GuardCache()
+
+    monkeypatch.setattr(Handler, "_match_distribution", Mock(return_value=Mock()))
+    monkeypatch.setattr(Handler, "_permit", Mock(side_effect=RuntimeError("unexpected")))
+
+    with pytest.raises(RuntimeError, match="unexpected"):
+        await Handler.auth_cached(request, cached, "base")
+
+    assert cached.writes == []
