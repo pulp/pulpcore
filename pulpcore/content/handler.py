@@ -13,6 +13,7 @@ import django
 from aiohttp.client_exceptions import ClientConnectionError, ClientResponseError
 from aiohttp.web import FileResponse, HTTPOk, StreamResponse
 from aiohttp.web_exceptions import (
+    HTTPBadGateway,
     HTTPError,
     HTTPForbidden,
     HTTPFound,
@@ -1050,7 +1051,8 @@ class Handler:
         [pulpcore.plugin.models.RemoteArtifact][] objects associated with the
         [pulpcore.plugin.models.ContentArtifact][] they will also be tried. If all
         [pulpcore.plugin.models.RemoteArtifact][] downloads raise exceptions, an HTTP 502
-        error is returned to the client.
+        error is returned to the client when a remote could not be reached or answered with a
+        server error, and an HTTP 404 error otherwise.
 
         Args:
             request(aiohttp.web.Request) The request to prepare a response for.
@@ -1059,10 +1061,15 @@ class Handler:
                 to fetch and then stream back to the client
 
         Raises:
+            [aiohttp.web.HTTPBadGateway][] when no
+                [pulpcore.plugin.models.RemoteArtifact][] objects associated with the
+                [pulpcore.plugin.models.ContentArtifact][] returned the binary data needed for
+                the client, and at least one of their remotes could not be reached or answered
+                with a server error.
             [aiohttp.web.HTTPNotFound][] when no
                 [pulpcore.plugin.models.RemoteArtifact][] objects associated with the
                 [pulpcore.plugin.models.ContentArtifact][] returned the binary data needed for
-                the client.
+                the client, for any other reason.
         """
         # We should only skip exceptions that happen before we receive any data
         # and start streaming, as we can't rollback data if something happens after that.
@@ -1078,6 +1085,7 @@ class Handler:
             .order_by_acs()
             .exclude(failed_at__gte=timezone.now() - timedelta(seconds=protection_time))
         )
+        remote_unavailable = False
         async for remote_artifact in remote_artifacts:
             try:
                 save_artifact = remote_artifact.remote.policy != Remote.STREAMED
@@ -1091,8 +1099,14 @@ class Handler:
                         remote_artifact.url, str(e)
                     )
                 )
+                if isinstance(e, ClientConnectionError) or (
+                    isinstance(e, ClientResponseError) and e.status >= 500
+                ):
+                    remote_unavailable = True
                 continue
 
+        if remote_unavailable:
+            raise HTTPBadGateway()
         raise HTTPNotFound()
 
     def _save_artifact(self, download_result, remote_artifact, request=None):
