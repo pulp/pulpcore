@@ -30,7 +30,11 @@ from pulpcore.app.models import (
     Task,
 )
 from pulpcore.app.models.content import ContentArtifact, RemoteArtifact
-from pulpcore.app.serializers import PulpExportSerializer, relative_path_validator
+from pulpcore.app.serializers import (
+    FilesystemExportSerializer,
+    PulpExportSerializer,
+    relative_path_validator,
+)
 from pulpcore.app.util import Crc32Hasher, HashingFileWriter, compute_file_hash
 from pulpcore.constants import FS_EXPORT_METHODS
 
@@ -340,6 +344,7 @@ def fs_publication_export(exporter_pk, publication_pk, start_repo_version_pk=Non
     _export_publication_to_file_system(
         exporter.path, publication, start_repo_version=start_repo_version, method=exporter.method
     )
+    return FilesystemExportSerializer(export, context={"request": None}).data
 
 
 def fs_repo_version_export(exporter_pk, repo_version_pk, start_repo_version_pk=None, **kwargs):
@@ -407,6 +412,7 @@ def fs_repo_version_export(exporter_pk, repo_version_pk, start_repo_version_pk=N
     _export_to_file_system(exporter.path, relative_path_to_artifacts, exporter.method)
     if relative_path_to_local_paths:
         _export_local_to_file_system(exporter.path, relative_path_to_local_paths, exporter.method)
+    return FilesystemExportSerializer(export, context={"request": None}).data
 
 
 def _get_versions_to_export(the_exporter, the_export):
@@ -573,6 +579,7 @@ def pulp_export(exporter_pk, params, **kwargs):
     pulp_exporter.last_export = the_export
     # save the exporter
     pulp_exporter.save()
+    return PulpExportSerializer(the_export, context={"request": None}).data
 
 
 def _do_export(pulp_exporter, tar, the_export):
