@@ -8,6 +8,48 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.122.2 (2026-10-15) {: #3.122.2 }
+
+### REST API {: #3.122.2-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.122.2-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.122.2-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.122.2-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.122.1 (2026-10-15) {: #3.122.1 }
+
+### REST API {: #3.122.1-rest-api }
+
+#### Bugfixes {: #3.122.1-rest-api-bugfix }
+
+- Fixed repository version serialization failing with `LookupError` when the version contains a content type that has no registered viewset.
+
+### Plugin API {: #3.122.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.122.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.122.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.122.0 (2026-10-14) {: #3.122.0 }
 
 ### REST API {: #3.122.0-rest-api }
@@ -256,6 +298,26 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.119.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.118.3 (2026-10-15) {: #3.118.3 }
+
+### REST API {: #3.118.3-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.118.3-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.118.3-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.118.3-pulp-cert-guard }
 
 No significant changes.
 
@@ -1409,6 +1471,26 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.106.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.105.23 (2026-10-15) {: #3.105.23 }
+
+### REST API {: #3.105.23-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.105.23-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.105.23-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.105.23-pulp-cert-guard }
 
 No significant changes.
 
