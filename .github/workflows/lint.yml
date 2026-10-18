@@ -51,6 +51,10 @@ jobs:
         run: |
           ruff check
 
+      - name: "Check Changelog Snippets"
+        run: |
+          uv run .ci/scripts/check_changelog_snippets.py
+
       - name: "Run extra lint checks"
         run: |
           [ ! -x .ci/scripts/extra_linting.sh ] || .ci/scripts/extra_linting.sh
