@@ -28,7 +28,7 @@ class Domain(BaseModel, AutoAddObjPermsMixin):
         name (models.SlugField): Unique name of domain
         pulp_labels (HStoreField): Dictionary of string values
         description (models.TextField): Optional description of domain
-        storage_class (models.TextField): Required storage class for backend
+        storage_class (models.TextField): Historical class-path identifier for the backend
         storage_settings (EncryptedJSONField): Settings needed to configure storage backend
         redirect_to_object_storage (models.BooleanField): Redirect to object storage in content app
         hide_guarded_distributions (models.BooleanField): Hide guarded distributions in content app
@@ -41,7 +41,7 @@ class Domain(BaseModel, AutoAddObjPermsMixin):
     name = models.SlugField(null=False, unique=True)
     pulp_labels = HStoreField(default=dict)
     description = models.TextField(null=True)
-    # Storage class is required, optional settings are validated by serializer
+    # Class paths remain persisted so older Pulp processes can read Domain rows.
     storage_class = models.TextField(null=False)
     storage_settings = EncryptedJSONField(default=dict)
     # Pulp settings that are appropriate to be set on a "per domain" level
@@ -53,20 +53,30 @@ class Domain(BaseModel, AutoAddObjPermsMixin):
     )
 
     def get_storage(self):
-        """Returns this domain's instantiated storage class."""
+        """Return the deployment-selected storage implementation for this domain."""
         if self.name == "default":
             return default_storage
 
+        from pulpcore.app.storage_backends import backend_path
+
+        implementation = backend_path(self.storage_class)
         if date_storage_tuple := storages.get(self.pulp_id):
-            last_updated, storage = date_storage_tuple
-            if self.pulp_last_updated == last_updated:
+            last_updated, path, storage = date_storage_tuple
+            if self.pulp_last_updated == last_updated and path == implementation:
                 return storage
 
         from pulpcore.app.serializers import DomainSerializer
 
         storage = DomainSerializer(instance=self).create_storage()
-        storages[self.pulp_id] = (self.pulp_last_updated, storage)
+        storages[self.pulp_id] = (self.pulp_last_updated, implementation, storage)
         return storage
+
+    @property
+    def storage_backend(self):
+        """Return the stable backend ID for a historical class path or an ID."""
+        from pulpcore.app.storage_backends import backend_id
+
+        return backend_id(self.storage_class)
 
     @hook(BEFORE_DELETE, when="name", is_now="default")
     @hook(BEFORE_UPDATE, when="name", was="default")

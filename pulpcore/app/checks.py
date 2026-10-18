@@ -19,6 +19,30 @@ from django.db.models import Q
 from pulpcore import constants
 
 
+@register()
+def storage_redirect_backend(app_configs, **kwargs):
+    """Reject an unrecognized default storage when redirecting to object storage."""
+    from pulpcore.app.storage_backends import backend_id
+
+    if not settings.REDIRECT_TO_OBJECT_STORAGE:
+        return []
+    backend = backend_id(settings.STORAGES["default"]["BACKEND"])
+    if backend in {
+        constants.STORAGE_BACKENDS.FILESYSTEM,
+        constants.STORAGE_BACKENDS.S3,
+        constants.STORAGE_BACKENDS.AZURE,
+        constants.STORAGE_BACKENDS.GCS,
+    }:
+        return []
+    return [
+        CheckError(
+            "STORAGES['default']['BACKEND'] must map to a redirect-capable "
+            "DOMAIN_STORAGE_BACKENDS entry when REDIRECT_TO_OBJECT_STORAGE is enabled.",
+            id="pulpcore.E002",
+        )
+    ]
+
+
 @register(deploy=True)
 def secret_key_check(app_configs, **kwargs):
     messages = []
@@ -38,7 +62,9 @@ def secret_key_check(app_configs, **kwargs):
 def storage_paths(app_configs, **kwargs):
     warnings = []
 
-    if settings.STORAGES["default"]["BACKEND"] == "pulpcore.app.models.storage.FileSystem":
+    from pulpcore.app.storage_backends import default_backend_id
+
+    if default_backend_id() == constants.STORAGE_BACKENDS.FILESYSTEM:
         try:
             media_root_dev = Path(settings.MEDIA_ROOT).stat().st_dev
         except OSError:

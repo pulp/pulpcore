@@ -85,8 +85,9 @@ Specific examples for different storage backends:
 
 
 !!! warning
-    Changing the `storage-class` or `storage-settings` of an in-use domain is dangerous and can result in a broken domain.
-    TODO Migration feature
+    Changing a domain's storage location without migrating its artifacts can break the domain.
+    Replacing the implementation for the same backend and object namespace is configured by the
+    administrator through `DOMAIN_STORAGE_BACKENDS` and does not require updating the domain.
 
 ## Using Domains
 

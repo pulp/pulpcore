@@ -11,6 +11,7 @@ from django.db import ProgrammingError, connection, transaction
 from django.db.models.signals import post_migrate, pre_migrate
 from django.utils.module_loading import module_has_submodule
 
+from pulpcore.constants import STORAGE_BACKENDS
 from pulpcore.exceptions.plugin import MissingPlugin
 
 VIEWSETS_MODULE_NAME = "viewsets"
@@ -333,18 +334,29 @@ def _ensure_default_domain(sender, apps, **kwargs):
     with suppress(LookupError, ProgrammingError):
         table_names = connection.introspection.table_names()
         if "core_domain" in table_names:
+            from pulpcore.app.storage_backends import (
+                backend_id,
+                default_backend_id,
+                legacy_backend_path,
+            )
             from pulpcore.app.util import get_default_domain
 
             default = get_default_domain()  # Cache the default domain
+            storage_changed = default_backend_id() != (
+                backend_id(default.storage_class) or default.storage_class
+            )
             # Match the Pulp settings
             if (
                 settings.HIDE_GUARDED_DISTRIBUTIONS != default.hide_guarded_distributions
                 or settings.REDIRECT_TO_OBJECT_STORAGE != default.redirect_to_object_storage
-                or settings.STORAGES["default"]["BACKEND"] != default.storage_class
+                or storage_changed
             ):
                 default.hide_guarded_distributions = settings.HIDE_GUARDED_DISTRIBUTIONS
                 default.redirect_to_object_storage = settings.REDIRECT_TO_OBJECT_STORAGE
-                default.storage_class = settings.STORAGES["default"]["BACKEND"]
+                if storage_changed:
+                    default.storage_class = legacy_backend_path(
+                        settings.STORAGES["default"]["BACKEND"]
+                    )
                 default.save(skip_hooks=True)
 
 
@@ -408,8 +420,10 @@ def adjust_roles(apps, role_prefix, desired_roles, verbosity=1):
 
 
 def _populate_artifact_serving_distribution(sender, apps, verbosity, **kwargs):
+    from pulpcore.app.storage_backends import default_backend_id
+
     if (
-        settings.STORAGES["default"]["BACKEND"] == "pulpcore.app.models.storage.FileSystem"
+        default_backend_id() == STORAGE_BACKENDS.FILESYSTEM
         or not settings.REDIRECT_TO_OBJECT_STORAGE
     ):
         try:

@@ -27,7 +27,7 @@ from django.utils.http import http_date
 from multidict import CIMultiDict
 from yarl import URL
 
-from pulpcore.constants import CHECKPOINT_TS_FORMAT, STORAGE_RESPONSE_MAP
+from pulpcore.constants import CHECKPOINT_TS_FORMAT, STORAGE_BACKENDS
 from pulpcore.responses import ArtifactResponse
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pulpcore.app.settings")
@@ -57,6 +57,7 @@ from pulpcore.app.models import (  # noqa: E402
     Remote,
     RemoteArtifact,
 )
+from pulpcore.app.storage_backends import signed_url  # noqa: E402
 from pulpcore.app.util import (  # noqa: E402
     cache_key,
     check_request_was_modified,
@@ -1200,27 +1201,19 @@ class Handler:
     def _build_response_from_content_artifact(self, content_artifact, headers, request):
         """Helper method to build the correct response to serve a ContentArtifact."""
 
-        def _set_params_from_headers(hdrs, storage_domain):
-            # Map standard-response-headers to storage-object-specific keys
-            params = {}
-            if storage_domain in STORAGE_RESPONSE_MAP:
-                for a_key in STORAGE_RESPONSE_MAP[storage_domain]:
-                    if hdrs.get(a_key, None):
-                        params[STORAGE_RESPONSE_MAP[storage_domain][a_key]] = hdrs[a_key]
-            return params
-
-        def _build_url(**kwargs):
+        def _build_url(method=None):
             filename = os.path.basename(content_artifact.relative_path)
             content_disposition = f"attachment;filename={filename}"
 
             headers["Content-Disposition"] = content_disposition
-            parameters = _set_params_from_headers(headers, domain.storage_class)
-            storage_url = storage.url(artifact_name, parameters=parameters, **kwargs)
+            storage_url = signed_url(
+                storage, domain.storage_backend, artifact_name, headers=headers, method=method
+            )
 
             return URL(storage_url, encoded=True)
 
-        def _build_redirect_response(**kwargs):
-            url = _build_url(**kwargs)
+        def _build_redirect_response(method=None):
+            url = _build_url(method=method)
             # Contains signed URL. Tell external caches to not store this
             headers["Cache-Control"] = NO_STORE_EDGE_CACHE_CONTROL
             return HTTPFound(url, headers=headers)
@@ -1231,22 +1224,20 @@ class Handler:
         storage = domain.get_storage()
         headers["X-PULP-ARTIFACT-SIZE"] = str(artifact_file.size)
 
-        if domain.storage_class == "pulpcore.app.models.storage.FileSystem":
+        if domain.storage_backend == STORAGE_BACKENDS.FILESYSTEM:
             path = storage.path(artifact_name)
             if not os.path.exists(path):
                 raise Exception(_("Expected path '{}' is not found").format(path))
             return FileResponse(path, headers=headers)
         elif not domain.redirect_to_object_storage:
-            return ArtifactResponse(content_artifact.artifact, headers=headers)
-        elif domain.storage_class in (
-            "storages.backends.s3boto3.S3Boto3Storage",
-            "storages.backends.s3.S3Storage",
+            return ArtifactResponse(content_artifact.artifact, headers=headers, storage=storage)
+        elif domain.storage_backend in (
+            STORAGE_BACKENDS.S3,
+            STORAGE_BACKENDS.AZURE,
+            STORAGE_BACKENDS.GCS,
         ):
-            return _build_redirect_response(http_method=request.method)
-        elif domain.storage_class in (
-            "storages.backends.azure_storage.AzureStorage",
-            "storages.backends.gcloud.GoogleCloudStorage",
-        ):
+            return _build_redirect_response(method=request.method)
+        elif callable(getattr(storage, "pulp_url", None)):
             return _build_redirect_response()
         else:
             raise NotImplementedError()

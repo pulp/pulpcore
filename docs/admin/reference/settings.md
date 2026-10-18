@@ -127,6 +127,31 @@ This depends on the installation method.
 Learn more on the
 [Configure Storages](site:pulpcore/docs/admin/guides/configure-pulp/configure-storages/) guide.
 
+### DOMAIN_STORAGE_BACKENDS
+
+Domain records retain their historical class-path values for compatibility. Pulp maps those values
+to stable backend IDs internally; `DOMAIN_STORAGE_BACKENDS` maps the IDs to installed implementation
+classes for non-default domains. Its defaults are `filesystem`, `s3`, `azure`, and `gcs`;
+only `filesystem`, `s3`, and `azure` are currently offered when creating a domain.
+
+To use a compatible S3 fork, for example:
+
+```python
+DOMAIN_STORAGE_BACKENDS = {
+    "filesystem": "pulpcore.app.models.storage.FileSystem",
+    "s3": "my_storage.backends.s3.S3Storage",
+    "azure": "storages.backends.azure_storage.AzureStorage",
+    "gcs": "storages.backends.gcloud.GoogleCloudStorage",
+}
+```
+
+The default domain still uses Django's `STORAGES["default"]` configuration. If its `BACKEND` is
+changed to a fork, set the matching `DOMAIN_STORAGE_BACKENDS` entry too, so Pulp can identify its
+provider. Changing implementation code does not copy artifacts or require another Domain data
+migration; changing buckets, prefixes, or filesystem locations still requires a storage migration.
+Do not change the API's `storage_class` values during a rolling deployment with older Pulp
+processes. The legacy paths remain supported identifiers even when their implementation changes.
+
 Overview of the integration with Pulp:
 
 - **Supported**: We support (test) Amazon S3 and Azure.
