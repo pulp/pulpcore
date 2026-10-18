@@ -5,6 +5,7 @@ import uuid
 
 import pytest
 
+from pulpcore.app.storage_backends import backend_id
 from pulpcore.client.pulpcore import ApiException
 from pulpcore.tests.functional.utils import PulpTaskError
 
@@ -57,6 +58,36 @@ def test_crud_domains(pulpcore_bindings, monitor_task):
 
 
 @pytest.mark.parallel
+def test_backend_id_input_keeps_legacy_domain_value(
+    pulpcore_bindings, pulp_api_v3_url, monitor_task
+):
+    """An ID accepted by new Pulp must not create a row unreadable by old Pulp."""
+    # The generated client rejects IDs because the API advertises legacy enum choices.
+    url = f"{pulp_api_v3_url}domains/"
+    headers = {"Content-Type": "application/json"}
+    pulpcore_bindings.client.update_params_for_auth(headers, {}, ["basicAuth"], url, "POST", None)
+    response = pulpcore_bindings.client.rest_client.request(
+        "POST",
+        url,
+        body={
+            "name": str(uuid.uuid4()),
+            "storage_class": "filesystem",
+            "storage_settings": {"location": ""},
+        },
+        headers=headers,
+    )
+    assert response.status == 201
+    domain = json.loads(response.response.data)
+    assert domain["storage_class"] == "pulpcore.app.models.storage.FileSystem"
+    assert (
+        pulpcore_bindings.DomainsApi.read(domain["pulp_href"]).storage_class
+        == "pulpcore.app.models.storage.FileSystem"
+    )
+    response = pulpcore_bindings.DomainsApi.delete(domain["pulp_href"])
+    monitor_task(response.task)
+
+
+@pytest.mark.parallel
 def test_default_domain(pulpcore_bindings, pulp_settings):
     """Test properties around the default domain."""
     settings = pulp_settings
@@ -66,7 +97,9 @@ def test_default_domain(pulpcore_bindings, pulp_settings):
     # Read the default domain, ensure storage is set to default
     default_domain = domains.results[0]
     assert default_domain.name == "default"
-    assert default_domain.storage_class == settings.STORAGES["default"]["BACKEND"]
+    assert backend_id(default_domain.storage_class) == backend_id(
+        settings.STORAGES["default"]["BACKEND"]
+    )
     assert default_domain.redirect_to_object_storage == settings.REDIRECT_TO_OBJECT_STORAGE
     assert default_domain.hide_guarded_distributions == settings.HIDE_GUARDED_DISTRIBUTIONS
 
