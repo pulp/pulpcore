@@ -1,0 +1,1 @@
+Increased the default maximum HTTP header field size for the pulpcore gunicorn config from 8190 to 16384 bytes to support PQC (post-quantum) X.509 certificates forwarded via the `X-CLIENT-CERT` header.
