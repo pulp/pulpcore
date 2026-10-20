@@ -68,6 +68,9 @@ class PulpcoreGunicornApplication(Application):
                 "bind": ["127.0.0.1:8000"],
                 "threads": 1,
                 "worker_class": "<class 'gunicorn.workers.sync.SyncWorker'>",
+                # PQC (post-quantum) X.509 certificates can exceed aiohttp's default 8190-byte header
+                # limit when forwarded via X-CLIENT-CERT by a reverse proxy.
+                "limit_request_field_size": "32768",
             }
             return key in defaults and str(defaults[key]) == str(value)
 
