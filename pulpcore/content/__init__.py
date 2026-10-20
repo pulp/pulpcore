@@ -31,7 +31,7 @@ log = logging.getLogger(__name__)
 
 # PQC (post-quantum) X.509 certificates can exceed aiohttp's default 8190-byte header
 # limit when forwarded via X-CLIENT-CERT by a reverse proxy.
-_HANDLER_ARGS = {"max_field_size": 16 * 1024}
+_HANDLER_ARGS = {"max_field_size": 32768}
 
 if settings.OTEL_ENABLED:
     from .instrumentation import instrumentation  # noqa: E402
