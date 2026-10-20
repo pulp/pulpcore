@@ -615,3 +615,44 @@ class TestCacheInvalidationOnPublicationDelete:
         assert cache_key(dist_repo.base_path) not in invalidated, (
             "repo dist should NOT be invalidated (pub2 still latest)"
         )
+
+
+@pytest.mark.django_db
+class TestCacheInvalidationOnRepositoryVersionCreate:
+    """
+    While a new repository version is being created, the repository's distributions are still
+    served from the previous one, and a response computed then can be put into the cache.
+    Clearing the cache only when the version is started would leave that response there until
+    it expires, so the cache must be cleared once the new version is complete.
+    """
+
+    def test_invalidates_once_new_version_is_complete(
+        self, settings, django_capture_on_commit_callbacks
+    ):
+        """Creating a repository version invalidates the cache after the version is complete."""
+        settings.CACHE_ENABLED = True
+        repo = FileRepository.objects.create(name=f"repo-{uuid.uuid4().hex[:8]}")
+        dist = dist_factory(repo=repo)
+        complete_at_invalidation = []
+
+        def record(*args, base_key=None, **kwargs):
+            if base_key is not None and cache_key(dist.base_path) in base_key:
+                complete_at_invalidation.append(repo.versions.latest("number").complete)
+
+        with mock.patch("pulpcore.app.models.repository.Cache") as mock_cache:
+            mock_cache.return_value.delete.side_effect = record
+            with django_capture_on_commit_callbacks(execute=True):
+                version = create_version(repo, add=["some-file.txt"])
+        assert version.complete
+        assert True in complete_at_invalidation
+
+    def test_ignores_version_without_changes(self, settings, django_capture_on_commit_callbacks):
+        """A new version that changes nothing is discarded and leaves the cache alone."""
+        settings.CACHE_ENABLED = True
+        repo = FileRepository.objects.create(name=f"repo-{uuid.uuid4().hex[:8]}")
+        dist_factory(repo=repo)
+        with mock.patch("pulpcore.app.models.repository.Cache") as mock_cache:
+            with django_capture_on_commit_callbacks(execute=True):
+                with repo.new_version():
+                    pass
+        mock_cache.return_value.delete.assert_not_called()
