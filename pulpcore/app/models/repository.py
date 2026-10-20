@@ -198,8 +198,6 @@ class Repository(MasterModel):
                 resource = CreatedResource(content_object=version)
                 resource.save()
 
-            self.invalidate_cache()
-
             return version
 
     def initialize_new_version(self, new_version):
@@ -1534,6 +1532,7 @@ class RepositoryVersion(BaseModel):
                         self.repository.save()
                         self.save()
                         self._compute_counts()
+                    transaction.on_commit(self.repository.invalidate_cache)
                     self.repository.cleanup_old_versions()
                     repository.on_new_version(self)
             except Exception:
