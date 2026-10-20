@@ -29,6 +29,23 @@ from pulp_file.app.models import (
     FileRemote,
     FileRepository,
 )
+from pulp_file.manifest import Sha256Sums
+
+
+def validate_manifest_sha256sums(manifest, sha256sums):
+    """
+    Validate that the manifest filename does not collide with a generated SHA256SUMS file.
+
+    Raises:
+        serializers.ValidationError: If the manifest would be published at a generated path.
+
+    """
+    if sha256sums != FileRepository.SHA256SUMS_DISABLED and manifest == Sha256Sums.FILENAME:
+        raise serializers.ValidationError(
+            _("The manifest cannot be named {name} while SHA256SUMS files are generated.").format(
+                name=Sha256Sums.FILENAME
+            )
+        )
 
 
 class FileContentSerializer(SingleArtifactContentUploadSerializer, ContentChecksumSerializer):
@@ -143,13 +160,43 @@ class FileRepositorySerializer(RepositorySerializer):
         allow_null=True,
     )
 
+    sha256sums = serializers.ChoiceField(
+        help_text=_(
+            "Whether to generate SHA256SUMS files, and where to place them. 'root' writes a "
+            "single file at the root of the repository, 'directory' writes one in every "
+            "directory. Each file lists every file below it, with paths relative to itself."
+        ),
+        choices=FileRepository.SHA256SUMS_CHOICES,
+        default=FileRepository.SHA256SUMS_DISABLED,
+        required=False,
+    )
+
     last_sync_details = serializers.JSONField(
         help_text=_("Details about the last sync of this repository."),
         read_only=True,
     )
 
+    def validate(self, data):
+        """Validate the FileRepository data."""
+        data = super().validate(data)
+
+        validate_manifest_sha256sums(
+            data.get("manifest", getattr(self.instance, "manifest", None)),
+            data.get(
+                "sha256sums",
+                getattr(self.instance, "sha256sums", FileRepository.SHA256SUMS_DISABLED),
+            ),
+        )
+
+        return data
+
     class Meta:
-        fields = RepositorySerializer.Meta.fields + ("autopublish", "manifest", "last_sync_details")
+        fields = RepositorySerializer.Meta.fields + (
+            "autopublish",
+            "manifest",
+            "sha256sums",
+            "last_sync_details",
+        )
         model = FileRepository
 
 
@@ -218,11 +265,24 @@ class FilePublicationSerializer(PublicationSerializer):
         required=False,
         allow_null=True,
     )
+    sha256sums = serializers.ChoiceField(
+        help_text=_(
+            "Whether to generate SHA256SUMS files, and where to place them. Defaults to the "
+            "setting on the repository being published."
+        ),
+        choices=FileRepository.SHA256SUMS_CHOICES,
+        required=False,
+    )
     checkpoint = serializers.BooleanField(required=False)
 
     class Meta:
         model = FilePublication
-        fields = PublicationSerializer.Meta.fields + ("distributions", "manifest", "checkpoint")
+        fields = PublicationSerializer.Meta.fields + (
+            "distributions",
+            "manifest",
+            "sha256sums",
+            "checkpoint",
+        )
 
 
 class FileDistributionSerializer(DistributionSerializer):
