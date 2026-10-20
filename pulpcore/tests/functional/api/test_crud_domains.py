@@ -195,7 +195,6 @@ def test_special_domain_creation(pulpcore_bindings, gen_object_with_cleanup, pul
     # This test needs to account for which environment it is running in
     storage_types = {
         "pulpcore.app.models.storage.FileSystem",
-        # "pulpcore.app.models.storage.PulpSFTPStorage",
         "storages.backends.s3boto3.S3Boto3Storage",
         "storages.backends.s3.S3Storage",
         "storages.backends.azure_storage.AzureStorage",
@@ -204,14 +203,6 @@ def test_special_domain_creation(pulpcore_bindings, gen_object_with_cleanup, pul
 
     storage_settings = {
         "pulpcore.app.models.storage.FileSystem": {"media_root": ""},
-        "pulpcore.app.models.storage.PulpSFTPStorage": {
-            "SFTP_STORAGE_HOST": "sftp-storage-host",
-            "SFTP_STORAGE_ROOT": "/storage/",
-            "SFTP_STORAGE_PARAMS": {
-                "username": "foo",
-                "key_filename": "/etc/pulp/certs/storage_id_ed25519",
-            },
-        },
         "storages.backends.s3.S3Storage": {
             "AWS_ACCESS_KEY_ID": "random",
             "AWS_SECRET_ACCESS_KEY": "random",
@@ -247,8 +238,6 @@ def test_special_domain_creation(pulpcore_bindings, gen_object_with_cleanup, pul
             "storage_class": backend,
             "storage_settings": storage_settings[backend],
         }
-        if backend == "pulpcore.app.models.storage.PulpSFTPStorage":
-            body["redirect_to_object_storage"] = False
         try:
             domain = gen_object_with_cleanup(pulpcore_bindings.DomainsApi, body)
         except ApiException as e:

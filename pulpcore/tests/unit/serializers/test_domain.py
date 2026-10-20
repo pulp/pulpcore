@@ -4,7 +4,6 @@ import pytest
 from rest_framework import serializers
 
 from pulpcore.app.serializers.domain import (
-    # SFTPSettingsSerializer,
     AmazonS3SettingsSerializer,
     AzureSettingsSerializer,
     # GoogleSettingsSerializer,
@@ -242,17 +241,6 @@ def test_hidden_settings(storage_class, serializer_class, all_settings):
         assert field in hidden_fields
         is_set = bool(all_settings[field])
         assert hidden_fields[field] == is_set, field
-
-
-# class TestDomainSFTPSettingsSerializer(DomainSettingsBaseMixin, TestCase):
-#     storage_class = "pulpcore.app.models.storage.PulpSFTPStorage"
-#     serializer_class = SFTPSettingsSerializer
-#     required_settings = {"host": "http://testing", "root_path": "/storage_sftp/"}
-#
-#     @classmethod
-#     def setUpClass(cls):
-#         super().setUpClass()
-#         cls.min_domain_settings["redirect_to_object_storage"] = False
 
 
 # class TestDomainGoogleSettingsSerializer(DomainSettingsBaseMixin, TestCase):
