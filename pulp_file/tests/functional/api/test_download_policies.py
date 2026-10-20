@@ -54,8 +54,6 @@ def test_download_policy(
 ):
     """Test that "on_demand" and "streamed" download policies work as expected."""
     settings = pulp_settings
-    if download_policy == "on_demand" and "SFTP" in settings.STORAGES["default"]["BACKEND"]:
-        pytest.skip("This storage technology is not properly supported.")
 
     remote = file_remote_ssl_factory(
         manifest_path=range_header_manifest_path, policy=download_policy

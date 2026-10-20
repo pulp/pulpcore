@@ -131,8 +131,6 @@ Overview of the integration with Pulp:
 
 - **Supported**: We support (test) Amazon S3 and Azure.
 - **Untested**: Other backends provided by `django-storages` may work as well, but we provide no guarantee.
-- **Known caveat**: Using SFTP Storage is not recommended in Pulp's current state, and doing so can lead to file corruption.
-This is because Pulp currently uses coroutines that seem to be incompatible with Django's SFTPStorage implementation.
 
 
 ## Pulp Settings

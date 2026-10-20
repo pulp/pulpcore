@@ -21,7 +21,6 @@ from pulpcore.app.util import get_prn
 
 BACKEND_CHOICES = (
     ("pulpcore.app.models.storage.FileSystem", "Use local filesystem as storage"),
-    # ("pulpcore.app.models.storage.PulpSFTPStorage", "Use SFTP server as storage"),
     ("storages.backends.s3boto3.S3Boto3Storage", "Use Amazon S3 as storage [deprecated]"),
     ("storages.backends.s3.S3Storage", "Use Amazon S3 as storage"),
     ("storages.backends.azure_storage.AzureStorage", "Use Azure Blob as storage"),
@@ -105,36 +104,6 @@ class FileSystemSettingsSerializer(BaseSettingsClass):
     base_url = serializers.CharField(allow_blank=True, default="")
     file_permissions_mode = serializers.IntegerField(default=0o644)
     directory_permissions_mode = serializers.IntegerField(allow_null=True, default=None)
-
-
-class SFTPSettingsSerializer(BaseSettingsClass):
-    """A Serializer for SFTP storage settings."""
-
-    STORAGE_CLASS = "pulpcore.app.models.storage.PulpSFTPStorage"
-    SETTING_MAPPING = {
-        "sftp_storage_host": "host",
-        "sftp_storage_params": "params",
-        "sftp_storage_interactive": "interactive",
-        "sftp_storage_file_mode": "file_mode",
-        "sftp_storage_dir_mode": "dir_mode",
-        "sftp_storage_uid": "uid",
-        "sftp_storage_gid": "gid",
-        "sftp_known_host_file": "known_host_file",
-        "sftp_storage_root": "root_path",
-        "media_url": "base_url",
-        "sftp_base_url": "base_url",
-    }
-
-    host = serializers.CharField(required=True)
-    root_path = serializers.CharField(required=True)
-    params = serializers.DictField(default={}, write_only=True)
-    file_mode = serializers.IntegerField(allow_null=True, default=None)
-    dir_mode = serializers.IntegerField(allow_null=True, default=None)
-    uid = serializers.CharField(allow_null=True, default=None)
-    gid = serializers.CharField(allow_null=True, default=None)
-    base_url = serializers.CharField(allow_null=True, default=None)
-    interactive = serializers.HiddenField(default=False)
-    known_host_file = serializers.HiddenField(default=None)
 
 
 class TransferConfigSerializer(serializers.Serializer):
@@ -342,7 +311,6 @@ class StorageSettingsSerializer(serializers.Serializer):
 
     STORAGE_MAPPING = {
         "pulpcore.app.models.storage.FileSystem": FileSystemSettingsSerializer,
-        "pulpcore.app.models.storage.PulpSFTPStorage": SFTPSettingsSerializer,
         "storages.backends.s3.S3Storage": AmazonS3SettingsSerializer,
         "storages.backends.s3boto3.S3Boto3Storage": AmazonS3SettingsSerializer,
         "storages.backends.azure_storage.AzureStorage": AzureSettingsSerializer,
@@ -509,19 +477,6 @@ class DomainSerializer(BackendSettingsValidator, ModelSerializer):
         storage_class = data.get("storage_class") or self.instance.storage_class
         storage_settings = data.get("storage_settings") or self.instance.storage_settings
         self._validate_storage_backend(storage_class, storage_settings)
-
-        redirect = data.get("redirect_to_object_storage", True)
-        if self.instance and "redirect_to_object_storage" not in data:
-            redirect = self.instance.redirect_to_object_storage
-
-        if redirect and storage_class == "pulpcore.app.models.storage.PulpSFTPStorage":
-            raise serializers.ValidationError(
-                detail={
-                    "redirect_to_object_storage": _(
-                        "This field does not support being used with the SFTP backend."
-                    )
-                }
-            )
         return data
 
     class Meta:

@@ -1,0 +1,1 @@
+Removed SFTP storage support because it was unreliable and could corrupt files; it also did not support object-storage redirects or on-demand downloads.
