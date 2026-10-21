@@ -56,6 +56,7 @@ from pulpcore.app.models import (  # noqa: E402
     Publication,
     Remote,
     RemoteArtifact,
+    RepositoryContent,
 )
 from pulpcore.app.util import (  # noqa: E402
     cache_key,
@@ -716,9 +717,11 @@ class Handler:
                 # path filter. For a path with no matches this lets the planner short-circuit
                 # without touching the membership table at all.
                 content_in_version = models.Exists(
-                    content_repo_ver._content_relationships().filter(
-                        content_id=models.OuterRef("content_id")
-                    )
+                    RepositoryContent.objects.filter(
+                        repository_id=content_repo_ver.repository_id,
+                        content_id=models.OuterRef("content_id"),
+                        version_added__number__lte=content_repo_ver.number,
+                    ).exclude(version_removed__number__lte=content_repo_ver.number)
                 )
                 cas = ContentArtifact.objects.select_related("artifact").filter(
                     content_in_version, relative_path__startswith=path
