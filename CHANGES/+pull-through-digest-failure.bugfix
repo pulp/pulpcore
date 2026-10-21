@@ -1,1 +1,0 @@
-Fixed a foreign key error when a first-time pull-through download fails digest validation; the content app now reports the intended checksum error and closes the connection.
