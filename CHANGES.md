@@ -8,6 +8,36 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.123.0 (2026-10-21) {: #3.123.0 }
+
+### REST API {: #3.123.0-rest-api }
+
+#### Bugfixes {: #3.123.0-rest-api-bugfix }
+
+- Fixed a foreign key error when a first-time pull-through download fails digest validation; the content app now reports the intended checksum error and closes the connection.
+- Fixed repository version serialization failing with `LookupError` when the version contains a content type that has no registered viewset.
+
+#### Removals {: #3.123.0-rest-api-removal }
+
+- Removed SFTP storage support because it was unreliable and could corrupt files; it also did not support object-storage redirects or on-demand downloads.
+
+### Plugin API {: #3.123.0-plugin-api }
+
+#### Features {: #3.123.0-plugin-api-feature }
+
+- `SigningService.sign()` and `asign()` now accept an optional `pubkey_fingerprint` to sign with a key other than the one the signing service was created with.
+  [#7942](https://github.com/pulp/pulpcore/issues/7942)
+
+### Pulp File {: #3.123.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.123.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.122.2 (2026-10-15) {: #3.122.2 }
 
 ### REST API {: #3.122.2-rest-api }
