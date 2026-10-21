@@ -15,18 +15,20 @@ from django.core.checks import (
     Warning as CheckWarning,
 )
 from django.db.models import Q
+from django.utils.module_loading import import_string
 
 from pulpcore import constants
 
 
 @register()
 def storage_redirect_backend(app_configs, **kwargs):
-    """Reject an unrecognized default storage when redirecting to object storage."""
+    """Reject default storage that the content app cannot serve with redirects."""
     from pulpcore.app.storage_backends import backend_id
 
     if not settings.REDIRECT_TO_OBJECT_STORAGE:
         return []
-    backend = backend_id(settings.STORAGES["default"]["BACKEND"])
+    path = settings.STORAGES["default"]["BACKEND"]
+    backend = backend_id(path)
     if backend in {
         constants.STORAGE_BACKENDS.FILESYSTEM,
         constants.STORAGE_BACKENDS.S3,
@@ -34,11 +36,20 @@ def storage_redirect_backend(app_configs, **kwargs):
         constants.STORAGE_BACKENDS.GCS,
     }:
         return []
+
+    # An unregistered default backend can still redirect through Pulp's URL hook.
+    try:
+        implementation = import_string(path)
+    except (ImportError, AttributeError):
+        implementation = None
+    if callable(getattr(implementation, "pulp_url", None)):
+        return []
+
     return [
         CheckError(
-            "STORAGES['default']['BACKEND'] must map to a redirect-capable "
-            "DOMAIN_STORAGE_BACKENDS entry when REDIRECT_TO_OBJECT_STORAGE is enabled.",
-            id="pulpcore.E002",
+            "STORAGES['default']['BACKEND'] must map to a supported storage type "
+            "or implement pulp_url when REDIRECT_TO_OBJECT_STORAGE is enabled.",
+            id="pulpcore.E003",
         )
     ]
 

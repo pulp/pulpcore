@@ -342,6 +342,7 @@ def _ensure_default_domain(sender, apps, **kwargs):
             from pulpcore.app.util import get_default_domain
 
             default = get_default_domain()  # Cache the default domain
+            # A class-path change within one backend must not rewrite the legacy row.
             storage_changed = default_backend_id() != (
                 backend_id(default.storage_class) or default.storage_class
             )

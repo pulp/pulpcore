@@ -56,14 +56,14 @@ DEFAULT_CONTENT_TYPES = [
 
 
 class BaseSettingsClass(HiddenFieldsMixin, serializers.Serializer):
-    """A Base Serializer class for different Storage Backend Settings."""
+    """Validate the persisted settings shared by a backend's implementations."""
 
     STORAGE_BACKEND = None
     SETTING_MAPPING = None
 
     def to_representation(self, instance):
-        """Handle getting settings values for default domain case."""
-        # Should I convert back the saved settings to their Setting names for to_representation?
+        """Show the process settings used by the default Domain's Django storage."""
+        # Process settings overlay the default Domain's stored settings on reads.
         if getattr(self.context.get("domain", None), "name", None) == "default":
             for setting_name, field in self.SETTING_MAPPING.items():
                 value = getattr(settings, setting_name, None) or settings.STORAGES["default"].get(
@@ -74,7 +74,7 @@ class BaseSettingsClass(HiddenFieldsMixin, serializers.Serializer):
         return super().to_representation(instance)
 
     def to_internal_value(self, data):
-        """Translate incoming data from storage setting name to storage init arg."""
+        """Translate legacy setting names to the stored constructor arguments."""
         init_keys = set(self.SETTING_MAPPING.values())
         unknown_fields = set()
         fields_to_pop = set()
@@ -98,15 +98,17 @@ class BaseSettingsClass(HiddenFieldsMixin, serializers.Serializer):
         return super().to_internal_value(data)
 
     def create(self, validated_data, schema_version=1):
-        """
-        Create a storage instance based on the stored settings.
+        """Construct the configured implementation from versioned Domain settings.
 
-        Subclasses can override this to instantiate objects needed for creation.
+        A replacement backend may translate the existing settings in its factory.
+        Legacy backends accept version-1 settings as constructor arguments.
         """
         implementation = backend_class(self.STORAGE_BACKEND)
         if factory := getattr(implementation, "from_domain_settings", None):
+            # Pass the validated dict unchanged so a replacement can interpret it.
             return factory(validated_data, schema_version=schema_version)
         if schema_version != 1:
+            # Direct constructor calls have no way to negotiate a newer schema.
             raise ImproperlyConfigured(
                 _("Backend does not support storage settings version {}.").format(schema_version)
             )
@@ -114,7 +116,7 @@ class BaseSettingsClass(HiddenFieldsMixin, serializers.Serializer):
 
 
 class FileSystemSettingsSerializer(BaseSettingsClass):
-    """A Serializer for FileSystem storage settings."""
+    """Validate filesystem settings independently of the selected class path."""
 
     STORAGE_BACKEND = STORAGE_BACKENDS.FILESYSTEM
     SETTING_MAPPING = {
@@ -152,7 +154,7 @@ class TransferConfigSerializer(serializers.Serializer):
 
 
 class AmazonS3SettingsSerializer(BaseSettingsClass):
-    """A Serializer for Amazon S3 storage settings."""
+    """Validate the existing S3 schema for compatible implementations."""
 
     STORAGE_BACKEND = STORAGE_BACKENDS.S3
     SETTING_MAPPING = {
@@ -239,8 +241,9 @@ class AmazonS3SettingsSerializer(BaseSettingsClass):
         return data
 
     def create(self, validated_data, schema_version=1):
-        """Special handling for TransferConfig if set."""
+        """Give legacy django-storages a TransferConfig, or a factory the raw dict."""
         implementation = backend_class(self.STORAGE_BACKEND)
+        # Factories may not use boto3, so only the legacy constructor needs this conversion.
         if not hasattr(implementation, "from_domain_settings") and (
             transfer_config := validated_data.get("transfer_config")
         ):
@@ -250,7 +253,7 @@ class AmazonS3SettingsSerializer(BaseSettingsClass):
 
 
 class AzureSettingsSerializer(BaseSettingsClass):
-    """A Serializer for Azure storage settings."""
+    """Validate the existing Azure schema for compatible implementations."""
 
     STORAGE_BACKEND = STORAGE_BACKENDS.AZURE
     SETTING_MAPPING = {
@@ -295,7 +298,7 @@ class AzureSettingsSerializer(BaseSettingsClass):
 
 
 class GoogleSettingsSerializer(BaseSettingsClass):
-    """A Serializer for Google storage settings."""
+    """Validate the existing GCS schema for compatible implementations."""
 
     STORAGE_BACKEND = STORAGE_BACKENDS.GCS
     SETTING_MAPPING = {
@@ -345,7 +348,7 @@ class StorageSettingsSerializer(serializers.Serializer):
     }
 
     def to_representation(self, instance):
-        """Return the correct serializer based on the Domain's storage class."""
+        """Serialize settings by backend ID, not by the selected implementation path."""
         serializer_class = self.STORAGE_MAPPING[backend_id(instance.storage_class)]
         serializer = serializer_class(
             instance=instance.storage_settings, context={"domain": instance}
@@ -353,8 +356,7 @@ class StorageSettingsSerializer(serializers.Serializer):
         return serializer.data
 
     def to_internal_value(self, data):
-        """Appropriately convert the incoming data based on the Domain's storage class."""
-        # Handle Creating & Updating
+        """Validate settings against the backend type selected for this Domain."""
         storage_settings = self.root.initial_data.get("storage_settings", {})
         if not isinstance(storage_settings, dict):
             if isinstance(storage_settings, str):
@@ -366,7 +368,7 @@ class StorageSettingsSerializer(serializers.Serializer):
                 raise serializers.ValidationError("Storage settings should be a JSON object.")
 
         if self.root.instance:
-            # Use passed in values, if not present fallback onto current values of instance
+            # Updates keep omitted settings only when the backend type has not changed.
             storage_class = backend_id(
                 self.root.initial_data.get("storage_class", self.root.instance.storage_class)
             )
@@ -380,11 +382,11 @@ class StorageSettingsSerializer(serializers.Serializer):
             serializer = serializer_class(data=storage_settings)
             serializer.is_valid(raise_exception=True)
             ret.update(serializer.validated_data)
-        # Hack to get correct data for DomainSerializer since this field uses source="*"
+        # source="*" requires this field to return the parent serializer's key.
         return {"storage_settings": ret}
 
     def create_storage(self):
-        """Instantiate a storage class based on the Domain's storage class."""
+        """Revalidate persisted settings before constructing the selected backend."""
         if self.root.instance:
             storage_class = backend_id(self.root.instance.storage_class)
             storage_settings = self.root.instance.storage_settings
@@ -402,8 +404,9 @@ class BackendSettingsValidator:
 
     @staticmethod
     def _validate_storage_backend(storage_class, storage_settings):
-        """Ensure that the backend can be used."""
+        """Check the deployment-selected class with the Domain's stored settings."""
         try:
+            # The API value is a legacy identifier; it need not name the installed class.
             backend = backend_class(storage_class)
         except (ImportError, AttributeError, KeyError, ValueError, ImproperlyConfigured):
             raise serializers.ValidationError(
@@ -411,6 +414,7 @@ class BackendSettingsValidator:
             )
 
         try:
+            # Match the construction path used later by Domain.get_storage().
             if factory := getattr(backend, "from_domain_settings", None):
                 factory(storage_settings, schema_version=1)
             else:

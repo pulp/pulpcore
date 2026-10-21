@@ -3,32 +3,6 @@
 Pulp uses [django-storages](https://django-storages.readthedocs.io) to support multiple storage backends.
 See the reference for the [`STORAGES` settings](site:pulpcore/docs/admin/reference/settings/#storages).
 
-The Domain API and database continue to use the existing storage class paths. Pulp interprets
-those paths as backend identifiers internally, so the implementation can change without rewriting
-Domain records. Requests may also use stable IDs such as `filesystem`, `s3`, or `azure`; Pulp stores
-and returns the corresponding historical path to remain compatible with older clients and Pulp
-processes. Existing S3Boto3 paths are preserved rather than normalized to the newer S3 path.
-
-To replace the implementation for non-default domains, configure
-[`DOMAIN_STORAGE_BACKENDS`](site:pulpcore/docs/admin/reference/settings/#domain_storage_backends).
-The default domain uses `STORAGES["default"]["BACKEND"]`; set both paths when replacing its
-implementation. A replacement class may accept the version-1 `storage_settings` keyword arguments
-directly, or provide `from_domain_settings(settings, schema_version=1)` to translate them. To
-support redirects and native ranged reads, it may provide `pulp_url(name, headers, method)` and
-`open_stream(name, start=0, length=None)` context managers, respectively. Without `open_stream`,
-Pulp falls back to Django's `open()` and `seek()`; that fallback bounds response bytes but may
-buffer an entire remote object in the storage implementation. An adapter must reject any
-settings it cannot honor; changing the class path alone does not make unsupported
-settings safe to ignore.
-
-Test a replacement against the existing objects and signed-URL behavior before changing every
-Pulp process. A code-only swap needs no Domain migration if the old and new implementations use
-the same bucket/container, prefix, object names, credentials, and URL behavior. A change in physical
-location still requires the Domain storage migration operation. This compatibility release can be
-rolled out while older API, content, and worker processes continue serving requests. Keep the old
-storage package installed until all older processes and the rollback window have ended.
-No database migration is required for this compatibility release.
-
 ## Modifying the settings
 
 The settings can be updated via the `settings.py` file or through environment variables

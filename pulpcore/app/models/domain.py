@@ -62,6 +62,7 @@ class Domain(BaseModel, AutoAddObjPermsMixin):
         implementation = backend_path(self.storage_class)
         if date_storage_tuple := storages.get(self.pulp_id):
             last_updated, path, storage = date_storage_tuple
+            # A settings-only implementation swap must invalidate the process cache.
             if self.pulp_last_updated == last_updated and path == implementation:
                 return storage
 

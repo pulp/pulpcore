@@ -38,10 +38,6 @@ pulpcore & pulp-file functional tests require both client bindings to be install
 
 **Always** use the `oci-env` to run the functional and unit tests.
 
-`oci-env test -p pulpcore unit` always includes the full unit suite; use pytest's `-k` to narrow it. In a multi-plugin dev container, database-backed tests can fail during test-database migration with `InvalidBasesError: Cannot resolve bases for rpm.RpmDistribution`, before any test runs. Check the active pulp_rpm branch and migration state before attributing this to the test.
-
-The unit suite may exit successfully but still print test-database teardown and aiohttp session-cleanup warnings after the pytest summary. Check the exit code and summary separately from these teardown messages.
-
 ## Modifying template_config.yml
 
 Use the `plugin-template` tool after any changes made to `template_config.yml`.
