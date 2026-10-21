@@ -710,8 +710,18 @@ class Handler:
                             artifacts_to_find[pa.content_artifact.pk] = name
 
             if repo_version or publication.pass_through:
+                # Filter by relative_path first (selective, indexed) and check repository
+                # membership with a correlated EXISTS instead of `content__in=`, which forces
+                # Postgres to materialize the entire version's content set before applying the
+                # path filter. For a path with no matches this lets the planner short-circuit
+                # without touching the membership table at all.
+                content_in_version = models.Exists(
+                    content_repo_ver._content_relationships().filter(
+                        content_id=models.OuterRef("content_id")
+                    )
+                )
                 cas = ContentArtifact.objects.select_related("artifact").filter(
-                    content__in=content_repo_ver.content, relative_path__startswith=path
+                    content_in_version, relative_path__startswith=path
                 )
                 for ca in cas:
                     name = file_or_directory_name(path, ca.relative_path)

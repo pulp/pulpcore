@@ -1,0 +1,1 @@
+Fixed a slow query in the content app's directory listing that forced Postgres to materialize a repository version's entire content set before checking the requested path, making lookups for nonexistent paths (e.g. bot traffic probing nonexistent directories) scale with repository size instead of running in constant time.
