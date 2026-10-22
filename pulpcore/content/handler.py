@@ -45,6 +45,7 @@ from django.db import (  # noqa: E402
     models,
     transaction,
 )
+from django.db.models import Exists, OuterRef  # noqa: E402
 from jinja2 import Template  # noqa: E402
 
 from pulpcore.app import mime_types  # noqa: E402
@@ -897,11 +898,14 @@ class Handler:
                             "artifact", "artifact__pulp_domain"
                         )
                         .filter(
-                            content__in=publication.repository_version._content_relationships().values(
-                                "content_id"
-                            )
+                            Exists(
+                                publication.repository_version._content_relationships().filter(
+                                    content_id=OuterRef("content_id")
+                                )
+                            ),
+                            relative_path=original_rel_path,
                         )
-                        .aget(relative_path=original_rel_path)
+                        .aget()
                     )
 
                 except MultipleObjectsReturned:
@@ -964,10 +968,14 @@ class Handler:
             try:
                 ca = await ContentArtifact.objects.select_related(
                     "artifact", "artifact__pulp_domain"
-                ).aget(
-                    content__in=repo_version._content_relationships().values("content_id"),
+                ).filter(
+                    Exists(
+                        repo_version._content_relationships().filter(
+                            content_id=OuterRef("content_id")
+                        )
+                    ),
                     relative_path=original_rel_path,
-                )
+                ).aget()
 
             except MultipleObjectsReturned:
                 log.error(
