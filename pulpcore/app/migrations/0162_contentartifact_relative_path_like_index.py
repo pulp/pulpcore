@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
             model_name="contentartifact",
             index=BTreeIndex(
                 OpClass("relative_path", name="text_pattern_ops"),
-                name="core_contentartifact_relative_path_like",
+                name="core_conten_relativ_like_idx",
             ),
         ),
     ]
