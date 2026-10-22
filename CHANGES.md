@@ -8,6 +8,30 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.105.24 (2026-10-22) {: #3.105.24 }
+
+### REST API {: #3.105.24-rest-api }
+
+#### Bugfixes {: #3.105.24-rest-api-bugfix }
+
+- Fixed responses for a distribution being cached from the previous repository version, and served until the cache entry expired, when they were requested while a new version was being created.
+  [#8246](https://github.com/pulp/pulpcore/issues/8246)
+- Fixed a foreign key error when a first-time pull-through download fails digest validation; the content app now reports the intended checksum error and closes the connection.
+
+### Plugin API {: #3.105.24-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.105.24-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.105.24-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.105.23 (2026-10-15) {: #3.105.23 }
 
 ### REST API {: #3.105.23-rest-api }
