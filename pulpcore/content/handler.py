@@ -974,7 +974,12 @@ class Handler:
                 contentartifact_exists = False
             else:
                 contentartifact_exists = await ContentArtifact.objects.filter(
-                    content__in=repo_version.content, relative_path=index_path
+                    Exists(
+                        repo_version._content_relationships().filter(
+                            content_id=OuterRef("content_id")
+                        )
+                    ),
+                    relative_path=index_path,
                 ).aexists()
             if contentartifact_exists:
                 original_rel_path = index_path
