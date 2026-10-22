@@ -1001,16 +1001,20 @@ class Handler:
                     )
 
             try:
-                ca = await ContentArtifact.objects.select_related(
-                    "artifact", "artifact__pulp_domain"
-                ).filter(
-                    Exists(
-                        repo_version._content_relationships().filter(
-                            content_id=OuterRef("content_id")
-                        )
-                    ),
-                    relative_path=original_rel_path,
-                ).aget()
+                ca = (
+                    await ContentArtifact.objects.select_related(
+                        "artifact", "artifact__pulp_domain"
+                    )
+                    .filter(
+                        Exists(
+                            repo_version._content_relationships().filter(
+                                content_id=OuterRef("content_id")
+                            )
+                        ),
+                        relative_path=original_rel_path,
+                    )
+                    .aget()
+                )
 
             except MultipleObjectsReturned:
                 log.error(
