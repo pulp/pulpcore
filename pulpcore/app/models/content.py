@@ -669,7 +669,7 @@ class ContentArtifact(BaseModel, QueryMixin):
             # e.g. for directory listings served from a repository version.
             BTreeIndex(
                 OpClass("relative_path", name="text_pattern_ops"),
-                name="core_contentartifact_relative_path_like",
+                name="core_conten_relativ_like_idx",
             ),
         ]
 
