@@ -51,6 +51,7 @@ class Command(BaseCommand):
         def _repair_for_domain(domain, alias):
             for remote_pk in (
                 Remote.objects.using(alias)
+                .filter(pulp_domain=domain)
                 .filter(possibly_affected_remotes)
                 .values_list("pk", flat=True)
             ):

@@ -3,6 +3,7 @@ from django.contrib.postgres.fields import HStoreField
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.db import models
+from django.db.models.deletion import PROTECT, get_candidate_relations_to_delete
 from django_lifecycle import BEFORE_CREATE, BEFORE_DELETE, BEFORE_UPDATE, hook
 
 from pulpcore.app.models import AutoAddObjPermsMixin, BaseModel
@@ -124,6 +125,26 @@ class Domain(BaseModel, AutoAddObjPermsMixin):
         for artifact in self.artifact_set.using(self.database_alias).all().iterator():
             # Delete on by one to properly cleanup the storage.
             artifact.delete()
+
+        # Domain always lives in 'default' (it's control-plane), so Django's own PROTECT check
+        # for this delete runs against 'default' and can't see anything living on
+        # self.database_alias instead -- e.g. a Repository on a satellite alias. Without this,
+        # the domain would be deletable on 'default' while repositories (or other PROTECT-related
+        # data-plane rows) referencing it still exist on the satellite. Re-check every PROTECT
+        # relation Django would otherwise check, pointed at the domain's own alias instead.
+        # Existence-only: a full django.db.models.deletion.Collector walk constructs real model
+        # instances, which trips over MasterModel's pulp_type lazy-reload for a deferred field
+        # loaded from a non-ambient alias.
+        for related in get_candidate_relations_to_delete(self._meta):
+            if related.field.remote_field.on_delete is not PROTECT:
+                continue
+            related_model = related.related_model
+            if (
+                related_model.objects.using(self.database_alias)
+                .filter(**{related.field.name: self})
+                .exists()
+            ):
+                raise DomainProtectedError()
 
     class Meta:
         permissions = [

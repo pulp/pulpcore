@@ -3,6 +3,7 @@ from uuid import uuid4
 import pytest
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
+from django.test import TestCase
 
 from pulpcore.app.contexts import with_domain
 from pulpcore.app.models import Domain, Group, Repository
@@ -42,12 +43,16 @@ def _replicated_permission_ids(replica, alias):
 
 @pytest.fixture
 def satellite_domain():
-    domain = Domain.objects.create(
-        name="rbac-sync-test-domain",
-        storage_class="pulpcore.app.models.storage.FileSystem",
-        storage_settings={"location": "/tmp/rbac-sync-test-domain"},
-        database_alias=SATELLITE_ALIAS,
-    )
+    # Domain replication to the satellite is deferred via transaction.on_commit (see
+    # domain_sync.on_domain_post_save), which never fires under pytest-django's test-wrapping
+    # transaction unless explicitly flushed like this.
+    with TestCase.captureOnCommitCallbacks(execute=True):
+        domain = Domain.objects.create(
+            name="rbac-sync-test-domain",
+            storage_class="pulpcore.app.models.storage.FileSystem",
+            storage_settings={"location": "/tmp/rbac-sync-test-domain"},
+            database_alias=SATELLITE_ALIAS,
+        )
     yield domain
     domain.delete()
 
@@ -94,6 +99,26 @@ class TestReplicateIdentities:
         replica = User.objects.using(SATELLITE_ALIAS).get(pk=user.pk)
         assert replica.username == user.username
 
+    def test_last_login_only_save_does_not_replicate(self, user):
+        """Regression test for review comment on PR #7862: update_last_login() saves with
+        update_fields=["last_login"] on every login; replicating that to every satellite
+        synchronously would make login latency scale with satellite count. on_user_post_save
+        should skip replication when last_login is the only field that changed."""
+        from django.utils import timezone
+
+        User.objects.using(SATELLITE_ALIAS).filter(pk=user.pk).delete()
+
+        user.last_login = timezone.now()
+        user.save(update_fields=["last_login"])
+
+        assert not User.objects.using(SATELLITE_ALIAS).filter(pk=user.pk).exists()
+
+        # A real field change must still replicate.
+        user.username = f"renamed-{user.username}"
+        user.save(update_fields=["username"])
+
+        assert User.objects.using(SATELLITE_ALIAS).filter(pk=user.pk).exists()
+
     def test_group_replicates_with_permissions(self, group, viewer_role):
         perm = Permission.objects.get(content_type__app_label="core", codename="view_repository")
         group.permissions.add(perm)
@@ -122,6 +147,34 @@ class TestReplicateIdentities:
         assert User.objects.using(SATELLITE_ALIAS).filter(pk=user.pk).exists()
         assert Group.objects.using(SATELLITE_ALIAS).filter(pk=group.pk).exists()
         assert Role.objects.using(SATELLITE_ALIAS).filter(pulp_id=viewer_role.pulp_id).exists()
+
+    def test_ensure_replicated_on_alias_does_not_target_every_satellite(
+        self, user, group, viewer_role, monkeypatch
+    ):
+        """Regression test for review comment on PR #7862: ensure_replicated_on_alias(alias)
+        ignored `alias` and called replicate_user/group/role with no aliases= override, which
+        fall back to satellite_aliases() -- every satellite, not just the one being backfilled.
+        Migrating one satellite then retried every User/Group/Role against every OTHER satellite
+        too, with real sleep-backed retries each. Asserting satellite_aliases() is never even
+        called proves the backfill no longer falls through to that default."""
+        import pulpcore.app.rbac_sync as rbac_sync
+
+        def _fail_if_called():
+            raise AssertionError(
+                "ensure_replicated_on_alias must not fall back to satellite_aliases()"
+            )
+
+        monkeypatch.setattr(rbac_sync, "satellite_aliases", _fail_if_called)
+        try:
+            ensure_replicated_on_alias(SATELLITE_ALIAS)
+
+            assert User.objects.using(SATELLITE_ALIAS).filter(pk=user.pk).exists()
+            assert Group.objects.using(SATELLITE_ALIAS).filter(pk=group.pk).exists()
+            assert Role.objects.using(SATELLITE_ALIAS).filter(pulp_id=viewer_role.pulp_id).exists()
+        finally:
+            # Fixture teardown below (remove_replicated_*) legitimately needs the real
+            # satellite_aliases(); don't leave the patch in place for it.
+            monkeypatch.undo()
 
 
 class TestGrantRouting:

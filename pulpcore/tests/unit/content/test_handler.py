@@ -10,6 +10,7 @@ from aiohttp import web
 from aiohttp.test_utils import make_mocked_request
 from aiohttp.web_exceptions import HTTPMovedPermanently
 from django.db import IntegrityError
+from django.test import TestCase
 from django_guid import clear_guid, set_guid
 
 from pulpcore.app.contexts import with_domain
@@ -507,12 +508,16 @@ def test_pull_through_save_single_artifact_content(
 def test_pull_through_save_single_artifact_content_multi_db(
     request123, download_result_mock, monkeypatch, tmp_path
 ):
-    domain = Domain.objects.create(
-        name="ki27-pull-through-domain",
-        storage_class="pulpcore.app.models.storage.FileSystem",
-        storage_settings={"location": str(tmp_path)},
-        database_alias=SATELLITE_ALIAS,
-    )
+    # Domain replication to the satellite is deferred via transaction.on_commit (see
+    # domain_sync.on_domain_post_save), which never fires under pytest-django's test-wrapping
+    # transaction unless explicitly flushed like this.
+    with TestCase.captureOnCommitCallbacks(execute=True):
+        domain = Domain.objects.create(
+            name="ki27-pull-through-domain",
+            storage_class="pulpcore.app.models.storage.FileSystem",
+            storage_settings={"location": str(tmp_path)},
+            database_alias=SATELLITE_ALIAS,
+        )
     try:
         with with_domain(domain):
             remote = Remote.objects.create(name="123", url="https://123")

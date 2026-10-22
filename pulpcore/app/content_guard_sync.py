@@ -49,25 +49,26 @@ def _cast_on_own_alias(guard):
     return model.objects.using(guard._state.db).get(pk=guard.pk)
 
 
-def _replicate_one_save(model, pk, values, attempts=REPLICATION_RETRY_ATTEMPTS):
+def _replicate_one_save(model, pk, values, alias, attempts=REPLICATION_RETRY_ATTEMPTS):
     pk_field = model._meta.pk.attname
     delay = REPLICATION_RETRY_BACKOFF
     for attempt in range(1, attempts + 1):
         try:
-            manager = model.objects.using("default")
+            manager = model.objects.using(alias)
             try:
                 instance = manager.get(**{pk_field: pk})
                 for key, value in values.items():
                     setattr(instance, key, value)
             except model.DoesNotExist:
                 instance = model(**{pk_field: pk}, **values)
-            instance.save(using="default")
+            instance.save(using=alias)
             return instance
         except Exception:
             logger.warning(
-                "Replicating %s(pk=%s) to 'default' failed (attempt %d/%d).",
+                "Replicating %s(pk=%s) to '%s' failed (attempt %d/%d).",
                 model.__name__,
                 pk,
+                alias,
                 attempt,
                 attempts,
                 exc_info=True,
@@ -76,39 +77,39 @@ def _replicate_one_save(model, pk, values, attempts=REPLICATION_RETRY_ATTEMPTS):
                 time.sleep(delay)
                 delay *= 2
     logger.error(
-        "Replicating %s(pk=%s) to 'default' failed after %d attempts. Domain."
-        "default_content_guard referencing it may fail to validate until it is reconciled.",
+        "Replicating %s(pk=%s) to '%s' failed after %d attempts. A reference to it from that "
+        "alias may fail to validate until it is reconciled.",
         model.__name__,
         pk,
+        alias,
         attempts,
     )
     return None
 
 
-def _set_guard_membership_on_default(replica, child_pks):
+def _set_guard_membership_on_alias(replica, alias, child_pks):
     # replica.guards.set(...) would resolve the through table's write alias via the router based
-    # on ContentGuard (a data-plane model) -- ambient, not necessarily 'default' -- so write the
+    # on ContentGuard (a data-plane model) -- ambient, not necessarily alias -- so write the
     # through table directly instead, mirroring rbac_sync._set_permissions_on_alias.
     field = type(replica)._meta.get_field("guards")
     through = field.remote_field.through
     source_id = f"{field.m2m_field_name()}_id"
     target_id = f"{field.m2m_reverse_field_name()}_id"
-    through.objects.using("default").filter(**{source_id: replica.pk}).delete()
-    through.objects.using("default").bulk_create(
+    through.objects.using(alias).filter(**{source_id: replica.pk}).delete()
+    through.objects.using(alias).bulk_create(
         [through(**{source_id: replica.pk, target_id: pk}) for pk in child_pks]
     )
 
 
-def replicate_content_guard_to_default(guard, attempts=REPLICATION_RETRY_ATTEMPTS):
+def replicate_content_guard_to_alias(guard, alias, attempts=REPLICATION_RETRY_ATTEMPTS):
     """
-    Replicate ``guard`` -- resolved to its concrete subclass -- into 'default', recursing into
+    Replicate `guard` -- resolved to its concrete subclass -- into `alias`, recursing into
     its child guards and 'guards' membership first if it's a CompositeContentGuard.
 
-    No-ops if ``guard`` already lives in 'default' (the common case: a content guard lives in
-    'default' unless its owning domain is mapped to a satellite alias).
+    No-ops if `guard` already lives on `alias`.
     """
     guard = _cast_on_own_alias(guard)
-    if guard._state.db == "default":
+    if guard._state.db == alias:
         return
 
     from pulpcore.app.models import CompositeContentGuard
@@ -117,13 +118,22 @@ def replicate_content_guard_to_default(guard, attempts=REPLICATION_RETRY_ATTEMPT
     if isinstance(guard, CompositeContentGuard):
         children = list(guard.guards.all())
         for child in children:
-            replicate_content_guard_to_default(child, attempts=attempts)
+            replicate_content_guard_to_alias(child, alias, attempts=attempts)
 
     values = _field_values(guard, exclude=(guard._meta.pk.attname,))
-    replica = _replicate_one_save(type(guard), guard.pk, values, attempts=attempts)
+    replica = _replicate_one_save(type(guard), guard.pk, values, alias, attempts=attempts)
 
     if replica is not None and children is not None:
-        _set_guard_membership_on_default(replica, [child.pk for child in children])
+        _set_guard_membership_on_alias(replica, alias, [child.pk for child in children])
+
+
+def replicate_content_guard_to_default(guard, attempts=REPLICATION_RETRY_ATTEMPTS):
+    """Replicate `guard` into 'default'. See replicate_content_guard_to_alias.
+
+    No-ops if ``guard`` already lives in 'default' (the common case: a content guard lives in
+    'default' unless its owning domain is mapped to a satellite alias).
+    """
+    replicate_content_guard_to_alias(guard, "default", attempts=attempts)
 
 
 def remove_content_guard_default_replica(pk, attempts=REPLICATION_RETRY_ATTEMPTS):

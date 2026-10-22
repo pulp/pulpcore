@@ -710,6 +710,14 @@ def for_each_domain(callback):
             callback(domain, alias)
 
 
+def for_each_alias(callback):
+    """Like for_each_domain, but for callbacks that operate on a whole database alias at once
+    (e.g. a model with no pulp_domain of its own) instead of one domain's slice of it -- calling
+    this once per domain sharing that alias would reprocess the same rows multiple times."""
+    for alias in settings.DATABASES:
+        callback(alias)
+
+
 def cache_key(base_path, domain=None):
     """Return the cache base key or keys for the passed base path or paths."""
     if settings.DOMAIN_ENABLED:

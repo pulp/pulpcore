@@ -8,7 +8,7 @@ from django.db.models import Q, Sum
 
 from pulpcore import constants
 from pulpcore.app import pulp_hashlib
-from pulpcore.app.util import for_each_domain
+from pulpcore.app.util import for_each_alias
 from pulpcore.plugin.models import (
     Artifact,
     Content,
@@ -166,12 +166,12 @@ class Command(BaseCommand):
             allowed_checksums
         )
 
-        def _report_for_domain(domain, alias):
-            self.stdout.write(_("\n=== Domain '{name}' ===").format(name=domain.name))
+        def _report_for_alias(alias):
+            self.stdout.write(_("\n=== Database '{name}' ===").format(name=alias))
             self._show_on_demand_content(forbidden_checksums, alias)
             self._show_immediate_content(forbidden_checksums, alias)
 
-        for_each_domain(_report_for_domain)
+        for_each_alias(_report_for_alias)
 
     def handle(self, *args, **options):
         if options["report"]:
@@ -185,7 +185,7 @@ class Command(BaseCommand):
         log.setLevel(logging.ERROR)
         hrefs = set()
 
-        def _populate_missing_for_domain(domain, alias):
+        def _populate_missing_for_alias(alias):
             for checksum in settings.ALLOWED_CONTENT_CHECKSUMS:
                 params = {f"{checksum}__isnull": True}
                 artifacts_qs = Artifact.objects.using(alias).filter(**params)
@@ -213,7 +213,7 @@ class Command(BaseCommand):
                 if artifacts:
                     Artifact.objects.using(alias).bulk_update(objs=artifacts, fields=[checksum])
 
-        for_each_domain(_populate_missing_for_domain)
+        for_each_alias(_populate_missing_for_alias)
 
         if hrefs:
             raise CommandError(
@@ -224,19 +224,17 @@ class Command(BaseCommand):
             settings.ALLOWED_CONTENT_CHECKSUMS
         )
 
-        def _remove_forbidden_for_domain(domain, alias):
+        def _remove_forbidden_for_alias(alias):
             for checksum in forbidden_checksums:
                 search_params = {f"{checksum}__isnull": False}
                 update_params = {f"{checksum}": None}
                 artifacts_qs = Artifact.objects.using(alias).filter(**search_params)
                 if artifacts_qs.exists():
                     self.stdout.write(
-                        "Removing forbidden checksum {} from database (domain '{}')".format(
-                            checksum, domain.name
-                        )
+                        "Removing forbidden checksum {} from database '{}'".format(checksum, alias)
                     )
                     artifacts_qs.update(**update_params)
 
-        for_each_domain(_remove_forbidden_for_domain)
+        for_each_alias(_remove_forbidden_for_alias)
 
         self.stdout.write(_("Finished aligning checksums with settings.ALLOWED_CONTENT_CHECKSUMS"))

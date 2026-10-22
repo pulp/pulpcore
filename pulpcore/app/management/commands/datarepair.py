@@ -149,6 +149,7 @@ class Command(BaseCommand):
         def _repair_2327_for_domain(domain, alias):
             for remote_pk in (
                 models.Remote.objects.using(alias)
+                .filter(pulp_domain=domain)
                 .filter(possibly_affected_remotes)
                 .values_list("pk", flat=True)
             ):
