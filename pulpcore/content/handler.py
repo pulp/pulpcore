@@ -663,6 +663,8 @@ class Handler:
 
         Returns:
             Set of strings representing the files and directories in the directory listing.
+            If DIRECTORY_LISTING_LIMIT is set and the listing exceeds it, the listing is
+            truncated and a "…" marker entry is included.
         """
 
         def update_date(dates, name, timestamp):
@@ -719,7 +721,15 @@ class Handler:
                     ),
                     relative_path__startswith=path,
                 )
+                listing_limit = settings.DIRECTORY_LISTING_LIMIT
+                if listing_limit:
+                    # Fetch one extra row so truncation can be detected without a count query.
+                    cas = cas[: listing_limit + 1]
                 for ca in cas:
+                    if listing_limit and len(directory_list) >= listing_limit:
+                        # Too many entries to render; mark the listing as truncated.
+                        directory_list.add("…")
+                        break
                     name = file_or_directory_name(path, ca.relative_path)
                     directory_list.add(name)
                     update_content_date(content_dates, ca.content_id, ca.pulp_created)
@@ -732,9 +742,13 @@ class Handler:
 
             if directory_list:
                 # Find the dates the content got added to the repository
-                for rc in content_repo_ver._content_relationships():
-                    if rc.content_id in content_to_find:
-                        content_dates[rc.content_id] = rc.pulp_created
+                content_dates.update(
+                    dict(
+                        content_repo_ver._content_relationships()
+                        .filter(content_id__in=list(content_to_find))
+                        .values_list("content_id", "pulp_created")
+                    )
+                )
 
                 # Prefer repository membership dates, then aggregate the newest date per entry.
                 for content_id, names in content_to_find.items():
