@@ -308,7 +308,9 @@ async def test_list_directory_metadata(monkeypatch, use_publication):
         SimpleNamespace(objects=remote_artifact_manager),
     )
 
-    repo_version = SimpleNamespace(content=[], _content_relationships=lambda: [])
+    relationships = Mock()
+    relationships.filter.return_value.values_list.return_value = []
+    repo_version = SimpleNamespace(content=[], _content_relationships=lambda: relationships)
 
     if use_publication:
         publication_manager = Mock()
