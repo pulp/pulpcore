@@ -8,6 +8,34 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.85.33 (2026-10-22) {: #3.85.33 }
+
+### REST API {: #3.85.33-rest-api }
+
+#### Bugfixes {: #3.85.33-rest-api-bugfix }
+
+- Fixed responses for a distribution being cached from the previous repository version, and served until the cache entry expired, when they were requested while a new version was being created.
+  [#8246](https://github.com/pulp/pulpcore/issues/8246)
+
+#### Improved Documentation {: #3.85.33-rest-api-doc }
+
+- Modernized documentation around signing docs.
+- Separated and improved documentation around the database encryption key.
+
+### Plugin API {: #3.85.33-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.85.33-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.33-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.85.32 (2026-10-14) {: #3.85.32 }
 
 ### REST API {: #3.85.32-rest-api }
