@@ -962,9 +962,20 @@ class Handler:
             # Look for index.html or list the directory
             index_path = "{}index.html".format(rel_path)
 
-            contentartifact_exists = await ContentArtifact.objects.filter(
-                content__in=repo_version.content, relative_path=index_path
-            ).aexists()
+            # File-ish paths (no trailing slash, dot in the last segment, e.g.
+            # "a-1.0.0.jar") can never have a ContentArtifact at "<path>/index.html",
+            # so skip the existence probe entirely. Directory URLs (trailing slash
+            # or dot-less last segment) still probe below. A dotted *directory*
+            # name without a slash falls through to list_directory(), which issues
+            # the trailing-slash redirect; the redirected request probes again and
+            # serves index.html as before (one extra redirect, same content).
+            last_segment = rel_path.rstrip("/").rsplit("/", 1)[-1]
+            if not ends_in_slash and "." in last_segment:
+                contentartifact_exists = False
+            else:
+                contentartifact_exists = await ContentArtifact.objects.filter(
+                    content__in=repo_version.content, relative_path=index_path
+                ).aexists()
             if contentartifact_exists:
                 original_rel_path = index_path
                 headers = self.response_headers(original_rel_path, distro)
