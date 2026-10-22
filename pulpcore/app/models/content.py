@@ -16,7 +16,7 @@ from itertools import chain
 
 from django.conf import settings
 from django.contrib.postgres.fields import HStoreField
-from django.contrib.postgres.indexes import GinIndex
+from django.contrib.postgres.indexes import BtreeIndex, GinIndex, OpClass
 from django.core import validators
 from django.db import IntegrityError, models, transaction
 from django.forms.models import model_to_dict
@@ -663,7 +663,15 @@ class ContentArtifact(BaseModel, QueryMixin):
 
     class Meta:
         unique_together = ("content", "relative_path")
-        indexes = [models.Index(fields=["relative_path"])]
+        indexes = [
+            models.Index(fields=["relative_path"]),
+            # Supports LIKE 'prefix%' (relative_path__startswith) regardless of collation,
+            # e.g. for directory listings served from a repository version.
+            BtreeIndex(
+                OpClass("relative_path", name="text_pattern_ops"),
+                name="core_contentartifact_relative_path_like",
+            ),
+        ]
 
     @staticmethod
     def sort_key(ca):
