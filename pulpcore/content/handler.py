@@ -712,7 +712,12 @@ class Handler:
 
             if repo_version or publication.pass_through:
                 cas = ContentArtifact.objects.select_related("artifact").filter(
-                    content__in=content_repo_ver.content, relative_path__startswith=path
+                    Exists(
+                        content_repo_ver._content_relationships().filter(
+                            content_id=OuterRef("content_id")
+                        )
+                    ),
+                    relative_path__startswith=path,
                 )
                 for ca in cas:
                     name = file_or_directory_name(path, ca.relative_path)
