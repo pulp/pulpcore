@@ -1,5 +1,5 @@
-from django.contrib.postgres.operations import AddIndexConcurrently
 from django.contrib.postgres.indexes import BTreeIndex, OpClass
+from django.contrib.postgres.operations import AddIndexConcurrently
 from django.db import migrations
 
 
