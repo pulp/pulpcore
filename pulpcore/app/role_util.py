@@ -55,17 +55,10 @@ def assign_role(rolename, entity, obj=None, domain=None):
                     rolename
                 )
             )
-    # Every grant has exactly one home, and pulpcore.app.rbac_sync never replicates any of them.
-    # A domain-wide grant resolves explicitly to that domain's own alias, since ambient context
-    # can't be trusted the way it can for an object-scoped request (someone can grant access to a
-    # different domain than the one they're currently acting in). An object-level grant resolves
-    # explicitly to its target object's own alias instead, for the same reason -- and critically,
-    # because the target may be a control-plane model (Task, TaskSchedule, Group, ...) that always
-    # lives in 'default' regardless of the ambient domain the grant is being created from; ambient
-    # routing would otherwise land the grant on a satellite the target object was never on, making
-    # it invisible to any query scoped to the target's own alias. Only a grant tied to neither an
-    # object nor a domain trusts ambient routing: it lands wherever the request creating it is
-    # already scoped, and only ever applies there.
+    # Every grant has exactly one home and is never replicated (see rbac_sync). A domain-wide or
+    # object-level grant resolves explicitly to that domain's/object's own alias, since ambient
+    # context can't be trusted (e.g. an object may be a control-plane model always in 'default',
+    # regardless of the ambient domain). Only a grant tied to neither trusts ambient routing.
     if domain is not None:
         using = domain.database_alias
     elif obj is not None:

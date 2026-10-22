@@ -96,12 +96,11 @@ class Command(BaseCommand):
         else:
 
             def _collect_for_domain(domain, alias):
+                distributions = Distribution.objects.using(alias).filter(pulp_domain=domain)
                 if options.get("distribution_path_prefix"):
-                    distributions = Distribution.objects.using(alias).filter(
+                    distributions = distributions.filter(
                         base_path__startswith=options["distribution_path_prefix"]
                     )
-                else:
-                    distributions = Distribution.objects.using(alias).all()
 
                 if options["type"]:
                     distributions = distributions.filter(pulp_type__startswith=options["type"])

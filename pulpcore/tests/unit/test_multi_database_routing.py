@@ -2,6 +2,7 @@ from contextlib import contextmanager
 
 import pytest
 from django.conf import settings
+from django.test import TestCase
 
 from pulpcore.app.contexts import with_domain
 from pulpcore.app.db_router import is_multi_db_routing_active
@@ -24,12 +25,16 @@ pytestmark = [requires_multi_db, pytest.mark.django_db(databases=["default", SAT
 
 @contextmanager
 def _satellite_domain(**extra_fields):
-    domain = Domain.objects.create(
-        name=f"test-satellite-domain-{extra_fields.get('_suffix', '')}".rstrip("-"),
-        storage_class="pulpcore.app.models.storage.FileSystem",
-        database_alias=SATELLITE_ALIAS,
-        **{k: v for k, v in extra_fields.items() if k != "_suffix"},
-    )
+    # Domain replication to the satellite is deferred via transaction.on_commit (see
+    # domain_sync.on_domain_post_save), which never fires under pytest-django's test-wrapping
+    # transaction unless explicitly flushed like this.
+    with TestCase.captureOnCommitCallbacks(execute=True):
+        domain = Domain.objects.create(
+            name=f"test-satellite-domain-{extra_fields.get('_suffix', '')}".rstrip("-"),
+            storage_class="pulpcore.app.models.storage.FileSystem",
+            database_alias=SATELLITE_ALIAS,
+            **{k: v for k, v in extra_fields.items() if k != "_suffix"},
+        )
     try:
         yield domain
     finally:

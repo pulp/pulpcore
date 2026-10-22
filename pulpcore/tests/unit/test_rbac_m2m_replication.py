@@ -12,6 +12,7 @@ import uuid
 
 import pytest
 from django.contrib.auth.models import Permission
+from django.db import connections
 
 from pulpcore.app.models import Group
 from pulpcore.app.models.role import Role
@@ -76,5 +77,58 @@ class TestRolePermissionM2MReplication:
             group.permissions.clear()
 
             assert _replicated_permission_ids(replica, SATELLITE_ALIAS) == set()
+        finally:
+            group.delete()
+
+
+class TestPermissionPkDriftAcrossAliases:
+    """Regression test for review comment on PR #7862: a Permission's pk is NOT guaranteed to
+    match across aliases (it depends on each database's own migration history), so copying pks
+    verbatim can point a replicated grant at the wrong row -- or no row at all -- on a satellite
+    whose auth_permission table drifted from 'default'. rbac_sync now translates by
+    (app_label, codename) instead of trusting the pk."""
+
+    @pytest.fixture
+    def drifted_permission(self):
+        """Give 'view_task' a different pk on the satellite than it has on 'default', the way a
+        satellite added after 'default' had accrued/removed unrelated ContentTypes would."""
+        perm = Permission.objects.using("default").get(
+            content_type__app_label="core", codename="view_task"
+        )
+        drifted_pk = perm.pk + 1_000_000
+        with connections[SATELLITE_ALIAS].cursor() as cursor:
+            cursor.execute(
+                "UPDATE auth_permission SET id = %s WHERE id = %s", [drifted_pk, perm.pk]
+            )
+        try:
+            yield perm, drifted_pk
+        finally:
+            with connections[SATELLITE_ALIAS].cursor() as cursor:
+                cursor.execute(
+                    "UPDATE auth_permission SET id = %s WHERE id = %s", [perm.pk, drifted_pk]
+                )
+
+    def test_role_permission_replicates_to_the_satellites_own_pk(self, drifted_permission):
+        perm, drifted_pk = drifted_permission
+        role = Role.objects.create(name=f"pk-drift-role-{uuid.uuid4()}")
+        try:
+            role.permissions.set([perm])
+
+            replica = Role.objects.using(SATELLITE_ALIAS).get(pulp_id=role.pulp_id)
+            assert _replicated_permission_ids(replica, SATELLITE_ALIAS) == {drifted_pk}, (
+                "Replication should translate 'view_task' to the satellite's own pk for that "
+                "permission, not copy 'default's pk verbatim."
+            )
+        finally:
+            role.delete()
+
+    def test_group_permission_replicates_to_the_satellites_own_pk(self, drifted_permission):
+        perm, drifted_pk = drifted_permission
+        group = Group.objects.create(name=f"pk-drift-group-{uuid.uuid4()}")
+        try:
+            group.permissions.set([perm])
+
+            replica = Group.objects.using(SATELLITE_ALIAS).get(pk=group.pk)
+            assert _replicated_permission_ids(replica, SATELLITE_ALIAS) == {drifted_pk}
         finally:
             group.delete()

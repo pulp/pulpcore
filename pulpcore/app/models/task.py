@@ -446,16 +446,9 @@ class CreatedResource(GenericRelationModel):
         from pulpcore.app.db_router import is_multi_db_routing_active
 
         if is_multi_db_routing_active():
-            # content_object is a plain, unmodified GenericForeignKey (intentionally -- see
-            # pulpcore.app.models.generic) and can point at a data-plane object living on a
-            # different database than this (control-plane) row -- a real cross-database generic
-            # relationship, which can't be represented. Only skip persisting created-resource
-            # tracking for a target that's actually on a satellite alias, though: a target that
-            # happens to live on 'default' (the same alias CreatedResource itself always uses,
-            # being control-plane -- see CONTROL_PLANE_LABELS) has no cross-database relationship
-            # to avoid, and task-cancellation cleanup depends on this tracking existing for it.
-            # content_object is always already cached here (every call site constructs this model
-            # with content_object= set directly, right before saving), so this never queries.
+            # Skip tracking a target on a satellite alias, to avoid a cross-database generic
+            # relation; a target on 'default' needs no such skip and cancellation cleanup
+            # depends on it being tracked.
             content_object = self.content_object
             target_db = content_object._state.db if content_object is not None else None
             if target_db is not None and target_db != "default":

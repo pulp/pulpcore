@@ -9,6 +9,7 @@ at all -- and task-cancellation cleanup depends on this tracking existing.
 """
 
 import pytest
+from django.test import TestCase
 
 from pulpcore.app.contexts import with_domain
 from pulpcore.app.models import Domain, Repository, Task
@@ -22,12 +23,16 @@ pytestmark = [requires_multi_db, pytest.mark.django_db(databases=["default", SAT
 
 @pytest.fixture
 def satellite_domain():
-    domain = Domain.objects.create(
-        name="created-resource-tracking-domain",
-        storage_class="pulpcore.app.models.storage.FileSystem",
-        storage_settings={"location": "/tmp/created-resource-tracking-domain"},
-        database_alias=SATELLITE_ALIAS,
-    )
+    # Domain replication to the satellite is deferred via transaction.on_commit (see
+    # domain_sync.on_domain_post_save), which never fires under pytest-django's test-wrapping
+    # transaction unless explicitly flushed like this.
+    with TestCase.captureOnCommitCallbacks(execute=True):
+        domain = Domain.objects.create(
+            name="created-resource-tracking-domain",
+            storage_class="pulpcore.app.models.storage.FileSystem",
+            storage_settings={"location": "/tmp/created-resource-tracking-domain"},
+            database_alias=SATELLITE_ALIAS,
+        )
     yield domain
     domain.delete()
 

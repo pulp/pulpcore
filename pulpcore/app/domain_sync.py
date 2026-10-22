@@ -2,6 +2,7 @@ import logging
 import time
 
 from django.conf import settings
+from django.db import transaction
 from django.db.models import Q
 
 logger = logging.getLogger(__name__)
@@ -86,6 +87,9 @@ def reconcile_domains_to_alias(alias, dry_run=False):
     for pulp_id in missing | stale:
         values = domain_field_values(desired_domains[pulp_id])
         values.pop("pulp_id")
+        _ensure_default_content_guard_on_alias(
+            values.get("default_content_guard_id"), alias, REPLICATION_RETRY_ATTEMPTS
+        )
         try:
             instance = Domain.objects.using(alias).get(pulp_id=pulp_id)
             for key, value in values.items():
@@ -99,8 +103,27 @@ def reconcile_domains_to_alias(alias, dry_run=False):
     return {"missing": missing, "extra": extra, "stale": stale}
 
 
+def _ensure_default_content_guard_on_alias(default_content_guard_id, alias, attempts):
+    # default_content_guard is a real, DB-enforced FK. Postgres has no cross-database foreign
+    # keys, so if the guard only lives in 'default' (the common case), writing this Domain's
+    # fields to a satellite as-is would violate that satellite's own copy of the FK. Give the
+    # satellite its own local copy of the guard first, mirroring models.domain.Domain's
+    # _replicate_default_content_guard hook for the opposite (satellite guard -> 'default') case.
+    if default_content_guard_id is None:
+        return
+    from pulpcore.app.content_guard_sync import replicate_content_guard_to_alias
+    from pulpcore.app.models import ContentGuard
+
+    guard = ContentGuard.objects.using("default").get(pk=default_content_guard_id)
+    replicate_content_guard_to_alias(guard, alias, attempts=attempts)
+
+
 def _replicate_one_save(alias, pulp_id, defaults, attempts):
     from pulpcore.app.models import Domain
+
+    _ensure_default_content_guard_on_alias(
+        defaults.get("default_content_guard_id"), alias, attempts
+    )
 
     delay = REPLICATION_RETRY_BACKOFF
     for attempt in range(1, attempts + 1):
@@ -167,10 +190,13 @@ def _replicate_one_delete(alias, pulp_id, attempts):
 def on_domain_post_save(sender, instance, created, using, **kwargs):
     if using != "default":
         return
-    replicate_domain_save(instance, using=using)
+    # Replicating synchronously here would let a satellite see a save that 'default' later rolls
+    # back. on_commit defers it until 'default's transaction actually commits.
+    transaction.on_commit(lambda: replicate_domain_save(instance, using=using), using=using)
 
 
 def on_domain_post_delete(sender, instance, using, **kwargs):
     if using != "default":
         return
-    replicate_domain_delete(instance, using=using)
+    # See on_domain_post_save: defer until 'default's transaction actually commits.
+    transaction.on_commit(lambda: replicate_domain_delete(instance, using=using), using=using)

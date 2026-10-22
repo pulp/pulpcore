@@ -20,6 +20,7 @@ import uuid
 import pytest
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
+from django.test import TestCase
 
 from pulpcore.app.contexts import with_domain
 from pulpcore.app.models import Domain, Task
@@ -37,12 +38,16 @@ pytestmark = [requires_multi_db, pytest.mark.django_db(databases=["default", SAT
 
 @pytest.fixture
 def satellite_domain():
-    domain = Domain.objects.create(
-        name=f"grant-routing-{uuid.uuid4().hex[:10]}",
-        storage_class="pulpcore.app.models.storage.FileSystem",
-        storage_settings={"location": "/tmp/grant-routing-domain"},
-        database_alias=SATELLITE_ALIAS,
-    )
+    # Domain replication to the satellite is deferred via transaction.on_commit (see
+    # domain_sync.on_domain_post_save), which never fires under pytest-django's test-wrapping
+    # transaction unless explicitly flushed like this.
+    with TestCase.captureOnCommitCallbacks(execute=True):
+        domain = Domain.objects.create(
+            name=f"grant-routing-{uuid.uuid4().hex[:10]}",
+            storage_class="pulpcore.app.models.storage.FileSystem",
+            storage_settings={"location": "/tmp/grant-routing-domain"},
+            database_alias=SATELLITE_ALIAS,
+        )
     yield domain
     domain.delete()
 

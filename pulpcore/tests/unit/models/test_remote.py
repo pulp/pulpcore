@@ -6,6 +6,7 @@ from cryptography.fernet import InvalidToken
 from django.conf import settings
 from django.core.management import call_command
 from django.db import connection
+from django.test import TestCase
 
 from pulpcore.app.contexts import with_domain
 from pulpcore.app.models import Domain, Remote
@@ -63,12 +64,16 @@ def test_rotate_db_key(fake_fernet):
     satellite_remote = None
     satellite_domain = None
     if SATELLITE_ALIAS in settings.DATABASES:
-        satellite_domain = Domain.objects.create(
-            name=uuid4(),
-            storage_class="pulpcore.app.models.storage.FileSystem",
-            storage_settings={"base_path": "/satellite"},
-            database_alias=SATELLITE_ALIAS,
-        )
+        # Domain replication to the satellite is deferred via transaction.on_commit (see
+        # domain_sync.on_domain_post_save), which never fires under pytest-django's test-wrapping
+        # transaction unless explicitly flushed like this.
+        with TestCase.captureOnCommitCallbacks(execute=True):
+            satellite_domain = Domain.objects.create(
+                name=uuid4(),
+                storage_class="pulpcore.app.models.storage.FileSystem",
+                storage_settings={"base_path": "/satellite"},
+                database_alias=SATELLITE_ALIAS,
+            )
         with with_domain(satellite_domain):
             satellite_remote = Remote.objects.create(
                 name=uuid4(), proxy_password="satellite-secret"

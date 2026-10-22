@@ -204,9 +204,14 @@ class Publication(MasterModel):
             if base_paths:
                 Cache().delete(base_key=cache_key(base_paths))
 
-        CreatedResource.objects.filter(object_id=self.pk).delete()
-        with atomic():
-            return super().delete(**kwargs)
+        # Nested in an outer atomic(using="default"): CreatedResource is control-plane and always
+        # lives in 'default', which may differ from this publication's own alias, so a single
+        # atomic() can't cover both. This restores the old all-or-nothing behavior for single-DB
+        # installs and keeps the CreatedResource delete in 'default's own transaction otherwise.
+        with atomic(using="default"):
+            CreatedResource.objects.filter(object_id=self.pk).delete()
+            with atomic():
+                return super().delete(**kwargs)
 
     def finalize_new_publication(self):
         """
