@@ -1,5 +1,5 @@
 from django.contrib.postgres.operations import AddIndexConcurrently
-from django.contrib.postgres.indexes import BtreeIndex, OpClass
+from django.contrib.postgres.indexes import BTreeIndex, OpClass
 from django.db import migrations
 
 
@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
     operations = [
         AddIndexConcurrently(
             model_name="contentartifact",
-            index=BtreeIndex(
+            index=BTreeIndex(
                 OpClass("relative_path", name="text_pattern_ops"),
                 name="core_contentartifact_relative_path_like",
             ),
