@@ -897,7 +897,9 @@ class Handler:
                             "artifact", "artifact__pulp_domain"
                         )
                         .filter(
-                            content__in=publication.repository_version.content,
+                            content__in=publication.repository_version._content_relationships().values(
+                                "content_id"
+                            )
                         )
                         .aget(relative_path=original_rel_path)
                     )
@@ -962,7 +964,10 @@ class Handler:
             try:
                 ca = await ContentArtifact.objects.select_related(
                     "artifact", "artifact__pulp_domain"
-                ).aget(content__in=repo_version.content, relative_path=original_rel_path)
+                ).aget(
+                    content__in=repo_version._content_relationships().values("content_id"),
+                    relative_path=original_rel_path,
+                )
 
             except MultipleObjectsReturned:
                 log.error(
