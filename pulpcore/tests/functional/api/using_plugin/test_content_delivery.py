@@ -8,6 +8,7 @@ from urllib.parse import urljoin
 
 import pytest
 import requests
+from aiohttp import web
 from aiohttp.client_exceptions import ClientPayloadError, ClientResponseError
 
 from pulpcore.client.pulp_file import FileRepositorySyncURL
@@ -163,6 +164,60 @@ def test_remote_content_changed_with_on_demand(
     # THEN
     assert result.returncode == 0
     assert b"< HTTP/1.1 404 Not Found" in result.stderr
+
+
+@pytest.mark.parallel
+@pytest.mark.parametrize("failure", ["connection", "server_error"])
+def test_remote_unavailable_on_demand(
+    failure,
+    basic_manifest_path,
+    file_fixtures_root,
+    gen_threaded_aiohttp_server,
+    gen_object_with_cleanup,
+    distribution_base_url,
+    file_repo_with_auto_publish,
+    file_bindings,
+    monitor_task,
+    file_distribution_factory,
+):
+    """
+    GIVEN a content synced with on-demand
+    WHEN its remote cannot be reached or answers with a server error
+    THEN the content app returns a 502
+    """
+    unavailable = False
+
+    async def handler(request):
+        relative_path = request.raw_path[1:]
+        if unavailable and "PULP_MANIFEST" not in relative_path:
+            if failure == "connection":
+                request.transport.close()
+            raise web.HTTPServiceUnavailable()
+        return web.FileResponse(file_fixtures_root / relative_path)
+
+    app = web.Application()
+    app.add_routes([web.get("/{tail:.*}", handler)])
+    server = gen_threaded_aiohttp_server(app, None, [])
+    remote = gen_object_with_cleanup(
+        file_bindings.RemotesFileApi,
+        {
+            "name": str(uuid.uuid4()),
+            "url": server.make_url(basic_manifest_path),
+            "policy": "on_demand",
+        },
+    )
+    body = FileRepositorySyncURL(remote=remote.pulp_href)
+    monitor_task(
+        file_bindings.RepositoriesFileApi.sync(file_repo_with_auto_publish.pulp_href, body).task
+    )
+    repo = file_bindings.RepositoriesFileApi.read(file_repo_with_auto_publish.pulp_href)
+    distribution = file_distribution_factory(repository=repo.pulp_href)
+    content_name = list(get_files_in_manifest(remote.url))[0][0]
+
+    unavailable = True
+    with pytest.raises(ClientResponseError) as exc:
+        download_file(urljoin(distribution_base_url(distribution.base_url), content_name))
+    assert exc.value.status == 502
 
 
 @pytest.mark.parallel
