@@ -44,6 +44,23 @@ types. For ranged content reads, a replacement may expose a synchronous
 `seek()` if the hook is absent; that fallback bounds the returned bytes but may buffer a whole
 remote object. The stream must release its resources when the context exits.
 
+## Use storage from a plugin
+
+Plugin code should use `pulpcore.plugin.util.get_local_storage_path(file, domain=None)` when it
+needs an actual filesystem path. It returns `None` when the backend does not provide one; other
+storage errors are propagated. Use `get_direct_storage_url(file, headers=None, http_method=None,
+domain=None)` when a consumer needs a URL directly to object storage. It returns `None` when the
+Domain uses filesystem storage or has redirects disabled, and raises `NotImplementedError` when
+redirects are requested from an unsupported backend. Both functions accept a Pulp-managed file
+such as `Artifact.file` or `PulpTemporaryFile.file`. If the file belongs to another Domain, pass
+that Domain explicitly; otherwise they use the current Domain.
+
+The URL function accepts generic `Content-Type` and `Content-Disposition` response headers and
+translates them into the selected provider's signed URL parameters. Plugins should not inspect
+`storage_class` or pass provider-specific parameters to `storage.url()`. The existing
+`get_artifact_url(artifact, ...)` differs: it always returns a URL, falling back to the content
+app when a direct URL is unavailable.
+
 ## Roll out a replacement
 
 Keep the Domain's storage type, bucket or container, prefix, object names, credentials, and URL

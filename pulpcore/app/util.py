@@ -574,6 +574,41 @@ def _artifact_serving_distribution():
     return models.ArtifactDistribution.objects.get()
 
 
+def get_local_storage_path(file, domain=None):
+    """Return a Pulp-managed file's local path, or `None` if storage has no path.
+
+    `domain` defaults to the current Domain. Other errors from the storage, such
+    as an invalid name, are not interpreted as a missing local-path capability.
+    """
+    domain = domain if domain is not None else get_domain()
+    try:
+        return domain.get_storage().path(file.name)
+    except NotImplementedError:
+        return None
+
+
+def get_direct_storage_url(file, headers=None, http_method=None, domain=None):
+    """Return a direct URL for a Pulp-managed file when redirects are enabled.
+
+    Return `None` for filesystem storage or a Domain that serves content itself.
+    Unsupported redirect backends raise `NotImplementedError`. `domain` defaults
+    to the current Domain; callers handling a file from another Domain must pass it.
+    """
+    domain = domain if domain is not None else get_domain()
+    if (
+        domain.storage_backend == STORAGE_BACKENDS.FILESYSTEM
+        or not domain.redirect_to_object_storage
+    ):
+        return None
+    return signed_url(
+        domain.get_storage(),
+        domain.storage_backend,
+        file.name,
+        headers=headers,
+        method=http_method,
+    )
+
+
 def get_artifact_url(artifact, headers=None, http_method=None):
     """Get artifact url.
 
@@ -588,21 +623,18 @@ def get_artifact_url(artifact, headers=None, http_method=None):
     artifact_file = artifact.file
     content_disposition = f"attachment;filename={artifact.pk}"
     artifact_domain = artifact.pulp_domain
-    if (
-        artifact_domain.storage_backend == STORAGE_BACKENDS.FILESYSTEM
-        or not artifact_domain.redirect_to_object_storage
-    ):
-        return _artifact_serving_distribution().artifact_url(artifact)
     response_headers = {"Content-Disposition": content_disposition}
     if headers and headers.get("Content-Type"):
         response_headers["Content-Type"] = headers["Content-Type"]
-    return signed_url(
-        artifact_domain.get_storage(),
-        artifact_domain.storage_backend,
-        artifact_file.name,
+    direct_url = get_direct_storage_url(
+        artifact_file,
         headers=response_headers,
-        method=http_method,
+        http_method=http_method,
+        domain=artifact_domain,
     )
+    if direct_url is not None:
+        return direct_url
+    return _artifact_serving_distribution().artifact_url(artifact)
 
 
 def get_current_user():

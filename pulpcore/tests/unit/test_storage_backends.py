@@ -1,6 +1,7 @@
 """Tests for the stable Domain storage boundary."""
 
 from io import BytesIO
+from types import SimpleNamespace
 
 import pytest
 from django.test import override_settings
@@ -19,6 +20,7 @@ from pulpcore.app.storage_backends import (
     open_stream,
     signed_url,
 )
+from pulpcore.plugin.util import get_artifact_url, get_direct_storage_url, get_local_storage_path
 
 
 def test_backend_choice_preserves_legacy_api_values():
@@ -125,6 +127,124 @@ def test_implementation_mapping_does_not_change_backend_id():
     assert backend_id("example.adapters.S3Storage") == "s3"
     assert backend_path("s3") == "example.adapters.S3Storage"
     assert legacy_backend_path("example.adapters.S3Storage") == "storages.backends.s3.S3Storage"
+
+
+def test_local_storage_path_uses_backend_capability():
+    """A plugin can serve a local file without identifying its storage class."""
+    file = SimpleNamespace(name="artifact/abc")
+    storage = SimpleNamespace(path=lambda name: f"/media/{name}")
+    domain = SimpleNamespace(get_storage=lambda: storage)
+
+    assert get_local_storage_path(file, domain=domain) == "/media/artifact/abc"
+
+    def unsupported_path(name):
+        raise NotImplementedError
+
+    storage.path = unsupported_path
+    assert get_local_storage_path(file, domain=domain) is None
+
+    def invalid_path(name):
+        raise ValueError("invalid name")
+
+    storage.path = invalid_path
+    with pytest.raises(ValueError, match="invalid name"):
+        get_local_storage_path(file, domain=domain)
+
+
+@pytest.mark.parametrize(
+    ("kind", "redirect"),
+    [("filesystem", True), ("s3", False)],
+)
+def test_direct_storage_url_is_absent_when_content_app_serves_file(kind, redirect):
+    """Local storage and Domains with redirects disabled have no direct URL."""
+    domain = SimpleNamespace(storage_backend=kind, redirect_to_object_storage=redirect)
+    file = SimpleNamespace(name="artifact/abc")
+    assert get_direct_storage_url(file, domain=domain) is None
+
+
+def test_direct_storage_url_uses_provider_neutral_hook():
+    """A custom implementation signs generic headers without a plugin-side switch."""
+    file = SimpleNamespace(name="artifact/abc")
+
+    class Storage:
+        def pulp_url(self, name, headers, method):
+            assert name == "artifact/abc"
+            assert headers == {
+                "Content-Type": "application/octet-stream",
+                "Content-Disposition": "attachment;filename=archive.tar.gz",
+            }
+            assert method == "HEAD"
+            return "https://example.test/signed"
+
+    domain = SimpleNamespace(
+        storage_backend=None,
+        redirect_to_object_storage=True,
+        get_storage=lambda: Storage(),
+    )
+    assert (
+        get_direct_storage_url(
+            file,
+            headers={
+                "Content-Type": "application/octet-stream",
+                "Content-Disposition": "attachment;filename=archive.tar.gz",
+            },
+            http_method="HEAD",
+            domain=domain,
+        )
+        == "https://example.test/signed"
+    )
+
+
+def test_direct_storage_url_rejects_unsupported_redirect_backend():
+    """An unsupported backend is not mistaken for an intentional content fallback."""
+    domain = SimpleNamespace(
+        storage_backend=None,
+        redirect_to_object_storage=True,
+        get_storage=lambda: object(),
+    )
+    with pytest.raises(NotImplementedError):
+        get_direct_storage_url(SimpleNamespace(name="artifact/abc"), domain=domain)
+
+
+def test_artifact_url_falls_back_to_content_app(monkeypatch):
+    """The existing plugin API still returns a URL when no direct URL exists."""
+    domain = SimpleNamespace(storage_backend="filesystem", redirect_to_object_storage=True)
+    artifact = SimpleNamespace(
+        pk="artifact-id", pulp_domain=domain, file=SimpleNamespace(name="artifact/abc")
+    )
+    distribution = SimpleNamespace(artifact_url=lambda artifact: "/pulp/content/artifact/abc")
+    monkeypatch.setattr("pulpcore.app.util._artifact_serving_distribution", lambda: distribution)
+
+    assert get_artifact_url(artifact) == "/pulp/content/artifact/abc"
+
+
+def test_artifact_url_preserves_existing_direct_headers():
+    """The existing plugin API keeps its artifact filename and content type."""
+
+    class Storage:
+        def pulp_url(self, name, headers, method):
+            assert name == "artifact/abc"
+            assert headers == {
+                "Content-Disposition": "attachment;filename=artifact-id",
+                "Content-Type": "application/octet-stream",
+            }
+            assert method == "HEAD"
+            return "https://example.test/signed"
+
+    domain = SimpleNamespace(
+        storage_backend=None,
+        redirect_to_object_storage=True,
+        get_storage=lambda: Storage(),
+    )
+    artifact = SimpleNamespace(
+        pk="artifact-id", pulp_domain=domain, file=SimpleNamespace(name="artifact/abc")
+    )
+    assert (
+        get_artifact_url(
+            artifact, headers={"Content-Type": "application/octet-stream"}, http_method="HEAD"
+        )
+        == "https://example.test/signed"
+    )
 
 
 def test_s3_signed_url_translates_headers_and_method():
