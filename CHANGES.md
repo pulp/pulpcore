@@ -8,6 +8,29 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.123.1 (2026-10-23) {: #3.123.1 }
+
+### REST API {: #3.123.1-rest-api }
+
+#### Bugfixes {: #3.123.1-rest-api-bugfix }
+
+- Fixed responses for a distribution being cached from the previous repository version, and served until the cache entry expired, when they were requested while a new version was being created.
+  [#8246](https://github.com/pulp/pulpcore/issues/8246)
+
+### Plugin API {: #3.123.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.123.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.123.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.123.0 (2026-10-21) {: #3.123.0 }
 
 ### REST API {: #3.123.0-rest-api }
