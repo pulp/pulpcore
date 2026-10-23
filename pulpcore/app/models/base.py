@@ -6,7 +6,7 @@ from django.db import models
 from django.db.models import options
 from django.db.models.base import ModelBase
 from django_lifecycle import LifecycleModel
-from uuid6 import uuid7
+from uuid_utils.compat import uuid7
 
 
 def pulp_uuid():
