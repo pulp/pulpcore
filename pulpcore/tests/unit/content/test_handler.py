@@ -768,6 +768,22 @@ def test_render_html_normal_name():
     assert '<a href="./simple-dir/">simple-dir/</a>' in html
 
 
+def test_render_html_formats_escaped_names_and_metadata():
+    name = "a&b.jar"
+    html = Handler.render_html(
+        [name],
+        dates={name: datetime(2026, 10, 22, 12, 34)},
+        sizes={name: 1_200},
+    )
+
+    escaped_name = "a&amp;b.jar"
+    expected_row = (
+        f'<a href="./{escaped_name}">{escaped_name}</a>'
+        f"{' ' * (100 - len(escaped_name))}22-Oct-2026 12:34  1.2 kB\n"
+    )
+    assert expected_row in html
+
+
 @pytest.mark.asyncio
 @pytest.mark.django_db
 async def test_async_pull_through_add(ca1, monkeypatch, app_status):
