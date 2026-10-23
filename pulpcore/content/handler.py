@@ -78,6 +78,34 @@ EDGE_CACHE_CONTROL = "public, max-age=0, must-revalidate"
 # Tell HTTP caches not to store redirects containing signed URLs.
 NO_STORE_EDGE_CACHE_CONTROL = "no-store"
 
+DIRECTORY_LISTING_TEMPLATE = Template(
+    """
+<html>
+<head><title>Index of {{ path }}</title></head>
+<body bgcolor="white">
+<h1>Index of {{ path }}</h1>
+<hr><pre>
+{%- if not root %}<a href="../">../</a>{% endif %}
+{% for name in dir_list -%}
+{% if dates.get(name, "") -%}
+{% set date = dates.get(name).strftime("%d-%b-%Y %H:%M") -%}
+{% else -%}
+{% set date = "" -%}
+{% endif -%}
+{% if name in sizes -%}
+{% set size | filesizeformat -%}
+{{ sizes.get(name) }}
+{% endset -%}
+{% else -%}
+{% set size = "" -%}
+{% endif -%}
+<a href="./{{ name|e }}">{{ name|e }}</a>{{ " " * (100 - name|e|length) }}{{ date }}  {{ size }}
+{% endfor -%}
+</pre><hr></body>
+</html>
+"""
+)
+
 
 class PathNotResolved(HTTPNotFound):
     """
@@ -569,35 +597,7 @@ class Handler:
         root = path == settings.CONTENT_PATH_PREFIX
         if root and settings.DOMAIN_ENABLED:
             path += f"{get_domain().name}/"
-        template = Template(
-            """
-<html>
-<head><title>Index of {{ path }}</title></head>
-<body bgcolor="white">
-<h1>Index of {{ path }}</h1>
-<hr><pre>
-{%- if not root %}<a href="../">../</a>{% endif %}
-{% for name in dir_list -%}
-{% if dates.get(name, "") -%}
-{% set date = dates.get(name).strftime("%d-%b-%Y %H:%M") -%}
-{% else -%}
-{% set date = "" -%}
-{% endif -%}
-{% if name in sizes -%}
-{% set size | filesizeformat -%}
-{{ sizes.get(name) }}
-{% endset -%}
-{% else -%}
-{% set size = "" -%}
-{% endif -%}
-<a href="./{{ name|e }}">{{ name|e }}</a>{% for number in range(100 - name|e|length) %} """
-            """{% endfor %}{{ date }}  {{ size }}
-{% endfor -%}
-</pre><hr></body>
-</html>
-"""
-        )
-        return template.render(
+        return DIRECTORY_LISTING_TEMPLATE.render(
             dir_list=sorted(directory_list),
             dates=dates,
             path=path,
