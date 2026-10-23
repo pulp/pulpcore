@@ -106,12 +106,18 @@ GCS_RESPONSE_HEADER_MAP = {
     "Content-Type": "response_type",
 }
 
-# Storage-type mapped to storage-response-map
+STORAGE_BACKENDS = SimpleNamespace(
+    FILESYSTEM="filesystem",
+    S3="s3",
+    AZURE="azure",
+    GCS="gcs",
+)
+
+# Stable storage backend ID mapped to its legacy URL parameter names.
 STORAGE_RESPONSE_MAP = {
-    "storages.backends.s3boto3.S3Boto3Storage": S3_RESPONSE_HEADER_MAP,
-    "storages.backends.s3.S3Storage": S3_RESPONSE_HEADER_MAP,
-    "storages.backends.azure_storage.AzureStorage": AZURE_RESPONSE_HEADER_MAP,
-    "storages.backends.gcloud.GoogleCloudStorage": GCS_RESPONSE_HEADER_MAP,
+    STORAGE_BACKENDS.S3: S3_RESPONSE_HEADER_MAP,
+    STORAGE_BACKENDS.AZURE: AZURE_RESPONSE_HEADER_MAP,
+    STORAGE_BACKENDS.GCS: GCS_RESPONSE_HEADER_MAP,
 }
 
 # Message users receive when attempting to delete a protected repo version

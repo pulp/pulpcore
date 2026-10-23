@@ -77,6 +77,15 @@ STORAGES = {
     },
 }
 
+# Domain class paths are treated as legacy backend identifiers. Override a path
+# here to change the implementation without rewriting stored Domain rows.
+DOMAIN_STORAGE_BACKENDS = {
+    constants.STORAGE_BACKENDS.FILESYSTEM: "pulpcore.app.models.storage.FileSystem",
+    constants.STORAGE_BACKENDS.S3: "storages.backends.s3.S3Storage",
+    constants.STORAGE_BACKENDS.AZURE: "storages.backends.azure_storage.AzureStorage",
+    constants.STORAGE_BACKENDS.GCS: "storages.backends.gcloud.GoogleCloudStorage",
+}
+
 REDIRECT_TO_OBJECT_STORAGE = True
 
 WORKING_DIRECTORY = DEPLOY_ROOT / "tmp"
@@ -461,19 +470,6 @@ REDACT_UNSAFE_EXCEPTIONS = False
 
 # Validators
 
-storage_validator = (
-    Validator("REDIRECT_TO_OBJECT_STORAGE", eq=False)
-    | Validator("STORAGES.default.BACKEND", eq="pulpcore.app.models.storage.FileSystem")
-    | Validator("STORAGES.default.BACKEND", eq="storages.backends.azure_storage.AzureStorage")
-    | Validator("STORAGES.default.BACKEND", eq="storages.backends.s3.S3Storage")
-    | Validator("STORAGES.default.BACKEND", eq="storages.backends.s3boto3.S3Boto3Storage")
-    | Validator("STORAGES.default.BACKEND", eq="storages.backends.gcloud.GoogleCloudStorage")
-)
-storage_validator.messages["combined"] = (
-    "'REDIRECT_TO_OBJECT_STORAGE=True' is only supported with the local file, S3, GCP or Azure "
-    "storage backend configured in STORAGES['default']['BACKEND']."
-)
-
 cache_enabled_validator = Validator("CACHE_ENABLED", eq=True)
 redis_url_validator = Validator("REDIS_URL", must_exist=True, when=cache_enabled_validator)
 redis_host_validator = Validator("REDIS_HOST", must_exist=True, when=cache_enabled_validator)
@@ -693,7 +689,6 @@ settings = DjangoDynaconf(
         worker_type_allowed_values_validator,
         worker_type_redis_validator,
         sha256_validator,
-        storage_validator,
         unknown_algs_validator,
         json_header_auth_validator,
         authentication_json_header_openapi_security_scheme_validator,
