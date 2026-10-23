@@ -1568,6 +1568,30 @@ No significant changes.
 
 ---
 
+## 3.105.24 (2026-10-22) {: #3.105.24 }
+
+### REST API {: #3.105.24-rest-api }
+
+#### Bugfixes {: #3.105.24-rest-api-bugfix }
+
+- Fixed responses for a distribution being cached from the previous repository version, and served until the cache entry expired, when they were requested while a new version was being created.
+  [#8246](https://github.com/pulp/pulpcore/issues/8246)
+- Fixed a foreign key error when a first-time pull-through download fails digest validation; the content app now reports the intended checksum error and closes the connection.
+
+### Plugin API {: #3.105.24-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.105.24-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.105.24-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.105.23 (2026-10-15) {: #3.105.23 }
 
 ### REST API {: #3.105.23-rest-api }
@@ -3101,6 +3125,34 @@ No significant changes.
 
 ---
 
+## 3.85.33 (2026-10-22) {: #3.85.33 }
+
+### REST API {: #3.85.33-rest-api }
+
+#### Bugfixes {: #3.85.33-rest-api-bugfix }
+
+- Fixed responses for a distribution being cached from the previous repository version, and served until the cache entry expired, when they were requested while a new version was being created.
+  [#8246](https://github.com/pulp/pulpcore/issues/8246)
+
+#### Improved Documentation {: #3.85.33-rest-api-doc }
+
+- Modernized documentation around signing docs.
+- Separated and improved documentation around the database encryption key.
+
+### Plugin API {: #3.85.33-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.85.33-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.33-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.85.32 (2026-10-14) {: #3.85.32 }
 
 ### REST API {: #3.85.32-rest-api }
@@ -4606,6 +4658,26 @@ No significant changes.
   [#6244](https://github.com/pulp/pulpcore/issues/6244)
 
 ### Pulp Cert Guard {: #3.74.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.73.46 (2026-10-22) {: #3.73.46 }
+
+### REST API {: #3.73.46-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.73.46-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.73.46-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.46-pulp-cert-guard }
 
 No significant changes.
 
@@ -6335,6 +6407,26 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.64.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.63.49 (2026-10-22) {: #3.63.49 }
+
+### REST API {: #3.63.49-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.63.49-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.49-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.49-pulp-cert-guard }
 
 No significant changes.
 
@@ -8282,6 +8374,26 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard
+
+No significant changes.
+
+---
+
+## 3.49.72 (2026-10-22) {: #3.49.72 }
+
+### REST API {: #3.49.72-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.49.72-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.72-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.72-pulp-cert-guard }
 
 No significant changes.
 
