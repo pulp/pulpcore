@@ -176,6 +176,16 @@ class FileRepositorySerializer(RepositorySerializer):
         read_only=True,
     )
 
+    versioned = serializers.BooleanField(
+        help_text=_(
+            "Whether the repository keeps repository versions. Unversioned repositories store "
+            "their content directly and do not support publications or version retention. "
+            "Can only be set on creation."
+        ),
+        default=True,
+        required=False,
+    )
+
     def validate(self, data):
         """Validate the FileRepository data."""
         data = super().validate(data)
@@ -188,6 +198,17 @@ class FileRepositorySerializer(RepositorySerializer):
             ),
         )
 
+        if self.instance and "versioned" in data and data["versioned"] != self.instance.versioned:
+            raise serializers.ValidationError(
+                {"versioned": _("Can only be set on repository creation.")}
+            )
+        versioned = data.get("versioned", self.instance.versioned if self.instance else True)
+        if not versioned:
+            for field in ("autopublish", "retain_repo_versions", "retain_checkpoints"):
+                if data.get(field):
+                    raise serializers.ValidationError(
+                        {field: _("Not supported for unversioned repositories.")}
+                    )
         return data
 
     class Meta:
@@ -196,6 +217,7 @@ class FileRepositorySerializer(RepositorySerializer):
             "manifest",
             "sha256sums",
             "last_sync_details",
+            "versioned",
         )
         model = FileRepository
 
