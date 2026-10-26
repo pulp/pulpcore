@@ -15,7 +15,7 @@ from django.contrib.postgres.fields import ArrayField, HStoreField
 from django.core.validators import MinValueValidator
 from django.db import models, transaction
 from django.db.models import F, Func, Q, Value
-from django_lifecycle import AFTER_UPDATE, BEFORE_CREATE, BEFORE_DELETE, hook
+from django_lifecycle import AFTER_UPDATE, BEFORE_CREATE, BEFORE_DELETE, BEFORE_UPDATE, hook
 from rest_framework.exceptions import APIException
 
 from pulpcore.app.loggers import deprecation_logger
@@ -55,6 +55,9 @@ class Repository(MasterModel):
         retain_checkpoints (models.PositiveIntegerField): Number of checkpoint publications to
             keep as checkpoints.
         user_hidden (models.BooleanField): Whether to expose this repo to users via the API
+        versioned (models.BooleanField): Whether the repository tracks its content in repository
+            versions. Unversioned repositories keep their content directly in RepositoryContent.
+            Can only be set on creation.
 
     Relations:
 
@@ -75,6 +78,7 @@ class Repository(MasterModel):
     retain_repo_versions = models.PositiveIntegerField(default=None, null=True)
     retain_checkpoints = models.PositiveIntegerField(default=None, null=True)
     user_hidden = models.BooleanField(default=False)
+    versioned = models.BooleanField(default=True)
     content = models.ManyToManyField(
         "Content", through="RepositoryContent", related_name="repositories"
     )
@@ -84,6 +88,10 @@ class Repository(MasterModel):
     class Meta:
         unique_together = ("name", "pulp_domain")
         verbose_name_plural = "repositories"
+
+    @hook(BEFORE_UPDATE, when="versioned", has_changed=True)
+    def _prevent_versioned_change(self):
+        raise ValueError(_("The 'versioned' field can only be set on repository creation."))
 
     @property
     def disk_size(self):
@@ -136,7 +144,8 @@ class Repository(MasterModel):
             adding = self._state.adding
             super().save(*args, **kwargs)
             if adding:
-                self.create_initial_version()
+                if self.versioned:
+                    self.create_initial_version()
 
                 # lock the repository if it was created from within a running task
                 task_id = Task.current_id()
@@ -176,8 +185,15 @@ class Repository(MasterModel):
                 whose content will be used as the set of content for the new version
 
         Returns:
-            pulpcore.app.models.RepositoryVersion: The Created RepositoryVersion
+            pulpcore.app.models.RepositoryVersion: The Created RepositoryVersion, or a
+                RepositoryMembership for unversioned repositories.
         """
+        if not self.versioned:
+            if base_version:
+                # there are no versions to use as a base
+                raise ValueError(_("Unversioned repositories do not support 'base_version'."))
+            return RepositoryMembership(self, complete=False)
+
         with transaction.atomic():
             latest_version = self.versions.latest()
             if not latest_version.complete:
@@ -308,9 +324,12 @@ class Repository(MasterModel):
             repository (pulpcore.app.models.Repository): to get the latest version of
 
         Returns:
-            pulpcore.app.models.RepositoryVersion: The latest RepositoryVersion
+            pulpcore.app.models.RepositoryVersion: The latest RepositoryVersion, or a
+                RepositoryMembership for unversioned repositories.
 
         """
+        if not self.versioned:
+            return RepositoryMembership(self)
         with suppress(RepositoryVersion.DoesNotExist):
             model = self.versions.complete().latest()
             return model
@@ -323,9 +342,12 @@ class Repository(MasterModel):
             repository (pulpcore.app.models.Repository): to get the latest version of
 
         Returns:
-            pulpcore.app.models.RepositoryVersion: The latest RepositoryVersion
+            pulpcore.app.models.RepositoryVersion: The latest RepositoryVersion, or a
+                RepositoryMembership for unversioned repositories.
 
         """
+        if not self.versioned:
+            return RepositoryMembership(self)
         with suppress(RepositoryVersion.DoesNotExist):
             model = await self.versions.complete().alatest()
             return model
@@ -852,7 +874,7 @@ class RepositoryContent(BaseModel):
         content (models.ForeignKey): The associated content.
         repository (models.ForeignKey): The associated repository.
         version_added (models.ForeignKey): The RepositoryVersion which added the referenced
-            Content.
+            Content. Null for content of unversioned repositories.
         version_removed (models.ForeignKey): The RepositoryVersion which removed the referenced
             Content.
     """
@@ -865,7 +887,7 @@ class RepositoryContent(BaseModel):
     # version_added and version_removed need to be properly handled in _squash before the version
     # can be deleted
     version_added = models.ForeignKey(
-        "RepositoryVersion", related_name="added_memberships", on_delete=models.RESTRICT
+        "RepositoryVersion", null=True, related_name="added_memberships", on_delete=models.RESTRICT
     )
     version_removed = models.ForeignKey(
         "RepositoryVersion",
@@ -879,6 +901,14 @@ class RepositoryContent(BaseModel):
             ("repository", "content", "version_added"),
             ("repository", "content", "version_removed"),
         )
+        constraints = [
+            # prevents duplicate memberships in unversioned repositories
+            models.UniqueConstraint(
+                fields=["repository", "content"],
+                condition=Q(version_added__isnull=True),
+                name="unique_unversioned_repository_content",
+            ),
+        ]
 
 
 class RepositoryVersionQuerySet(models.QuerySet):
@@ -1604,3 +1634,144 @@ class RepositoryVersionContentDetails(models.Model):
         return full_url
 
     content_href = property(get_content_href)
+
+
+class RepositoryMembership:
+    """
+    The content of an unversioned repository, exposed through the RepositoryVersion interface.
+
+    Returned by `Repository.new_version()` and `Repository.latest_version()` for repositories with
+    `versioned=False`, so code written against repository versions keeps working. Content is stored
+    as RepositoryContent rows without versions. Changes are written immediately and are not rolled
+    back if the operation fails.
+
+    `added()` and `removed()` report the changes made through this instance.
+    """
+
+    # Needed only for compatibility with RepositoryVersion
+    DoesNotExist = RepositoryVersion.DoesNotExist
+    base_version = None
+    pulp_created = None
+
+    def __init__(self, repository, complete=True, exclude=(), include=()):
+        self.repository = repository
+        # False means writable, True means read-only
+        self.complete = complete
+        self._added = set()
+        self._removed = set()
+        self._exclude = set(exclude)
+        self._include = set(include)
+
+    def __str__(self):
+        return "<Repository: {}; unversioned>".format(self.repository.name)
+
+    ### Reads ###
+
+    def _content_relationships(self):
+        return RepositoryContent.objects.filter(
+            repository_id=self.repository.pk, version_added__isnull=True
+        )
+
+    def get_content(self, content_qs=None):
+        if content_qs is None:
+            content_qs = Content.objects
+        content_qs = content_qs.filter(
+            Q(pk__in=self._content_relationships().values("content_id")) | Q(pk__in=self._include)
+        )
+        if self._exclude:
+            content_qs = content_qs.exclude(pk__in=self._exclude)
+        return content_qs
+
+    @property
+    def content(self):
+        return self.get_content()
+
+    def contains(self, content):
+        return self._content_relationships().filter(content_id=content.pk).exists()
+
+    def added(self, base_version=None):
+        return Content.objects.filter(pk__in=self._added)
+
+    def removed(self, base_version=None):
+        return Content.objects.filter(pk__in=self._removed)
+
+    def previous(self):
+        return RepositoryMembership(self.repository, exclude=self._added, include=self._removed)
+
+    ### Checks ###
+
+    def _check_mutable(self, content):
+        assert issubclass(content.model, Content)
+        if self.complete:
+            raise ResourceImmutableError(self)
+        assert (
+            not Content.objects.filter(pk__in=content)
+            .exclude(pulp_domain_id=get_domain_pk())
+            .exists()
+        )
+
+    def _check_content_types(self, pks):
+        repository = self.repository.cast()
+        content_types_seen = set(
+            Content.objects.filter(pk__in=pks).values_list("pulp_type", flat=True).distinct()
+        )
+        content_types_supported = set(ctype.get_pulp_type() for ctype in repository.CONTENT_TYPES)
+        unsupported_types = content_types_seen - content_types_supported
+        if unsupported_types:
+            raise ValueError(_("Saw unsupported content types {}").format(unsupported_types))
+
+    ### Writes ###
+
+    def add_content(self, content):
+        self._check_mutable(content)
+        pks = set(content.values_list("pk", flat=True))
+        existing = set(
+            self._content_relationships()
+            .filter(content_id__in=pks)
+            .values_list("content_id", flat=True)
+        )
+        to_add = pks - existing
+        self._check_content_types(to_add)
+        RepositoryContent.objects.bulk_create(
+            [RepositoryContent(repository=self.repository, content_id=pk) for pk in to_add],
+            ignore_conflicts=True,
+        )
+        # Content removed and re-added through this instance is unchanged
+        self._added |= to_add - self._removed
+        self._removed -= to_add
+
+    def remove_content(self, content):
+        self._check_mutable(content)
+        rows = self._content_relationships().filter(content_id__in=content)
+        removed = set(rows.values_list("content_id", flat=True))
+        rows.delete()
+        # Content added and removed again through this instance is unchanged
+        self._removed |= removed - self._added
+        self._added -= removed
+
+    def set_content(self, content):
+        assert issubclass(content.model, Content)
+        self.remove_content(self.content.exclude(pk__in=content))
+        self.add_content(content.exclude(pk__in=self.content))
+
+    ### Operation lifecycle ###
+
+    def __enter__(self):
+        if self.complete:
+            raise RuntimeError(_("This repository content is complete. It cannot be modified."))
+        repository = self.repository.cast()
+        repository.initialize_new_version(self)
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        try:
+            if not exc_value:
+                repository = self.repository.cast()
+                repository.finalize_new_version(self)
+                if self._added or self._removed:
+                    repository.on_new_version(self)
+        finally:
+            # Changes are already written and are kept on failure, so the cache is stale either way
+            self.complete = True
+            if self._added or self._removed:
+                self.repository.invalidate_cache()

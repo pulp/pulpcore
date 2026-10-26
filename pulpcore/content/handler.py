@@ -933,7 +933,12 @@ class Handler:
                         request, StreamResponse(headers=headers), ca
                     )
 
-        if repo_version and not publication and not distro.SERVE_FROM_PUBLICATION:
+        # Serve from the repository if the plugin has no publications, or the repo is unversioned
+        if (
+            repo_version
+            and not publication
+            and (not distro.SERVE_FROM_PUBLICATION or (repository and not repository.versioned))
+        ):
             # Look for index.html or list the directory
             index_path = "{}index.html".format(rel_path)
 

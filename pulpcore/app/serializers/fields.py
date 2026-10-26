@@ -311,8 +311,11 @@ class LatestVersionField(RepositoryVersionRelatedField):
                 current ViewSet.
 
         Returns:
-            instance [pulpcore.app.models.RepositoryVersion][]
+            instance [pulpcore.app.models.RepositoryVersion][], or None if the repository is
+            unversioned.
         """
+        if not instance.versioned:
+            return None
         if hasattr(instance, "latest_version_number"):
             # Return a shallow object sufficient to create the HREF.
             return models.RepositoryVersion(
