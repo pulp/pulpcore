@@ -301,6 +301,9 @@ WORKER_TYPE = "pulpcore"
 # On SIGINT, this value represents the time before the worker will attempt to kill the subprocess.
 TASK_GRACE_INTERVAL = 600
 
+# Seconds from the first staged content until it is eligible for automatic commit
+STAGING_AUTOCOMMIT_DELAY_SECONDS = 300
+
 # how long to protect ephemeral items in minutes
 ORPHAN_PROTECTION_TIME = 24 * 60
 
