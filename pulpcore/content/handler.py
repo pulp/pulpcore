@@ -722,15 +722,16 @@ class Handler:
                     relative_path__startswith=path,
                 )
                 listing_limit = settings.DIRECTORY_LISTING_LIMIT
-                if listing_limit:
-                    # Fetch one extra row so truncation can be detected without a count query.
-                    cas = cas[: listing_limit + 1]
                 for ca in cas:
-                    if listing_limit and len(directory_list) >= listing_limit:
-                        # Too many entries to render; mark the listing as truncated.
+                    name = file_or_directory_name(path, ca.relative_path)
+                    # Limit distinct entries, not rows: many rows can share one displayed name.
+                    if (
+                        listing_limit
+                        and name not in directory_list
+                        and len(directory_list) >= listing_limit
+                    ):
                         directory_list.add("…")
                         break
-                    name = file_or_directory_name(path, ca.relative_path)
                     directory_list.add(name)
                     update_content_date(content_dates, ca.content_id, ca.pulp_created)
                     content_to_find.setdefault(ca.content_id, set()).add(name)

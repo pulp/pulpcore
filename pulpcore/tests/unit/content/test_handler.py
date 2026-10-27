@@ -339,6 +339,58 @@ async def test_list_directory_metadata(monkeypatch, use_publication):
     assert sizes["file.rpm"] == file_content.artifact.size
 
 
+def _listing_rows(paths):
+    timestamp = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    return [
+        SimpleNamespace(
+            relative_path=relative_path,
+            pulp_created=timestamp,
+            content_id=uuid.uuid4(),
+            artifact=SimpleNamespace(size=1),
+            pk=uuid.uuid4(),
+        )
+        for relative_path in paths
+    ]
+
+
+async def _list_with_limit(monkeypatch, settings, limit, paths):
+    settings.DIRECTORY_LISTING_LIMIT = limit
+    content_artifact_manager = Mock()
+    content_artifact_manager.select_related.return_value.filter.return_value = _listing_rows(paths)
+    monkeypatch.setattr(
+        "pulpcore.content.handler.ContentArtifact",
+        SimpleNamespace(objects=content_artifact_manager),
+    )
+    relationships = Mock()
+    relationships.filter.return_value.values_list.return_value = []
+    repo_version = SimpleNamespace(content=[], _content_relationships=lambda: relationships)
+    directory_list, _, _ = await Handler().list_directory(repo_version, None, "")
+    return directory_list
+
+
+@pytest.mark.asyncio
+async def test_list_directory_limit_counts_entries_not_rows(monkeypatch, settings):
+    """Rows sharing one displayed name do not hide later entries."""
+    paths = ["a/1", "a/2", "a/3", "b/1", "c/1"]
+    directory_list = await _list_with_limit(monkeypatch, settings, 2, paths)
+    assert directory_list == {"a/", "b/", "…"}
+
+
+@pytest.mark.asyncio
+async def test_list_directory_limit_marks_only_when_truncated(monkeypatch, settings):
+    """A listing that fits the limit has no marker, even when the last rows repeat a name."""
+    directory_list = await _list_with_limit(monkeypatch, settings, 2, ["a/1", "b/1", "b/2"])
+    assert directory_list == {"a/", "b/"}
+
+
+@pytest.mark.asyncio
+async def test_list_directory_limit_disabled(monkeypatch, settings):
+    """A limit of 0 lists every entry."""
+    paths = ["a/1", "b/1", "c/1"]
+    directory_list = await _list_with_limit(monkeypatch, settings, 0, paths)
+    assert directory_list == {"a/", "b/", "c/"}
+
+
 @pytest.mark.asyncio
 @pytest.mark.django_db
 async def test_publication_listing_uses_repository_content_date():
