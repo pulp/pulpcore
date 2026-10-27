@@ -7,6 +7,7 @@ Object-storage redirects include Cache-Control: no-store.
 
 import time
 from base64 import b64encode
+from math import ceil
 from urllib.parse import urljoin
 from uuid import uuid4
 
@@ -26,10 +27,12 @@ def assert_full_download(response):
     assert response.status_code == 200
     assert response.content
     assert response.headers.get("Cache-Control") == EDGE_CACHE_CONTROL
-    # Last-Modified must be a real date in the past - never missing, epoch, or in the future
+    # aiohttp.FileResponse rounds fractional file mtimes up to the next second for Last-Modified.
+    # See: https://github.com/pulp/pulpcore/issues/8293
+    rounded_now = ceil(time.time())
     last_modified = response.headers.get("Last-Modified")
     assert last_modified
-    assert 0 < parse_http_date(last_modified) <= time.time()
+    assert 0 < parse_http_date(last_modified) <= rounded_now
 
 
 def assert_not_modified(response):
