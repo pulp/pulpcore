@@ -213,21 +213,27 @@ def commit_staging(repository_pk, **kwargs):
         repository = models.Repository.objects.get(pk=repository_pk).cast()
         staged = models.StagedContent.objects.filter(repository=repository)
         staged_rows = list(staged.values_list("pk", "content_id"))
-        if not staged_rows:
-            return None
+        result = None
+        if staged_rows:
+            with repository.new_version() as version:
+                version.add_content(
+                    models.Content.objects.filter(
+                        pk__in=[content_id for _, content_id in staged_rows]
+                    )
+                )
 
-        with repository.new_version() as version:
-            version.add_content(
-                models.Content.objects.filter(pk__in=[content_id for _, content_id in staged_rows])
-            )
+            staged.filter(pk__in=[pk for pk, _ in staged_rows]).delete()
+            result = _serialize_version(version)
 
-        staged.filter(pk__in=[pk for pk, _ in staged_rows]).delete()
-        return _serialize_version(version)
+        models.Repository.objects.filter(pk=repository_pk).update(next_commit=None)
+        return result
 
 
 def restore_staging(repository_pk, **kwargs):
     """Discard staged content without changing repository versions."""
-    models.StagedContent.objects.filter(repository_id=repository_pk).delete()
+    with transaction.atomic():
+        models.StagedContent.objects.filter(repository_id=repository_pk).delete()
+        models.Repository.objects.filter(pk=repository_pk).update(next_commit=None)
 
 
 def add_and_remove(

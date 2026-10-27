@@ -421,6 +421,15 @@ A JSON object representing the security scheme advertised for the `PulpRemoteUse
 
 Defaults to `{"type": "mutualTLS"}`, which represents x509 certificate based authentication.
 
+### STAGING\_AUTOCOMMIT\_DELAY\_SECONDS
+
+Time in seconds from the first staged content until a repository with autocommit enabled becomes
+eligible for a commit.
+The scheduler's scan interval is separate; this setting does not control how often repositories
+are checked.
+
+Defaults to `300` seconds.
+
 ### TASK\_DIAGNOSTICS
 
 When enabled, users are allowed to request various diagnostics for analysis by a developer.
