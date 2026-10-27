@@ -376,6 +376,19 @@ class PulpSchemaGenerator(SchemaGenerator):
                 resource_model, prefix, pulp_model_alias
             )
             resource_path = "%s}/" % path.rsplit(sep="}", maxsplit=1)[0]
+            # TODO: review this implementation
+            lookup_names = {
+                "pulp_id",
+                getattr(view, "lookup_url_kwarg", None) or getattr(view, "lookup_field", None),
+            }
+            if parent_viewset:
+                parent_lookup = getattr(parent_viewset, "router_lookup", None)
+                if parent_lookup:
+                    lookup_names.add(f"{parent_lookup}_pk")
+            # Keep action parameters after the resource href.
+            for match in re.finditer(r"\{([^{}]+)\}/", path):
+                if match.group(1) in lookup_names:
+                    resource_path = path[: match.end()]
             # This check prevents /pulp/{pulp_domain}/ from being converted for non-detail endpoints
             # Possibly affects plugin-specific urls, depends on their url structure
             if not resource_path.endswith("/{pulp_domain}/"):

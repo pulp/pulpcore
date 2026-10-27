@@ -53,6 +53,12 @@ class RepositorySerializer(ModelSerializer):
         required=False,
         min_value=1,
     )
+    staging_enabled = serializers.BooleanField(
+        help_text=_("Whether content can be staged in this repository."), required=False
+    )
+    staging_autocommit = serializers.BooleanField(
+        help_text=_("Whether staged content is committed on a schedule."), required=False
+    )
     remote = DetailRelatedField(
         help_text=_("An optional remote to use by default when syncing."),
         view_name_pattern=r"remotes(-.*/.*)-detail",
@@ -79,6 +85,8 @@ class RepositorySerializer(ModelSerializer):
             "description",
             "retain_repo_versions",
             "retain_checkpoints",
+            "staging_enabled",
+            "staging_autocommit",
             "remote",
         )
 

@@ -207,6 +207,29 @@ def _serialize_version(version):
     return RepositoryVersionSerializer(version, context={"request": None}).data
 
 
+def commit_staging(repository_pk, **kwargs):
+    """Commit staged content to a repository version and clear those staged entries."""
+    with transaction.atomic():
+        repository = models.Repository.objects.get(pk=repository_pk).cast()
+        staged = models.StagedContent.objects.filter(repository=repository)
+        staged_rows = list(staged.values_list("pk", "content_id"))
+        if not staged_rows:
+            return None
+
+        with repository.new_version() as version:
+            version.add_content(
+                models.Content.objects.filter(pk__in=[content_id for _, content_id in staged_rows])
+            )
+
+        staged.filter(pk__in=[pk for pk, _ in staged_rows]).delete()
+        return _serialize_version(version)
+
+
+def restore_staging(repository_pk, **kwargs):
+    """Discard staged content without changing repository versions."""
+    models.StagedContent.objects.filter(repository_id=repository_pk).delete()
+
+
 def add_and_remove(
     repository_pk,
     add_content_units,

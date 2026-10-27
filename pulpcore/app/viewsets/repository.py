@@ -4,17 +4,21 @@ from gettext import gettext as _
 from django.db.models import Max, Q
 from django_filters import Filter
 from drf_spectacular.utils import extend_schema
-from rest_framework import mixins, serializers
+from rest_framework import mixins, serializers, status
 from rest_framework.decorators import action
+from rest_framework.exceptions import NotFound
+from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
 from pulpcore.app import tasks
 from pulpcore.app.models import (
     Content,
+    ContentArtifact,
     Remote,
     Repository,
     RepositoryContent,
     RepositoryVersion,
+    StagedContent,
 )
 from pulpcore.app.response import OperationPostponedResponse
 from pulpcore.app.serializers import (
@@ -25,7 +29,12 @@ from pulpcore.app.serializers import (
     RepositorySerializer,
     RepositoryVersionSerializer,
 )
-from pulpcore.app.util import resolve_prn, resolve_repository_version_href
+from pulpcore.app.util import (
+    get_url,
+    get_viewset_for_model,
+    resolve_prn,
+    resolve_repository_version_href,
+)
 from pulpcore.app.viewsets import (
     AsyncRemoveMixin,
     AsyncUpdateMixin,
@@ -173,10 +182,130 @@ class ImmutableRepositoryViewSet(
     """
 
 
+class StagingBaseQuerySerializer(serializers.Serializer):
+    def validate(self, attrs):
+        unknown = set(self.initial_data) - set(self.fields)
+        if unknown:
+            raise serializers.ValidationError(
+                {field: _("Unknown query parameter.") for field in sorted(unknown)}
+            )
+        return attrs
+
+
+class StagingGetQuerySerializer(StagingBaseQuerySerializer):
+    limit = serializers.IntegerField(required=False, min_value=1)
+    offset = serializers.IntegerField(required=False, min_value=0)
+
+
+class StagingPostQuerySerializer(StagingBaseQuerySerializer):
+    action = serializers.ChoiceField(choices=("commit", "restore"))
+
+
 class RepositoryViewSet(ImmutableRepositoryViewSet, AsyncUpdateMixin, LabelsMixin):
     """
     A ViewSet for an ordinary repository.
     """
+
+    def filter_queryset(self, queryset):
+        if self.action in {
+            "staging",
+            "staging_head",
+            "staging_post",
+            "staging_path",
+            "staging_path_head",
+        }:
+            return queryset
+        return super().filter_queryset(queryset)
+
+    def _check_staging_enabled(self):
+        repository = self.get_object()
+        if not repository.staging_enabled:
+            raise NotFound()
+        return repository
+
+    @action(detail=True, methods=["get"])
+    def staging(self, request, pk=None):
+        repository = self._check_staging_enabled()
+        query = StagingGetQuerySerializer(data=request.query_params.dict())
+        query.is_valid(raise_exception=True)
+        staged = (
+            StagedContent.objects.filter(repository=repository)
+            .select_related("content")
+            .order_by("content_id")
+        )
+        page = self.paginate_queryset(staged)
+        if page is not None:
+            contents = [get_url(membership.content, request=request) for membership in page]
+            return self.get_paginated_response(contents)
+        contents = [get_url(membership.content, request=request) for membership in staged]
+        return Response(contents)
+
+    @staging.mapping.head
+    def staging_head(self, request, pk=None):
+        self._check_staging_enabled()
+        query = StagingGetQuerySerializer(data=request.query_params.dict())
+        query.is_valid(raise_exception=True)
+        return Response(status=status.HTTP_200_OK)
+
+    def _get_staged_content_by_path(self, repository, relative_path):
+        content_ids = ContentArtifact.objects.filter(relative_path=relative_path).values(
+            "content_id"
+        )
+        path_filter = Q(content_id__in=content_ids)
+        for content_type in repository.CONTENT_TYPES:
+            if any(field.name == "relative_path" for field in content_type._meta.get_fields()):
+                matching_ids = content_type.objects.filter(relative_path=relative_path).values("pk")
+                path_filter |= Q(content_id__in=matching_ids)
+
+        membership = (
+            StagedContent.objects.filter(repository=repository)
+            .filter(path_filter)
+            .select_related("content")
+            .order_by("content_id")
+            .first()
+        )
+        if membership is None:
+            raise NotFound()
+        return membership.content.cast()
+
+    @action(detail=True, methods=["get"], url_path=r"staging/(?P<relative_path>.+)")
+    def staging_path(self, request, pk=None, relative_path=None):
+        repository = self._check_staging_enabled()
+        query = StagingBaseQuerySerializer(data=request.query_params.dict())
+        query.is_valid(raise_exception=True)
+        content = self._get_staged_content_by_path(repository, relative_path)
+        serializer = get_viewset_for_model(content).serializer_class(
+            content, context={"request": request}
+        )
+        return Response(serializer.data)
+
+    @staging_path.mapping.head
+    def staging_path_head(self, request, pk=None, relative_path=None):
+        repository = self._check_staging_enabled()
+        query = StagingBaseQuerySerializer(data=request.query_params.dict())
+        query.is_valid(raise_exception=True)
+        self._get_staged_content_by_path(repository, relative_path)
+        return Response(status=status.HTTP_200_OK)
+
+    @staging.mapping.post
+    def staging_post(self, request, pk=None):
+        repository = self._check_staging_enabled()
+        query = StagingPostQuerySerializer(data=request.query_params.dict())
+        query.is_valid(raise_exception=True)
+        if not StagedContent.objects.filter(repository=repository).exists():
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+        task_function = (
+            tasks.repository.commit_staging
+            if query.validated_data["action"] == "commit"
+            else tasks.repository.restore_staging
+        )
+        task = dispatch(
+            task_function,
+            kwargs={"repository_pk": str(repository.pk)},
+            exclusive_resources=[repository],
+        )
+        return OperationPostponedResponse(task, request)
 
 
 class RepositoryVersionFilter(BaseFilterSet):
