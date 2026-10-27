@@ -75,10 +75,14 @@ class Domain(BaseModel, AutoAddObjPermsMixin):
 
     @hook(BEFORE_DELETE, when="name", is_not="default")
     def _cleanup_orphans_pre_delete(self):
-        protected_content_set = self.content_set.exclude(version_memberships__isnull=True)
+        protected_content_set = self.content_set.exclude(
+            version_memberships__isnull=True, staged_memberships__isnull=True
+        )
         if protected_content_set.exists():
             raise DomainProtectedError()
-        self.content_set.filter(version_memberships__isnull=True).delete()
+        self.content_set.filter(
+            version_memberships__isnull=True, staged_memberships__isnull=True
+        ).delete()
         for artifact in self.artifact_set.all().iterator():
             # Delete on by one to properly cleanup the storage.
             artifact.delete()

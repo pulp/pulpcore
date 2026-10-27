@@ -508,6 +508,7 @@ class ContentQuerySet(BulkTouchQuerySet):
         if content_pks:
             return self.filter(
                 version_memberships__isnull=True,
+                staged_memberships__isnull=True,
                 timestamp_of_interest__lt=expiration,
                 pk__in=content_pks,
             )
@@ -516,6 +517,7 @@ class ContentQuerySet(BulkTouchQuerySet):
         return self.filter(
             pulp_domain=domain_pk,
             version_memberships__isnull=True,
+            staged_memberships__isnull=True,
             timestamp_of_interest__lt=expiration,
         )
 

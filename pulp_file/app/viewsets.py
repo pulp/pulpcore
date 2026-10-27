@@ -207,13 +207,19 @@ class FileRepositoryViewSet(RepositoryViewSet, ModifyRepositoryActionMixin, Role
                 ],
             },
             {
-                "action": ["modify"],
+                "action": ["modify", "staging_post"],
                 "principal": "authenticated",
                 "effect": "allow",
                 "condition": [
                     "has_model_or_domain_or_obj_perms:file.modify_filerepository",
                     "has_model_or_domain_or_obj_perms:file.view_filerepository",
                 ],
+            },
+            {
+                "action": ["staging", "staging_head", "staging_path", "staging_path_head"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": ["has_model_or_domain_or_obj_perms:file.view_filerepository"],
             },
             {
                 "action": ["list_roles", "add_role", "remove_role"],
