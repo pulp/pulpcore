@@ -55,6 +55,17 @@ def test_upload_valid_attrs(pulpcore_bindings, pulpcore_random_file, monitor_tas
             _do_upload_valid_attrs(pulpcore_bindings, pulpcore_random_file["name"], data)
 
 
+@pytest.mark.parallel
+def test_upload_artifact_prefixed_filename(pulpcore_bindings, tmp_path):
+    file = tmp_path / f"artifact-{uuid.uuid4()}.txt"
+    contents = os.urandom(1024)
+    file.write_bytes(contents)
+
+    artifact = pulpcore_bindings.ArtifactsApi.create(str(file))
+
+    assert artifact.sha256 == hashlib.sha256(contents).hexdigest()
+
+
 def test_upload_empty_file(pulpcore_bindings, tmp_path, monitor_task):
     """Upload an empty file.
 
