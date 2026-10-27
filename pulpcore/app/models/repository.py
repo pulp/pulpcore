@@ -55,6 +55,8 @@ class Repository(MasterModel):
         retain_checkpoints (models.PositiveIntegerField): Number of checkpoint publications to
             keep as checkpoints.
         user_hidden (models.BooleanField): Whether to expose this repo to users via the API
+        staging_enabled (models.BooleanField): Whether repository staging is enabled.
+        staging_autocommit (models.BooleanField): Whether staged content is committed on a schedule.
 
     Relations:
 
@@ -75,6 +77,8 @@ class Repository(MasterModel):
     retain_repo_versions = models.PositiveIntegerField(default=None, null=True)
     retain_checkpoints = models.PositiveIntegerField(default=None, null=True)
     user_hidden = models.BooleanField(default=False)
+    staging_enabled = models.BooleanField(default=False)
+    staging_autocommit = models.BooleanField(default=False)
     content = models.ManyToManyField(
         "Content", through="RepositoryContent", related_name="repositories"
     )
@@ -454,6 +458,11 @@ class Repository(MasterModel):
 
         body = {"repository_pk": self.pk, "add_content_units": [cpk], "remove_content_units": []}
         return dispatch(aadd_and_remove, kwargs=body, exclusive_resources=[self], immediate=True)
+
+    def stage_file(self, content):
+        """Associate a file content unit with this repository's staging area."""
+        staged_content, _ = StagedContent.objects.get_or_create(repository=self, content=content)
+        return staged_content
 
     async def async_pull_through_add_content(self, content_artifact):
         cpk = content_artifact.content_id
@@ -879,6 +888,18 @@ class RepositoryContent(BaseModel):
             ("repository", "content", "version_added"),
             ("repository", "content", "version_removed"),
         )
+
+
+class StagedContent(BaseModel):
+    """Content associated with a repository outside its versions."""
+
+    content = models.ForeignKey(
+        "Content", on_delete=models.PROTECT, related_name="staged_memberships"
+    )
+    repository = models.ForeignKey(Repository, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ("repository", "content")
 
 
 class RepositoryVersionQuerySet(models.QuerySet):
