@@ -16,6 +16,8 @@ the content from.
 You can automatically associate newly uploaded content with a Repository when using the
 `/pulp/api/v3/content/<plugin_name>/<content_type>/` API by passing the `repository reference`.
 
+For the repository staging API, see [Manage Repository Staging](site:pulpcore/docs/user/guides/stage-repository-content/).
+
 ## Chunked Uploads
 
 For large file uploads, Pulp provides an [Uploads API](site:pulpcore/restapi/#tag/Uploads). To begin
