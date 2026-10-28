@@ -7,12 +7,16 @@ from logging import getLogger
 
 from asgiref.sync import sync_to_async
 from django.db import transaction
+from django.utils import timezone
 
 from pulpcore.app import models
+from pulpcore.app.contexts import with_domain
 from pulpcore.app.models import ProgressReport
 from pulpcore.app.serializers import RepositoryVersionSerializer
-from pulpcore.app.util import get_domain
+from pulpcore.app.util import get_domain, get_prn
+from pulpcore.constants import TASK_INCOMPLETE_STATES
 from pulpcore.exceptions.base import RepositoryVersionDeleteError
+from pulpcore.tasking.tasks import dispatch
 
 log = getLogger(__name__)
 
@@ -234,6 +238,32 @@ def restore_staging(repository_pk, **kwargs):
     with transaction.atomic():
         models.StagedContent.objects.filter(repository_id=repository_pk).delete()
         models.Repository.objects.filter(pk=repository_pk).update(next_commit=None)
+
+
+def dispatch_staging_autocommits() -> list[str]:
+    """Dispatch commit tasks for repositories whose staging deadline has passed."""
+    task_ids = []
+    commit_task_name = f"{commit_staging.__module__}.{commit_staging.__name__}"
+    due_repositories = (
+        models.Repository.objects.filter(staging_autocommit=True, next_commit__lte=timezone.now())
+        .select_related("pulp_domain")
+        .order_by("pk")
+    )
+    for repository in due_repositories.iterator():
+        if models.Task.objects.filter(
+            name=commit_task_name,
+            state__in=TASK_INCOMPLETE_STATES,
+            reserved_resources_record__contains=[get_prn(repository)],
+        ).exists():
+            continue
+        with with_domain(repository.pulp_domain):
+            task = dispatch(
+                commit_staging,
+                kwargs={"repository_pk": repository.pk},
+                exclusive_resources=[repository],
+            )
+        task_ids.append(str(task.pk))
+    return task_ids
 
 
 def add_and_remove(
