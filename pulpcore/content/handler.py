@@ -45,6 +45,7 @@ from django.db import (  # noqa: E402
     models,
     transaction,
 )
+from django.db.models import Exists, OuterRef  # noqa: E402
 from jinja2 import Template  # noqa: E402
 
 from pulpcore.app import mime_types  # noqa: E402
@@ -662,6 +663,8 @@ class Handler:
 
         Returns:
             Set of strings representing the files and directories in the directory listing.
+            If DIRECTORY_LISTING_LIMIT is set and the listing exceeds it, the listing is
+            truncated and a "…" marker entry is included.
         """
 
         def update_date(dates, name, timestamp):
@@ -711,10 +714,24 @@ class Handler:
 
             if repo_version or publication.pass_through:
                 cas = ContentArtifact.objects.select_related("artifact").filter(
-                    content__in=content_repo_ver.content, relative_path__startswith=path
+                    Exists(
+                        content_repo_ver._content_relationships().filter(
+                            content_id=OuterRef("content_id")
+                        )
+                    ),
+                    relative_path__startswith=path,
                 )
+                listing_limit = settings.DIRECTORY_LISTING_LIMIT
                 for ca in cas:
                     name = file_or_directory_name(path, ca.relative_path)
+                    # Limit distinct entries, not rows: many rows can share one displayed name.
+                    if (
+                        listing_limit
+                        and name not in directory_list
+                        and len(directory_list) >= listing_limit
+                    ):
+                        directory_list.add("…")
+                        break
                     directory_list.add(name)
                     update_content_date(content_dates, ca.content_id, ca.pulp_created)
                     content_to_find.setdefault(ca.content_id, set()).add(name)
@@ -726,9 +743,13 @@ class Handler:
 
             if directory_list:
                 # Find the dates the content got added to the repository
-                for rc in content_repo_ver._content_relationships():
-                    if rc.content_id in content_to_find:
-                        content_dates[rc.content_id] = rc.pulp_created
+                content_dates.update(
+                    dict(
+                        content_repo_ver._content_relationships()
+                        .filter(content_id__in=list(content_to_find))
+                        .values_list("content_id", "pulp_created")
+                    )
+                )
 
                 # Prefer repository membership dates, then aggregate the newest date per entry.
                 for content_id, names in content_to_find.items():
@@ -897,9 +918,14 @@ class Handler:
                             "artifact", "artifact__pulp_domain"
                         )
                         .filter(
-                            content__in=publication.repository_version.content,
+                            Exists(
+                                publication.repository_version._content_relationships().filter(
+                                    content_id=OuterRef("content_id")
+                                )
+                            ),
+                            relative_path=original_rel_path,
                         )
-                        .aget(relative_path=original_rel_path)
+                        .aget()
                     )
 
                 except MultipleObjectsReturned:
@@ -937,9 +963,25 @@ class Handler:
             # Look for index.html or list the directory
             index_path = "{}index.html".format(rel_path)
 
-            contentartifact_exists = await ContentArtifact.objects.filter(
-                content__in=repo_version.content, relative_path=index_path
-            ).aexists()
+            # File-ish paths (no trailing slash, dot in the last segment, e.g.
+            # "a-1.0.0.jar") can never have a ContentArtifact at "<path>/index.html",
+            # so skip the existence probe entirely. Directory URLs (trailing slash
+            # or dot-less last segment) still probe below. A dotted *directory*
+            # name without a slash falls through to list_directory(), which issues
+            # the trailing-slash redirect; the redirected request probes again and
+            # serves index.html as before (one extra redirect, same content).
+            last_segment = rel_path.rstrip("/").rsplit("/", 1)[-1]
+            if not ends_in_slash and "." in last_segment:
+                contentartifact_exists = False
+            else:
+                contentartifact_exists = await ContentArtifact.objects.filter(
+                    Exists(
+                        repo_version._content_relationships().filter(
+                            content_id=OuterRef("content_id")
+                        )
+                    ),
+                    relative_path=index_path,
+                ).aexists()
             if contentartifact_exists:
                 original_rel_path = index_path
                 headers = self.response_headers(original_rel_path, distro)
@@ -960,9 +1002,20 @@ class Handler:
                     )
 
             try:
-                ca = await ContentArtifact.objects.select_related(
-                    "artifact", "artifact__pulp_domain"
-                ).aget(content__in=repo_version.content, relative_path=original_rel_path)
+                ca = (
+                    await ContentArtifact.objects.select_related(
+                        "artifact", "artifact__pulp_domain"
+                    )
+                    .filter(
+                        Exists(
+                            repo_version._content_relationships().filter(
+                                content_id=OuterRef("content_id")
+                            )
+                        ),
+                        relative_path=original_rel_path,
+                    )
+                    .aget()
+                )
 
             except MultipleObjectsReturned:
                 log.error(
