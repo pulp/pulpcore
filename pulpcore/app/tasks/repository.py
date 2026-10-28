@@ -2,11 +2,15 @@ import asyncio
 import hashlib
 from concurrent.futures import ThreadPoolExecutor
 from contextvars import copy_context
+from datetime import timedelta
 from gettext import gettext as _
+from itertools import chain
 from logging import getLogger
 
 from asgiref.sync import sync_to_async
+from django.conf import settings
 from django.db import transaction
+from django.db.models import Exists, OuterRef
 from django.utils import timezone
 
 from pulpcore.app import models
@@ -242,14 +246,30 @@ def restore_staging(repository_pk, **kwargs):
 
 def dispatch_staging_autocommits() -> list[str]:
     """Dispatch commit tasks for repositories whose staging deadline has passed."""
-    task_ids = []
-    commit_task_name = f"{commit_staging.__module__}.{commit_staging.__name__}"
-    due_repositories = (
-        models.Repository.objects.filter(staging_autocommit=True, next_commit__lte=timezone.now())
+    now = timezone.now()
+    # A concurrent commit can clear a deadline while newer content remains staged
+    # Treat old-enough staged content as due when that deadline is missing
+    old_enough_staged = models.StagedContent.objects.filter(
+        repository_id=OuterRef("pk"),
+        pulp_created__lte=now - timedelta(seconds=settings.STAGING_AUTOCOMMIT_DELAY_SECONDS),
+    )
+    due_without_deadline = (
+        models.Repository.objects.filter(staging_autocommit=True, next_commit__isnull=True)
+        .filter(Exists(old_enough_staged))
         .select_related("pulp_domain")
         .order_by("pk")
     )
-    for repository in due_repositories.iterator():
+
+    task_ids = []
+    commit_task_name = f"{commit_staging.__module__}.{commit_staging.__name__}"
+    # Stored deadlines remain authoritative when present
+    due_repositories = (
+        models.Repository.objects.filter(staging_autocommit=True, next_commit__lte=now)
+        .select_related("pulp_domain")
+        .order_by("pk")
+    )
+    for repository in chain(due_repositories.iterator(), due_without_deadline.iterator()):
+        # Avoid queuing another commit while one is waiting or running
         if models.Task.objects.filter(
             name=commit_task_name,
             state__in=TASK_INCOMPLETE_STATES,

@@ -27,6 +27,30 @@ http --auth "admin:$PULP_PASSWORD" POST "$PULP_API_URL/repositories/file/file/" 
 The staging endpoints return `404` while staging is disabled for the repository.
 Set `REPOSITORY_ID` to the ID in the returned `pulp_href` before using the following commands.
 
+## Commit Staged Content Automatically
+
+Set `staging_autocommit` on a repository with staging enabled to commit staged content on a schedule.
+It defaults to `false`.
+
+```bash
+http --auth "admin:$PULP_PASSWORD" PATCH \
+  "$PULP_API_URL/repositories/file/file/${REPOSITORY_ID}/" \
+  staging_autocommit:=true
+```
+
+The first content staged after autocommit is enabled starts the delay set by
+[`STAGING_AUTOCOMMIT_DELAY_SECONDS`](site:pulpcore/docs/admin/reference/settings/#staging_autocommit_delay_seconds).
+Staging more content does not postpone that deadline.
+A separate scheduled task checks for expired deadlines at the interval set by
+[`STAGING_AUTOCOMMIT_SCAN_INTERVAL_SECONDS`](site:pulpcore/docs/admin/reference/settings/#staging_autocommit_scan_interval_seconds)
+and dispatches a commit task for each ready repository.
+The commit task may wait for other tasks holding the repository lock.
+
+Autocommit only affects content already placed in staging; enabling it does not change the file
+upload endpoint.
+A manual commit or restore clears the pending deadline.
+If a commit fails, the staged content and deadline remain available for another attempt.
+
 ## Inspect Staged Content
 
 Use the repository's `pulp_href` followed by `staging/` to list staged content URLs.
