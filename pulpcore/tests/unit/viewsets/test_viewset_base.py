@@ -66,7 +66,7 @@ def test_does_not_add_filters():
     queryset = viewset.get_queryset()
     expected = models.Repository.objects.all()
 
-    assertQuerySetEqual(queryset, expected)
+    assertQuerySetEqual(queryset, expected, ordered=False)
 
 
 def test_must_define_serializer_class():
