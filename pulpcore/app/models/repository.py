@@ -5,6 +5,7 @@ Repository related Django models.
 import logging
 from collections import defaultdict
 from contextlib import suppress
+from datetime import timedelta
 from gettext import gettext as _
 from os import path
 
@@ -15,6 +16,7 @@ from django.contrib.postgres.fields import ArrayField, HStoreField
 from django.core.validators import MinValueValidator
 from django.db import models, transaction
 from django.db.models import F, Func, Q, Value
+from django.utils import timezone
 from django_lifecycle import AFTER_UPDATE, BEFORE_CREATE, BEFORE_DELETE, hook
 from rest_framework.exceptions import APIException
 
@@ -55,6 +57,9 @@ class Repository(MasterModel):
         retain_checkpoints (models.PositiveIntegerField): Number of checkpoint publications to
             keep as checkpoints.
         user_hidden (models.BooleanField): Whether to expose this repo to users via the API
+        staging_enabled (models.BooleanField): Whether repository staging is enabled.
+        staging_autocommit (models.BooleanField): Whether staged content is committed on a schedule.
+        next_commit (models.DateTimeField): When staged content is eligible for automatic commit.
 
     Relations:
 
@@ -75,6 +80,9 @@ class Repository(MasterModel):
     retain_repo_versions = models.PositiveIntegerField(default=None, null=True)
     retain_checkpoints = models.PositiveIntegerField(default=None, null=True)
     user_hidden = models.BooleanField(default=False)
+    staging_enabled = models.BooleanField(default=False)
+    staging_autocommit = models.BooleanField(default=False)
+    next_commit = models.DateTimeField(null=True, db_index=True)
     content = models.ManyToManyField(
         "Content", through="RepositoryContent", related_name="repositories"
     )
@@ -454,6 +462,25 @@ class Repository(MasterModel):
 
         body = {"repository_pk": self.pk, "add_content_units": [cpk], "remove_content_units": []}
         return dispatch(aadd_and_remove, kwargs=body, exclusive_resources=[self], immediate=True)
+
+    def stage_file(self, content):
+        """Associate a file content unit with this repository's staging area."""
+        staged_content, _ = StagedContent.objects.get_or_create(repository=self, content=content)
+        if self.staging_autocommit:
+            with transaction.atomic():
+                # no_key=True allows concurrent staging to create FK reference to the repository even
+                repository = (
+                    Repository.objects.select_for_update(skip_locked=True, no_key=True)
+                    .filter(pk=self.pk, staging_autocommit=True, next_commit__isnull=True)
+                    .first()
+                )
+                if repository is not None:
+                    repository.next_commit = timezone.now() + timedelta(
+                        seconds=settings.STAGING_AUTOCOMMIT_DELAY_SECONDS
+                    )
+                    repository.save(update_fields=["next_commit"])
+                    self.next_commit = repository.next_commit
+        return staged_content
 
     async def async_pull_through_add_content(self, content_artifact):
         cpk = content_artifact.content_id
@@ -879,6 +906,18 @@ class RepositoryContent(BaseModel):
             ("repository", "content", "version_added"),
             ("repository", "content", "version_removed"),
         )
+
+
+class StagedContent(BaseModel):
+    """Content associated with a repository outside its versions."""
+
+    content = models.ForeignKey(
+        "Content", on_delete=models.PROTECT, related_name="staged_memberships"
+    )
+    repository = models.ForeignKey(Repository, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ("repository", "content")
 
 
 class RepositoryVersionQuerySet(models.QuerySet):
