@@ -33,7 +33,7 @@ jobs:
           path: "pulp-openapi-generator"
       - uses: "actions/setup-python@v6"
         with:
-          python-version: "3.9"
+          python-version: "3.11"
       - name: "Install uv"
         uses: "astral-sh/setup-uv@v7"
         with:
@@ -44,8 +44,9 @@ jobs:
           uvx twine check dist/*
       - name: "Install built packages"
         run: |
+          uv run --script .ci/scripts/calc_constraints.py -u pyproject.toml > upperbounds_constraints.txt
           # This seems to be the only way to inject the constraints file.
-          uv pip install dist/pulpcore-*-py3-none-any.whl -c .ci/assets/ci_constraints.txt
+          uv pip install dist/pulpcore-*-py3-none-any.whl -c .ci/assets/ci_constraints.txt -c upperbounds_constraints.txt
       - name: "Generate api specs"
         run: |
           pulpcore-manager openapi --file "api.json"
