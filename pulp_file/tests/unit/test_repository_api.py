@@ -1,17 +1,19 @@
-from datetime import timedelta
+import json
+from datetime import datetime, timedelta
 from secrets import token_hex
 from urllib.parse import urlencode, urljoin, urlsplit
 
 import pytest
 from django.test import override_settings
 from django.utils import timezone
+from django_guid import clear_guid, set_guid
 from rest_framework import status
 from rest_framework.test import APIClient
 
 from pulpcore.app.contexts import with_user
-from pulpcore.app.models import RepositoryVersion, StagedContent, Task
+from pulpcore.app.models import RepositoryVersion, StagedContent, Task, TaskSchedule
 from pulpcore.app.tasks import repository as repository_tasks
-from pulpcore.app.util import get_prn, resolve, reverse
+from pulpcore.app.util import configure_staging_autocommit, get_prn, resolve, reverse
 
 from pulp_file.app.models import FileContent, FileRepository
 from pulp_file.app.viewsets import FileContentViewSet, FileRepositoryViewSet
@@ -359,3 +361,79 @@ class TestRepositoryStagingTasks:
         repository.refresh_from_db()
         assert repository.next_commit == deadline
         assert StagedContent.objects.filter(repository=repository, content=content).exists()
+
+
+class TestRepositoryAutocommitScheduler:
+    @staticmethod
+    def create_repo_and_stage_content(
+        next_commit: datetime | None, *, autocommit: bool = True
+    ) -> FileRepository:
+        with with_user(None):
+            repository = FileRepository.objects.create(name=f"autocommit-{token_hex(8)}")
+        update_repository(repository, autocommit=autocommit)
+        repository.stage_file(create_file_content(f"{repository.name}.txt"))
+        repository.next_commit = next_commit
+        repository.save(update_fields=["next_commit"])
+        return repository
+
+    def test_dispatches_due_repositories_with_serializable_task_ids(self, db):
+        now = timezone.now()
+        t_past = now - timedelta(seconds=1)
+        t_far_future = now + timedelta(hours=1)
+
+        # These will trigger autocommit tasks
+        due_repositories = (
+            self.create_repo_and_stage_content(next_commit=t_past),
+            self.create_repo_and_stage_content(next_commit=t_past),
+        )
+        # These won't trigger autocommit tasks
+        self.create_repo_and_stage_content(next_commit=t_far_future)
+        self.create_repo_and_stage_content(next_commit=t_past, autocommit=False)
+        self.create_repo_and_stage_content(next_commit=None)
+
+        with with_user(None):
+            set_guid(token_hex(16))
+            try:
+                task_ids = repository_tasks.dispatch_staging_autocommits()
+                repeated_task_ids = repository_tasks.dispatch_staging_autocommits()
+            finally:
+                clear_guid()
+
+        # Only due repositories with autocommit enabled receive commit tasks
+        tasks = list(Task.objects.filter(name="pulpcore.app.tasks.repository.commit_staging"))
+        assert len(tasks) == 2
+        assert repeated_task_ids == []
+        assert {task.enc_kwargs["repository_pk"] for task in tasks} == {
+            str(due.pk) for due in due_repositories
+        }
+
+        # Task results contain serializable identifiers for the dispatched tasks
+        assert isinstance(task_ids, list)
+        assert len(task_ids) == len(tasks)
+        assert set(task_ids) == {str(task.pk) for task in tasks}
+        assert json.loads(json.dumps(task_ids)) == task_ids
+
+        # Each commit task reserves its repository exclusively
+        for task in tasks:
+            due = next(
+                due for due in due_repositories if str(due.pk) == task.enc_kwargs["repository_pk"]
+            )
+            repository_prn = get_prn(due)
+            assert repository_prn in task.reserved_resources_record
+            assert f"shared:{repository_prn}" not in task.reserved_resources_record
+
+    def test_scan_schedule_uses_configured_interval(self, db):
+        name = "Scan repositories for staging autocommit"
+        with override_settings(STAGING_AUTOCOMMIT_SCAN_INTERVAL_SECONDS=17):
+            configure_staging_autocommit()
+
+        schedule = TaskSchedule.objects.get(name=name)
+        assert schedule.task_name == "pulpcore.app.tasks.repository.dispatch_staging_autocommits"
+        assert schedule.dispatch_interval == timedelta(seconds=17)
+
+        with override_settings(STAGING_AUTOCOMMIT_SCAN_INTERVAL_SECONDS=29):
+            configure_staging_autocommit()
+
+        schedule.refresh_from_db()
+        assert TaskSchedule.objects.filter(name=name).count() == 1
+        assert schedule.dispatch_interval == timedelta(seconds=29)

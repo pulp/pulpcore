@@ -567,6 +567,19 @@ def configure_periodic_telemetry():
         models.TaskSchedule.objects.filter(task_name=task_name).delete()
 
 
+def configure_staging_autocommit():
+    task_name = "pulpcore.app.tasks.repository.dispatch_staging_autocommits"
+    models.TaskSchedule.objects.update_or_create(
+        name="Scan repositories for staging autocommit",
+        defaults={
+            "task_name": task_name,
+            "dispatch_interval": timedelta(
+                seconds=settings.STAGING_AUTOCOMMIT_SCAN_INTERVAL_SECONDS
+            ),
+        },
+    )
+
+
 @lru_cache(maxsize=1)
 def _artifact_serving_distribution():
     return models.ArtifactDistribution.objects.get()
