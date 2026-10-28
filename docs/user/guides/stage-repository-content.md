@@ -48,6 +48,9 @@ The commit task may wait for other tasks holding the repository lock.
 
 Autocommit only affects content already placed in staging; enabling it does not change the file
 upload endpoint.
+Repositories using Pulp's default pull-through behavior stage new content fetched through their
+distributions when staging is enabled.
+Plugins with custom pull-through behavior may handle staging differently.
 A manual commit or restore clears the pending deadline.
 If a commit fails, the staged content and deadline remain available for another attempt.
 
