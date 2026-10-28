@@ -422,6 +422,51 @@ class TestRepositoryAutocommitScheduler:
             assert repository_prn in task.reserved_resources_record
             assert f"shared:{repository_prn}" not in task.reserved_resources_record
 
+    @override_settings(STAGING_AUTOCOMMIT_DELAY_SECONDS=AUTOCOMMIT_DELAY_SECONDS)
+    def test_dispatches_without_deadline_when_oldest_staged_content_is_due(self, db):
+        now = timezone.now()
+        repository = self.create_repo_and_stage_content(next_commit=None)
+        oldest = StagedContent.objects.get(repository=repository)
+        oldest.pulp_created = now - timedelta(seconds=30)
+        oldest.save(update_fields=["pulp_created"])
+
+        newer = repository.stage_file(create_file_content("newer.txt"))
+        newer.pulp_created = now - timedelta(seconds=10)
+        newer.save(update_fields=["pulp_created"])
+        repository.next_commit = None
+        repository.save(update_fields=["next_commit"])
+
+        with with_user(None):
+            empty = FileRepository.objects.create(name=f"empty-autocommit-{token_hex(8)}")
+        update_repository(empty, autocommit=True)
+        disabled = self.create_repo_and_stage_content(next_commit=None, autocommit=False)
+        expired = self.create_repo_and_stage_content(next_commit=None)
+        expired_staged = StagedContent.objects.get(repository=expired)
+        expired_staged.pulp_created = now - timedelta(seconds=AUTOCOMMIT_DELAY_SECONDS + 1)
+        expired_staged.save(update_fields=["pulp_created"])
+        expired.stage_file(create_file_content("expired-newer.txt"))
+        expired.next_commit = None
+        expired.save(update_fields=["next_commit"])
+
+        with with_user(None):
+            set_guid(token_hex(16))
+            try:
+                task_ids = repository_tasks.dispatch_staging_autocommits()
+            finally:
+                clear_guid()
+
+        # Only an old-enough staged row dispatches without a stored deadline
+        repository.refresh_from_db()
+        empty.refresh_from_db()
+        disabled.refresh_from_db()
+        expired.refresh_from_db()
+        assert repository.next_commit is None
+        assert empty.next_commit is None
+        assert disabled.next_commit is None
+        assert expired.next_commit is None
+        assert len(task_ids) == 1
+        assert Task.objects.get(pk=task_ids[0]).enc_kwargs == {"repository_pk": str(expired.pk)}
+
     def test_scan_schedule_uses_configured_interval(self, db):
         name = "Scan repositories for staging autocommit"
         with override_settings(STAGING_AUTOCOMMIT_SCAN_INTERVAL_SECONDS=17):
