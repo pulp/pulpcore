@@ -44,15 +44,17 @@ class ArtifactFileField(FileField):
 
         There are two ways to get artifact into Pulp: sync and upload.
 
-        The upload case
-         - file is not stored yet, aka file._committed = False
-         - nothing to do here in addition to Django pre_save actions
+        The upload case:
+         - assigning a File object sets _committed=False, meaning this FieldFile has not saved it
+         - the File object may still refer to a file already in artifact storage, so check any
+           absolute source path before saving
+         - Django pre_save writes the File object to upload_to without extra handling here
 
         The sync case:
-         - file is already stored in a temporary location, aka file._committed = True
-         - it needs to be moved into Pulp artifact storage if it's not there
-         - TemporaryDownloadedFile takes care of correctly set storage path
-         - only then Django pre_save actions should be performed
+         - assigning a path sets _committed=True, even when the file is in a temporary location
+         - a file already at upload_to stays in place; other files in artifact storage are rejected
+         - TemporaryDownloadedFile wraps an outside source so storage can move or copy it
+         - when needed, mark the file uncommitted so Django pre_save stores it at upload_to
 
         Args:
             model_instance (`class::pulpcore.plugin.Artifact`): The instance this field belongs to.
@@ -64,13 +66,30 @@ class ArtifactFileField(FileField):
 
         """
         file = model_instance.file
+        # A path assignment creates a committed FieldFile whose name is the source path.
+        # A File assignment is uncommitted, so inspect the wrapped File's source name.
+        source_path = file.name if file._committed else file.file.name
+        if not file._committed and (not source_path or not os.path.isabs(source_path)):
+            # A relative File name does not identify a location in artifact storage.
+            return super().pre_save(model_instance, add)
+
         artifact_storage_path = self.upload_to(model_instance, "")
 
-        already_in_place = file.name in [
-            artifact_storage_path,
-            os.path.join(settings.MEDIA_ROOT, artifact_storage_path),
-        ]
-        is_in_artifact_storage = file.name.startswith(os.path.join(settings.MEDIA_ROOT, "artifact"))
+        stored_file_path = None
+        stored_artifact_dir = None
+        try:
+            stored_file_path = file.storage.path(artifact_storage_path)
+            stored_artifact_dir = file.storage.path("artifact")
+        except NotImplementedError:
+            # Object storage backends do not have absolute filesystem paths.
+            pass
+
+        already_in_place = source_path in (artifact_storage_path, stored_file_path)
+        # Match the artifact directory, not other names beginning with "artifact".
+        artifact_storage_prefixes = [os.path.join("artifact", "")]
+        if stored_artifact_dir is not None:
+            artifact_storage_prefixes.append(os.path.join(stored_artifact_dir, ""))
+        is_in_artifact_storage = source_path.startswith(tuple(artifact_storage_prefixes))
 
         if not already_in_place and is_in_artifact_storage:
             raise ValueError(
@@ -80,10 +99,13 @@ class ArtifactFileField(FileField):
                     "prior to Artifact creation."
                 )
             )
-        move = file._committed and file.name != artifact_storage_path
-        if move:
+        if not file._committed:
+            return super().pre_save(model_instance, add)
+
+        if file.name != artifact_storage_path:
             if not already_in_place:
                 file._file = TemporaryDownloadedFile(open(file.name, "rb"))
+            # Let Django save the source and record its storage-relative name.
             file._committed = False
 
         return super().pre_save(model_instance, add)
