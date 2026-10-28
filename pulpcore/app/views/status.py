@@ -16,6 +16,7 @@ from pulpcore.app.models.status import AppStatus
 from pulpcore.app.redis_connection import get_redis_connection
 from pulpcore.app.serializers.status import StatusSerializer, V4StatusSerializer
 from pulpcore.app.util import get_domain
+from pulpcore.constants import STORAGE_BACKENDS
 
 _logger = logging.getLogger(__name__)
 StorageSpace = namedtuple("StorageSpace", ("total", "used", "free"))
@@ -23,7 +24,7 @@ StorageSpace = namedtuple("StorageSpace", ("total", "used", "free"))
 
 def _disk_usage():
     domain = get_domain()
-    if domain.storage_class == "pulpcore.app.models.storage.FileSystem":
+    if domain.storage_backend == STORAGE_BACKENDS.FILESYSTEM:
         storage = domain.get_storage()
         try:
             return shutil.disk_usage(storage.location)

@@ -26,6 +26,8 @@ from pulpcore.app import models
 from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app.contexts import _current_domain, _current_user_func, current_pulp_api_version
 from pulpcore.app.loggers import deprecation_logger
+from pulpcore.app.storage_backends import legacy_backend_path, signed_url
+from pulpcore.constants import STORAGE_BACKENDS
 from pulpcore.exceptions.validation import InvalidSignatureError
 
 # a little cache so viewset_for_model doesn't have to iterate over every app every time
@@ -572,6 +574,41 @@ def _artifact_serving_distribution():
     return models.ArtifactDistribution.objects.get()
 
 
+def get_local_storage_path(file, domain=None):
+    """Return a Pulp-managed file's local path, or `None` if storage has no path.
+
+    `domain` defaults to the current Domain. Other errors from the storage, such
+    as an invalid name, are not interpreted as a missing local-path capability.
+    """
+    domain = domain if domain is not None else get_domain()
+    try:
+        return domain.get_storage().path(file.name)
+    except NotImplementedError:
+        return None
+
+
+def get_direct_storage_url(file, headers=None, http_method=None, domain=None):
+    """Return a direct URL for a Pulp-managed file when redirects are enabled.
+
+    Return `None` for filesystem storage or a Domain that serves content itself.
+    Unsupported redirect backends raise `NotImplementedError`. `domain` defaults
+    to the current Domain; callers handling a file from another Domain must pass it.
+    """
+    domain = domain if domain is not None else get_domain()
+    if (
+        domain.storage_backend == STORAGE_BACKENDS.FILESYSTEM
+        or not domain.redirect_to_object_storage
+    ):
+        return None
+    return signed_url(
+        domain.get_storage(),
+        domain.storage_backend,
+        file.name,
+        headers=headers,
+        method=http_method,
+    )
+
+
 def get_artifact_url(artifact, headers=None, http_method=None):
     """Get artifact url.
 
@@ -586,41 +623,18 @@ def get_artifact_url(artifact, headers=None, http_method=None):
     artifact_file = artifact.file
     content_disposition = f"attachment;filename={artifact.pk}"
     artifact_domain = artifact.pulp_domain
-    if (
-        artifact_domain.storage_class == "pulpcore.app.models.storage.FileSystem"
-        or not artifact_domain.redirect_to_object_storage
-    ):
-        return _artifact_serving_distribution().artifact_url(artifact)
-    elif artifact_domain.storage_class in (
-        "storages.backends.s3boto3.S3Boto3Storage",
-        "storages.backends.s3.S3Storage",
-    ):
-        parameters = {"ResponseContentDisposition": content_disposition}
-        if headers and headers.get("Content-Type"):
-            parameters["ResponseContentType"] = headers.get("Content-Type")
-        url = artifact_file.storage.url(
-            artifact_file.name, parameters=parameters, http_method=http_method
-        )
-    elif artifact_domain.storage_class == "storages.backends.azure_storage.AzureStorage":
-        parameters = {"content_disposition": content_disposition}
-        if headers and headers.get("Content-Type"):
-            parameters["content_type"] = headers.get("Content-Type")
-        url = artifact_file.storage.url(artifact_file.name, parameters=parameters)
-    elif artifact_domain.storage_class == "storages.backends.gcloud.GoogleCloudStorage":
-        parameters = {"response_disposition": content_disposition}
-        if headers and headers.get("Content-Type"):
-            parameters["content_type"] = headers.get("Content-Type")
-        url = artifact_file.storage.url(artifact_file.name, parameters=parameters)
-    else:
-        if settings.DOMAIN_ENABLED:
-            loc = f"domain {artifact_domain.name}.storage_class"
-        else:
-            loc = "settings.STORAGES['default']['BACKEND']"
-
-        raise NotImplementedError(
-            f"The value {loc}={artifact_domain.storage_class} does not allow redirecting."
-        )
-    return url
+    response_headers = {"Content-Disposition": content_disposition}
+    if headers and headers.get("Content-Type"):
+        response_headers["Content-Type"] = headers["Content-Type"]
+    direct_url = get_direct_storage_url(
+        artifact_file,
+        headers=response_headers,
+        http_method=http_method,
+        domain=artifact_domain,
+    )
+    if direct_url is not None:
+        return direct_url
+    return _artifact_serving_distribution().artifact_url(artifact)
 
 
 def get_current_user():
@@ -657,7 +671,8 @@ def get_default_domain():
             default_domain = Domain.objects.get(name="default")
         except Domain.DoesNotExist:
             default_domain = Domain(
-                name="default", storage_class=settings.STORAGES["default"]["BACKEND"]
+                name="default",
+                storage_class=legacy_backend_path(settings.STORAGES["default"]["BACKEND"]),
             )
             default_domain.save(skip_hooks=True)
 
