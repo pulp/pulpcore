@@ -18,7 +18,7 @@ from django.contrib.postgres.indexes import OpClass, SpGistIndex
 from django.db import DatabaseError, IntegrityError, models, transaction
 from django.utils import timezone
 from django_lifecycle import AFTER_CREATE, AFTER_UPDATE, BEFORE_CREATE, BEFORE_DELETE, hook
-from rest_framework.exceptions import APIException
+from rest_framework.exceptions import APIException, AuthenticationFailed, NotAuthenticated
 from url_normalize import url_normalize
 
 from pulpcore.app.files import PulpTemporaryUploadedFile
@@ -26,6 +26,7 @@ from pulpcore.app.models import AutoAddObjPermsMixin
 from pulpcore.app.models.fields import RelativePathField
 from pulpcore.app.util import cache_key, get_domain_pk, get_url, retain_distributed_pub_enabled
 from pulpcore.cache import Cache
+from pulpcore.exceptions import AuthenticationError
 from pulpcore.responses import ArtifactResponse
 
 from .base import BaseModel, MasterModel
@@ -400,6 +401,7 @@ class ContentGuard(MasterModel):
 
         Raises:
             PermissionError: When not authorized.
+            AuthenticationError: When client authentication is required.
         """
         raise NotImplementedError()
 
@@ -434,8 +436,11 @@ class RBACContentGuard(ContentGuard, AutoAddObjPermsMixin):
         setattr(view, "action", "download")
         try:
             view.check_permissions(drequest)
+        except (NotAuthenticated, AuthenticationFailed) as e:
+            # No (or invalid) credentials were provided at all -> 401, not 403.
+            raise AuthenticationError(str(e), challenge="Basic") from e
         except APIException as e:
-            raise PermissionError(e)
+            raise PermissionError(e) from e
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
@@ -665,6 +670,7 @@ class CompositeContentGuard(ContentGuard, AutoAddObjPermsMixin):
         Permit if ANY content-guard allows (OR permissions).
         """
         errors = []
+        authentication_error = None
         if not self.guards.all():
             # No guards specified? PASS
             return
@@ -674,6 +680,13 @@ class CompositeContentGuard(ContentGuard, AutoAddObjPermsMixin):
             try:
                 detail_guard.permit(request)
                 return  # success on first-pass
+            except AuthenticationError as ae:
+                if authentication_error is None:
+                    authentication_error = ae
+                guard_error = _("Guard: '{}', HREF: '{}', class: '{}', denial: [{}].").format(
+                    detail_guard.name, get_url(detail_guard), type(detail_guard), str(ae)
+                )
+                errors.append(guard_error)
             except PermissionError as pe:
                 guard_error = _("Guard: '{}', HREF: '{}', class: '{}', denial: [{}].").format(
                     detail_guard.name, get_url(detail_guard), type(detail_guard), str(pe)
@@ -681,6 +694,8 @@ class CompositeContentGuard(ContentGuard, AutoAddObjPermsMixin):
                 errors.append(guard_error)
 
         # If we get here - FAIL
+        if authentication_error is not None:
+            raise authentication_error
         msg = _("Access forbidden. Refusals: {}").format(errors)
         raise PermissionError(msg)
 

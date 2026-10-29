@@ -20,6 +20,7 @@ from aiohttp.web_exceptions import (
     HTTPNotFound,
     HTTPNotModified,
     HTTPRequestRangeNotSatisfiable,
+    HTTPUnauthorized,
 )
 from asgiref.sync import sync_to_async
 from django.utils import timezone
@@ -64,6 +65,7 @@ from pulpcore.app.util import (  # noqa: E402
 )
 from pulpcore.cache import AsyncContentCache  # noqa: E402
 from pulpcore.exceptions import (  # noqa: E402
+    AuthenticationError,
     DigestValidationError,
     UnsupportedDigestValidationError,
 )
@@ -297,6 +299,7 @@ class Handler:
         """
         guard_key = "DISTRO#GUARD#PRESENT"
         present = await cached.get(guard_key, base_key=base_key)
+        guard = None
         if present == b"True" or present is None:
             path = request.match_info["path"]
             if not (distro := _current_distribution.get()):
@@ -306,11 +309,11 @@ class Handler:
                 _current_distribution.set(distro)
             try:
                 guard = await sync_to_async(cls._permit)(request, distro)
-            except HTTPForbidden:
+            except (HTTPForbidden, HTTPUnauthorized):
                 guard = True
                 raise
             finally:
-                if not present:
+                if not present and guard is not None:
                     await cached.set(guard_key, str(guard), base_key=base_key)
 
     @AsyncContentCache(
@@ -538,6 +541,7 @@ class Handler:
                 distribution.
 
         Raises:
+            aiohttp.web_exceptions.HTTPUnauthorized: When authentication is required.
             [aiohttp.web_exceptions.HTTPForbidden][]: When not permitted.
         """
         guard = distribution.content_guard
@@ -545,6 +549,15 @@ class Handler:
             return False
         try:
             guard.cast().permit(request)
+        except AuthenticationError as ae:
+            log.debug(
+                'Path: %(p)s requires authentication for guard: "%(g)s" reason: %(r)s',
+                {"p": request.path, "g": guard.name, "r": str(ae)},
+            )
+            raise HTTPUnauthorized(
+                reason=str(ae),
+                headers={"WWW-Authenticate": ae.challenge},
+            )
         except PermissionError as pe:
             log.debug(
                 'Path: %(p)s not permitted by guard: "%(g)s" reason: %(r)s',
