@@ -442,6 +442,19 @@ class CreatedResource(GenericRelationModel):
         Task, related_name="created_resources", default=Task.current, on_delete=models.CASCADE
     )
 
+    def save(self, *args, **kwargs):
+        from pulpcore.app.db_router import is_multi_db_routing_active
+
+        if is_multi_db_routing_active():
+            # Skip tracking a target on a satellite alias, to avoid a cross-database generic
+            # relation; a target on 'default' needs no such skip and cancellation cleanup
+            # depends on it being tracked.
+            content_object = self.content_object
+            target_db = content_object._state.db if content_object is not None else None
+            if target_db is not None and target_db != "default":
+                return
+        super().save(*args, **kwargs)
+
 
 class TaskSchedule(BaseModel):
     name = models.TextField(null=False)

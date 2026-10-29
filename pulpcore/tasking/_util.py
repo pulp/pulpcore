@@ -157,9 +157,9 @@ def _memory_diagnostic_decorator(temp_dir, func):
             # it is possible for the diagnostic artifact (memory report) to be identical to
             # a previous report, in which case we need to handle the case where saving a new
             # artifact fails.
-            artifact.save()
+            artifact.save(using="default")
         except IntegrityError:
-            artifact = Artifact.objects.get(sha256=artifact.sha256)
+            artifact = Artifact.objects.using("default").get(sha256=artifact.sha256)
 
         ProfileArtifact.objects.get_or_create(artifact=artifact, name="memory_profile", task=task)
         _logger.info("Created memory diagnostic data.")
@@ -185,9 +185,9 @@ def _pyinstrument_diagnostic_decorator(temp_dir, func):
                 # it is possible for the diagnostic artifact (memory report) to be identical to
                 # a previous report, in which case we need to handle the case where saving a new
                 # artifact fails.
-                artifact.save()
+                artifact.save(using="default")
             except IntegrityError:
-                artifact = Artifact.objects.get(sha256=artifact.sha256)
+                artifact = Artifact.objects.using("default").get(sha256=artifact.sha256)
 
             ProfileArtifact.objects.get_or_create(
                 artifact=artifact, name="pyinstrument_profile", task=task
@@ -217,9 +217,9 @@ def _memray_diagnostic_decorator(temp_dir, func):
                 # it is possible for the diagnostic artifact (memory report) to be identical to
                 # a previous report, in which case we need to handle the case where saving a new
                 # artifact fails.
-                artifact.save()
+                artifact.save(using="default")
             except IntegrityError:
-                artifact = Artifact.objects.get(sha256=artifact.sha256)
+                artifact = Artifact.objects.using("default").get(sha256=artifact.sha256)
 
             ProfileArtifact.objects.get_or_create(
                 artifact=artifact, name="memray_profile", task=task
@@ -272,9 +272,9 @@ def _logging_decorator(temp_dir, is_debug, func):
         try:
             # it's unlikely for a log file to be identical, but we retain the same check as the
             # other decorators
-            artifact.save()
+            artifact.save(using="default")
         except IntegrityError:
-            artifact = Artifact.objects.get(sha256=artifact.sha256)
+            artifact = Artifact.objects.using("default").get(sha256=artifact.sha256)
 
         ProfileArtifact.objects.get_or_create(artifact=artifact, name="task_logs", task=task)
         _logger.info("Created task logging diagnostic data.")
