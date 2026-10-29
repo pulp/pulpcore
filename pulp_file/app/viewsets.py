@@ -93,7 +93,7 @@ class FileContentViewSet(SingleArtifactContentUploadViewSet):
                 "effect": "allow",
             },
             {
-                "action": ["create"],
+                "action": ["create", "upload_sync"],
                 "principal": "authenticated",
                 "effect": "allow",
                 "condition": [
