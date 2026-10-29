@@ -1,6 +1,7 @@
 """Tests for repositories without repository versions."""
 
 import hashlib
+import os
 import uuid
 
 import pytest
@@ -108,3 +109,96 @@ def test_unversioned_restrictions(file_bindings, file_repository_factory, unvers
     with pytest.raises(ApiException) as exc:
         file_bindings.PublicationsFileApi.create({"repository": unversioned_repo.pulp_href})
     assert exc.value.status == 400
+
+
+### Uploads ###
+
+
+@pytest.mark.parallel
+def test_upload_sync(
+    file_bindings,
+    unversioned_repo,
+    file_repository_factory,
+    file_distribution_factory,
+    random_artifact,
+    download,
+):
+    """
+    Verify that upload_sync adds content to an unversioned repository without a task and rejects
+    versioned repositories.
+    """
+    distribution = file_distribution_factory(repository=unversioned_repo.pulp_href)
+    path = str(uuid.uuid4())
+
+    content = file_bindings.ContentFilesApi.upload_sync(
+        artifact=random_artifact.pulp_href,
+        relative_path=path,
+        repository=unversioned_repo.pulp_href,
+    )
+    assert content.sha256 == random_artifact.sha256
+    assert hashlib.sha256(download(distribution, path)).hexdigest() == random_artifact.sha256
+
+    versions = file_bindings.RepositoriesFileVersionsApi.list(unversioned_repo.pulp_href)
+    assert versions.count == 0
+
+    versioned_repo = file_repository_factory()
+    with pytest.raises(ApiException) as exc:
+        file_bindings.ContentFilesApi.upload_sync(
+            relative_path=str(uuid.uuid4()),
+            artifact=random_artifact.pulp_href,
+            repository=versioned_repo.pulp_href,
+        )
+    assert exc.value.status == 400
+
+
+@pytest.mark.parallel
+def test_upload_sync_file(
+    file_bindings, unversioned_repo, file_distribution_factory, tmp_path, download
+):
+    """Verify that upload_sync accepts a file and creates its artifact."""
+    distribution = file_distribution_factory(repository=unversioned_repo.pulp_href)
+    path = str(uuid.uuid4())
+    file = tmp_path / "file"
+    file.write_bytes(os.urandom(128))
+    expected_digest = hashlib.sha256(file.read_bytes()).hexdigest()
+
+    content = file_bindings.ContentFilesApi.upload_sync(
+        file=str(file), relative_path=path, repository=unversioned_repo.pulp_href
+    )
+    assert content.sha256 == expected_digest
+    assert hashlib.sha256(download(distribution, path)).hexdigest() == expected_digest
+
+
+@pytest.mark.parallel
+def test_upload_sync_chunked(
+    file_bindings,
+    pulpcore_bindings,
+    unversioned_repo,
+    file_distribution_factory,
+    gen_object_with_cleanup,
+    tmp_path,
+    download,
+):
+    """Verify that upload_sync accepts a chunked upload and deletes it afterwards."""
+    distribution = file_distribution_factory(repository=unversioned_repo.pulp_href)
+    path = str(uuid.uuid4())
+    file_1 = tmp_path / "file.part1"
+    file_1.write_bytes(os.urandom(128))
+    file_2 = tmp_path / "file.part2"
+    file_2.write_bytes(os.urandom(128))
+    expected_digest = hashlib.sha256(file_1.read_bytes() + file_2.read_bytes()).hexdigest()
+
+    upload = gen_object_with_cleanup(pulpcore_bindings.UploadsApi, {"size": 256})
+    pulpcore_bindings.UploadsApi.update(
+        upload_href=upload.pulp_href, file=str(file_1), content_range="bytes 0-127/256"
+    )
+    pulpcore_bindings.UploadsApi.update(
+        upload_href=upload.pulp_href, file=str(file_2), content_range="bytes 128-255/256"
+    )
+    content = file_bindings.ContentFilesApi.upload_sync(
+        upload=upload.pulp_href, relative_path=path, repository=unversioned_repo.pulp_href
+    )
+    assert content.sha256 == expected_digest
+    assert hashlib.sha256(download(distribution, path)).hexdigest() == expected_digest
+    with pytest.raises(pulpcore_bindings.module.ApiException):
+        pulpcore_bindings.UploadsApi.read(upload.pulp_href)
