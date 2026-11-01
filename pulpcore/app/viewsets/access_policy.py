@@ -3,6 +3,7 @@ from rest_framework import mixins
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from pulpcore.app.access_policy import get_default_access_policy
 from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app.models import AccessPolicy
 from pulpcore.app.serializers import AccessPolicySerializer
@@ -39,7 +40,7 @@ class AccessPolicyViewSet(
                         hasattr(viewset, "DEFAULT_ACCESS_POLICY")
                         and get_view_urlpattern(viewset) == access_policy.viewset_name
                     ):
-                        default_access_policy = viewset.DEFAULT_ACCESS_POLICY
+                        default_access_policy = get_default_access_policy(viewset)
                         access_policy.statements = default_access_policy["statements"]
                         access_policy.creation_hooks = default_access_policy.get(
                             "creation_hooks"
