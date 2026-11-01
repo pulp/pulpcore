@@ -11,6 +11,63 @@ from pulpcore.app.util import get_view_urlpattern, get_viewset_for_model
 DEFAULT_ACCESS_POLICY = {"statements": [{"action": "*", "principal": "admin", "effect": "allow"}]}
 
 
+def get_default_access_policy(viewset):
+    """Add repository staging permissions to a viewset's default policy."""
+    from pulpcore.app.viewsets.repository import RepositoryViewSet
+
+    viewset_class = viewset if isinstance(viewset, type) else type(viewset)
+    policy = getattr(viewset_class, "DEFAULT_ACCESS_POLICY", DEFAULT_ACCESS_POLICY)
+    if not issubclass(viewset_class, RepositoryViewSet):
+        return policy
+
+    declared_actions = set()
+    for statement in policy["statements"]:
+        actions = statement["action"]
+        declared_actions.update([actions] if isinstance(actions, str) else actions)
+    if "*" in declared_actions:
+        return policy
+
+    read_actions = [
+        action
+        for action in ("staging", "staging_head", "staging_path", "staging_path_head")
+        if action not in declared_actions
+    ]
+    write_action = "staging_post" not in declared_actions
+    if not read_actions and not write_action:
+        return policy
+
+    model_meta = viewset_class.queryset.model._meta
+    view_permission = getattr(
+        viewset_class,
+        "queryset_filtering_required_permission",
+        f"{model_meta.app_label}.view_{model_meta.model_name}",
+    )
+    modify_permission = f"{model_meta.app_label}.modify_{model_meta.model_name}"
+    policy = deepcopy(policy)
+    if read_actions:
+        policy["statements"].append(
+            {
+                "action": read_actions,
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": f"has_model_or_domain_or_obj_perms:{view_permission}",
+            }
+        )
+    if write_action:
+        policy["statements"].append(
+            {
+                "action": ["staging_post"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": [
+                    f"has_model_or_domain_or_obj_perms:{modify_permission}",
+                    f"has_model_or_domain_or_obj_perms:{view_permission}",
+                ],
+            }
+        )
+    return policy
+
+
 class DefaultAccessPolicy(AccessPolicy):
     """
     An AccessPolicy that takes default statements from the view(set).
@@ -39,7 +96,7 @@ class DefaultAccessPolicy(AccessPolicy):
         Returns:
             A dictionary representing the access policy.
         """
-        return getattr(view, "DEFAULT_ACCESS_POLICY", DEFAULT_ACCESS_POLICY)
+        return get_default_access_policy(view)
 
     @classmethod
     def handle_creation_hooks(cls, obj):

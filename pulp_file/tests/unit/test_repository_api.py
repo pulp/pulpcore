@@ -4,16 +4,25 @@ from secrets import token_hex
 from urllib.parse import urlencode, urljoin, urlsplit
 
 import pytest
+from django.apps import apps
 from django.test import override_settings
 from django.utils import timezone
 from django_guid import clear_guid, set_guid
 from rest_framework import status
 from rest_framework.test import APIClient
 
+from pulpcore.app.apps import _populate_access_policies
 from pulpcore.app.contexts import with_user
-from pulpcore.app.models import RepositoryVersion, StagedContent, Task, TaskSchedule
+from pulpcore.app.models import AccessPolicy, RepositoryVersion, StagedContent, Task, TaskSchedule
+from pulpcore.app.role_util import assign_role
 from pulpcore.app.tasks import repository as repository_tasks
-from pulpcore.app.util import configure_staging_autocommit, get_prn, resolve, reverse
+from pulpcore.app.util import (
+    configure_staging_autocommit,
+    get_prn,
+    get_view_urlpattern,
+    resolve,
+    reverse,
+)
 
 from pulp_file.app.models import FileContent, FileRepository
 from pulp_file.app.viewsets import FileContentViewSet, FileRepositoryViewSet
@@ -139,6 +148,37 @@ class TestRepositoryNextCommit:
 
 
 class TestRepositoryStagingEndpoint:
+    def test_staging_access_follows_repository_roles(
+        self, api_client, repository, django_user_model
+    ):
+        update_repository(repository)
+        url = get_detail_url(FileRepositoryViewSet, repository.pk, "staging/")
+        user = django_user_model.objects.create_user(username="staging-viewer")
+        api_client.force_authenticate(user=user)
+
+        assert api_client.get(url).status_code == status.HTTP_404_NOT_FOUND
+
+        assign_role("file.filerepository_viewer", user, repository)
+        assert api_client.get(url).status_code == status.HTTP_200_OK
+        assert api_client.post(url + "?action=commit").status_code == status.HTTP_403_FORBIDDEN
+
+        assign_role("file.filerepository_owner", user, repository)
+        assert api_client.post(url + "?action=commit").status_code == status.HTTP_204_NO_CONTENT
+
+    def test_customized_policy_keeps_staging_denied(self, api_client, repository):
+        update_repository(repository)
+        policy = AccessPolicy.objects.get(viewset_name=get_view_urlpattern(FileRepositoryViewSet))
+        policy.statements = []
+        policy.customized = True
+        policy.save(update_fields=["statements", "customized"])
+
+        _populate_access_policies(sender=apps.get_app_config("file"), apps=apps, verbosity=0)
+
+        policy.refresh_from_db()
+        assert policy.statements == []
+        url = get_detail_url(FileRepositoryViewSet, repository.pk, "staging/")
+        assert api_client.get(url).status_code == status.HTTP_403_FORBIDDEN
+
     @pytest.mark.parametrize(
         ("method", "query_params"),
         [
