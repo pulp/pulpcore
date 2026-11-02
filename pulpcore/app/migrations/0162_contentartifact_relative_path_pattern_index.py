@@ -1,3 +1,5 @@
+import re
+
 import django.contrib.postgres.indexes
 from django.db import migrations, models
 
@@ -8,6 +10,13 @@ _CREATE_INDEX_SQL = (
     'ON "core_contentartifact" USING btree ("relative_path" text_pattern_ops)'
 )
 _DROP_INDEX_SQL = 'DROP INDEX CONCURRENTLY IF EXISTS "core_ca_relpath_pattern_idx"'
+# pg_get_indexdef output for the expected index, e.g.
+# CREATE INDEX core_ca_relpath_pattern_idx ON public.core_contentartifact USING btree
+# (relative_path text_pattern_ops)
+_EXPECTED_INDEX_DEF = re.compile(
+    r'^CREATE INDEX "?core_ca_relpath_pattern_idx"? ON (?:"?\w+"?\.)?"?core_contentartifact"? '
+    r'USING btree \("?relative_path"? text_pattern_ops\)$'
+)
 _COMMENT_INDEX_SQL = (
     'COMMENT ON INDEX "core_ca_relpath_pattern_idx" '
     "IS 'pulpcore:0162:core_ca_relpath_pattern_idx'"
@@ -17,7 +26,10 @@ _COMMENT_INDEX_SQL = (
 def _index_info(cursor):
     cursor.execute(
         """
-        SELECT pg_index.indisvalid, obj_description(indexrel.oid, 'pg_class')
+        SELECT
+            pg_index.indisvalid,
+            obj_description(indexrel.oid, 'pg_class'),
+            pg_get_indexdef(indexrel.oid)
         FROM pg_class AS indexrel
         JOIN pg_index ON pg_index.indexrelid = indexrel.oid
         JOIN pg_namespace AS namespace ON namespace.oid = indexrel.relnamespace
@@ -29,13 +41,19 @@ def _index_info(cursor):
 
 
 def create_relative_path_index(apps, schema_editor):
-    """Create the index, reusing one that already exists (e.g. created out of band)."""
+    """Create the index, reusing an equivalent one that already exists (e.g. created out of band)."""
     with schema_editor.connection.cursor() as cursor:
         info = _index_info(cursor)
         if info:
-            if not info[0]:
+            valid, _, definition = info
+            if not valid:
                 raise RuntimeError(
                     f"Index {_INDEX_NAME!r} exists but is invalid; refusing to drop it automatically."
+                )
+            if not _EXPECTED_INDEX_DEF.match(definition):
+                raise RuntimeError(
+                    f"Index {_INDEX_NAME!r} exists with an unexpected definition ({definition!r}); "
+                    "refusing to reuse or drop it automatically."
                 )
             return
 
