@@ -316,6 +316,16 @@ Default location is `/etc/pulp/certs/database_fields.symmetric.key`.
 
 See [Database Encryption] for more details.
 
+### DIRECTORY\_LISTING\_LIMIT
+
+The maximum number of entries the content app renders in a directory listing.
+A listing with more entries is truncated and ends with a `…` entry.
+The limit counts distinct entries, not underlying content rows.
+
+Set to `0` to disable the limit.
+
+Defaults to `10000`.
+
 ### DISTRIBUTED\_PUBLICATION\_RETENTION\_PERIOD
 
 When a distribution switches to a newer publication, the previously served (superseded) publication continues to be available for this many seconds.
