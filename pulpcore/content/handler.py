@@ -663,8 +663,6 @@ class Handler:
 
         Returns:
             Set of strings representing the files and directories in the directory listing.
-            If DIRECTORY_LISTING_LIMIT is set and the listing exceeds it, the listing is
-            truncated and a "…" marker entry is included.
         """
 
         def update_date(dates, name, timestamp):
@@ -721,17 +719,8 @@ class Handler:
                     ),
                     relative_path__startswith=path,
                 )
-                listing_limit = settings.DIRECTORY_LISTING_LIMIT
                 for ca in cas:
                     name = file_or_directory_name(path, ca.relative_path)
-                    # Limit distinct entries, not rows: many rows can share one displayed name.
-                    if (
-                        listing_limit
-                        and name not in directory_list
-                        and len(directory_list) >= listing_limit
-                    ):
-                        directory_list.add("…")
-                        break
                     directory_list.add(name)
                     update_content_date(content_dates, ca.content_id, ca.pulp_created)
                     content_to_find.setdefault(ca.content_id, set()).add(name)
@@ -743,13 +732,9 @@ class Handler:
 
             if directory_list:
                 # Find the dates the content got added to the repository
-                content_dates.update(
-                    dict(
-                        content_repo_ver._content_relationships()
-                        .filter(content_id__in=list(content_to_find))
-                        .values_list("content_id", "pulp_created")
-                    )
-                )
+                for rc in content_repo_ver._content_relationships():
+                    if rc.content_id in content_to_find:
+                        content_dates[rc.content_id] = rc.pulp_created
 
                 # Prefer repository membership dates, then aggregate the newest date per entry.
                 for content_id, names in content_to_find.items():
