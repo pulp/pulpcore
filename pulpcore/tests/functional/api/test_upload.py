@@ -71,6 +71,7 @@ def pulpcore_upload_chunks(
         finish_task = pulpcore_bindings.UploadsApi.commit(upload.pulp_href, {"sha256": sha256}).task
         response = monitor_task(finish_task)
         artifact_href = response.created_resources[0]
+        assert response.result["pulp_href"] == artifact_href
         artifact = pulpcore_bindings.ArtifactsApi.read(artifact_href)
         artifacts.append(artifact_href)
         return upload, artifact
@@ -244,6 +245,7 @@ def test_upload_duplicate_chunk(
     task = pulpcore_bindings.UploadsApi.commit(upload.pulp_href, {"sha256": sha256}).task
     response = monitor_task(task)
     artifact_href = response.created_resources[0]
+    assert response.result["pulp_href"] == artifact_href
     artifact = pulpcore_bindings.ArtifactsApi.read(artifact_href)
     assert artifact.sha256 == sha256
 

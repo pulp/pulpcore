@@ -124,8 +124,10 @@ def create_exporter_export(pulpcore_bindings, monitor_task):
         export_response = pulpcore_bindings.ExportersFilesystemExportsApi.create(
             exporter.pulp_href, body
         )
-        created_resources = monitor_task(export_response.task).created_resources
+        task = monitor_task(export_response.task)
+        created_resources = task.created_resources
         assert 1 == len(created_resources)
+        assert task.result["pulp_href"] == created_resources[0]
 
         return pulpcore_bindings.ExportersFilesystemExportsApi.read(created_resources[0])
 
@@ -138,6 +140,23 @@ def test_create_exporter_export(create_exporter, create_exporter_export, publica
     exporter, body = create_exporter({"method": "write"})
     export = create_exporter_export(exporter, publications[0])
     assert export is not None
+
+
+@pytest.mark.parallel
+def test_create_exporter_repo_version_export(
+    pulpcore_bindings, create_exporter, file_repository_factory, monitor_task
+):
+    """The repository-version export task returns its created export."""
+    exporter, _ = create_exporter({"method": "write"})
+    repo = file_repository_factory()
+    response = pulpcore_bindings.ExportersFilesystemExportsApi.create(
+        exporter.pulp_href, {"repository_version": repo.latest_version_href}
+    )
+
+    task = monitor_task(response.task)
+
+    assert len(task.created_resources) == 1
+    assert task.result["pulp_href"] == task.created_resources[0]
 
 
 @pytest.mark.parallel
