@@ -30,6 +30,7 @@ from pulpcore.openapi import PulpSchemaGenerator
             "staging_path",
             "{repository_href}staging/{relative_path}/",
             id="detail-action-with-path-parameter",
+            marks=pytest.mark.skip(reason="Staging path endpoint is temporarily removed."),
         ),
         pytest.param(
             "/repositories/{repository_pk}/versions/",

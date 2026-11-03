@@ -278,8 +278,18 @@ class TestRepositoryStagingEndpoint:
         [
             ("get", "staging/", {}),
             ("head", "staging/", {}),
-            ("get", "staging/missing.txt/", {}),
-            ("head", "staging/missing.txt/", {}),
+            pytest.param(
+                "get",
+                "staging/missing.txt/",
+                {},
+                marks=pytest.mark.skip(reason="Staging path endpoint is temporarily removed."),
+            ),
+            pytest.param(
+                "head",
+                "staging/missing.txt/",
+                {},
+                marks=pytest.mark.skip(reason="Staging path endpoint is temporarily removed."),
+            ),
             ("post", "staging/", {"action": "commit"}),
             ("post", "staging/", {"action": "restore"}),
         ],
@@ -344,6 +354,7 @@ class TestRepositoryStagingEndpoint:
         assert second_page.data["results"] == expected_urls[1:]
         assert api_client.head(second_page_url).status_code == status.HTTP_200_OK
 
+    @pytest.mark.skip(reason="Staging path endpoint is temporarily removed.")
     def test_staging_path_get_and_head(self, api_client, repository):
         update_repository(repository)
         content = create_file_content("nested/file.txt")

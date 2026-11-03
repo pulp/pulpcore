@@ -77,9 +77,6 @@ The list is paginated with `limit` and `offset`.
 An empty list returns `{"count": 0, "next": null, "previous": null, "results": []}`.
 `HEAD` on `staging/` returns `200` when staging is enabled.
 
-To retrieve one staged content unit by path, append its `relative_path` to `staging/`.
-Set `RELATIVE_PATH` to the staged content unit's relative path before using the path commands.
-
 ```bash
 # List staged content URLs.
 http --auth "admin:$PULP_PASSWORD" GET \
@@ -89,17 +86,9 @@ http --auth "admin:$PULP_PASSWORD" GET \
 # Check whether staging is enabled.
 http --auth "admin:$PULP_PASSWORD" HEAD \
   "$PULP_API_URL/repositories/file/file/${REPOSITORY_ID}/staging/"
-
-# Retrieve content at a relative path, or check whether it exists.
-http --auth "admin:$PULP_PASSWORD" GET \
-  "$PULP_API_URL/repositories/file/file/${REPOSITORY_ID}/staging/${RELATIVE_PATH}/"
-http --auth "admin:$PULP_PASSWORD" HEAD \
-  "$PULP_API_URL/repositories/file/file/${REPOSITORY_ID}/staging/${RELATIVE_PATH}/"
 ```
 
-The response contains the content unit's `pulp_href` and plugin-specific fields.
-Nested paths remain part of `relative_path`; URL-encode reserved characters.
-`GET` and `HEAD` return `404` when the path is not staged.
+Use a content URL from the list to retrieve that content unit's details.
 
 ## Commit or Discard Staged Content
 
