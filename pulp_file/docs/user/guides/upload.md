@@ -32,6 +32,10 @@ The section shows how to upload content to Pulp.
 
 ## Upload a file into `foo`
 
+The synchronous File `upload/` endpoint accepts `repository` when the repository has staging enabled.
+It adds the file to staging without creating a repository version.
+See [Manage Repository Staging](site:pulpcore/docs/user/guides/stage-repository-content/).
+
 === "Upload file"
 
     ```bash

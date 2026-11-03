@@ -5,6 +5,7 @@ from urllib.parse import urlencode, urljoin, urlsplit
 
 import pytest
 from django.apps import apps
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import override_settings
 from django.utils import timezone
 from django_guid import clear_guid, set_guid
@@ -13,7 +14,13 @@ from rest_framework.test import APIClient
 
 from pulpcore.app.apps import _populate_access_policies
 from pulpcore.app.contexts import with_user
-from pulpcore.app.models import AccessPolicy, RepositoryVersion, StagedContent, Task, TaskSchedule
+from pulpcore.app.models import (
+    AccessPolicy,
+    RepositoryVersion,
+    StagedContent,
+    Task,
+    TaskSchedule,
+)
 from pulpcore.app.role_util import assign_role
 from pulpcore.app.tasks import repository as repository_tasks
 from pulpcore.app.util import (
@@ -178,6 +185,69 @@ class TestRepositoryStagingEndpoint:
         assert policy.statements == []
         url = get_detail_url(FileRepositoryViewSet, repository.pk, "staging/")
         assert api_client.get(url).status_code == status.HTTP_403_FORBIDDEN
+
+    def test_synchronous_upload_stages_only_for_enabled_repository(self, api_client, repository):
+        upload_url = get_list_url(FileContentViewSet, "upload/")
+        repository_url = get_detail_url(FileRepositoryViewSet, repository.pk)
+
+        disabled = api_client.post(
+            upload_url,
+            {
+                "file": SimpleUploadedFile("disabled.txt", b"disabled"),
+                "relative_path": "disabled.txt",
+                "repository": repository_url,
+            },
+            format="multipart",
+        )
+        assert disabled.status_code == status.HTTP_400_BAD_REQUEST
+        assert StagedContent.objects.filter(repository=repository).count() == 0
+
+        update_repository(repository)
+        staged = api_client.post(
+            upload_url,
+            {
+                "file": SimpleUploadedFile("staged.txt", b"staged"),
+                "relative_path": "staged.txt",
+                "repository": repository_url,
+            },
+            format="multipart",
+        )
+        assert staged.status_code == status.HTTP_201_CREATED
+        assert StagedContent.objects.filter(repository=repository).count() == 1
+        assert staged.data["relative_path"] == "staged.txt"
+        assert repository.latest_version().number == 0
+
+        orphan = api_client.post(
+            upload_url,
+            {"file": SimpleUploadedFile("orphan.txt", b"orphan"), "relative_path": "orphan.txt"},
+            format="multipart",
+        )
+        assert orphan.status_code == status.HTTP_201_CREATED
+        assert StagedContent.objects.filter(repository=repository).count() == 1
+
+    def test_synchronous_upload_requires_repository_modify_permission(
+        self, api_client, repository, django_user_model
+    ):
+        update_repository(repository)
+        user = django_user_model.objects.create_user(username="file-staging-uploader")
+        assign_role("file.file_uploader", user)
+        assign_role("file.filerepository_viewer", user, repository)
+        api_client.force_authenticate(user=user)
+        url = get_list_url(FileContentViewSet, "upload/")
+        data = {
+            "file": SimpleUploadedFile("restricted.txt", b"restricted"),
+            "relative_path": "restricted.txt",
+            "repository": get_detail_url(FileRepositoryViewSet, repository.pk),
+        }
+
+        assert (
+            api_client.post(url, data, format="multipart").status_code == status.HTTP_403_FORBIDDEN
+        )
+
+        assign_role("file.filerepository_owner", user, repository)
+        data["file"] = SimpleUploadedFile("restricted.txt", b"restricted")
+        assert api_client.post(url, data, format="multipart").status_code == status.HTTP_201_CREATED
+        assert StagedContent.objects.filter(repository=repository).count() == 1
 
     @pytest.mark.parametrize(
         ("method", "query_params"),

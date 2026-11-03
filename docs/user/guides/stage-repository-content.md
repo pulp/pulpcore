@@ -46,13 +46,29 @@ A separate scheduled task checks for expired deadlines at the interval set by
 and dispatches a commit task for each ready repository.
 The commit task may wait for other tasks holding the repository lock.
 
-Autocommit only affects content already placed in staging; enabling it does not change the file
-upload endpoint.
+Autocommit only affects content already placed in staging.
 Repositories using Pulp's default pull-through behavior stage new content fetched through their
 distributions when staging is enabled.
 Plugins with custom pull-through behavior may handle staging differently.
 A manual commit or restore clears the pending deadline.
 If a commit fails, the staged content and deadline remain available for another attempt.
+
+## Stage Uploaded Content
+
+The File plugin accepts `repository` on its synchronous `upload/` endpoint.
+With staging enabled, the upload returns the content and adds it to staging without creating a version.
+With staging disabled, an upload that supplies `repository` returns `400`.
+Omitting `repository` keeps the usual upload behavior and creates content without associating it with a repository.
+
+Set `FILE_PATH` to a local file and `RELATIVE_PATH` to its path in the repository.
+
+```bash
+# Upload File content synchronously and stage it.
+http --auth "admin:$PULP_PASSWORD" --form POST \
+  "$PULP_API_URL/content/file/files/upload/" \
+  file@"$FILE_PATH" relative_path="$RELATIVE_PATH" \
+  repository="$PULP_API_URL/repositories/file/file/${REPOSITORY_ID}/"
+```
 
 ## Inspect Staged Content
 
