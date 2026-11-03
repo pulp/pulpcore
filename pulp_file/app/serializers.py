@@ -67,6 +67,11 @@ class FileContentUploadSerializer(FileContentSerializer):
 
     def validate(self, data):
         """Validate the FileContent data."""
+        if repository := data.get("repository"):
+            if not repository.staging_enabled:
+                raise serializers.ValidationError(
+                    {"repository": _("The repository must have staging enabled.")}
+                )
         data = super().validate(data)
 
         if upload := data.pop("upload", None):
@@ -114,9 +119,16 @@ class FileContentUploadSerializer(FileContentSerializer):
 
         return data
 
+    def create(self, validated_data):
+        repository = validated_data.pop("repository", None)
+        content = super().create(validated_data)
+        if repository:
+            repository.cast().stage_file(content)
+        return content
+
     class Meta:
-        # This API does not support uploading to a repository.
-        fields = tuple(f for f in FileContentSerializer.Meta.fields if f not in ["repository"])
+        # Repository uploads are limited to staging-enabled repositories.
+        fields = FileContentSerializer.Meta.fields
         model = FileContent
         # Name used for the OpenAPI request object
         ref_name = "FileContentUploadSerializer"
