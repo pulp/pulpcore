@@ -13,7 +13,6 @@ from rest_framework.viewsets import GenericViewSet
 from pulpcore.app import tasks
 from pulpcore.app.models import (
     Content,
-    ContentArtifact,
     Remote,
     Repository,
     RepositoryContent,
@@ -211,8 +210,6 @@ class RepositoryViewSet(ImmutableRepositoryViewSet, AsyncUpdateMixin, LabelsMixi
             "staging",
             "staging_head",
             "staging_post",
-            "staging_path",
-            "staging_path_head",
         }:
             return queryset
         return super().filter_queryset(queryset)
@@ -245,46 +242,6 @@ class RepositoryViewSet(ImmutableRepositoryViewSet, AsyncUpdateMixin, LabelsMixi
         self._check_staging_enabled()
         query = StagingGetQuerySerializer(data=request.query_params.dict())
         query.is_valid(raise_exception=True)
-        return Response(status=status.HTTP_200_OK)
-
-    def _get_staged_content_by_path(self, repository, relative_path):
-        content_ids = ContentArtifact.objects.filter(relative_path=relative_path).values(
-            "content_id"
-        )
-        path_filter = Q(content_id__in=content_ids)
-        for content_type in repository.CONTENT_TYPES:
-            if any(field.name == "relative_path" for field in content_type._meta.get_fields()):
-                matching_ids = content_type.objects.filter(relative_path=relative_path).values("pk")
-                path_filter |= Q(content_id__in=matching_ids)
-
-        membership = (
-            StagedContent.objects.filter(repository=repository)
-            .filter(path_filter)
-            .select_related("content")
-            .order_by("content_id")
-            .first()
-        )
-        if membership is None:
-            raise NotFound()
-        return membership.content.cast()
-
-    @action(detail=True, methods=["get"], url_path=r"staging/(?P<relative_path>.+)")
-    def staging_path(self, request, pk=None, relative_path=None):
-        repository = self._check_staging_enabled()
-        query = StagingBaseQuerySerializer(data=request.query_params.dict())
-        query.is_valid(raise_exception=True)
-        content = self._get_staged_content_by_path(repository, relative_path)
-        serializer = get_viewset_for_model(content).serializer_class(
-            content, context={"request": request}
-        )
-        return Response(serializer.data)
-
-    @staging_path.mapping.head
-    def staging_path_head(self, request, pk=None, relative_path=None):
-        repository = self._check_staging_enabled()
-        query = StagingBaseQuerySerializer(data=request.query_params.dict())
-        query.is_valid(raise_exception=True)
-        self._get_staged_content_by_path(repository, relative_path)
         return Response(status=status.HTTP_200_OK)
 
     @staging.mapping.post
