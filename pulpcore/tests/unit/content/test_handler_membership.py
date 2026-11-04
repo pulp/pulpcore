@@ -4,6 +4,7 @@ import uuid
 from unittest.mock import AsyncMock
 
 import pytest
+import pytest_asyncio
 from aiohttp.test_utils import make_mocked_request
 from aiohttp.web_exceptions import HTTPMovedPermanently
 from asgiref.sync import sync_to_async
@@ -16,35 +17,69 @@ from pulpcore.plugin.models import Content, ContentArtifact, Distribution, Repos
 pytestmark = [pytest.mark.asyncio, pytest.mark.django_db]
 
 
-@sync_to_async
-def build_repository(*steps):
+def _delete_tracked(tracked):
+    # Distributions first, then repositories (cascading versions and memberships), then content.
+    Distribution.objects.filter(pk__in=tracked["distributions"]).delete()
+    Repository.objects.filter(pk__in=tracked["repositories"]).delete()
+    Content.objects.filter(pk__in=tracked["contents"]).delete()
+
+
+@pytest_asyncio.fixture
+async def created(db):
     """
-    Create a repository with one version per step; return (repository, versions, contents).
+    Track the rows a test creates and delete exactly those afterwards.
 
-    Each step is (paths_to_add, paths_to_remove). Versions are built through new_version() so
-    both the content_ids array and the RepositoryContent intervals describe the membership.
+    These tests build data through worker threads, so it is committed and not rolled back with the
+    test transaction. Left behind, it changes row order and contents for later tests.
     """
-    repository = Repository.objects.create(name=str(uuid.uuid4()))
-    repository.CONTENT_TYPES = [Content]
-    contents = {}
-    versions = []
-    for add, remove in steps:
-        for path in add:
-            content = Content.objects.create(pulp_type="core.content")
-            ContentArtifact.objects.create(content=content, relative_path=path)
-            contents[path] = content
-        with repository.new_version() as version:
-            version.add_content(Content.objects.filter(pk__in=[contents[p].pk for p in add]))
-            version.remove_content(Content.objects.filter(pk__in=[contents[p].pk for p in remove]))
-        versions.append(version)
-    return repository, versions, contents
+    tracked = {"distributions": [], "repositories": [], "contents": []}
+    yield tracked
+    await sync_to_async(_delete_tracked)(tracked)
 
 
-async def create_distribution(repo_version):
-    name = str(uuid.uuid4())
-    return await Distribution.objects.acreate(
-        name=name, base_path=name, repository_version=repo_version
-    )
+@pytest.fixture
+def build_repository(created):
+    @sync_to_async
+    def _build_repository(*steps):
+        """
+        Create a repository with one version per step; return (repository, versions, contents).
+
+        Each step is (paths_to_add, paths_to_remove). Versions are built through new_version() so
+        both the content_ids array and the RepositoryContent intervals describe the membership.
+        """
+        repository = Repository.objects.create(name=str(uuid.uuid4()))
+        created["repositories"].append(repository.pk)
+        repository.CONTENT_TYPES = [Content]
+        contents = {}
+        versions = []
+        for add, remove in steps:
+            for path in add:
+                content = Content.objects.create(pulp_type="core.content")
+                created["contents"].append(content.pk)
+                ContentArtifact.objects.create(content=content, relative_path=path)
+                contents[path] = content
+            with repository.new_version() as version:
+                version.add_content(Content.objects.filter(pk__in=[contents[p].pk for p in add]))
+                version.remove_content(
+                    Content.objects.filter(pk__in=[contents[p].pk for p in remove])
+                )
+            versions.append(version)
+        return repository, versions, contents
+
+    return _build_repository
+
+
+@pytest.fixture
+def create_distribution(created):
+    async def _create_distribution(repo_version):
+        name = str(uuid.uuid4())
+        distribution = await Distribution.objects.acreate(
+            name=name, base_path=name, repository_version=repo_version
+        )
+        created["distributions"].append(distribution.pk)
+        return distribution
+
+    return _create_distribution
 
 
 @pytest.fixture
@@ -81,7 +116,7 @@ def contentartifact_sql(queries):
     return [sql for sql in queries if 'FROM "core_contentartifact"' in sql]
 
 
-async def test_list_directory_lists_only_version_content():
+async def test_list_directory_lists_only_version_content(build_repository, created):
     """Entries come only from the listed version, not from other repositories or no repository."""
     _, (version,), _ = await build_repository(
         (["org/a/a-1.0.jar", "org/b/index.html", "top.txt"], [])
@@ -89,6 +124,7 @@ async def test_list_directory_lists_only_version_content():
     _, (other_version,), _ = await build_repository((["org/c/c-1.0.jar", "org/a/a-2.0.jar"], []))
     # Exists as a ContentArtifact, but belongs to no repository version.
     orphan = await Content.objects.acreate(pulp_type="core.content")
+    created["contents"].append(orphan.pk)
     await ContentArtifact.objects.acreate(content=orphan, relative_path="org/z.jar")
 
     directory_list, _, _ = await Handler().list_directory(version, None, "org/")
@@ -98,7 +134,7 @@ async def test_list_directory_lists_only_version_content():
     assert other_list == {"c/", "a/"}
 
 
-async def test_list_directory_excludes_removed_content():
+async def test_list_directory_excludes_removed_content(build_repository):
     """Content removed in a later version is listed only for the versions that contained it."""
     _, (version_1, version_2), _ = await build_repository(
         (["pkg/keep.rpm", "pkg/gone.rpm"], []),
@@ -112,7 +148,7 @@ async def test_list_directory_excludes_removed_content():
     assert listed_2 == {"keep.rpm", "new.rpm"}
 
 
-async def test_list_directory_lists_dotted_directories():
+async def test_list_directory_lists_dotted_directories(build_repository):
     _, (version,), _ = await build_repository(
         (["12.1.12/index.html", "12.1.12/a.txt", "top.txt"], [])
     )
@@ -124,7 +160,7 @@ async def test_list_directory_lists_dotted_directories():
     assert nested == {"index.html", "a.txt"}
 
 
-async def test_list_directory_query_uses_correlated_exists():
+async def test_list_directory_query_uses_correlated_exists(build_repository):
     _, (version,), _ = await build_repository((["org/a/a-1.0.jar"], []))
 
     _, queries = await capture_sql(Handler().list_directory(version, None, "org/"))
@@ -135,7 +171,9 @@ async def test_list_directory_query_uses_correlated_exists():
     assert "content_ids" not in sql
 
 
-async def test_file_lookup_serves_only_version_content(serve):
+async def test_file_lookup_serves_only_version_content(
+    serve, build_repository, create_distribution
+):
     _, (version,), _ = await build_repository((["org/a.jar"], []))
     await build_repository((["org/other.jar"], []))
     distribution = await create_distribution(version)
@@ -148,7 +186,9 @@ async def test_file_lookup_serves_only_version_content(serve):
         await serve(distribution, "org/other.jar")
 
 
-async def test_file_lookup_does_not_serve_removed_content(serve):
+async def test_file_lookup_does_not_serve_removed_content(
+    serve, build_repository, create_distribution
+):
     _, (version_1, version_2), _ = await build_repository(
         (["pkg/gone.rpm"], []),
         ([], ["pkg/gone.rpm"]),
@@ -160,7 +200,9 @@ async def test_file_lookup_does_not_serve_removed_content(serve):
         await serve(await create_distribution(version_2), "pkg/gone.rpm")
 
 
-async def test_file_lookup_query_uses_correlated_exists(serve):
+async def test_file_lookup_query_uses_correlated_exists(
+    serve, build_repository, create_distribution
+):
     _, (version,), _ = await build_repository((["org/a.jar"], []))
     distribution = await create_distribution(version)
 
@@ -175,7 +217,9 @@ async def test_file_lookup_query_uses_correlated_exists(serve):
 
 
 @pytest.mark.parametrize("path", ["12.1.12/", "12.1.12"])
-async def test_index_html_is_served_for_dotted_directory(serve, path):
+async def test_index_html_is_served_for_dotted_directory(
+    serve, build_repository, create_distribution, path
+):
     """A dotted final segment can still be a directory holding index.html."""
     _, (version,), _ = await build_repository((["12.1.12/index.html", "12.1.12/a.txt"], []))
     distribution = await create_distribution(version)
@@ -185,7 +229,9 @@ async def test_index_html_is_served_for_dotted_directory(serve, path):
     assert served.relative_path == "12.1.12/index.html"
 
 
-async def test_dotted_directory_without_index_redirects_to_listing(serve):
+async def test_dotted_directory_without_index_redirects_to_listing(
+    serve, build_repository, create_distribution
+):
     _, (version,), _ = await build_repository((["12.1.12/a.txt"], []))
     distribution = await create_distribution(version)
 
@@ -193,7 +239,9 @@ async def test_dotted_directory_without_index_redirects_to_listing(serve):
         await serve(distribution, "12.1.12")
 
 
-async def test_index_probe_ignores_other_repository_index(serve):
+async def test_index_probe_ignores_other_repository_index(
+    serve, build_repository, create_distribution
+):
     _, (version,), _ = await build_repository((["docs/page.html"], []))
     await build_repository((["docs/index.html"], []))
     distribution = await create_distribution(version)
@@ -203,7 +251,9 @@ async def test_index_probe_ignores_other_repository_index(serve):
         await serve(distribution, "docs")
 
 
-async def test_index_probe_is_existence_only_with_limit(serve):
+async def test_index_probe_is_existence_only_with_limit(
+    serve, build_repository, create_distribution
+):
     _, (version,), _ = await build_repository((["docs/index.html"], []))
     distribution = await create_distribution(version)
 

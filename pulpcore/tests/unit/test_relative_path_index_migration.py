@@ -49,10 +49,8 @@ def test_equivalent_existing_index_is_reused():
         # Partial index.
         f'CREATE INDEX "{INDEX}" ON core_contentartifact (relative_path text_pattern_ops)'
         " WHERE relative_path <> ''",
-        # Unique index.
-        f'CREATE UNIQUE INDEX "{INDEX}" ON core_contentartifact (relative_path text_pattern_ops)',
     ],
-    ids=["default-opclass", "extra-column", "partial", "unique"],
+    ids=["default-opclass", "extra-column", "partial"],
 )
 def test_index_with_unexpected_definition_is_rejected(create_sql):
     replace_index(create_sql)
@@ -77,3 +75,45 @@ def test_reverse_leaves_index_it_did_not_create():
     migration.drop_relative_path_index(None, schema_editor)
 
     assert index_info() is not None
+
+
+class RecordingCursor:
+    """A stand-in cursor that returns one canned index row and records every statement."""
+
+    def __init__(self, row):
+        self.row = row
+        self.statements = []
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc_info):
+        return False
+
+    def execute(self, sql, params=None):
+        self.statements.append(sql)
+
+    def fetchone(self):
+        return self.row
+
+
+def test_unique_index_is_rejected_without_running_ddl():
+    """
+    A UNIQUE index of the same name is rejected and left alone.
+
+    It cannot be created in the test database, where relative_path values are not unique, so the
+    existing index is simulated instead of built.
+    """
+    definition = (
+        f"CREATE UNIQUE INDEX {INDEX} ON public.core_contentartifact "
+        "USING btree (relative_path text_pattern_ops)"
+    )
+    cursor = RecordingCursor((True, None, definition))
+    fake_editor = SimpleNamespace(connection=SimpleNamespace(cursor=lambda: cursor))
+
+    with pytest.raises(RuntimeError, match="unexpected definition"):
+        migration.create_relative_path_index(None, fake_editor)
+
+    # Only the lookup ran: nothing was created, commented on, or dropped.
+    assert len(cursor.statements) == 1
+    assert cursor.statements[0].lstrip().startswith("SELECT")
