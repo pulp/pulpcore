@@ -1,0 +1,2 @@
+Fixed canceling a task while its worker is shutting down gracefully. The cancellation never
+aborted the task, so the worker could not exit and kept holding the task's resource locks.
