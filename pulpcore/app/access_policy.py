@@ -28,9 +28,7 @@ def get_default_access_policy(viewset):
         return policy
 
     read_actions = [
-        action
-        for action in ("staging", "staging_head")
-        if action not in declared_actions
+        action for action in ("staging", "staging_head") if action not in declared_actions
     ]
     write_action = "staging_post" not in declared_actions
     if not read_actions and not write_action:
