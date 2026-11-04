@@ -30,7 +30,6 @@ from pulpcore.app.serializers import (
 )
 from pulpcore.app.util import (
     get_url,
-    get_viewset_for_model,
     resolve_prn,
     resolve_repository_version_href,
 )
