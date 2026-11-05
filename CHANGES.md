@@ -8,6 +8,29 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.49.73 (2026-11-05) {: #3.49.73 }
+
+### REST API {: #3.49.73-rest-api }
+
+#### Bugfixes {: #3.49.73-rest-api-bugfix }
+
+- Fixed a typo in `GroupRoleSerializer` that caused a 500 error when listing group roles with a domain set.
+  [#7095](https://github.com/pulp/pulpcore/issues/7095)
+
+### Plugin API {: #3.49.73-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.73-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.73-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.49.72 (2026-10-22) {: #3.49.72 }
 
 ### REST API {: #3.49.72-rest-api }
