@@ -8,6 +8,33 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.123.2 (2026-11-05) {: #3.123.2 }
+
+### REST API {: #3.123.2-rest-api }
+
+#### Bugfixes {: #3.123.2-rest-api-bugfix }
+
+- Fixed uploads of files whose names start with `artifact` when the media root is empty.
+  [#8041](https://github.com/pulp/pulpcore/issues/8041)
+- Insures that `Content-Disposition`, `Content-Security-Policy`, and `X-Content-Type-Options`
+  are set consistently in the content-app. This addresses CVE-2026-84232.
+
+### Plugin API {: #3.123.2-plugin-api }
+
+#### Bugfixes {: #3.123.2-plugin-api-bugfix }
+
+- Pulp's `gpg_verify()` function now respects the system policy for the sequoia crypto library in `/etc/crypto-policies/back-ends/sequoia.config` (or the path set by the environment variable `SEQUOIA_CRYPTO_POLICY`).
+
+### Pulp File {: #3.123.2-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.123.2-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.123.1 (2026-10-23) {: #3.123.1 }
 
 ### REST API {: #3.123.1-rest-api }
