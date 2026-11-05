@@ -1,12 +1,33 @@
 from gettext import gettext as _
 from itertools import chain
 
+from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import BaseBackend
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 
 from pulpcore.app.models import Domain
-from pulpcore.app.models.role import GroupRole
+from pulpcore.app.models.role import GroupRole, UserRole
+
+User = get_user_model()
+
+
+def _global_user_roles(user_obj, **filters):
+    """UserRole query for a global (no object, no domain) grant check.
+
+    For a real, persisted User, query UserRole directly rather than through
+    user_obj.object_roles: that related manager passes user_obj as an instance hint, and
+    PulpDomainRouter gives a persisted instance's own db (User is control-plane, always
+    'default') priority over ambient routing -- which would always check 'default' here,
+    regardless of ambient context.
+
+    For anything else (e.g. WorkloadIdentityPrincipal, a duck-typed, non-model request.user
+    that overrides object_roles itself), trust that override instead: it isn't a real User row
+    UserRole.objects could filter by user=user_obj against.
+    """
+    if isinstance(user_obj, User):
+        return UserRole.objects.filter(user=user_obj, **filters)
+    return user_obj.object_roles.filter(**filters)
 
 
 class ObjectRolePermissionBackend(BaseBackend):
@@ -27,39 +48,63 @@ class ObjectRolePermissionBackend(BaseBackend):
             return False
 
         if obj is None:
-            # Check for global roles
-            if user_obj.object_roles.filter(
-                object_id=None, domain=None, role__permissions=permission
+            # Check for global roles. A grant with neither an object nor a domain lives on
+            # whichever alias it was created on (role_util.assign_role), so there's no "target
+            # database" to route to here -- ambient routing is correct.
+            if _global_user_roles(
+                user_obj, object_id=None, domain=None, role__permissions=permission
             ).exists():
                 return True
             if GroupRole.objects.filter(
-                group__in=user_obj.groups.all(),
+                group_id__in=list(user_obj.groups.values_list("pk", flat=True)),
                 object_id=None,
                 domain=None,
                 role__permissions=permission,
             ).exists():
                 return True
         elif isinstance(obj, Domain) and "domain" not in perm:
-            # Check for domain roles
-            if user_obj.object_roles.filter(
-                domain_id=obj.pk, role__permissions=permission
-            ).exists():
+            # Domain-wide grants always live on the domain's own alias (role_util.assign_role),
+            # which may differ from wherever this check happens to be running from.
+            alias = obj.database_alias
+            if (
+                user_obj.object_roles.using(alias)
+                .filter(domain_id=obj.pk, role__permissions=permission)
+                .exists()
+            ):
                 return True
-            if GroupRole.objects.filter(
-                group__in=user_obj.groups.all(), domain_id=obj.pk, role__permissions=permission
-            ).exists():
+            if (
+                GroupRole.objects.using(alias)
+                .filter(
+                    group_id__in=list(user_obj.groups.values_list("pk", flat=True)),
+                    domain_id=obj.pk,
+                    role__permissions=permission,
+                )
+                .exists()
+            ):
                 return True
         else:
             obj_type = ContentType.objects.get_for_model(obj, for_concrete_model=False)
             if permission.content_type == obj_type:
-                # Check object specific roles
-                if user_obj.object_roles.filter(
-                    object_id=obj.pk, role__permissions=permission
-                ).exists():
+                # Object-level grants live on the target object's own database (role_util.
+                # assign_role), which may differ from wherever this check happens to be running
+                # from -- e.g. checking a Task's 'core.task_owner' grant from satellite-scoped
+                # ambient context, when Task (and its grant) always live in 'default'.
+                alias = obj._state.db
+                if (
+                    user_obj.object_roles.using(alias)
+                    .filter(object_id=obj.pk, role__permissions=permission)
+                    .exists()
+                ):
                     return True
-                if GroupRole.objects.filter(
-                    group__in=user_obj.groups.all(), object_id=obj.pk, role__permissions=permission
-                ).exists():
+                if (
+                    GroupRole.objects.using(alias)
+                    .filter(
+                        group_id__in=list(user_obj.groups.values_list("pk", flat=True)),
+                        object_id=obj.pk,
+                        role__permissions=permission,
+                    )
+                    .exists()
+                ):
                     return True
             else:
                 raise RuntimeError(
@@ -76,10 +121,13 @@ class ObjectRolePermissionBackend(BaseBackend):
         if obj is None:
             # Returns all domain & model level permissions for user
             result = (
-                user_obj.object_roles.filter(object_id=None).values(app_label, codename).distinct()
+                _global_user_roles(user_obj, object_id=None).values(app_label, codename).distinct()
             )
             group_result = (
-                GroupRole.objects.filter(group__in=user_obj.groups.all(), object_id=None)
+                GroupRole.objects.filter(
+                    group_id__in=list(user_obj.groups.values_list("pk", flat=True)),
+                    object_id=None,
+                )
                 .values(app_label, codename)
                 .distinct()
             )
@@ -88,10 +136,14 @@ class ObjectRolePermissionBackend(BaseBackend):
             )
 
         else:
+            # Object-level grants live on the target object's own database (role_util.
+            # assign_role), which may differ from wherever this check happens to be running from.
+            alias = obj._state.db
             obj_type = ContentType.objects.get_for_model(obj, for_concrete_model=False)
             # Maybe there is a way to reformulate this as a single query on Permissions
             result = (
-                user_obj.object_roles.filter(role__permissions__content_type=obj_type)
+                user_obj.object_roles.using(alias)
+                .filter(role__permissions__content_type=obj_type)
                 .filter(
                     content_type=obj_type,
                     object_id=obj.pk,
@@ -100,8 +152,10 @@ class ObjectRolePermissionBackend(BaseBackend):
                 .distinct()
             )
             group_result = (
-                GroupRole.objects.filter(
-                    group__in=user_obj.groups.all(), role__permissions__content_type=obj_type
+                GroupRole.objects.using(alias)
+                .filter(
+                    group_id__in=list(user_obj.groups.values_list("pk", flat=True)),
+                    role__permissions__content_type=obj_type,
                 )
                 .filter(
                     content_type=obj_type,

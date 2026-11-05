@@ -18,6 +18,7 @@ from django.db.models import F, Func, Q, Value
 from django_lifecycle import AFTER_UPDATE, BEFORE_CREATE, BEFORE_DELETE, hook
 from rest_framework.exceptions import APIException
 
+from pulpcore.app.db_router import atomic
 from pulpcore.app.loggers import deprecation_logger
 from pulpcore.app.util import (
     batch_qs,
@@ -132,26 +133,34 @@ class Repository(MasterModel):
             args (list): list of positional arguments for Model.save()
             kwargs (dict): dictionary of keyword arguments to pass to Model.save()
         """
-        with transaction.atomic():
-            adding = self._state.adding
-            super().save(*args, **kwargs)
-            if adding:
-                self.create_initial_version()
+        adding = self._state.adding
+        # Nested in an outer atomic(using="default"): Task (the lock target below) is
+        # control-plane and always lives in 'default', which may differ from the repository's own
+        # alias, so a single atomic() can't cover both -- there's no cross-database transaction.
+        # This at least restores the old all-or-nothing behavior for single-DB installs (the inner
+        # atomic() then nests as a savepoint in the same 'default' transaction), and keeps the lock
+        # update in 'default's own transaction when the aliases differ.
+        with atomic(using="default"):
+            with atomic():
+                super().save(*args, **kwargs)
+                if adding:
+                    self.create_initial_version()
 
-                # lock the repository if it was created from within a running task
-                task_id = Task.current_id()
-                if task_id is None:
-                    return
+            if not adding:
+                return
 
-                repository_prn = Value(get_prn(instance=self))
-                update_func = Func(
-                    F("reserved_resources_record"), repository_prn, function="ARRAY_APPEND"
-                )
-                updated = Task.objects.filter(pk=task_id).update(
-                    reserved_resources_record=update_func
-                )
-                if not updated:
-                    raise RuntimeError(f"The repository '{self.name}' could not be locked")
+            # lock the repository if it was created from within a running task
+            task_id = Task.current_id()
+            if task_id is None:
+                return
+
+            repository_prn = Value(get_prn(instance=self))
+            update_func = Func(
+                F("reserved_resources_record"), repository_prn, function="ARRAY_APPEND"
+            )
+            updated = Task.objects.filter(pk=task_id).update(reserved_resources_record=update_func)
+            if not updated:
+                raise RuntimeError(f"The repository '{self.name}' could not be locked")
 
     def create_initial_version(self):
         """
@@ -178,7 +187,7 @@ class Repository(MasterModel):
         Returns:
             pulpcore.app.models.RepositoryVersion: The Created RepositoryVersion
         """
-        with transaction.atomic():
+        with atomic():
             latest_version = self.versions.latest()
             if not latest_version.complete:
                 latest_version.delete()
@@ -474,7 +483,9 @@ class Repository(MasterModel):
     def _cleanup_old_versions_hook(self):
         # Do not attempt to clean up anything, while there is a transaction involving repo versions
         # still in flight.
-        transaction.on_commit(self.cleanup_old_versions)
+        # using=self._state.db: on_commit defaults to the 'default' alias's commit queue, not
+        # whatever alias this repository's own (possibly satellite) transaction is actually on.
+        transaction.on_commit(self.cleanup_old_versions, using=self._state.db)
 
     def cleanup_old_versions(self):
         """Cleanup old repository versions based on retain_repo_versions."""
@@ -498,7 +509,7 @@ class Repository(MasterModel):
 
     @hook(AFTER_UPDATE, when="retain_checkpoints", has_changed=True)
     def _cleanup_old_checkpoints_hook(self):
-        transaction.on_commit(self.cleanup_old_checkpoints)
+        transaction.on_commit(self.cleanup_old_checkpoints, using=self._state.db)
 
     def cleanup_old_checkpoints(self):
         """Unmark old checkpoint publications based on retain_checkpoints."""
@@ -542,7 +553,7 @@ class Repository(MasterModel):
         # first, to make the cascade delete managable.
         #
         # [0] https://docs.djangoproject.com/en/4.2/ref/models/querysets/#delete
-        with transaction.atomic():
+        with atomic():
             repo_contents = RepositoryContent.objects.filter(repository=self)
 
             # Materialize publication PKs to avoid nested IN subqueries that
@@ -1213,7 +1224,7 @@ class RepositoryVersion(BaseModel):
 
         repo_content = []
         to_add = set(content.values_list("pk", flat=True)) - set(self.content_ids)
-        with transaction.atomic():
+        with atomic():
             if to_add:
                 self.content_ids += list(to_add)
                 self.save(update_fields=["content_ids", "pulp_last_updated"])
@@ -1264,7 +1275,7 @@ class RepositoryVersion(BaseModel):
         )
         content_ids = set(self.content_ids)
         to_remove = set(content.values_list("pk", flat=True))
-        with transaction.atomic():
+        with atomic():
             # Normalize representation if content has already been added in this version.
             # Undo addition by deleting the RepositoryContent.
             RepositoryContent.objects.filter(
@@ -1424,7 +1435,7 @@ class RepositoryVersion(BaseModel):
 
             # Handle the manipulation of the repository version content and its final deletion in
             # the same transaction.
-            with transaction.atomic():
+            with atomic():
                 repo_relations = RepositoryContent.objects.filter(
                     repository=self.repository
                 ).select_for_update()
@@ -1445,11 +1456,19 @@ class RepositoryVersion(BaseModel):
                 return super().delete(**kwargs)
 
         else:
-            with transaction.atomic():
-                RepositoryContent.objects.filter(version_added=self).delete()
-                RepositoryContent.objects.filter(version_removed=self).update(version_removed=None)
+            # Nested in an outer atomic(using="default"): CreatedResource is control-plane and
+            # always lives in 'default', which may differ from this version's own alias, so a
+            # single atomic() can't cover both. This restores the old all-or-nothing behavior for
+            # single-DB installs and keeps the CreatedResource delete in 'default's own
+            # transaction otherwise.
+            with atomic(using="default"):
                 CreatedResource.objects.filter(object_id=self.pk).delete()
-                return super().delete(**kwargs)
+                with atomic():
+                    RepositoryContent.objects.filter(version_added=self).delete()
+                    RepositoryContent.objects.filter(version_removed=self).update(
+                        version_removed=None
+                    )
+                    return super().delete(**kwargs)
 
     def _compute_counts(self):
         """
@@ -1459,7 +1478,7 @@ class RepositoryVersion(BaseModel):
         This method deletes existing [pulpcore.app.models.RepositoryVersionContentDetails][]
         objects and makes new ones with each call.
         """
-        with transaction.atomic():
+        with atomic():
             # relatively inexpensive sanity check for memoization
             if self.content_ids:
                 assert len(self.content_ids) == self._content_relationships().count()
@@ -1528,7 +1547,7 @@ class RepositoryVersion(BaseModel):
 
                     self.complete = True
                     self.repository.next_version = self.number + 1
-                    with transaction.atomic():
+                    with atomic():
                         self.repository.save()
                         self.save()
                         self._compute_counts()

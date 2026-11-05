@@ -55,10 +55,24 @@ def assign_role(rolename, entity, obj=None, domain=None):
                     rolename
                 )
             )
-    if isinstance(entity, Group):
-        GroupRole.objects.create(role=role, group=entity, content_object=obj, domain=domain)
+    # Every grant has exactly one home and is never replicated (see rbac_sync). A domain-wide or
+    # object-level grant resolves explicitly to that domain's/object's own alias, since ambient
+    # context can't be trusted (e.g. an object may be a control-plane model always in 'default',
+    # regardless of the ambient domain). Only a grant tied to neither trusts ambient routing.
+    if domain is not None:
+        using = domain.database_alias
+    elif obj is not None:
+        using = obj._state.db
     else:
-        UserRole.objects.create(role=role, user=entity, content_object=obj, domain=domain)
+        using = None
+    if isinstance(entity, Group):
+        return GroupRole.objects.using(using).create(
+            role=role, group=entity, content_object=obj, domain=domain
+        )
+    else:
+        return UserRole.objects.using(using).create(
+            role=role, user=entity, content_object=obj, domain=domain
+        )
 
 
 def remove_role(rolename, entity, obj=None, domain=None):
@@ -79,10 +93,17 @@ def remove_role(rolename, entity, obj=None, domain=None):
         role = Role.objects.get(name=rolename)
     except Role.DoesNotExist:
         raise BadRequest(_("The role '{}' does not exist.").format(rolename))
-    if isinstance(entity, Group):
-        qs = GroupRole.objects.filter(role=role, group=entity)
+    # See assign_role for why each grant kind resolves to a different alias.
+    if domain is not None:
+        using = domain.database_alias
+    elif obj is not None:
+        using = obj._state.db
     else:
-        qs = UserRole.objects.filter(role=role, user=entity)
+        using = None
+    if isinstance(entity, Group):
+        qs = GroupRole.objects.using(using).filter(role=role, group=entity)
+    else:
+        qs = UserRole.objects.using(using).filter(role=role, user=entity)
     if obj is None:
         # Global or domain search
         qs = qs.filter(object_id=None, domain=domain)
@@ -110,65 +131,93 @@ def get_objects_for_user_roles(
         return qs.none()
     if with_superuser and user.is_superuser:
         return qs
+
+    # Permission is always resolved against 'default' -- it's control-plane, and we trust
+    # pulpcore.app.rbac_sync's natural-key-based replication to keep each alias's Role.permissions
+    # M2M pointing at the locally-equivalent Permission row, so a Permission instance resolved on
+    # 'default' still matches correctly when used to filter a UserRole/GroupRole query pinned to a
+    # satellite alias below. Every grant kind -- object-level, domain-wide, and the kind tied to
+    # neither -- only ever exists on qs's own alias (see role_util.assign_role), so a single local
+    # query covers all of them without any cross-database materialization.
+    alias = qs.db
     if "." in permission_name:
         app_label, codename = permission_name.split(".", maxsplit=1)
         permission = Permission.objects.get(content_type__app_label=app_label, codename=codename)
     else:
         permission = Permission.objects.get(codename=permission_name)
 
+    group_ids = list(user.groups.values_list("pk", flat=True)) if use_groups else []
+
     if accept_global_perms:
-        if user.object_roles.filter(
-            object_id=None, domain=None, role__permissions=permission
-        ).exists():
+        if (
+            UserRole.objects.using(alias)
+            .filter(user=user, object_id=None, domain=None, role__permissions=permission)
+            .exists()
+        ):
             return qs
         if (
             use_groups
-            and GroupRole.objects.filter(
-                group__in=user.groups.all(),
+            and GroupRole.objects.using(alias)
+            .filter(
+                group_id__in=group_ids,
                 object_id=None,
                 domain=None,
                 role__permissions=permission,
-            ).exists()
+            )
+            .exists()
         ):
             return qs
 
-    user_role_pks = user.object_roles.filter(
-        domain__isnull=True, role__permissions=permission
-    ).values_list("object_id", flat=True)
+    user_role_pks = (
+        UserRole.objects.using(alias)
+        .filter(user=user, domain__isnull=True, role__permissions=permission)
+        .values_list("object_id", flat=True)
+    )
     final_q = Q(pk_str__in=user_role_pks)
     if accept_domain_perms and hasattr(qs.model, "pulp_domain"):
         # Optimization used by get_queryset in NamedModelViewSet
         if filtered_domain := getattr(qs, "filtered_domain", None):
-            if user.object_roles.filter(
-                domain=filtered_domain, role__permissions=permission
-            ).exists():
+            if (
+                UserRole.objects.using(alias)
+                .filter(user=user, domain=filtered_domain, role__permissions=permission)
+                .exists()
+            ):
                 return qs
             if (
                 use_groups
-                and GroupRole.objects.filter(
-                    group__in=user.groups.all(),
+                and GroupRole.objects.using(alias)
+                .filter(
+                    group_id__in=group_ids,
                     domain=filtered_domain,
                     role__permissions=permission,
-                ).exists()
+                )
+                .exists()
             ):
                 return qs
         else:
-            user_domains = user.object_roles.filter(
-                domain__isnull=False, role__permissions=permission
-            ).values_list("domain_id", flat=True)
-            final_q |= Q(pulp_domain_id__in=user_domains)
+            domains = list(
+                UserRole.objects.using(alias)
+                .filter(user=user, domain__isnull=False, role__permissions=permission)
+                .values_list("domain_id", flat=True)
+            )
             if use_groups:
-                group_domains = GroupRole.objects.filter(
-                    group__in=user.groups.all(),
-                    domain__isnull=False,
-                    role__permissions=permission,
-                ).values_list("domain_id", flat=True)
-                final_q |= Q(pulp_domain_id__in=group_domains)
+                domains.extend(
+                    GroupRole.objects.using(alias)
+                    .filter(
+                        group_id__in=group_ids,
+                        domain__isnull=False,
+                        role__permissions=permission,
+                    )
+                    .values_list("domain_id", flat=True)
+                )
+            final_q |= Q(pulp_domain_id__in=domains)
 
     if use_groups:
-        group_role_pks = GroupRole.objects.filter(
-            group__in=user.groups.all(), role__permissions=permission, domain__isnull=True
-        ).values_list("object_id", flat=True)
+        group_role_pks = (
+            GroupRole.objects.using(alias)
+            .filter(group_id__in=group_ids, role__permissions=permission, domain__isnull=True)
+            .values_list("object_id", flat=True)
+        )
         final_q |= Q(pk_str__in=group_role_pks)
 
     return qs.annotate(pk_str=Cast("pk", output_field=CharField())).filter(final_q)
