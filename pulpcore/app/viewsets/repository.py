@@ -220,7 +220,7 @@ class RepositoryViewSet(ImmutableRepositoryViewSet, AsyncUpdateMixin, LabelsMixi
         return repository
 
     @action(detail=True, methods=["get"])
-    def staging(self, request, pk=None):
+    def staging(self, request, pk=None, **kwargs):
         repository = self._check_staging_enabled()
         query = StagingGetQuerySerializer(data=request.query_params.dict())
         query.is_valid(raise_exception=True)
@@ -237,14 +237,14 @@ class RepositoryViewSet(ImmutableRepositoryViewSet, AsyncUpdateMixin, LabelsMixi
         return Response(contents)
 
     @staging.mapping.head
-    def staging_head(self, request, pk=None):
+    def staging_head(self, request, pk=None, **kwargs):
         self._check_staging_enabled()
         query = StagingGetQuerySerializer(data=request.query_params.dict())
         query.is_valid(raise_exception=True)
         return Response(status=status.HTTP_200_OK)
 
     @staging.mapping.post
-    def staging_post(self, request, pk=None):
+    def staging_post(self, request, pk=None, **kwargs):
         repository = self._check_staging_enabled()
         query = StagingPostQuerySerializer(data=request.query_params.dict())
         query.is_valid(raise_exception=True)

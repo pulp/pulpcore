@@ -1,17 +1,21 @@
 import json
 from datetime import datetime, timedelta
+from importlib import reload
 from secrets import token_hex
 from urllib.parse import urlencode, urljoin, urlsplit
 
 import pytest
 from django.apps import apps
+from django.conf import settings as django_settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import override_settings
+from django.urls import clear_url_caches
 from django.utils import timezone
 from django_guid import clear_guid, set_guid
 from rest_framework import status
 from rest_framework.test import APIClient
 
+from pulpcore.app import urls as api_urls
 from pulpcore.app.apps import _populate_access_policies
 from pulpcore.app.contexts import with_user
 from pulpcore.app.models import (
@@ -95,6 +99,19 @@ def api_client(db, django_user_model):
     return client
 
 
+@pytest.fixture
+def versioned_api_urls():
+    rest_framework = {**django_settings.REST_FRAMEWORK, "ALLOWED_VERSIONS": ["v3", "v4"]}
+    try:
+        with override_settings(ENABLE_V4_API=True, REST_FRAMEWORK=rest_framework):
+            reload(api_urls)
+            clear_url_caches()
+            yield
+    finally:
+        reload(api_urls)
+        clear_url_caches()
+
+
 class TestRepositoryEndpoint:
     def test_detail_exposes_default_staging_fields(self, api_client, repository):
         detail_url = get_detail_url(FileRepositoryViewSet, repository.pk)
@@ -155,6 +172,27 @@ class TestRepositoryNextCommit:
 
 
 class TestRepositoryStagingEndpoint:
+    @pytest.mark.parametrize(
+        ("method", "query", "expected_status"),
+        [
+            ("get", "", status.HTTP_200_OK),
+            ("head", "", status.HTTP_200_OK),
+            ("post", "?action=commit", status.HTTP_204_NO_CONTENT),
+        ],
+    )
+    def test_staging_accepts_version_route_parameter(
+        self, api_client, repository, versioned_api_urls, method, query, expected_status
+    ):
+        update_repository(repository)
+        url = get_detail_url(FileRepositoryViewSet, repository.pk, "staging/").replace(
+            "/api/v3/", "/api/v4/"
+        )
+        assert resolve(url).kwargs["version"] == "v4"
+
+        response = getattr(api_client, method)(url + query)
+
+        assert response.status_code == expected_status
+
     def test_staging_access_follows_repository_roles(
         self, api_client, repository, django_user_model
     ):
