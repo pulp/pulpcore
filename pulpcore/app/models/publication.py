@@ -30,6 +30,7 @@ from pulpcore.responses import ArtifactResponse
 
 from .base import BaseModel, MasterModel
 from .content import Artifact, Content, ContentArtifact
+from .domain import DomainDefaultContentGuard
 from .repository import Remote, Repository, RepositoryVersion
 from .task import CreatedResource
 
@@ -917,9 +918,11 @@ class Distribution(MasterModel):
         explicitly provided `content_guard` always takes precedence.
         """
         if self.content_guard_id is None:
-            default_content_guard_id = self.pulp_domain.default_content_guard_id
-            if default_content_guard_id is not None:
-                self.content_guard_id = default_content_guard_id
+            self.content_guard_id = (
+                DomainDefaultContentGuard.objects.filter(pulp_domain_id=self.pulp_domain_id)
+                .values_list("content_guard_id", flat=True)
+                .first()
+            )
 
     @hook(AFTER_CREATE)
     @hook(
