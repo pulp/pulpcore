@@ -8,6 +8,32 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.118.6 (2026-11-05) {: #3.118.6 }
+
+### REST API {: #3.118.6-rest-api }
+
+#### Bugfixes {: #3.118.6-rest-api-bugfix }
+
+- Fixed uploads of files whose names start with `artifact` when the media root is empty.
+  [#8041](https://github.com/pulp/pulpcore/issues/8041)
+- Increased the default maximum HTTP header field size for the pulpcore gunicorn config from 8190 to 16384 bytes to support PQC (post-quantum) X.509 certificates forwarded via the `X-CLIENT-CERT` header.
+
+### Plugin API {: #3.118.6-plugin-api }
+
+#### Bugfixes {: #3.118.6-plugin-api-bugfix }
+
+- Pulp's `gpg_verify()` function now respects the system policy for the sequoia crypto library in `/etc/crypto-policies/back-ends/sequoia.config` (or the path set by the environment variable `SEQUOIA_CRYPTO_POLICY`).
+
+### Pulp File {: #3.118.6-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.118.6-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.118.5 (2026-10-23) {: #3.118.5 }
 
 ### REST API {: #3.118.5-rest-api }
