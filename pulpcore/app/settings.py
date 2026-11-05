@@ -288,6 +288,10 @@ DRF_ACCESS_POLICY = {"reusable_conditions": ["pulpcore.app.global_access_conditi
 CONTENT_ORIGIN = None
 CONTENT_PATH_PREFIX = "/pulp/content/"
 
+# Maximum number of entries rendered in a content app directory listing. Listings with more
+# entries are truncated and a "…" marker is shown. Set to 0 to disable the limit.
+DIRECTORY_LISTING_LIMIT = 10000
+
 API_APP_TTL = 120  # The heartbeat is called from gunicorn notify (defaulting to 45 sec).
 CONTENT_APP_TTL = 30
 WORKER_TTL = 30
