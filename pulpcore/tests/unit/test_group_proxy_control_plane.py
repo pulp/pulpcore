@@ -37,14 +37,12 @@ def satellite_domain():
 
 class TestGroupProxyIsControlPlane:
     def test_group_created_in_satellite_context_lands_on_default(self, satellite_domain):
-        with with_domain(satellite_domain):
+        with TestCase.captureOnCommitCallbacks(execute=True), with_domain(satellite_domain):
             group = Group.objects.create(name=f"cp-group-{uuid.uuid4()}")
         try:
             assert group._state.db == "default"
             assert Group.objects.using("default").filter(pk=group.pk).exists()
-            # Group IS instance-wide replicated to every satellite by rbac_sync (same as User/
-            # Role) -- that's expected and separate from this fix. What this fix changes is that
-            # 'default' -- not the satellite -- is where the Group actually lives and originates.
-            assert Group.objects.using(SATELLITE_ALIAS).filter(pk=group.pk).exists()
+            # Satellites only get a stub once a grant for the group is written there.
+            assert not Group.objects.using(SATELLITE_ALIAS).filter(pk=group.pk).exists()
         finally:
             Group.objects.using("default").filter(pk=group.pk).delete()

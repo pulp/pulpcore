@@ -20,7 +20,6 @@ from django.test import TestCase
 from pulpcore.app.contexts import with_domain
 from pulpcore.app.models import Domain
 from pulpcore.app.models.role import Role
-from pulpcore.app.rbac_sync import replicate_role, replicate_user
 from pulpcore.app.role_util import assign_role
 
 from .test_multi_database_routing import SATELLITE_ALIAS, requires_multi_db
@@ -49,12 +48,14 @@ def satellite_domain():
 class TestGlobalUserGrantFollowsAmbientContext:
     def test_has_perm_finds_grant_created_under_satellite_context(self, satellite_domain):
         user = User.objects.create(username=str(uuid.uuid4()))
-        role = Role.objects.create(name=f"global-viewer-{uuid.uuid4()}")
+        role = Role.objects.using(SATELLITE_ALIAS).create(name=f"global-viewer-{uuid.uuid4()}")
         role.permissions.set(
-            [Permission.objects.get(content_type__app_label="core", codename="view_remote")]
+            [
+                Permission.objects.using(SATELLITE_ALIAS).get(
+                    content_type__app_label="core", codename="view_remote"
+                )
+            ]
         )
-        replicate_user(user)
-        replicate_role(role)
         try:
             # A grant tied to neither object nor domain lands wherever the request creating it
             # was ambiently scoped (role_util.assign_role) -- here, the satellite.

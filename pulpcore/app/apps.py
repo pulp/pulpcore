@@ -9,7 +9,7 @@ from django import apps
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db import ProgrammingError, connection, connections, transaction
-from django.db.models.signals import m2m_changed, post_delete, post_migrate, post_save, pre_migrate
+from django.db.models.signals import post_delete, post_migrate, post_save, pre_migrate, pre_save
 from django.utils.module_loading import module_has_submodule
 
 from pulpcore.exceptions.plugin import MissingPlugin
@@ -274,14 +274,7 @@ class PulpAppConfig(PulpPluginAppConfig):
         )
 
     def _connect_multi_db_signals(self):
-        """Wire up the Domain/User/Group/Role replication signals. Only called when
-        PulpDomainRouter is actually configured, so a single-database Pulp instance never pays
-        for connecting (and firing, on every save/delete of these models) signal receivers it has
-        no use for. UserRole/GroupRole grants aren't replicated at all -- see
-        pulpcore.app.rbac_sync's module docstring -- so they don't need signals here. RBAC
-        (User/Group/Role) replication isn't wired here either -- see
-        ensure_rbac_replicated_for_alias's docstring for why it has to run from the migrate
-        command instead of a post_migrate signal."""
+        """Connect replication for Domains and stub Users/Groups."""
         post_migrate.connect(
             _ensure_domains_replicated,
             sender=self,
@@ -297,16 +290,12 @@ class PulpAppConfig(PulpPluginAppConfig):
 
         from pulpcore.app.domain_sync import on_domain_post_delete, on_domain_post_save
         from pulpcore.app.models import Domain, Group
-        from pulpcore.app.models.role import Role
+        from pulpcore.app.models.role import GroupRole, UserRole
         from pulpcore.app.rbac_sync import (
-            on_group_permissions_changed,
             on_group_post_delete,
-            on_group_post_save,
-            on_role_permissions_changed,
-            on_role_post_delete,
-            on_role_post_save,
+            on_group_role_pre_save,
             on_user_post_delete,
-            on_user_post_save,
+            on_user_role_pre_save,
         )
 
         post_save.connect(
@@ -316,28 +305,12 @@ class PulpAppConfig(PulpPluginAppConfig):
             on_domain_post_delete, sender=Domain, dispatch_uid="replicate_domain_post_delete"
         )
 
-        User = get_user_model()
-        for model, save_fn, delete_fn, prefix in (
-            (User, on_user_post_save, on_user_post_delete, "replicate_user"),
-            (Group, on_group_post_save, on_group_post_delete, "replicate_group"),
-            (Role, on_role_post_save, on_role_post_delete, "replicate_role"),
-        ):
-            post_save.connect(save_fn, sender=model, dispatch_uid=f"{prefix}_post_save")
-            post_delete.connect(delete_fn, sender=model, dispatch_uid=f"{prefix}_post_delete")
-
-        # permissions is M2M: membership changes (.set()/.add()/.remove()/.clear(), e.g. from
-        # RoleSerializer) don't save the Group/Role row itself, so post_save above never fires
-        # for them -- see on_*_permissions_changed's docstrings.
-        m2m_changed.connect(
-            on_group_permissions_changed,
-            sender=Group.permissions.through,
-            dispatch_uid="replicate_group_permissions_changed",
+        pre_save.connect(on_user_role_pre_save, sender=UserRole, dispatch_uid="user_role_stub")
+        pre_save.connect(on_group_role_pre_save, sender=GroupRole, dispatch_uid="group_role_stub")
+        post_delete.connect(
+            on_user_post_delete, sender=get_user_model(), dispatch_uid="remove_user_stubs"
         )
-        m2m_changed.connect(
-            on_role_permissions_changed,
-            sender=Role.permissions.through,
-            dispatch_uid="replicate_role_permissions_changed",
-        )
+        post_delete.connect(on_group_post_delete, sender=Group, dispatch_uid="remove_group_stubs")
 
 
 def _clean_app_status(sender, apps, verbosity, **kwargs):
@@ -454,35 +427,8 @@ def _ensure_domains_replicated(sender, **kwargs):
         )
 
 
-def ensure_rbac_replicated_for_alias(using):
-    """Backfill Users/Groups/Roles (with their permissions) onto a satellite alias.
-
-    Called explicitly from the migrate command after it finishes, not from a post_migrate signal:
-    replicating a Role's permissions needs every app's Permission rows to already exist on this
-    alias, but post_migrate fires once per app in installed-app order, and plugin apps are
-    appended after pulpcore.app -- a signal scoped to this app's sender would run before plugin
-    apps have created their own permissions here yet, failing with a Permission FK violation.
-    """
-    if using == "default":
-        return
-    if "auth_user" not in connections[using].introspection.table_names():
-        return
-    from pulpcore.app.rbac_sync import ensure_replicated_on_alias
-
-    try:
-        ensure_replicated_on_alias(using)
-    except Exception:
-        logging.getLogger(__name__).error(
-            "Replicating Users/Groups/Roles to alias '%s' failed during migration. Object-level "
-            "role grants created on this alias may fail to validate until it is reconciled.",
-            using,
-            exc_info=True,
-        )
-
-
 def _populate_roles(sender, apps, verbosity, **kwargs):
-    if kwargs.get("using", "default") != "default":
-        return
+    alias = kwargs.get("using", "default")
     role_prefix = f"{sender.label}."
     # collect all plugin defined roles
     desired_roles = {}
@@ -491,10 +437,10 @@ def _populate_roles(sender, apps, verbosity, **kwargs):
             locked_roles = getattr(viewset, "LOCKED_ROLES", None)
             if locked_roles is not None:
                 desired_roles.update(locked_roles or {})
-    adjust_roles(apps, role_prefix, desired_roles, verbosity)
+    adjust_roles(apps, role_prefix, desired_roles, verbosity, using=alias)
 
 
-def adjust_roles(apps, role_prefix, desired_roles, verbosity=1):
+def adjust_roles(apps, role_prefix, desired_roles, verbosity=1, using="default"):
     """
     Adjust all roles with a given prefix.
 
@@ -516,10 +462,12 @@ def adjust_roles(apps, role_prefix, desired_roles, verbosity=1):
 
     def _get_permission(perm):
         app_label, codename = perm.split(".", maxsplit=2)
-        return Permission.objects.get(content_type__app_label=app_label, codename=codename)
+        return Permission.objects.using(using).get(
+            content_type__app_label=app_label, codename=codename
+        )
 
     # Remove obsolete roles
-    Role.objects.filter(name__startswith=role_prefix, locked=True).exclude(
+    Role.objects.using(using).filter(name__startswith=role_prefix, locked=True).exclude(
         name__in=desired_roles.keys()
     ).delete()
     # Create / update desired roles
@@ -535,7 +483,7 @@ def adjust_roles(apps, role_prefix, desired_roles, verbosity=1):
                 _("Locked role definition for {name} is incompatible.").format(name=name)
             )
         permissions = [_get_permission(perm) for perm in permissions]
-        role, created = Role.objects.update_or_create(
+        role, created = Role.objects.using(using).update_or_create(
             name=name, defaults={"name": name, "locked": True, "description": description}
         )
         role.permissions.set(permissions)

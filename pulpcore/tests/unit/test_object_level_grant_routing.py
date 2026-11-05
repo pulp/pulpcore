@@ -25,8 +25,8 @@ from django.test import TestCase
 from pulpcore.app.contexts import with_domain
 from pulpcore.app.models import Domain, Task
 from pulpcore.app.models.role import Role, UserRole
-from pulpcore.app.rbac_sync import replicate_role, replicate_user
 from pulpcore.app.role_util import assign_role, remove_role
+from pulpcore.app.serializers import UserRoleSerializer
 from pulpcore.constants import TASK_STATES
 
 from .test_multi_database_routing import SATELLITE_ALIAS, requires_multi_db
@@ -59,8 +59,6 @@ class TestObjectLevelGrantFollowsTargetDb:
         role.permissions.set(
             [Permission.objects.get(content_type__app_label="core", codename="view_task")]
         )
-        replicate_user(user)
-        replicate_role(role)
         task = Task.objects.create(name="regress-task", state=TASK_STATES.WAITING)
         try:
             # Ambient context is the satellite domain, but Task always lives in 'default' -- the
@@ -83,3 +81,17 @@ class TestObjectLevelGrantFollowsTargetDb:
             Task.objects.using("default").filter(pk=task.pk).delete()
             role.delete()
             user.delete()
+
+    def test_api_grant_on_satellite_task_uses_role_database(self, satellite_domain):
+        user = User.objects.create(username=str(uuid.uuid4()))
+        role = Role.objects.using("default").get(name="core.task_owner")
+        task = Task.objects.create(
+            name="regress-task", state=TASK_STATES.WAITING, pulp_domain=satellite_domain
+        )
+        # The serializer create runs under the task's (satellite) domain context.
+        with with_domain(satellite_domain):
+            grant = UserRoleSerializer().create(
+                {"role": role, "user": user, "content_object": task, "domain": None}
+            )
+        assert grant._state.db == "default"
+        assert user.has_perm("core.view_task", task)

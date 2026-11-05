@@ -8,6 +8,7 @@ from django.contrib.contenttypes.models import ContentType
 
 from pulpcore.app.models import Domain
 from pulpcore.app.models.role import GroupRole, UserRole
+from pulpcore.app.role_util import grant_alias
 
 User = get_user_model()
 
@@ -38,9 +39,14 @@ class ObjectRolePermissionBackend(BaseBackend):
         if not user_obj.is_authenticated:
             return False
 
+        alias = (
+            grant_alias(domain=obj)
+            if isinstance(obj, Domain) and "domain" not in perm
+            else grant_alias(obj)
+        )
         try:
             app_label, codename = perm.split(".", maxsplit=1)
-            permission = Permission.objects.get(
+            permission = Permission.objects.using(alias).get(
                 content_type__app_label=app_label, codename=codename
             )
         except Permission.DoesNotExist:
@@ -83,7 +89,9 @@ class ObjectRolePermissionBackend(BaseBackend):
             ):
                 return True
         else:
-            obj_type = ContentType.objects.get_for_model(obj, for_concrete_model=False)
+            obj_type = ContentType.objects.db_manager(alias).get_for_model(
+                obj, for_concrete_model=False
+            )
             if permission.content_type == obj_type:
                 # Object-level grants live on the target object's own database (role_util.
                 # assign_role), which may differ from wherever this check happens to be running
@@ -139,7 +147,9 @@ class ObjectRolePermissionBackend(BaseBackend):
             # Object-level grants live on the target object's own database (role_util.
             # assign_role), which may differ from wherever this check happens to be running from.
             alias = obj._state.db
-            obj_type = ContentType.objects.get_for_model(obj, for_concrete_model=False)
+            obj_type = ContentType.objects.db_manager(alias).get_for_model(
+                obj, for_concrete_model=False
+            )
             # Maybe there is a way to reformulate this as a single query on Permissions
             result = (
                 user_obj.object_roles.using(alias)

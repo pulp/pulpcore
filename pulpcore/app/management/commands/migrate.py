@@ -15,16 +15,4 @@ class Command(_DjangoMigrateCommand):
     def handle(self, *args, **options):
         alias = options.get("database") or DEFAULT_DB_ALIAS
         with with_migration_alias(alias):
-            result = super().handle(*args, **options)
-
-        if alias != DEFAULT_DB_ALIAS:
-            from pulpcore.app.db_router import is_multi_db_routing_active
-
-            if is_multi_db_routing_active():
-                # Must run after super().handle() fully returns, not from a post_migrate signal:
-                # see apps.ensure_rbac_replicated_for_alias's docstring for why.
-                from pulpcore.app.apps import ensure_rbac_replicated_for_alias
-
-                ensure_rbac_replicated_for_alias(alias)
-
-        return result
+            return super().handle(*args, **options)

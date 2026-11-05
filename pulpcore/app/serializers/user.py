@@ -284,7 +284,7 @@ class ValidateRoleMixin:
                 _("Domain and content_object are mutually exclusive.")
             )
         elif content_object:
-            content_type = ContentType.objects.get_for_model(
+            content_type = ContentType.objects.db_manager(data["role"]._state.db).get_for_model(
                 content_object, for_concrete_model=False
             )
             if not data["role"].permissions.filter(content_type__pk=content_type.id).exists():
@@ -308,10 +308,36 @@ class ValidateRoleMixin:
                         "The role '{}' does not carry any permission on an object with a domain"
                     ).format(data["role"].name)
                 )
-        if self.Meta.model.objects.filter(**natural_key_args).exists():
+        if (
+            self.Meta.model.objects.using(data["role"]._state.db)
+            .filter(**natural_key_args)
+            .exists()
+        ):
             raise serializers.ValidationError(
                 _("The role is already assigned to this {}.").format(role_type)
             )
+
+    def create(self, validated_data):
+        # A grant lives in the database its role was resolved from (see GrantRoleField).
+        return self.Meta.model.objects.using(validated_data["role"]._state.db).create(
+            **validated_data
+        )
+
+
+class GrantRoleField(serializers.SlugRelatedField):
+    """Look up a role on the database where its grant will live."""
+
+    def get_queryset(self):
+        data = getattr(self.parent, "initial_data", {})
+        domain = data.get("domain")
+        if domain:
+            domain = self.parent.fields["domain"].run_validation(domain)
+            return Role.objects.using(domain.database_alias).all()
+        for field_name in ("content_object", "content_object_prn"):
+            if value := data.get(field_name):
+                obj = self.parent.fields[field_name].run_validation(value)
+                return Role.objects.using(obj._state.db).all()
+        return super().get_queryset()
 
 
 class UserRoleSerializer(ValidateRoleMixin, ModelSerializer, NestedHyperlinkedModelSerializer):
@@ -321,7 +347,7 @@ class UserRoleSerializer(ValidateRoleMixin, ModelSerializer, NestedHyperlinkedMo
         view_name="roles-detail", parent_lookup_kwargs={"user_pk": "user__pk"}
     )
 
-    role = serializers.SlugRelatedField(
+    role = GrantRoleField(
         slug_field="name",
         queryset=Role.objects.all(),
     )
@@ -390,7 +416,7 @@ class GroupRoleSerializer(ValidateRoleMixin, ModelSerializer, NestedHyperlinkedM
         view_name="roles-detail", parent_lookup_kwargs={"group_pk": "group__pk"}
     )
 
-    role = serializers.SlugRelatedField(
+    role = GrantRoleField(
         slug_field="name",
         queryset=Role.objects.all(),
     )
@@ -483,11 +509,18 @@ class NestedRoleSerializer(serializers.Serializer):
         required=True,
     )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if obj := self.context.get("content_object"):
+            self.fields["role"].queryset = Role.objects.using(obj._state.db).all()
+
     def validate(self, data):
         data = super().validate(data)
         if "assign" in self.context:
             obj = self.context["content_object"]
-            obj_type = ContentType.objects.get_for_model(obj, for_concrete_model=False)
+            obj_type = ContentType.objects.db_manager(obj._state.db).get_for_model(
+                obj, for_concrete_model=False
+            )
             # Object-level grants live on the target object's own database (role_util.
             # assign_role), which may differ from the ambient alias this request happens to be
             # scoped to.

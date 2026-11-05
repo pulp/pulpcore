@@ -424,6 +424,10 @@ class DomainSerializer(BackendSettingsValidator, ModelSerializer):
         help_text=_("Boolean to hide distributions with a content guard in the content app."),
         default=False,
     )
+    database_alias = serializers.CharField(
+        required=False,
+        help_text=_("Database alias for a new domain. Cannot be changed after creation."),
+    )
     default_content_guard = DetailRelatedField(
         required=False,
         allow_null=True,
@@ -441,6 +445,17 @@ class DomainSerializer(BackendSettingsValidator, ModelSerializer):
 
     def get_default_content_guard_prn(self, obj):
         return get_prn(obj.default_content_guard) if obj.default_content_guard else None
+
+    def validate_database_alias(self, value):
+        from pulpcore.app.db_router import is_multi_db_routing_active
+
+        if value not in settings.DATABASES:
+            raise serializers.ValidationError(_("Unknown database alias."))
+        if value != "default" and not is_multi_db_routing_active():
+            raise serializers.ValidationError(_("Multi-database routing is not enabled."))
+        if self.instance is not None and value != self.instance.database_alias:
+            raise serializers.ValidationError(_("A domain's database cannot be changed."))
+        return value
 
     def validate_name(self, value):
         """Ensure name is not 'api' or 'content'."""
@@ -491,6 +506,7 @@ class DomainSerializer(BackendSettingsValidator, ModelSerializer):
             "hide_guarded_distributions",
             "default_content_guard",
             "default_content_guard_prn",
+            "database_alias",
         )
 
 

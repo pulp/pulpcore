@@ -20,7 +20,6 @@ from django.test import TestCase
 from pulpcore.app.contexts import with_domain
 from pulpcore.app.models import Domain, Group
 from pulpcore.app.models.role import Role
-from pulpcore.app.rbac_sync import replicate_group, replicate_role, replicate_user
 from pulpcore.app.role_util import assign_role
 
 from .test_multi_database_routing import SATELLITE_ALIAS, requires_multi_db
@@ -51,13 +50,14 @@ class TestGroupBasedDomainGrantOnSatellite:
         user = User.objects.create(username=str(uuid.uuid4()))
         group = Group.objects.create(name=f"grp-{uuid.uuid4()}")
         user.groups.add(group)
-        role = Role.objects.create(name=f"domain-viewer-{uuid.uuid4()}")
+        role = Role.objects.using(SATELLITE_ALIAS).create(name=f"domain-viewer-{uuid.uuid4()}")
         role.permissions.set(
-            [Permission.objects.get(content_type__app_label="core", codename="view_remote")]
+            [
+                Permission.objects.using(SATELLITE_ALIAS).get(
+                    content_type__app_label="core", codename="view_remote"
+                )
+            ]
         )
-        replicate_user(user)
-        replicate_group(group)
-        replicate_role(role)
         try:
             # Domain-wide grants resolve explicitly to the domain's own alias -- the satellite.
             grant = assign_role(role.name, group, domain=satellite_domain)

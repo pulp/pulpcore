@@ -20,7 +20,9 @@ CONTROL_PLANE_LABELS = frozenset(
         "core.appstatus",
         "core.systemid",
         "core.accesspolicy",
-        "core.role",
+        "auth.user",
+        "auth.group",
+        "auth.user_groups",
         "core.progressreport",
         "core.groupprogressreport",
         "core.profileartifact",
@@ -31,7 +33,7 @@ CONTROL_PLANE_LABELS = frozenset(
     }
 )
 
-CONTROL_PLANE_APPS = frozenset({"auth", "contenttypes", "admin", "sessions"})
+CONTROL_PLANE_APPS = frozenset({"admin", "sessions"})
 
 
 def _database_alias(domain):
@@ -69,11 +71,7 @@ def atomic(using=None, **kwargs):
 
 class PulpDomainRouter:
     def _is_control_plane(self, model):
-        # Resolve through proxy models to their concrete model before classifying: a proxy's
-        # own app_label/model_name needn't match its concrete model's (e.g. pulpcore.app.models.
-        # Group is a proxy over django.contrib.auth.models.Group labeled "core.group", not
-        # "auth.group" -- checking the proxy's own label would miss it even though it shares
-        # auth_group's table and must live wherever the rest of the "auth" app lives).
+        # Classify proxies by their concrete model, so core.Group follows auth.Group.
         concrete = model._meta.concrete_model or model
         label = f"{concrete._meta.app_label}.{concrete._meta.model_name}"
         return label in CONTROL_PLANE_LABELS or concrete._meta.app_label in CONTROL_PLANE_APPS

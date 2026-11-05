@@ -136,10 +136,32 @@ pulp user role-assignment add --username <username> --role <role_name> --domain 
     e.g. You can not add content from one domain to the repository of another domain even if you own both domains.
 
 
-There are notable objects in Pulp like `Roles`, `Users`, and `Groups`, that are not a part of domains and remain global across the system.
+With the default single-database configuration, `Roles`, `Users`, and `Groups` are not part of domains and remain global across the system.
 These objects are closely intertwined with the RBAC system and currently do not make sense to be unique on the domain level.
 Objects that are not a part of a domain are readable from any domain (with the correct permissions),
 but are only operable on within the `default` domain, i.e. `Roles` can be read from any domain, but can only be created from the `default` domain.
+
+## Separate databases
+
+To route new domains to separate databases, configure `DATABASES` and explicitly enable
+`pulpcore.app.db_router.PulpDomainRouter` in `DATABASE_ROUTERS`. Migrate `default` first, then
+run `pulpcore-manager migrate --database <alias>` for each satellite database. All processes
+must use the same database configuration and installed plugins.
+
+Set `database_alias` when creating a Domain through the API. It defaults to `default` and
+cannot be changed through the API after creation. Moving existing domains requires a separate
+migration procedure.
+
+Users, Groups, and group membership are managed centrally in `default`. When a role grant is
+written to a satellite, a placeholder row with the same id is created there for the grant's user
+or group; it carries no credentials. Deleting a User or Group removes its placeholders and the
+grants on every satellite.
+
+Roles, permissions, and role grants belong to each database. Built-in roles are initialized
+during migration; custom roles must be created in each database that needs them. A model-level
+(global) grant applies only within the database it was created in, including every domain that
+shares that database. Django permissions assigned directly to users or groups, outside of roles,
+are not supported for satellite domains.
 
 [RBAC Overview]: site:pulpcore/docs/dev/learn/rbac/
 [settings]: site:pulpcore/docs/admin/reference/settings/

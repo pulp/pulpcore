@@ -70,7 +70,8 @@ class Command(BaseCommand):
             - remove default access policies related to the plugin with provided app_label
             - remove locked roles related to the plugin, do not touch the user defined ones.
         """
-        ContentType.objects.filter(app_label=app_label).delete()
+        for alias in settings.DATABASES:
+            ContentType.objects.using(alias).filter(app_label=app_label).delete()
         app_config = apps.get_app_config(app_label)
         viewset_names = []
         role_names = []
@@ -80,7 +81,8 @@ class Command(BaseCommand):
                 role_names.extend(getattr(viewset, "LOCKED_ROLES", {}).keys())
 
         AccessPolicy.objects.filter(viewset_name__in=viewset_names, customized=False).delete()
-        Role.objects.filter(name__in=role_names, locked=True).delete()
+        for alias in settings.DATABASES:
+            Role.objects.using(alias).filter(name__in=role_names, locked=True).delete()
 
     def _remove_plugin_data(self, app_label):
         """
