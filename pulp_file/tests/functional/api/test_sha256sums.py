@@ -45,7 +45,7 @@ def get_sha256sums(base_url, directory=""):
     if response.status_code == 404:
         return None
     response.raise_for_status()
-    return {tuple(line.split("  ")) for line in response.text.splitlines()}
+    return {tuple(line.split(" *")) for line in response.text.splitlines()}
 
 
 @pytest.mark.parallel

@@ -151,8 +151,9 @@ class Sha256Sums:
     """
     A set of sha256sum files describing the files in a repository.
 
-    Every file lists each file below it as `<digest>  <path relative to the file>`, the format
-    read by `sha256sum -c`.
+    Every file lists each file below it as `<digest> *<path relative to the file>`, the format
+    read by `sha256sum -c`. The `*` marks binary mode, so a checker on Windows does not translate
+    newlines before hashing.
 
     Attributes:
         per_directory (bool): Write a file in every directory instead of only at the root.
@@ -204,7 +205,7 @@ class Sha256Sums:
                         name = entry.relative_path[len(directory) + 1 :]
                     else:
                         name = entry.relative_path
-                    open_files[directory].write(f"{entry.digest}  {name}\n")
+                    open_files[directory].write(f"{entry.digest} *{name}\n")
         finally:
             for fp in open_files.values():
                 fp.close()

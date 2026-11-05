@@ -19,9 +19,9 @@ def test_root(tmp_path):
 
     assert read_written(written) == {
         "SHA256SUMS": (
-            f"{'c' * 64}  docs/api/reference.md\n"
-            f"{'b' * 64}  docs/intro.md\n"
-            f"{'a' * 64}  release.iso\n"
+            f"{'c' * 64} *docs/api/reference.md\n"
+            f"{'b' * 64} *docs/intro.md\n"
+            f"{'a' * 64} *release.iso\n"
         )
     }
 
@@ -31,12 +31,12 @@ def test_per_directory(tmp_path):
 
     assert read_written(written) == {
         "SHA256SUMS": (
-            f"{'c' * 64}  docs/api/reference.md\n"
-            f"{'b' * 64}  docs/intro.md\n"
-            f"{'a' * 64}  release.iso\n"
+            f"{'c' * 64} *docs/api/reference.md\n"
+            f"{'b' * 64} *docs/intro.md\n"
+            f"{'a' * 64} *release.iso\n"
         ),
-        "docs/SHA256SUMS": f"{'c' * 64}  api/reference.md\n{'b' * 64}  intro.md\n",
-        "docs/api/SHA256SUMS": f"{'c' * 64}  reference.md\n",
+        "docs/SHA256SUMS": f"{'c' * 64} *api/reference.md\n{'b' * 64} *intro.md\n",
+        "docs/api/SHA256SUMS": f"{'c' * 64} *reference.md\n",
     }
 
 
