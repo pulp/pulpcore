@@ -524,7 +524,7 @@ def has_required_repo_perms_on_upload(request, view, action, permission):
 
     def _forbidden_labels():
         "Return true if we're creating, specifying labels, and DO NOT HAVE labeling-permissions."
-        if action == "create" and request.data.get("pulp_labels"):
+        if action in ("create", "upload_sync") and request.data.get("pulp_labels"):
             return not has_model_or_domain_perms(
                 request, view, action, "core.manage_content_labels"
             )

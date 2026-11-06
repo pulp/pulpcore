@@ -56,6 +56,10 @@ class PublicationSerializer(ModelSerializer):
             return data
         elif repository and not repository_version:
             validate_repo_and_remote(repository, "repository")
+            if not repository.versioned:
+                raise serializers.ValidationError(
+                    _("Publications are not supported for unversioned repositories.")
+                )
             version = repository.latest_version()
             if version:
                 new_data = {"repository_version": version}

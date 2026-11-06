@@ -200,8 +200,13 @@ def repair_all_artifacts(verify_checksums, **kwargs):
 
 
 def _serialize_version(version):
-    """Serialize `version` if it was created (i.e. not discarded as a no-op) else return None."""
-    if not version.complete:
+    """
+    Serialize `version` if it was created (i.e. not discarded as a no-op) else return None.
+
+    Also returns None for a [pulpcore.app.models.RepositoryMembership][] (unversioned repository),
+    since it is not a stored version and `RepositoryVersionSerializer` cannot serialize it.
+    """
+    if not version.complete or isinstance(version, models.RepositoryMembership):
         return None
     # The hyperlinked fields require the "request" key in the context, but hrefs are relative.
     return RepositoryVersionSerializer(version, context={"request": None}).data
