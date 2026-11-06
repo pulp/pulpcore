@@ -104,3 +104,33 @@ pulp file repository update --name $REPO_NAME --autopublish
 # This configures the distribution to be track the latest repository version for a given repository
 pulp file distribution update --name $DIST_NAME --repository $REPO_NAME
 ```
+
+## Publish SHA256SUMS Files
+
+A repository can publish `SHA256SUMS` files alongside its content, in the format read by
+`sha256sum -c`. This is off by default. Setting it to `root` publishes a single file at the root of
+the repository, and `directory` publishes one in every directory. Each file lists every file below
+it, with paths relative to the file itself.
+
+This option is not exposed by the CLI yet, so set it through the API:
+
+```bash
+REPO_HREF=$(pulp file repository show --name $REPO_NAME | jq -r '.pulp_href')
+
+# Every new publication of this repository gets a SHA256SUMS in each of its directories
+http PATCH :$REPO_HREF sha256sums=directory
+```
+
+A publication inherits the setting from the repository it is published from, and can override it:
+
+```bash
+http POST :/pulp/api/v3/publications/file/file/ repository=$REPO_HREF sha256sums=root
+```
+
+Consumers verify what they downloaded by running `sha256sum -c SHA256SUMS` in the directory they
+downloaded it into. Content that Pulp has not downloaded yet has no digest to publish and is left
+out.
+
+The generated files take the `SHA256SUMS` paths for themselves, so the manifest cannot be named
+`SHA256SUMS` while they are generated, and a repository already holding content at one of those
+paths cannot be published.
