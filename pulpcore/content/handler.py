@@ -46,6 +46,7 @@ from django.db import (  # noqa: E402
     models,
     transaction,
 )
+from django.db.models import Exists, OuterRef  # noqa: E402
 from jinja2 import Template  # noqa: E402
 
 from pulpcore.app import mime_types  # noqa: E402
@@ -712,7 +713,12 @@ class Handler:
 
             if repo_version or publication.pass_through:
                 cas = ContentArtifact.objects.select_related("artifact").filter(
-                    content__in=content_repo_ver.content, relative_path__startswith=path
+                    Exists(
+                        content_repo_ver._content_relationships().filter(
+                            content_id=OuterRef("content_id")
+                        )
+                    ),
+                    relative_path__startswith=path,
                 )
                 for ca in cas:
                     name = file_or_directory_name(path, ca.relative_path)
@@ -898,9 +904,14 @@ class Handler:
                             "artifact", "artifact__pulp_domain"
                         )
                         .filter(
-                            content__in=publication.repository_version.content,
+                            Exists(
+                                publication.repository_version._content_relationships().filter(
+                                    content_id=OuterRef("content_id")
+                                )
+                            ),
+                            relative_path=original_rel_path,
                         )
-                        .aget(relative_path=original_rel_path)
+                        .aget()
                     )
 
                 except MultipleObjectsReturned:
@@ -938,9 +949,14 @@ class Handler:
             # Look for index.html or list the directory
             index_path = "{}index.html".format(rel_path)
 
-            contentartifact_exists = await ContentArtifact.objects.filter(
-                content__in=repo_version.content, relative_path=index_path
-            ).aexists()
+            # Existence-only probe: select just the pk and stop at the first match.
+            index_matches = ContentArtifact.objects.filter(
+                Exists(
+                    repo_version._content_relationships().filter(content_id=OuterRef("content_id"))
+                ),
+                relative_path=index_path,
+            ).values_list("pk", flat=True)[:1]
+            contentartifact_exists = bool([pk async for pk in index_matches])
             if contentartifact_exists:
                 original_rel_path = index_path
                 headers = self.response_headers(original_rel_path, distro)
@@ -961,9 +977,20 @@ class Handler:
                     )
 
             try:
-                ca = await ContentArtifact.objects.select_related(
-                    "artifact", "artifact__pulp_domain"
-                ).aget(content__in=repo_version.content, relative_path=original_rel_path)
+                ca = (
+                    await ContentArtifact.objects.select_related(
+                        "artifact", "artifact__pulp_domain"
+                    )
+                    .filter(
+                        Exists(
+                            repo_version._content_relationships().filter(
+                                content_id=OuterRef("content_id")
+                            )
+                        ),
+                        relative_path=original_rel_path,
+                    )
+                    .aget()
+                )
 
             except MultipleObjectsReturned:
                 log.error(
