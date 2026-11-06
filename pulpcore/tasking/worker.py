@@ -107,6 +107,14 @@ class PulpcoreWorker:
         # It will be set into the future on moderately graceful worker shutdown,
         # and set to None for fully graceful shutdown.
         self.task_grace_timeout = timezone.now()
+
+        # Deadline for force-killing an explicitly canceled (or shutdown-aborted) task
+        # process. Kept separate from task_grace_timeout: that field can be set to None
+        # to make the worker wait forever for a task to finish naturally on a graceful
+        # shutdown, but an explicit cancellation must still take effect on its own
+        # schedule regardless of that wait, or it can never actually abort the task.
+        self.cancel_kill_deadline = None
+
         self.worker_cleanup_countdown = random.randint(
             int(WORKER_CLEANUP_INTERVAL / 10), WORKER_CLEANUP_INTERVAL
         )
@@ -460,16 +468,17 @@ class PulpcoreWorker:
         self.task = task
         cancel_state = None
         cancel_reason = None
+        self.cancel_kill_deadline = None
         domain = task.pulp_domain
         with TemporaryDirectory(dir=".") as task_working_dir_rel_path:
             task_process = Process(target=perform_task, args=(task.pk, task_working_dir_rel_path))
             task_process.start()
             while True:
                 if cancel_state:
-                    if self.task_grace_timeout is None or self.task_grace_timeout > timezone.now():
+                    if self.cancel_kill_deadline > timezone.now():
                         _logger.info("Wait for canceled task to abort.")
                     else:
-                        self.task_grace_timeout = timezone.now() + timezone.timedelta(
+                        self.cancel_kill_deadline = timezone.now() + timezone.timedelta(
                             seconds=TASK_KILL_INTERVAL
                         )
                         _logger.info(
@@ -496,6 +505,7 @@ class PulpcoreWorker:
                     )
                     cancel_state = TASK_STATES.CANCELED
                     self.cancel_task = False
+                    self.cancel_kill_deadline = timezone.now()
                 if self.wakeup_unblock:
                     self.unblock_tasks()
                 if task_process.sentinel in r:
@@ -503,7 +513,9 @@ class PulpcoreWorker:
                         break
                 if self.sentinel in r:
                     os.read(self.sentinel, 256)
-                if self.shutdown_requested:
+                # Once the task is being aborted, keep its state (e.g. CANCELED) and let the
+                # cancellation branch above drive the kill.
+                if self.shutdown_requested and not cancel_state:
                     if self.task_grace_timeout is None or self.task_grace_timeout > timezone.now():
                         msg = (
                             "Worker shutdown requested, waiting for task {pk} in domain: {name} "
@@ -519,6 +531,7 @@ class PulpcoreWorker:
                         )
                         cancel_state = TASK_STATES.FAILED
                         cancel_reason = "Aborted during worker shutdown."
+                        self.cancel_kill_deadline = timezone.now()
 
             task_process.join()
             if not cancel_state and task_process.exitcode != 0:
