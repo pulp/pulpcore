@@ -8,6 +8,33 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.123.2 (2026-11-05) {: #3.123.2 }
+
+### REST API {: #3.123.2-rest-api }
+
+#### Bugfixes {: #3.123.2-rest-api-bugfix }
+
+- Fixed uploads of files whose names start with `artifact` when the media root is empty.
+  [#8041](https://github.com/pulp/pulpcore/issues/8041)
+- Insures that `Content-Disposition`, `Content-Security-Policy`, and `X-Content-Type-Options`
+  are set consistently in the content-app. This addresses CVE-2026-84232.
+
+### Plugin API {: #3.123.2-plugin-api }
+
+#### Bugfixes {: #3.123.2-plugin-api-bugfix }
+
+- Pulp's `gpg_verify()` function now respects the system policy for the sequoia crypto library in `/etc/crypto-policies/back-ends/sequoia.config` (or the path set by the environment variable `SEQUOIA_CRYPTO_POLICY`).
+
+### Pulp File {: #3.123.2-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.123.2-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.123.1 (2026-10-23) {: #3.123.1 }
 
 ### REST API {: #3.123.1-rest-api }
@@ -351,6 +378,32 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.119.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.118.6 (2026-11-05) {: #3.118.6 }
+
+### REST API {: #3.118.6-rest-api }
+
+#### Bugfixes {: #3.118.6-rest-api-bugfix }
+
+- Fixed uploads of files whose names start with `artifact` when the media root is empty.
+  [#8041](https://github.com/pulp/pulpcore/issues/8041)
+- Increased the default maximum HTTP header field size for the pulpcore gunicorn config from 8190 to 16384 bytes to support PQC (post-quantum) X.509 certificates forwarded via the `X-CLIENT-CERT` header.
+
+### Plugin API {: #3.118.6-plugin-api }
+
+#### Bugfixes {: #3.118.6-plugin-api-bugfix }
+
+- Pulp's `gpg_verify()` function now respects the system policy for the sequoia crypto library in `/etc/crypto-policies/back-ends/sequoia.config` (or the path set by the environment variable `SEQUOIA_CRYPTO_POLICY`).
+
+### Pulp File {: #3.118.6-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.118.6-pulp-cert-guard }
 
 No significant changes.
 
@@ -1610,6 +1663,32 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.106.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.105.26 (2026-11-05) {: #3.105.26 }
+
+### REST API {: #3.105.26-rest-api }
+
+#### Bugfixes {: #3.105.26-rest-api-bugfix }
+
+- Fixed uploads of files whose names start with `artifact` when the media root is empty.
+  [#8041](https://github.com/pulp/pulpcore/issues/8041)
+- Increased the default maximum HTTP header field size for the pulpcore gunicorn config from 8190 to 16384 bytes to support PQC (post-quantum) X.509 certificates forwarded via the `X-CLIENT-CERT` header.
+
+### Plugin API {: #3.105.26-plugin-api }
+
+#### Bugfixes {: #3.105.26-plugin-api-bugfix }
+
+- Pulp's `gpg_verify()` function now respects the system policy for the sequoia crypto library in `/etc/crypto-policies/back-ends/sequoia.config` (or the path set by the environment variable `SEQUOIA_CRYPTO_POLICY`).
+
+### Pulp File {: #3.105.26-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.105.26-pulp-cert-guard }
 
 No significant changes.
 
@@ -3192,6 +3271,26 @@ No significant changes.
 
 ---
 
+## 3.85.35 (2026-11-05) {: #3.85.35 }
+
+### REST API {: #3.85.35-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.85.35-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.85.35-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.35-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.85.34 (2026-10-23) {: #3.85.34 }
 
 ### REST API {: #3.85.34-rest-api }
@@ -4745,6 +4844,26 @@ No significant changes.
   [#6244](https://github.com/pulp/pulpcore/issues/6244)
 
 ### Pulp Cert Guard {: #3.74.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.73.48 (2026-11-05) {: #3.73.48 }
+
+### REST API {: #3.73.48-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.73.48-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.73.48-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.48-pulp-cert-guard }
 
 No significant changes.
 
@@ -6514,6 +6633,26 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.64.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.63.50 (2026-11-05) {: #3.63.50 }
+
+### REST API {: #3.63.50-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.63.50-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.50-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.50-pulp-cert-guard }
 
 No significant changes.
 
@@ -8481,6 +8620,29 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard
+
+No significant changes.
+
+---
+
+## 3.49.73 (2026-11-05) {: #3.49.73 }
+
+### REST API {: #3.49.73-rest-api }
+
+#### Bugfixes {: #3.49.73-rest-api-bugfix }
+
+- Fixed a typo in `GroupRoleSerializer` that caused a 500 error when listing group roles with a domain set.
+  [#7095](https://github.com/pulp/pulpcore/issues/7095)
+
+### Plugin API {: #3.49.73-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.73-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.73-pulp-cert-guard }
 
 No significant changes.
 
