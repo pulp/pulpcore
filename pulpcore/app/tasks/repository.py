@@ -2,17 +2,25 @@ import asyncio
 import hashlib
 from concurrent.futures import ThreadPoolExecutor
 from contextvars import copy_context
+from datetime import timedelta
 from gettext import gettext as _
+from itertools import chain
 from logging import getLogger
 
 from asgiref.sync import sync_to_async
+from django.conf import settings
 from django.db import transaction
+from django.db.models import Exists, OuterRef
+from django.utils import timezone
 
 from pulpcore.app import models
+from pulpcore.app.contexts import with_domain
 from pulpcore.app.models import ProgressReport
 from pulpcore.app.serializers import RepositoryVersionSerializer
-from pulpcore.app.util import get_domain
+from pulpcore.app.util import get_domain, get_prn
+from pulpcore.constants import TASK_INCOMPLETE_STATES
 from pulpcore.exceptions.base import RepositoryVersionDeleteError
+from pulpcore.tasking.tasks import dispatch
 
 log = getLogger(__name__)
 
@@ -205,6 +213,77 @@ def _serialize_version(version):
         return None
     # The hyperlinked fields require the "request" key in the context, but hrefs are relative.
     return RepositoryVersionSerializer(version, context={"request": None}).data
+
+
+def commit_staging(repository_pk, **kwargs):
+    """Commit staged content to a repository version and clear those staged entries."""
+    with transaction.atomic():
+        repository = models.Repository.objects.get(pk=repository_pk).cast()
+        staged = models.StagedContent.objects.filter(repository=repository)
+        staged_rows = list(staged.values_list("pk", "content_id"))
+        result = None
+        if staged_rows:
+            with repository.new_version() as version:
+                version.add_content(
+                    models.Content.objects.filter(
+                        pk__in=[content_id for _, content_id in staged_rows]
+                    )
+                )
+
+            staged.filter(pk__in=[pk for pk, _ in staged_rows]).delete()
+            result = _serialize_version(version)
+
+        models.Repository.objects.filter(pk=repository_pk).update(next_commit=None)
+        return result
+
+
+def restore_staging(repository_pk, **kwargs):
+    """Discard staged content without changing repository versions."""
+    with transaction.atomic():
+        models.StagedContent.objects.filter(repository_id=repository_pk).delete()
+        models.Repository.objects.filter(pk=repository_pk).update(next_commit=None)
+
+
+def dispatch_staging_autocommits() -> list[str]:
+    """Dispatch commit tasks for repositories whose staging deadline has passed."""
+    now = timezone.now()
+    # A concurrent commit can clear a deadline while newer content remains staged
+    # Treat old-enough staged content as due when that deadline is missing
+    old_enough_staged = models.StagedContent.objects.filter(
+        repository_id=OuterRef("pk"),
+        pulp_created__lte=now - timedelta(seconds=settings.STAGING_AUTOCOMMIT_DELAY_SECONDS),
+    )
+    due_without_deadline = (
+        models.Repository.objects.filter(staging_autocommit=True, next_commit__isnull=True)
+        .filter(Exists(old_enough_staged))
+        .select_related("pulp_domain")
+        .order_by("pk")
+    )
+
+    task_ids = []
+    commit_task_name = f"{commit_staging.__module__}.{commit_staging.__name__}"
+    # Stored deadlines remain authoritative when present
+    due_repositories = (
+        models.Repository.objects.filter(staging_autocommit=True, next_commit__lte=now)
+        .select_related("pulp_domain")
+        .order_by("pk")
+    )
+    for repository in chain(due_repositories.iterator(), due_without_deadline.iterator()):
+        # Avoid queuing another commit while one is waiting or running
+        if models.Task.objects.filter(
+            name=commit_task_name,
+            state__in=TASK_INCOMPLETE_STATES,
+            reserved_resources_record__contains=[get_prn(repository)],
+        ).exists():
+            continue
+        with with_domain(repository.pulp_domain):
+            task = dispatch(
+                commit_staging,
+                kwargs={"repository_pk": repository.pk},
+                exclusive_resources=[repository],
+            )
+        task_ids.append(str(task.pk))
+    return task_ids
 
 
 def add_and_remove(

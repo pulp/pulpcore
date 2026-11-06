@@ -116,6 +116,10 @@ class FileContentViewSet(SingleArtifactContentUploadViewSet):
                 "effect": "allow",
                 "condition": [
                     "has_model_or_domain_perms:file.upload_files",
+                    "has_repo_or_repo_ver_param_model_or_domain_or_obj_perms:"
+                    "file.modify_filerepository",
+                    "has_repo_or_repo_ver_param_model_or_domain_or_obj_perms:"
+                    "file.view_filerepository",
                 ],
             },
         ],

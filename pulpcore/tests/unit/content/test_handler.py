@@ -12,6 +12,7 @@ from aiohttp.web_exceptions import HTTPMovedPermanently
 from django.db import IntegrityError
 from django_guid import clear_guid, set_guid
 
+from pulpcore.app.contexts import with_user
 from pulpcore.app.models import AppStatus
 from pulpcore.constants import TASK_STATES
 from pulpcore.content.handler import (
@@ -33,7 +34,11 @@ from pulpcore.plugin.models import (
     Repository,
     RepositoryContent,
     RepositoryVersion,
+    StagedContent,
+    Task,
 )
+
+from pulp_file.app.models import FileContent, FileRepository
 
 
 @pytest.fixture
@@ -805,6 +810,54 @@ async def test_async_pull_through_add(ca1, monkeypatch, app_status):
         await repo.adelete()
         if task:
             await task.adelete()
+
+
+@pytest.mark.django_db
+def test_pull_through_stages_content_when_enabled():
+    content = FileContent.objects.create(relative_path="pull-through", digest=uuid.uuid4().hex * 2)
+    ca = ContentArtifact.objects.create(content=content, relative_path=content.relative_path)
+    with with_user(None):
+        repo = FileRepository.objects.create(name=str(uuid.uuid4()), staging_enabled=True)
+    original_version = repo.latest_version().pk
+    task_count = Task.objects.count()
+
+    assert repo.pull_through_add_content(ca) is None
+    assert repo.pull_through_add_content(ca) is None
+
+    assert StagedContent.objects.filter(repository=repo, content=content).count() == 1
+    assert repo.latest_version().pk == original_version
+    assert not repo.latest_version().content.filter(pk=content.pk).exists()
+    assert Task.objects.count() == task_count
+    repo.refresh_from_db()
+    assert repo.next_commit is None
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db
+async def test_async_pull_through_stages_content_with_autocommit():
+    content = await FileContent.objects.acreate(
+        relative_path="pull-through", digest=uuid.uuid4().hex * 2
+    )
+    ca = await ContentArtifact.objects.acreate(content=content, relative_path=content.relative_path)
+    with with_user(None):
+        repo = await FileRepository.objects.acreate(
+            name=str(uuid.uuid4()), staging_enabled=True, staging_autocommit=True
+        )
+    original_version = (await repo.versions.alatest()).pk
+    task_count = await Task.objects.acount()
+    try:
+        assert await repo.async_pull_through_add_content(ca) is None
+
+        assert await StagedContent.objects.filter(
+            repository=repo, content_id=ca.content_id
+        ).aexists()
+        await repo.arefresh_from_db()
+        assert repo.next_commit is not None
+        assert (await repo.versions.alatest()).pk == original_version
+        assert await Task.objects.acount() == task_count
+    finally:
+        await repo.adelete()
+        await content.adelete()
 
 
 @pytest.fixture
