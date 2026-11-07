@@ -3,12 +3,10 @@ from hashlib import sha256
 
 import requests
 
-OBJECT_STORAGES = (
-    "storages.backends.s3boto3.S3Boto3Storage",
-    "storages.backends.s3.S3Storage",
-    "storages.backends.azure_storage.AzureStorage",
-    "storages.backends.gcloud.GoogleCloudStorage",
-)
+from pulpcore.app.storage_backends import backend_id
+from pulpcore.constants import STORAGE_BACKENDS
+
+OBJECT_STORAGES = {STORAGE_BACKENDS.S3, STORAGE_BACKENDS.AZURE, STORAGE_BACKENDS.GCS}
 
 
 def test_artifact_distribution(random_artifact, pulp_settings):
@@ -29,8 +27,14 @@ def test_artifact_distribution(random_artifact, pulp_settings):
     hasher = sha256()
     hasher.update(response.content)
     assert hasher.hexdigest() == random_artifact.sha256
-    if settings.STORAGES["default"]["BACKEND"] in OBJECT_STORAGES:
+    if backend_id(settings.STORAGES["default"]["BACKEND"]) in OBJECT_STORAGES:
         content_disposition = response.headers.get("Content-Disposition")
         assert content_disposition is not None
         filename = artifact_uuid
         assert f"attachment;filename={filename}" == content_disposition
+    else:
+        ranged = requests.get(artifact_url, headers={"Range": "bytes=1-3"})
+        ranged.raise_for_status()
+        assert ranged.status_code == 206
+        assert ranged.content == response.content[1:4]
+        assert ranged.headers["Content-Range"] == f"bytes 1-3/{len(response.content)}"
