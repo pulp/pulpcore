@@ -7,10 +7,10 @@ import re
 from base64 import b64decode
 from binascii import Error as Base64DecodeError
 from datetime import timedelta
+from functools import reduce
 from gettext import gettext as _
 from urllib.parse import urljoin, urlparse
 
-import jq
 from aiohttp.web_exceptions import HTTPNotFound
 from django.conf import settings
 from django.contrib.postgres.fields import HStoreField
@@ -34,6 +34,13 @@ from .repository import Remote, Repository, RepositoryVersion
 from .task import CreatedResource
 
 _logger = logging.getLogger(__name__)
+
+if settings.ALLOW_INSECURE_HEADER_CONTENT_GUARD_JQ_PROCESSING_AND_FORFEIT_ALL_COMMUNITY_SUPPORT:  # noqa
+    import jq
+else:
+    # Match a dotted identifier path.
+    # e.g.: "tenant.auth.token"
+    json_path_re = re.compile(r"(?:\.\w+)+", flags=re.ASCII)
 
 
 class PublicationQuerySet(models.QuerySet):
@@ -544,12 +551,32 @@ class HeaderContentGuard(ContentGuard, AutoAddObjPermsMixin):
 
         if self.jq_filter:
             try:
-                header_value = json.loads(header_decoded_content)
-                json_path = jq.compile(self.jq_filter)
+                header_json = json.loads(header_decoded_content)
+                if settings.ALLOW_INSECURE_HEADER_CONTENT_GUARD_JQ_PROCESSING_AND_FORFEIT_ALL_COMMUNITY_SUPPORT:  # noqa
+                    # DISCLAIMER:
+                    # The prelude attempts to strip the environment from the jq srcipt.
+                    # That does not mean it is safe to allow users to define a script to run on
+                    # the content app.
+                    JQ_PRELUDE = r"def env: {}; {} as $ENV |"
+                    json_path = jq.compile(
+                        f"{JQ_PRELUDE} {self.jq_filter}",
+                        args={
+                            "JQ_BUILD_CONFIGURATION": "",
+                            "ARGS": {"positional": [], "named": {}},
+                        },
+                    )
 
-                header_value = json_path.input_value(header_value).first()
+                    header_value = json_path.input_value(header_json).first()
 
-            except json.JSONDecodeError:
+                elif json_path_re.fullmatch(self.jq_filter):
+                    path = self.jq_filter.lstrip(".").split(".")
+                    header_value = reduce(lambda x, y: x[y], path, header_json)
+                else:
+                    _logger.warning(
+                        "Using 'jq_filter' is only allowed with simple paths on this installation."
+                    )
+                    raise PermissionError(_("ContentGuard misconfigured."))
+            except (TypeError, KeyError, json.JSONDecodeError):
                 _logger.debug("Access not allowed - Invalid JSON or Path not found.")
                 raise PermissionError(_("Access denied."))
         else:
