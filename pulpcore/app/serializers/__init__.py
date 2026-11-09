@@ -47,6 +47,7 @@ from .fields import (
     relative_path_validator,
     TaskGroupStatusCountField,
     pulp_labels_validator,
+    RegexValidator,
 )
 from .access_policy import AccessPolicySerializer
 from .acs import (
