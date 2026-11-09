@@ -1,3 +1,4 @@
+import re
 from gettext import gettext as _
 
 from django.conf import settings
@@ -14,6 +15,7 @@ from pulpcore.app.serializers import (
     DomainUniqueValidator,
     GetOrCreateSerializerMixin,
     ModelSerializer,
+    RegexValidator,
     RelativePathField,
     RepositoryVersionRelatedField,
     pulp_labels_validator,
@@ -161,13 +163,22 @@ class HeaderContentGuardSerializer(ContentGuardSerializer, GetOrCreateSerializer
     jq_filter = serializers.CharField(
         help_text=_(
             (
-                "A JQ syntax compatible filter. If jq_filter is not set, then the value will"
-                "only be Base64 decoded and checked as an explicit string match."
+                "A simple dotted path (e.g. .a.b.c) used to extract the value from the "
+                "Base64 decoded JSON header. If jq_filter is not set, the header value "
+                "is only Base64 decoded and checked as an explicit string match."
             )
         ),
         allow_null=True,
         required=False,
     )
+
+    def validate_jq_filter(self, value):
+        if (
+            value is not None
+            and not settings.ALLOW_INSECURE_HEADER_CONTENT_GUARD_JQ_PROCESSING_AND_FORFEIT_ALL_COMMUNITY_SUPPORT
+        ):  # noqa
+            RegexValidator(r"(?:\.\w+)+", re.ASCII)(value)
+        return value
 
     class Meta(ContentGuardSerializer.Meta):
         model = models.HeaderContentGuard
