@@ -28,6 +28,17 @@ def relative_path_validator(relative_path):
     return relative_path
 
 
+class RegexValidator:
+    def __init__(self, regex, flags=0):
+        self.pattern = re.compile(regex, flags)
+
+    def __call__(self, value):
+        if not self.pattern.fullmatch(value):
+            raise serializers.ValidationError(
+                _("Value does not match pattern r'{}'.").format(self.pattern.pattern)
+            )
+
+
 class RelativePathField(serializers.CharField):
     """
     Serializer Field for the base_url field of the Distribution.
