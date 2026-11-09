@@ -8,6 +8,29 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.85.36 (2026-11-09) {: #3.85.36 }
+
+### REST API {: #3.85.36-rest-api }
+
+#### Bugfixes {: #3.85.36-rest-api-bugfix }
+
+- Insures that `Content-Disposition`, `Content-Security-Policy`, and `X-Content-Type-Options`
+  are set consistently in the content-app. This addresses CVE-2026-84232.
+
+### Plugin API {: #3.85.36-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.85.36-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.36-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.85.35 (2026-11-05) {: #3.85.35 }
 
 ### REST API {: #3.85.35-rest-api }
