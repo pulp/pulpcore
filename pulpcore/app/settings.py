@@ -373,6 +373,11 @@ KAFKA_SASL_MECHANISM = None
 KAFKA_SASL_USERNAME = None
 KAFKA_SASL_PASSWORD = None
 
+# JQ is a query language after all. And it should be considered on the same level as SQL.
+# Do not allow users to write arbitrary programs to run on the content app.
+# Exposes to at least CVE-2026-123084.
+ALLOW_INSECURE_HEADER_CONTENT_GUARD_JQ_PROCESSING_AND_FORFEIT_ALL_COMMUNITY_SUPPORT = False
+
 # HERE STARTS DYNACONF EXTENSION LOAD (Keep at the very bottom of settings.py)
 # Read more at https://www.dynaconf.com/django/
 from dynaconf import DjangoDynaconf, Validator  # noqa
