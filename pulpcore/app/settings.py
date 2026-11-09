@@ -349,6 +349,11 @@ SHELL_PLUS_IMPORTS = [
 # By default, use all available workers.
 IMPORT_WORKERS_PERCENT = 100
 
+# JQ is a query language after all. And it should be considered on the same level as SQL.
+# Do not allow users to write arbitrary programs to run on the content app.
+# Exposes to at least CVE-2026-123084.
+ALLOW_INSECURE_HEADER_CONTENT_GUARD_JQ_PROCESSING_AND_FORFEIT_ALL_COMMUNITY_SUPPORT = False
+
 # HERE STARTS DYNACONF EXTENSION LOAD (Keep at the very bottom of settings.py)
 # Read more at https://dynaconf.readthedocs.io/en/latest/guides/django.html
 from dynaconf import DjangoDynaconf, Validator  # noqa
