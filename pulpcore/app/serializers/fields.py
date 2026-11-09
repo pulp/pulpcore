@@ -24,6 +24,18 @@ def relative_path_validator(relative_path):
         raise serializers.ValidationError(
             _("Relative path must not reach beyond the base path. {0}").format(relative_path)
         )
+    return relative_path
+
+
+class RegexValidator:
+    def __init__(self, regex, flags=0):
+        self.pattern = re.compile(regex, flags)
+
+    def __call__(self, value):
+        if not self.pattern.fullmatch(value):
+            raise serializers.ValidationError(
+                _("Value does not match pattern r'{}'.").format(self.pattern.pattern)
+            )
 
 
 @extend_schema_field(OpenApiTypes.OBJECT)
