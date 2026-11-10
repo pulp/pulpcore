@@ -12,6 +12,7 @@ x_task_diagnostics_var = ContextVar("x_profile_task")
 current_pulp_api_version = ContextVar(
     "current_pulp_api_version", default=settings.REST_FRAMEWORK.get("DEFAULT_VERSION", "v3")
 )
+_current_migration_alias = ContextVar("current_migration_alias", default=None)
 
 
 @contextmanager
@@ -43,6 +44,15 @@ def with_domain(domain):
         yield
     finally:
         _current_domain.reset(token)
+
+
+@contextmanager
+def with_migration_alias(alias):
+    token = _current_migration_alias.set(alias)
+    try:
+        yield
+    finally:
+        _current_migration_alias.reset(token)
 
 
 @contextmanager

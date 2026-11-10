@@ -25,6 +25,7 @@ from django_guid import get_guid
 from django_lifecycle import BEFORE_SAVE, BEFORE_UPDATE, hook
 
 from pulpcore.app import pulp_hashlib
+from pulpcore.app.db_router import atomic
 from pulpcore.app.models import BaseModel, MasterModel, fields, storage
 from pulpcore.app.util import get_domain_pk, gpg_verify
 from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS
@@ -85,12 +86,12 @@ class BulkCreateManager(models.Manager):
 
         objs = list(objs)
         try:
-            with transaction.atomic():
+            with atomic():
                 return super().bulk_create(objs, batch_size=batch_size)
         except IntegrityError:
             for i in range(len(objs)):
                 try:
-                    with transaction.atomic():
+                    with atomic():
                         objs[i].save()
                 except IntegrityError:
                     objs[i] = objs[i].__class__.objects.get(objs[i].q())
@@ -117,7 +118,7 @@ class BulkTouchQuerySet(models.QuerySet):
         # singular query.
         # `no_key` translates to `SELECT ... FOR NO KEY UPDATE` and results in a different type of
         # lock being used. We don't change any primary/foreign keys.
-        with transaction.atomic():
+        with atomic():
             sub_q = (
                 self.filter(timestamp_of_interest__lt=now() - datetime.timedelta(hours=1))
                 .order_by("pk")
@@ -171,9 +172,16 @@ class HandleTempFilesMixin:
             args (list): list of positional arguments for Model.delete()
             kwargs (dict): dictionary of keyword arguments to pass to Model.delete()
         """
+        # Capture before super().delete(): on_commit defaults to the 'default' alias's commit
+        # queue, not whatever alias this row's (possibly satellite) transaction is actually on.
+        # Registering the file deletion against the wrong alias's queue means it can fire on that
+        # alias's next commit (or immediately, if that alias has no open transaction) instead of
+        # waiting on *this* row's transaction -- a rollback here then restores the DB row while
+        # the file it points to is already gone.
+        using = kwargs.get("using") or self._state.db
         delete_result = super().delete(*args, **kwargs)
         # In case of rollback, we want the artifact to stay connected with it's file.
-        transaction.on_commit(partial(self.file.delete, save=False))
+        transaction.on_commit(partial(self.file.delete, save=False), using=using)
         return delete_result
 
 

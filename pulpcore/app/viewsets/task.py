@@ -190,9 +190,15 @@ class TaskViewSet(
             serializer.context["pulp_domain"] = get_domain()
             # Optimization for User created_by
             task_pks = [t.pk for t in task_list]
-            user_roles = UserRole.objects.filter(
-                role__name="core.task_owner", object_id__in=task_pks
-            ).order_by("-pulp_created")
+            # Task is control-plane (always 'default'), and object-level grants live on their
+            # target object's own database (role_util.assign_role) -- so the core.task_owner
+            # grant is always on 'default' too, regardless of the ambient alias this request
+            # happens to be scoped to.
+            user_roles = (
+                UserRole.objects.using("default")
+                .filter(role__name="core.task_owner", object_id__in=task_pks)
+                .order_by("-pulp_created")
+            )
             serializer.context["task_user_mapping"] = {u.object_id: u.user_id for u in user_roles}
         return serializer
 
