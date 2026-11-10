@@ -383,6 +383,29 @@ No significant changes.
 
 ---
 
+## 3.118.7 (2026-11-09) {: #3.118.7 }
+
+### REST API {: #3.118.7-rest-api }
+
+#### Bugfixes {: #3.118.7-rest-api-bugfix }
+
+- Insures that `Content-Disposition`, `Content-Security-Policy`, and `X-Content-Type-Options`
+  are set consistently in the content-app. This addresses CVE-2026-84232.
+
+### Plugin API {: #3.118.7-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.118.7-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.118.7-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.118.6 (2026-11-05) {: #3.118.6 }
 
 ### REST API {: #3.118.6-rest-api }
@@ -1663,6 +1686,29 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.106.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.105.27 (2026-11-09) {: #3.105.27 }
+
+### REST API {: #3.105.27-rest-api }
+
+#### Bugfixes {: #3.105.27-rest-api-bugfix }
+
+- Insures that `Content-Disposition`, `Content-Security-Policy`, and `X-Content-Type-Options`
+  are set consistently in the content-app. This addresses CVE-2026-84232.
+
+### Plugin API {: #3.105.27-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.105.27-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.105.27-pulp-cert-guard }
 
 No significant changes.
 
@@ -3271,6 +3317,29 @@ No significant changes.
 
 ---
 
+## 3.85.36 (2026-11-09) {: #3.85.36 }
+
+### REST API {: #3.85.36-rest-api }
+
+#### Bugfixes {: #3.85.36-rest-api-bugfix }
+
+- Insures that `Content-Disposition`, `Content-Security-Policy`, and `X-Content-Type-Options`
+  are set consistently in the content-app. This addresses CVE-2026-84232.
+
+### Plugin API {: #3.85.36-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.85.36-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.36-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.85.35 (2026-11-05) {: #3.85.35 }
 
 ### REST API {: #3.85.35-rest-api }
@@ -4844,6 +4913,29 @@ No significant changes.
   [#6244](https://github.com/pulp/pulpcore/issues/6244)
 
 ### Pulp Cert Guard {: #3.74.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.73.49 (2026-11-09) {: #3.73.49 }
+
+### REST API {: #3.73.49-rest-api }
+
+#### Bugfixes {: #3.73.49-rest-api-bugfix }
+
+- Insures that `Content-Disposition`, `Content-Security-Policy`, and `X-Content-Type-Options`
+  are set consistently in the content-app. This addresses CVE-2026-84232.
+
+### Plugin API {: #3.73.49-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.73.49-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.49-pulp-cert-guard }
 
 No significant changes.
 
@@ -6633,6 +6725,29 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.64.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.63.51 (2026-11-09) {: #3.63.51 }
+
+### REST API {: #3.63.51-rest-api }
+
+#### Bugfixes {: #3.63.51-rest-api-bugfix }
+
+- Insures that `Content-Disposition`, `Content-Security-Policy`, and `X-Content-Type-Options`
+  are set consistently in the content-app. This addresses CVE-2026-84232.
+
+### Plugin API {: #3.63.51-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.51-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.51-pulp-cert-guard }
 
 No significant changes.
 
@@ -8620,6 +8735,29 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard
+
+No significant changes.
+
+---
+
+## 3.49.74 (2026-11-09) {: #3.49.74 }
+
+### REST API {: #3.49.74-rest-api }
+
+#### Bugfixes {: #3.49.74-rest-api-bugfix }
+
+- Insures that `Content-Disposition`, `Content-Security-Policy`, and `X-Content-Type-Options`
+  are set consistently in the content-app. This addresses CVE-2026-84232.
+
+### Plugin API {: #3.49.74-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.74-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.74-pulp-cert-guard }
 
 No significant changes.
 
