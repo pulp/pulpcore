@@ -95,6 +95,14 @@ class PulpPluginAppConfig(apps.AppConfig):
                     "plugin or turn off `DOMAIN_ENABLED` for Pulp to start."
                 )
                 raise ImproperlyConfigured(msg.format(self.python_package_name, self.version))
+        if "pulpcore.app.db_router.PulpDomainRouter" in settings.DATABASE_ROUTERS:
+            if not getattr(self, "multi_db_compatible", None):
+                msg = (
+                    "The plugin `{}-{}` is not multi-database compatible. Please uninstall/update "
+                    "the plugin or remove `PulpDomainRouter` from `DATABASE_ROUTERS` for Pulp to "
+                    "start."
+                )
+                raise ImproperlyConfigured(msg.format(self.python_package_name, self.version))
         # Module containing viewsets eg. <module 'pulp_plugin.app.viewsets'
         # from 'pulp_plugin/app/viewsets.py'>. Set by import_viewsets().
         # None if the application doesn't have a viewsets module, automatically set
@@ -245,6 +253,7 @@ class PulpAppConfig(PulpPluginAppConfig):
     python_package_name = "pulpcore"
 
     domain_compatible = True
+    multi_db_compatible = True
 
     def ready(self):
         super().ready()
