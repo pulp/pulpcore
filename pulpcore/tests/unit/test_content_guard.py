@@ -270,6 +270,38 @@ def test_header_content_guard_hides_environment(db, monkeypatch, jq_filter):
         content_guard.permit(request)
 
 
+def test_header_content_guard_denies_per_character_environment_oracle(db, monkeypatch):
+    """The jq result must not work as a per-character allow/deny oracle for secrets."""
+
+    monkeypatch.setenv("PULP_TEST_SECRET", "supersecret")
+
+    def permits(jq_filter, guess, payload=b"{}"):
+        content_guard = HeaderContentGuard(
+            name="header_guard",
+            header_name="x-header-name",
+            header_value=guess,
+            jq_filter=jq_filter,
+        )
+        request = Mock()
+        request.headers = {"x-header-name": b64encode(payload)}
+        try:
+            content_guard.permit(request)
+        except PermissionError:
+            return False
+        return True
+
+    # Control: an honest filter still authorizes the matching value.
+    assert permits(".k", "v", b'{"k": "v"}')
+    assert not permits(".k", "x", b'{"k": "v"}')
+
+    for index, character in enumerate("supersecret"):
+        for jq_filter in (
+            f"env.PULP_TEST_SECRET | .[{index}:{index + 1}]",
+            f"$ENV.PULP_TEST_SECRET | .[{index}:{index + 1}]",
+        ):
+            assert not permits(jq_filter, character)
+
+
 def test_header_content_guard_supports_complex_jq_filters(db):
     """Legitimate filters keep working, including pipes, select and interpolation."""
 
