@@ -6,6 +6,7 @@ from types import SimpleNamespace
 import pytest
 from django.test import override_settings
 
+from pulpcore.app.checks import storage_redirect_backend
 from pulpcore.app.models.domain import Domain, storages
 from pulpcore.app.serializers.domain import (
     BACKEND_CHOICES,
@@ -44,6 +45,43 @@ class FirstStorage:
 
 class SecondStorage(FirstStorage):
     """A replacement implementation using the same persisted Domain record."""
+
+
+class CustomRedirectStorage:
+    """An unregistered default backend with Pulp's redirect hook."""
+
+    def pulp_url(self, name, headers=None, method=None):
+        """Return a URL using Pulp's provider-neutral arguments."""
+        return f"https://example.test/{name}"
+
+
+@pytest.mark.parametrize(
+    ("path", "expected_ids"),
+    [
+        ("pulpcore.app.models.storage.FileSystem", []),
+        ("storages.backends.s3.S3Storage", []),
+        ("storages.backends.azure_storage.AzureStorage", []),
+        ("storages.backends.gcloud.GoogleCloudStorage", []),
+        ("pulpcore.tests.unit.test_storage_backends.CustomRedirectStorage", []),
+        ("pulpcore.tests.unit.test_storage_backends.FirstStorage", ["pulpcore.E003"]),
+        ("missing.storage.Backend", ["pulpcore.E003"]),
+    ],
+)
+def test_storage_redirect_backend_check(path, expected_ids):
+    """Only default classes with a supported content-serving path pass the check."""
+    with override_settings(
+        STORAGES={"default": {"BACKEND": path}}, REDIRECT_TO_OBJECT_STORAGE=True
+    ):
+        assert [error.id for error in storage_redirect_backend(None)] == expected_ids
+
+
+@override_settings(
+    STORAGES={"default": {"BACKEND": "pulpcore.tests.unit.test_storage_backends.FirstStorage"}},
+    REDIRECT_TO_OBJECT_STORAGE=False,
+)
+def test_storage_redirect_backend_check_is_skipped_without_redirects():
+    """A default backend needs no redirect hook when Pulp streams content itself."""
+    assert storage_redirect_backend(None) == []
 
 
 @pytest.mark.django_db
