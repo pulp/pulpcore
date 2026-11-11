@@ -10,7 +10,6 @@ from datetime import timedelta
 from gettext import gettext as _
 from urllib.parse import urljoin, urlparse
 
-import jq
 from aiohttp.web_exceptions import HTTPNotFound
 from django.conf import settings
 from django.contrib.postgres.fields import HStoreField
@@ -22,6 +21,7 @@ from rest_framework.exceptions import APIException
 from url_normalize import url_normalize
 
 from pulpcore.app.files import PulpTemporaryUploadedFile
+from pulpcore.app.jq_utils import compile_safe_jq
 from pulpcore.app.models import AutoAddObjPermsMixin
 from pulpcore.app.models.fields import RelativePathField
 from pulpcore.app.util import cache_key, get_domain_pk, get_url, retain_distributed_pub_enabled
@@ -545,11 +545,8 @@ class HeaderContentGuard(ContentGuard, AutoAddObjPermsMixin):
         if self.jq_filter:
             try:
                 header_value = json.loads(header_decoded_content)
-                json_path = jq.compile(self.jq_filter)
-
-                header_value = json_path.input_value(header_value).first()
-
-            except json.JSONDecodeError:
+                header_value = compile_safe_jq(self.jq_filter).input_value(header_value).first()
+            except (StopIteration, ValueError):
                 _logger.debug("Access not allowed - Invalid JSON or Path not found.")
                 raise PermissionError(_("Access denied."))
         else:

@@ -248,3 +248,58 @@ def test_envvar_header_content_guard_serializer_rejects_disallowed_env_var(db):
     serializer = EnvVarHeaderContentGuardSerializer()
     with pytest.raises(ValidationError):
         serializer.validate_env_var("DJANGO_SECRET_KEY")
+
+
+@pytest.mark.parametrize("jq_filter", ["env.PULP_TEST_SECRET", "$ENV.PULP_TEST_SECRET"])
+def test_header_content_guard_hides_environment(db, monkeypatch, jq_filter):
+    """A jq filter must not be able to read the environment of the content process."""
+
+    monkeypatch.setenv("PULP_TEST_SECRET", "topsecret")
+
+    content_guard = HeaderContentGuard(
+        name="header_guard",
+        header_name="x-header-name",
+        jq_filter=jq_filter,
+        header_value="topsecret",
+    )
+
+    request = Mock()
+    request.headers = {"x-header-name": b64encode(b"{}")}
+
+    with pytest.raises(PermissionError):
+        content_guard.permit(request)
+
+
+def test_header_content_guard_supports_complex_jq_filters(db):
+    """Legitimate filters keep working, including pipes, select and interpolation."""
+
+    content_guard = HeaderContentGuard(
+        name="header_guard",
+        header_name="x-header-name",
+        jq_filter=r'.roles[] | select(.active) | "\(.name)"',
+        header_value="reader",
+    )
+
+    request = Mock()
+    payload = {"roles": [{"name": "reader", "active": True}]}
+    request.headers = {"x-header-name": b64encode(json.dumps(payload).encode())}
+
+    assert content_guard.permit(request) is None
+
+
+def test_header_content_guard_denies_when_filter_has_no_result(db):
+    """Filters that produce no result must deny access instead of raising an error."""
+
+    content_guard = HeaderContentGuard(
+        name="header_guard",
+        header_name="x-header-name",
+        jq_filter=".roles[] | select(.active == false) | .name",
+        header_value="reader",
+    )
+
+    request = Mock()
+    payload = {"roles": [{"name": "reader", "active": True}]}
+    request.headers = {"x-header-name": b64encode(json.dumps(payload).encode())}
+
+    with pytest.raises(PermissionError):
+        content_guard.permit(request)
