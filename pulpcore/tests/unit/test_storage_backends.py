@@ -1,0 +1,323 @@
+"""Tests for the stable Domain storage boundary."""
+
+from io import BytesIO
+from types import SimpleNamespace
+
+import pytest
+from django.test import override_settings
+
+from pulpcore.app.models.domain import Domain, storages
+from pulpcore.app.serializers.domain import (
+    BACKEND_CHOICES,
+    BackendChoiceField,
+)
+from pulpcore.app.storage_backends import (
+    backend_id,
+    backend_path,
+    legacy_backend_path,
+    open_stream,
+    signed_url,
+)
+from pulpcore.constants import STORAGE_BACKENDS
+from pulpcore.content.handler import Handler
+from pulpcore.plugin.util import get_artifact_url, get_direct_storage_url, get_local_storage_path
+
+
+def test_backend_choice_preserves_legacy_api_values():
+    """Older processes and clients continue to receive class-path identifiers."""
+    field = BackendChoiceField(choices=BACKEND_CHOICES)
+    assert (
+        field.to_internal_value("storages.backends.s3boto3.S3Boto3Storage")
+        == "storages.backends.s3boto3.S3Boto3Storage"
+    )
+    assert field.to_representation("s3") == "storages.backends.s3.S3Storage"
+    assert field.to_internal_value("filesystem") == "pulpcore.app.models.storage.FileSystem"
+    assert "storages.backends.s3boto3.S3Boto3Storage" in dict(BACKEND_CHOICES)
+
+
+class FirstStorage:
+    """A test implementation configured from Domain settings."""
+
+    def __init__(self, **settings):
+        self.settings = settings
+
+
+class SecondStorage(FirstStorage):
+    """A replacement implementation using the same persisted Domain record."""
+
+
+@pytest.mark.django_db
+def test_domain_implementation_can_change_without_updating_record():
+    """Changing the backend mapping replaces its implementation without changing the row."""
+    domain = Domain.objects.create(
+        name="other",
+        storage_class="pulpcore.app.models.storage.FileSystem",
+        storage_settings={"location": "/tmp/media"},
+    )
+    original_storage_class = domain.storage_class
+    original_storage_settings = domain.storage_settings.copy()
+    original_last_updated = domain.pulp_last_updated
+    first_path = "pulpcore.tests.unit.test_storage_backends.FirstStorage"
+    second_path = "pulpcore.tests.unit.test_storage_backends.SecondStorage"
+    try:
+        with override_settings(DOMAIN_STORAGE_BACKENDS={"filesystem": first_path}):
+            first = domain.get_storage()
+            assert isinstance(first, FirstStorage)
+            assert first.settings["location"] == "/tmp/media"
+        with override_settings(DOMAIN_STORAGE_BACKENDS={"filesystem": second_path}):
+            second = domain.get_storage()
+            assert isinstance(second, SecondStorage)
+            domain.refresh_from_db()
+            assert domain.storage_class == original_storage_class
+            assert domain.storage_settings == original_storage_settings
+            assert domain.pulp_last_updated == original_last_updated
+    finally:
+        storages.pop(domain.pulp_id, None)
+
+
+@override_settings(DOMAIN_STORAGE_BACKENDS={"s3": "example.adapters.S3Storage"})
+def test_implementation_mapping_does_not_change_backend_id():
+    """A deployment can replace code without updating a Domain row."""
+    assert backend_id("example.adapters.S3Storage") == "s3"
+    assert backend_path("s3") == "example.adapters.S3Storage"
+    assert legacy_backend_path("example.adapters.S3Storage") == "storages.backends.s3.S3Storage"
+
+
+def test_local_storage_path_uses_backend_capability():
+    """A plugin can serve a local file without identifying its storage class."""
+    file = SimpleNamespace(name="artifact/abc")
+    storage = SimpleNamespace(path=lambda name: f"/media/{name}")
+    domain = SimpleNamespace(get_storage=lambda: storage)
+
+    assert get_local_storage_path(file, domain=domain) == "/media/artifact/abc"
+
+    def unsupported_path(name):
+        raise NotImplementedError
+
+    storage.path = unsupported_path
+    assert get_local_storage_path(file, domain=domain) is None
+
+    def invalid_path(name):
+        raise ValueError("invalid name")
+
+    storage.path = invalid_path
+    with pytest.raises(ValueError, match="invalid name"):
+        get_local_storage_path(file, domain=domain)
+
+
+@pytest.mark.parametrize(
+    ("kind", "redirect"),
+    [("filesystem", True), ("s3", False)],
+)
+def test_direct_storage_url_is_absent_when_content_app_serves_file(kind, redirect):
+    """Local storage and Domains with redirects disabled have no direct URL."""
+    domain = SimpleNamespace(storage_backend=kind, redirect_to_object_storage=redirect)
+    file = SimpleNamespace(name="artifact/abc")
+    assert get_direct_storage_url(file, domain=domain) is None
+
+
+def test_direct_storage_url_uses_provider_neutral_hook():
+    """A custom implementation signs generic headers without a plugin-side switch."""
+    file = SimpleNamespace(name="artifact/abc")
+
+    class Storage:
+        def pulp_url(self, name, headers, method):
+            assert name == "artifact/abc"
+            assert headers == {
+                "Content-Type": "application/octet-stream",
+                "Content-Disposition": "attachment;filename=archive.tar.gz",
+            }
+            assert method == "HEAD"
+            return "https://example.test/signed"
+
+    domain = SimpleNamespace(
+        storage_backend=None,
+        redirect_to_object_storage=True,
+        get_storage=lambda: Storage(),
+    )
+    assert (
+        get_direct_storage_url(
+            file,
+            headers={
+                "Content-Type": "application/octet-stream",
+                "Content-Disposition": "attachment;filename=archive.tar.gz",
+            },
+            http_method="HEAD",
+            domain=domain,
+        )
+        == "https://example.test/signed"
+    )
+
+
+def test_direct_storage_url_rejects_unsupported_redirect_backend():
+    """An unsupported backend is not mistaken for an intentional content fallback."""
+    domain = SimpleNamespace(
+        storage_backend=None,
+        redirect_to_object_storage=True,
+        get_storage=lambda: object(),
+    )
+    with pytest.raises(NotImplementedError):
+        get_direct_storage_url(SimpleNamespace(name="artifact/abc"), domain=domain)
+
+
+def test_artifact_url_falls_back_to_content_app(monkeypatch):
+    """Domains without direct storage URLs serve artifact links through the content app."""
+    domain = SimpleNamespace(storage_backend="filesystem", redirect_to_object_storage=True)
+    artifact = SimpleNamespace(
+        pk="artifact-id", pulp_domain=domain, file=SimpleNamespace(name="artifact/abc")
+    )
+    distribution = SimpleNamespace(artifact_url=lambda artifact: "/pulp/content/artifact/abc")
+    monkeypatch.setattr("pulpcore.app.util._artifact_serving_distribution", lambda: distribution)
+
+    assert get_artifact_url(artifact) == "/pulp/content/artifact/abc"
+
+
+def test_artifact_url_preserves_existing_direct_headers():
+    """Pass the artifact filename, content type, and HTTP method to storage URL signing."""
+
+    class Storage:
+        def pulp_url(self, name, headers, method):
+            assert name == "artifact/abc"
+            assert headers == {
+                "Content-Disposition": "attachment;filename=artifact-id",
+                "Content-Type": "application/octet-stream",
+            }
+            assert method == "HEAD"
+            return "https://example.test/signed"
+
+    domain = SimpleNamespace(
+        storage_backend=None,
+        redirect_to_object_storage=True,
+        get_storage=lambda: Storage(),
+    )
+    artifact = SimpleNamespace(
+        pk="artifact-id", pulp_domain=domain, file=SimpleNamespace(name="artifact/abc")
+    )
+    assert (
+        get_artifact_url(
+            artifact, headers={"Content-Type": "application/octet-stream"}, http_method="HEAD"
+        )
+        == "https://example.test/signed"
+    )
+
+
+def test_content_redirect_signs_disposition_and_keeps_secure_headers(monkeypatch):
+    """The object response override and Pulp redirect both get safe headers."""
+
+    class Storage:
+        def url(self, name, **kwargs):
+            assert name == "artifact/abc"
+            assert kwargs == {
+                "parameters": {
+                    "ResponseContentDisposition": "attachment;filename=1.iso",
+                    "ResponseContentType": "application/octet-stream",
+                },
+                "http_method": "GET",
+            }
+            return "https://storage.example/artifact/abc"
+
+    domain = SimpleNamespace(
+        storage_backend=STORAGE_BACKENDS.S3,
+        redirect_to_object_storage=True,
+        get_storage=Storage,
+    )
+    monkeypatch.setattr("pulpcore.content.handler.get_domain", lambda: domain)
+    content_artifact = SimpleNamespace(
+        relative_path="nested/1.iso",
+        artifact=SimpleNamespace(file=SimpleNamespace(name="artifact/abc", size=3)),
+    )
+
+    response = Handler()._build_response_from_content_artifact(
+        content_artifact,
+        {"Content-Type": "application/octet-stream"},
+        SimpleNamespace(method="GET"),
+    )
+
+    assert response.headers["Content-Disposition"] == "attachment;filename=1.iso"
+    assert response.headers["Content-Security-Policy"] == "default-src 'none'; sandbox"
+    assert response.headers["X-Content-Type-Options"] == "nosniff"
+    assert response.headers["Cache-Control"] == "no-store"
+
+
+def test_s3_signed_url_translates_headers_and_method():
+    """The django-storages adapter receives only provider-supported URL options."""
+
+    class Storage:
+        def url(self, name, **kwargs):
+            assert name == "artifact/abc"
+            assert kwargs == {
+                "parameters": {
+                    "ResponseContentDisposition": "attachment;filename=abc",
+                    "ResponseContentType": "text/plain",
+                },
+                "http_method": "HEAD",
+            }
+            return "https://example.test/signed"
+
+    assert (
+        signed_url(
+            Storage(),
+            "s3",
+            "artifact/abc",
+            headers={
+                "Content-Disposition": "attachment;filename=abc",
+                "Content-Type": "text/plain",
+                "Ignored": "value",
+            },
+            method="HEAD",
+        )
+        == "https://example.test/signed"
+    )
+
+
+def test_native_stream_is_bounded_and_closed_on_early_exit():
+    """The Pulp boundary delegates ranges to implementations that support them."""
+    calls = []
+    streams = []
+
+    class Storage:
+        def open_stream(self, name, start=0, length=None):
+            from contextlib import contextmanager
+
+            @contextmanager
+            def stream():
+                calls.append((name, start, length))
+                file = BytesIO(b"bc-extra")
+                streams.append(file)
+                try:
+                    yield file
+                finally:
+                    file.close()
+                    calls.append("closed")
+
+            return stream()
+
+    storage = Storage()
+    with open_stream(storage, "artifact/abc", start=1, length=2) as stream:
+        assert stream.read(10) == b"bc"
+        assert stream.read(10) == b""
+    with open_stream(storage, "artifact/abc", start=1, length=2) as stream:
+        assert stream.read(1) == b"b"
+    assert calls == [
+        ("artifact/abc", 1, 2),
+        "closed",
+        ("artifact/abc", 1, 2),
+        "closed",
+    ]
+    assert all(file.closed for file in streams)
+
+
+def test_fallback_stream_bounds_reads_and_closes_on_error():
+    """The Django fallback cannot return bytes beyond the selected range."""
+    file = BytesIO(b"abcdef")
+
+    class Storage:
+        def open(self, name, mode):
+            assert (name, mode) == ("artifact/abc", "rb")
+            return file
+
+    with pytest.raises(RuntimeError), open_stream(Storage(), "artifact/abc", 1, 2) as stream:
+        assert stream.read(10) == b"bc"
+        assert stream.read(10) == b""
+        raise RuntimeError("stop")
+    assert file.closed

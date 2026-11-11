@@ -77,6 +77,15 @@ STORAGES = {
     },
 }
 
+# Domain class paths are treated as legacy backend identifiers. Override a path
+# here to change the implementation without rewriting stored Domain rows.
+DOMAIN_STORAGE_BACKENDS = {
+    constants.STORAGE_BACKENDS.FILESYSTEM: "pulpcore.app.models.storage.FileSystem",
+    constants.STORAGE_BACKENDS.S3: "storages.backends.s3.S3Storage",
+    constants.STORAGE_BACKENDS.AZURE: "storages.backends.azure_storage.AzureStorage",
+    constants.STORAGE_BACKENDS.GCS: "storages.backends.gcloud.GoogleCloudStorage",
+}
+
 REDIRECT_TO_OBJECT_STORAGE = True
 
 WORKING_DIRECTORY = DEPLOY_ROOT / "tmp"

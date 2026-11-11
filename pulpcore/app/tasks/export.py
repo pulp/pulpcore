@@ -32,7 +32,7 @@ from pulpcore.app.models import (
 from pulpcore.app.models.content import ContentArtifact, RemoteArtifact
 from pulpcore.app.serializers import PulpExportSerializer, relative_path_validator
 from pulpcore.app.util import Crc32Hasher, HashingFileWriter, compute_file_hash
-from pulpcore.constants import FS_EXPORT_METHODS
+from pulpcore.constants import FS_EXPORT_METHODS, STORAGE_BACKENDS
 
 log = logging.getLogger(__name__)
 
@@ -171,9 +171,9 @@ def _export_to_file_system(path, relative_paths_to_artifacts, method=FS_EXPORT_M
     Raises:
         ValidationError: When path is not in the ALLOWED_EXPORT_PATHS setting
     """
-    using_filesystem_storage = (
-        settings.STORAGES["default"]["BACKEND"] == "pulpcore.app.models.storage.FileSystem"
-    )
+    from pulpcore.app.storage_backends import default_backend_id
+
+    using_filesystem_storage = default_backend_id() == STORAGE_BACKENDS.FILESYSTEM
 
     if method != FS_EXPORT_METHODS.WRITE and not using_filesystem_storage:
         raise RuntimeError(_("Only write is supported for non-filesystem storage."))
