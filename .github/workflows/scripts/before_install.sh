@@ -88,6 +88,7 @@ if [ "$TEST" = "s3" ]; then
     env:
       RUSTFS_ACCESS_KEY: "${RUSTFS_ACCESS_KEY}"
       RUSTFS_SECRET_KEY: "${RUSTFS_SECRET_KEY}"
+      RUSTFS_REGION: "eu-central-1"
     command: "server /data"
 s3_test: true
 rustfs_access_key: "${RUSTFS_ACCESS_KEY}"
