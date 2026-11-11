@@ -8,6 +8,7 @@ from aiohttp.web_exceptions import (
 )
 
 from pulpcore.app.models import Artifact
+from pulpcore.app.storage_backends import open_stream
 
 
 class ArtifactResponse(StreamResponse):
@@ -23,6 +24,7 @@ class ArtifactResponse(StreamResponse):
         status=200,
         reason=None,
         headers=None,
+        storage=None,
     ):
         assert (artifact is not None) ^ (artifact_pk is not None)
 
@@ -31,8 +33,9 @@ class ArtifactResponse(StreamResponse):
         self._artifact = artifact
         self._artifact_pk = artifact_pk
         self._chunk_size = chunk_size
+        self._storage = storage
 
-    async def _sendfile(self, request, fobj, offset, count):
+    async def _sendfile(self, request, storage, name, offset, count):
         # To keep memory usage low, fobj is transferred in chunks
         # controlled by the constructor's chunk_size argument.
 
@@ -41,15 +44,17 @@ class ArtifactResponse(StreamResponse):
 
         loop = asyncio.get_event_loop()
 
-        await loop.run_in_executor(None, fobj.seek, offset)
-
-        chunk = await loop.run_in_executor(None, fobj.read, min(self._chunk_size, count))
-        while chunk:
-            await writer.write(chunk)
-            count = count - self._chunk_size
-            if count <= 0:
-                break
-            chunk = await loop.run_in_executor(None, fobj.read, min(self._chunk_size, count))
+        context = open_stream(storage, name, start=offset, length=count)
+        stream = await loop.run_in_executor(None, context.__enter__)
+        try:
+            while count > 0:
+                chunk = await loop.run_in_executor(None, stream.read, min(self._chunk_size, count))
+                if not chunk:
+                    break
+                await writer.write(chunk)
+                count -= len(chunk)
+        finally:
+            await loop.run_in_executor(None, context.__exit__, None, None, None)
 
         await writer.drain()
         return writer
@@ -61,8 +66,6 @@ class ArtifactResponse(StreamResponse):
             )
 
         self._file = self._artifact.file
-
-        loop = asyncio.get_event_loop()
 
         if hdrs.CONTENT_TYPE not in self.headers:
             self.content_type = "application/octet-stream"
@@ -150,7 +153,10 @@ class ArtifactResponse(StreamResponse):
         else:
             offset = 0
 
-        try:
-            return await self._sendfile(request, self._file, offset, count)
-        finally:
-            await loop.run_in_executor(None, self._file.close)
+        return await self._sendfile(
+            request,
+            self._storage or self._artifact.pulp_domain.get_storage(),
+            self._file.name,
+            offset,
+            count,
+        )

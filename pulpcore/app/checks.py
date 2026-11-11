@@ -38,7 +38,9 @@ def secret_key_check(app_configs, **kwargs):
 def storage_paths(app_configs, **kwargs):
     warnings = []
 
-    if settings.STORAGES["default"]["BACKEND"] == "pulpcore.app.models.storage.FileSystem":
+    from pulpcore.app.storage_backends import default_backend_id
+
+    if default_backend_id() == constants.STORAGE_BACKENDS.FILESYSTEM:
         try:
             media_root_dev = Path(settings.MEDIA_ROOT).stat().st_dev
         except OSError:

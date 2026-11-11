@@ -154,14 +154,13 @@ class DomainViewSet(
         be backwards compatible.
         """
         instance = request.pulp_domain
-        data = request.data
         if instance.name == "default":
             raise ValidationError(_("Default domain can not be migrated."))
-        serializer = DomainBackendMigratorSerializer(data=data)
+        serializer = DomainBackendMigratorSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         task = dispatch(
             migrate_backend,
-            args=(data,),
+            args=(serializer.validated_data,),
             exclusive_resources=[instance],
         )
         return OperationPostponedResponse(task, request)

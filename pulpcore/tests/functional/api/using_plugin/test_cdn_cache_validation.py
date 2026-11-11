@@ -8,7 +8,7 @@ Object-storage redirects include Cache-Control: no-store.
 import time
 from base64 import b64encode
 from math import ceil
-from urllib.parse import urljoin
+from urllib.parse import parse_qs, urljoin, urlparse
 from uuid import uuid4
 
 import pytest
@@ -218,7 +218,7 @@ class TestObjectStorageRedirect:
         ):
             pytest.skip("Requires object-storage redirects")
 
-    def test_cold_request_without_if_modified_since(self, distribution_url):
+    def test_cold_request_without_if_modified_since(self, distribution_url, pulp_settings):
         """A signed redirect can be revalidated with Last-Modified."""
         url = urljoin(distribution_url, "1.iso")
 
@@ -227,6 +227,13 @@ class TestObjectStorageRedirect:
         assert first.status_code == 302
         assert first.headers.get("Location")
         assert first.headers.get("Cache-Control") == NO_STORE_EDGE_CACHE_CONTROL
+        assert first.headers["Content-Disposition"] == "attachment;filename=1.iso"
+        assert first.headers["Content-Security-Policy"] == "default-src 'none'; sandbox"
+        assert first.headers["X-Content-Type-Options"] == "nosniff"
+        endpoint = pulp_settings.STORAGES["default"].get("OPTIONS", {}).get("endpoint_url", "")
+        if urlparse(endpoint).hostname == "rustfs":
+            query = parse_qs(urlparse(first.headers["Location"]).query)
+            assert query["response-content-disposition"] == ["attachment;filename=1.iso"]
         last_modified = first.headers["Last-Modified"]
 
         # Regardless if CDN respected Cache-Control, Pulp follow the protocol
