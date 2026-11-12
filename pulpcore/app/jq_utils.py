@@ -16,4 +16,4 @@ def compile_safe_jq(program):
     Shadowing both interfaces keeps the rest of the jq language available while
     making the environment unreachable from the filter.
     """
-    return jq.compile(f"def env: {{}}; {{}} as $ENV | ({program})")
+    return jq.compile(f"def env: {{}}; {{}} as $ENV | ({program}\n)")

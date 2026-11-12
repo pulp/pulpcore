@@ -12,7 +12,10 @@ from pulpcore.app.models import (
     EnvVarHeaderContentGuard,
     HeaderContentGuard,
 )
-from pulpcore.app.serializers import EnvVarHeaderContentGuardSerializer
+from pulpcore.app.serializers import (
+    EnvVarHeaderContentGuardSerializer,
+    HeaderContentGuardSerializer,
+)
 
 ENVVAR_HEADER = "X-Test-Content-Guard-Header"
 ENVVAR_NAME = "ENVVAR_HEADER_GUARD_TEST_SECRET"
@@ -335,3 +338,49 @@ def test_header_content_guard_denies_when_filter_has_no_result(db):
 
     with pytest.raises(PermissionError):
         content_guard.permit(request)
+
+
+def test_header_content_guard_denies_invalid_filter(db):
+    """A broken stored filter denies instead of raising a server error."""
+
+    content_guard = HeaderContentGuard(
+        name="header_guard",
+        header_name="x-header-name",
+        jq_filter="def broken:",
+        header_value="v",
+    )
+
+    request = Mock()
+    request.headers = {"x-header-name": b64encode(b'{"k": "v"}')}
+
+    with pytest.raises(PermissionError):
+        content_guard.permit(request)
+
+
+def test_header_content_guard_denies_non_ascii_header(db):
+    """A non-ASCII header value must not raise a server error."""
+
+    content_guard = HeaderContentGuard(
+        name="header_guard",
+        header_name="x-header-name",
+        jq_filter=".k",
+        header_value="v",
+    )
+
+    request = Mock()
+    request.headers = {"x-header-name": "é"}
+
+    with pytest.raises(PermissionError):
+        content_guard.permit(request)
+
+
+def test_header_content_guard_serializer_rejects_invalid_filter(db):
+    """Invalid filters are rejected at write time."""
+
+    serializer = HeaderContentGuardSerializer()
+
+    with pytest.raises(ValidationError):
+        serializer.validate_jq_filter("def broken:")
+
+    assert serializer.validate_jq_filter(".k # comment") == ".k # comment"
+    assert serializer.validate_jq_filter(None) is None

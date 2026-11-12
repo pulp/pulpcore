@@ -538,16 +538,25 @@ class HeaderContentGuard(ContentGuard, AutoAddObjPermsMixin):
 
         try:
             header_decoded_content = b64decode(header_content)
-        except Base64DecodeError:
+        except ValueError:
             _logger.debug("Access not allowed - Header content is not Base64 encoded.")
             raise PermissionError(_("Access denied."))
 
         if self.jq_filter:
             try:
                 header_value = json.loads(header_decoded_content)
+            except ValueError:
+                _logger.debug("Access not allowed - Header content is not valid JSON.")
+                raise PermissionError(_("Access denied."))
+            try:
                 header_value = compile_safe_jq(self.jq_filter).input_value(header_value).first()
-            except (StopIteration, ValueError):
-                _logger.debug("Access not allowed - Invalid JSON or Path not found.")
+            except StopIteration:
+                _logger.debug("Access not allowed - jq filter produced no result.")
+                raise PermissionError(_("Access denied."))
+            except ValueError as exc:
+                _logger.warning(
+                    "Access not allowed - Invalid jq filter %r: %s", self.jq_filter, exc
+                )
                 raise PermissionError(_("Access denied."))
         else:
             header_value = header_decoded_content.decode("utf8")

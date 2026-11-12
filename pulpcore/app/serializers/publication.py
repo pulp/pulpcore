@@ -6,6 +6,7 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from pulpcore.app import models
+from pulpcore.app.jq_utils import compile_safe_jq
 from pulpcore.app.role_util import get_groups_with_perms, get_users_with_perms
 from pulpcore.app.serializers import (
     BaseURLField,
@@ -168,6 +169,14 @@ class HeaderContentGuardSerializer(ContentGuardSerializer, GetOrCreateSerializer
         allow_null=True,
         required=False,
     )
+
+    def validate_jq_filter(self, value):
+        if value:
+            try:
+                compile_safe_jq(value)
+            except ValueError:
+                raise serializers.ValidationError(_("Invalid jq filter."))
+        return value
 
     class Meta(ContentGuardSerializer.Meta):
         model = models.HeaderContentGuard

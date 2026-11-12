@@ -1,7 +1,6 @@
 import json
 import logging
 from base64 import b64decode
-from binascii import Error as Base64DecodeError
 from gettext import gettext as _
 
 from django.conf import settings
@@ -62,7 +61,7 @@ class JSONHeaderRemoteAuthentication(BaseAuthentication):
         try:
             header_content = request.META.get(self.header)
             header_decoded_content = b64decode(header_content)
-        except Base64DecodeError:
+        except ValueError:
             _logger.debug(_("Access not allowed - Header content is not Base64 encoded."))
             raise AuthenticationFailed(_("Access denied."))
 
@@ -71,7 +70,7 @@ class JSONHeaderRemoteAuthentication(BaseAuthentication):
             remote_user = compile_safe_jq(self.jq_filter).input_value(header_value).first()
         except (StopIteration, ValueError):
             _logger.debug(_("Access not allowed - Invalid JSON or jq filter."))
-            raise AuthenticationFailed(_("Access denied. Invalid JSON."))
+            raise AuthenticationFailed(_("Access denied."))
 
         if not remote_user:
             _logger.debug(_("Path or value not found."))
