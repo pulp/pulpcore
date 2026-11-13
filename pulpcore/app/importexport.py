@@ -17,7 +17,7 @@ from pulpcore.app.modelresource import (
 from pulpcore.app.models.content import Artifact
 from pulpcore.app.models.progress import ProgressReport
 from pulpcore.app.models.repository import Repository
-from pulpcore.constants import EXPORT_BATCH_SIZE, TASK_STATES
+from pulpcore.constants import EXPORT_BATCH_SIZE, STORAGE_BACKENDS, TASK_STATES
 
 log = logging.getLogger(__name__)
 
@@ -118,7 +118,9 @@ def export_artifacts(export, artifact_pks):
     with ProgressReport(**data) as pb:
         pb.BATCH_INTERVAL = 5000
 
-        if settings.STORAGES["default"]["BACKEND"] != "pulpcore.app.models.storage.FileSystem":
+        from pulpcore.app.storage_backends import default_backend_id
+
+        if default_backend_id() != STORAGE_BACKENDS.FILESYSTEM:
             with tempfile.TemporaryDirectory(dir=".") as temp_dir:
                 for offset in range(0, len(artifact_pks), EXPORT_BATCH_SIZE):
                     batch = artifact_pks[offset : offset + EXPORT_BATCH_SIZE]

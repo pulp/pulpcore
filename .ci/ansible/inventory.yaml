@@ -6,7 +6,6 @@ all:
         pulp:
         pulp-fixtures:
         rustfs:
-        ci-sftp:
       vars:
         ansible_connection: docker
 ...
