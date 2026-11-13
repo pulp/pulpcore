@@ -12,7 +12,10 @@ from pulpcore.app.models import (
     EnvVarHeaderContentGuard,
     HeaderContentGuard,
 )
-from pulpcore.app.serializers import EnvVarHeaderContentGuardSerializer
+from pulpcore.app.serializers import (
+    EnvVarHeaderContentGuardSerializer,
+    HeaderContentGuardSerializer,
+)
 
 ENVVAR_HEADER = "X-Test-Content-Guard-Header"
 ENVVAR_NAME = "ENVVAR_HEADER_GUARD_TEST_SECRET"
@@ -248,3 +251,136 @@ def test_envvar_header_content_guard_serializer_rejects_disallowed_env_var(db):
     serializer = EnvVarHeaderContentGuardSerializer()
     with pytest.raises(ValidationError):
         serializer.validate_env_var("DJANGO_SECRET_KEY")
+
+
+@pytest.mark.parametrize("jq_filter", ["env.PULP_TEST_SECRET", "$ENV.PULP_TEST_SECRET"])
+def test_header_content_guard_hides_environment(db, monkeypatch, jq_filter):
+    """A jq filter must not be able to read the environment of the content process."""
+
+    monkeypatch.setenv("PULP_TEST_SECRET", "topsecret")
+
+    content_guard = HeaderContentGuard(
+        name="header_guard",
+        header_name="x-header-name",
+        jq_filter=jq_filter,
+        header_value="topsecret",
+    )
+
+    request = Mock()
+    request.headers = {"x-header-name": b64encode(b"{}")}
+
+    with pytest.raises(PermissionError):
+        content_guard.permit(request)
+
+
+def test_header_content_guard_denies_per_character_environment_oracle(db, monkeypatch):
+    """The jq result must not work as a per-character allow/deny oracle for secrets."""
+
+    monkeypatch.setenv("PULP_TEST_SECRET", "supersecret")
+
+    def permits(jq_filter, guess, payload=b"{}"):
+        content_guard = HeaderContentGuard(
+            name="header_guard",
+            header_name="x-header-name",
+            header_value=guess,
+            jq_filter=jq_filter,
+        )
+        request = Mock()
+        request.headers = {"x-header-name": b64encode(payload)}
+        try:
+            content_guard.permit(request)
+        except PermissionError:
+            return False
+        return True
+
+    # Control: an honest filter still authorizes the matching value.
+    assert permits(".k", "v", b'{"k": "v"}')
+    assert not permits(".k", "x", b'{"k": "v"}')
+
+    for index, character in enumerate("supersecret"):
+        for jq_filter in (
+            f"env.PULP_TEST_SECRET | .[{index}:{index + 1}]",
+            f"$ENV.PULP_TEST_SECRET | .[{index}:{index + 1}]",
+        ):
+            assert not permits(jq_filter, character)
+
+
+def test_header_content_guard_supports_complex_jq_filters(db):
+    """Legitimate filters keep working, including pipes, select and interpolation."""
+
+    content_guard = HeaderContentGuard(
+        name="header_guard",
+        header_name="x-header-name",
+        jq_filter=r'.roles[] | select(.active) | "\(.name)"',
+        header_value="reader",
+    )
+
+    request = Mock()
+    payload = {"roles": [{"name": "reader", "active": True}]}
+    request.headers = {"x-header-name": b64encode(json.dumps(payload).encode())}
+
+    assert content_guard.permit(request) is None
+
+
+def test_header_content_guard_denies_when_filter_has_no_result(db):
+    """Filters that produce no result must deny access instead of raising an error."""
+
+    content_guard = HeaderContentGuard(
+        name="header_guard",
+        header_name="x-header-name",
+        jq_filter=".roles[] | select(.active == false) | .name",
+        header_value="reader",
+    )
+
+    request = Mock()
+    payload = {"roles": [{"name": "reader", "active": True}]}
+    request.headers = {"x-header-name": b64encode(json.dumps(payload).encode())}
+
+    with pytest.raises(PermissionError):
+        content_guard.permit(request)
+
+
+def test_header_content_guard_denies_invalid_filter(db):
+    """A broken stored filter denies instead of raising a server error."""
+
+    content_guard = HeaderContentGuard(
+        name="header_guard",
+        header_name="x-header-name",
+        jq_filter="def broken:",
+        header_value="v",
+    )
+
+    request = Mock()
+    request.headers = {"x-header-name": b64encode(b'{"k": "v"}')}
+
+    with pytest.raises(PermissionError):
+        content_guard.permit(request)
+
+
+def test_header_content_guard_denies_non_ascii_header(db):
+    """A non-ASCII header value must not raise a server error."""
+
+    content_guard = HeaderContentGuard(
+        name="header_guard",
+        header_name="x-header-name",
+        jq_filter=".k",
+        header_value="v",
+    )
+
+    request = Mock()
+    request.headers = {"x-header-name": "é"}
+
+    with pytest.raises(PermissionError):
+        content_guard.permit(request)
+
+
+def test_header_content_guard_serializer_rejects_invalid_filter(db):
+    """Invalid filters are rejected at write time."""
+
+    serializer = HeaderContentGuardSerializer()
+
+    with pytest.raises(ValidationError):
+        serializer.validate_jq_filter("def broken:")
+
+    assert serializer.validate_jq_filter(".k # comment") == ".k # comment"
+    assert serializer.validate_jq_filter(None) is None

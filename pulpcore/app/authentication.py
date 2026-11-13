@@ -1,10 +1,8 @@
 import json
 import logging
 from base64 import b64decode
-from binascii import Error as Base64DecodeError
 from gettext import gettext as _
 
-import jq
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.backends import RemoteUserBackend
@@ -16,6 +14,8 @@ from rest_framework.authentication import (
     BasicAuthentication as OrigBasicAuthentication,
 )
 from rest_framework.exceptions import AuthenticationFailed
+
+from pulpcore.app.jq_utils import compile_safe_jq
 
 _logger = logging.getLogger(__name__)
 
@@ -61,18 +61,16 @@ class JSONHeaderRemoteAuthentication(BaseAuthentication):
         try:
             header_content = request.META.get(self.header)
             header_decoded_content = b64decode(header_content)
-        except Base64DecodeError:
+        except ValueError:
             _logger.debug(_("Access not allowed - Header content is not Base64 encoded."))
             raise AuthenticationFailed(_("Access denied."))
 
         try:
             header_value = json.loads(header_decoded_content)
-            json_path = jq.compile(self.jq_filter)
-
-            remote_user = json_path.input_value(header_value).first()
-        except json.JSONDecodeError:
-            _logger.debug(_("Access not allowed - Invalid JSON."))
-            raise AuthenticationFailed(_("Access denied. Invalid JSON."))
+            remote_user = compile_safe_jq(self.jq_filter).input_value(header_value).first()
+        except (StopIteration, ValueError):
+            _logger.debug(_("Access not allowed - Invalid JSON or jq filter."))
+            raise AuthenticationFailed(_("Access denied."))
 
         if not remote_user:
             _logger.debug(_("Path or value not found."))
