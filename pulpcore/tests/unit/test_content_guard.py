@@ -2,17 +2,22 @@ import json
 import os
 import re
 from base64 import b64encode
-from unittest.mock import Mock
+from unittest.mock import MagicMock, Mock
 
 import pytest
+from rest_framework.exceptions import AuthenticationFailed, NotAuthenticated, PermissionDenied
 from rest_framework.serializers import ValidationError
 
 from pulpcore.app.models import (
+    CompositeContentGuard,
     ContentRedirectContentGuard,
     EnvVarHeaderContentGuard,
     HeaderContentGuard,
+    RBACContentGuard,
 )
 from pulpcore.app.serializers import EnvVarHeaderContentGuardSerializer
+from pulpcore.app.viewsets import RBACContentGuardViewSet
+from pulpcore.plugin.exceptions import AuthenticationError
 
 ENVVAR_HEADER = "X-Test-Content-Guard-Header"
 ENVVAR_NAME = "ENVVAR_HEADER_GUARD_TEST_SECRET"
@@ -248,3 +253,112 @@ def test_envvar_header_content_guard_serializer_rejects_disallowed_env_var(db):
     serializer = EnvVarHeaderContentGuardSerializer()
     with pytest.raises(ValidationError):
         serializer.validate_env_var("DJANGO_SECRET_KEY")
+
+
+def _composite(*detail_guards):
+    composite = MagicMock(spec=CompositeContentGuard)
+    composite.guards.all.return_value = [
+        MagicMock(cast=MagicMock(return_value=guard)) for guard in detail_guards
+    ]
+    return composite
+
+
+def _detail_guard(name, error=None):
+    guard = MagicMock()
+    guard.name = name
+    if error is not None:
+        guard.permit.side_effect = error
+    return guard
+
+
+def test_content_guard_authentication_error_is_not_permission_error():
+    assert not issubclass(AuthenticationError, PermissionError)
+
+
+def test_content_guard_authentication_error_carries_challenge():
+    error = AuthenticationError("Authentication required.", challenge='Basic realm="example"')
+
+    assert str(error) == "Authentication required."
+    assert error.challenge == 'Basic realm="example"'
+
+
+def test_composite_authentication_error_does_not_short_circuit_later_success(monkeypatch):
+    authentication_guard = _detail_guard(
+        "identity",
+        AuthenticationError("Authentication required.", challenge="Basic"),
+    )
+    allowing_guard = _detail_guard("origin")
+    composite = _composite(authentication_guard, allowing_guard)
+    monkeypatch.setattr(
+        "pulpcore.app.models.publication.get_url", lambda *_args, **_kwargs: "/guard/"
+    )
+
+    CompositeContentGuard.permit(composite, MagicMock())
+
+    authentication_guard.permit.assert_called_once()
+    allowing_guard.permit.assert_called_once()
+
+
+def test_composite_authentication_error_wins_when_all_guards_deny(monkeypatch):
+    authentication_guard = _detail_guard(
+        "identity",
+        AuthenticationError("Authentication required.", challenge="Basic"),
+    )
+    denying_guard = _detail_guard("feature", PermissionError("Access denied."))
+    composite = _composite(authentication_guard, denying_guard)
+    monkeypatch.setattr(
+        "pulpcore.app.models.publication.get_url", lambda *_args, **_kwargs: "/guard/"
+    )
+
+    with pytest.raises(AuthenticationError) as exc_info:
+        CompositeContentGuard.permit(composite, MagicMock())
+
+    assert exc_info.value.challenge == "Basic"
+
+
+def test_composite_permission_error_when_no_guard_requires_authentication(monkeypatch):
+    first_guard = _detail_guard("first", PermissionError("Access denied."))
+    second_guard = _detail_guard("second", PermissionError("Access denied."))
+    composite = _composite(first_guard, second_guard)
+    monkeypatch.setattr(
+        "pulpcore.app.models.publication.get_url", lambda *_args, **_kwargs: "/guard/"
+    )
+
+    with pytest.raises(PermissionError) as exc_info:
+        CompositeContentGuard.permit(composite, MagicMock())
+
+    assert not isinstance(exc_info.value, AuthenticationError)
+
+
+@pytest.mark.parametrize("auth_exception", [NotAuthenticated, AuthenticationFailed])
+def test_rbac_content_guard_missing_or_invalid_credentials_raise_authentication_error(
+    monkeypatch, auth_exception, db
+):
+    """No (or invalid) credentials must surface as AuthenticationError, not PermissionError."""
+
+    def raise_auth_error(self, request):
+        raise auth_exception()
+
+    monkeypatch.setattr(RBACContentGuardViewSet, "check_permissions", raise_auth_error)
+
+    guard = RBACContentGuard(name="rbac_guard")
+
+    with pytest.raises(AuthenticationError) as exc_info:
+        guard.permit({"drf_request": Mock()})
+
+    assert exc_info.value.challenge == "Basic"
+
+
+def test_rbac_content_guard_bad_permissions_raises_permission_error(monkeypatch, db):
+    """An authenticated-but-unauthorized request should still raise a plain PermissionError."""
+
+    def raise_permission_denied(self, request):
+        raise PermissionDenied()
+
+    monkeypatch.setattr(RBACContentGuardViewSet, "check_permissions", raise_permission_denied)
+
+    guard = RBACContentGuard(name="rbac_guard")
+
+    with pytest.raises(PermissionError) as exc_info:
+        guard.permit({"drf_request": Mock()})
+    assert not isinstance(exc_info.value, AuthenticationError)
