@@ -195,10 +195,6 @@ class StagingGetQuerySerializer(StagingBaseQuerySerializer):
     offset = serializers.IntegerField(required=False, min_value=0)
 
 
-class StagingPostQuerySerializer(StagingBaseQuerySerializer):
-    action = serializers.ChoiceField(choices=("commit", "restore"))
-
-
 class RepositoryViewSet(ImmutableRepositoryViewSet, AsyncUpdateMixin, LabelsMixin):
     """
     A ViewSet for an ordinary repository.
@@ -209,6 +205,7 @@ class RepositoryViewSet(ImmutableRepositoryViewSet, AsyncUpdateMixin, LabelsMixi
             "staging",
             "staging_head",
             "staging_post",
+            "staging_delete",
         }:
             return queryset
         return super().filter_queryset(queryset)
@@ -246,16 +243,19 @@ class RepositoryViewSet(ImmutableRepositoryViewSet, AsyncUpdateMixin, LabelsMixi
     @staging.mapping.post
     def staging_post(self, request, pk=None, **kwargs):
         repository = self._check_staging_enabled()
-        query = StagingPostQuerySerializer(data=request.query_params.dict())
+        return self._dispatch_staging_task(request, repository, tasks.repository.commit_staging)
+
+    @staging.mapping.delete
+    def staging_delete(self, request, pk=None, **kwargs):
+        repository = self._check_staging_enabled()
+        return self._dispatch_staging_task(request, repository, tasks.repository.restore_staging)
+
+    def _dispatch_staging_task(self, request, repository, task_function):
+        query = StagingBaseQuerySerializer(data=request.query_params.dict())
         query.is_valid(raise_exception=True)
         if not StagedContent.objects.filter(repository=repository).exists():
             return Response(status=status.HTTP_204_NO_CONTENT)
 
-        task_function = (
-            tasks.repository.commit_staging
-            if query.validated_data["action"] == "commit"
-            else tasks.repository.restore_staging
-        )
         task = dispatch(
             task_function,
             kwargs={"repository_pk": str(repository.pk)},

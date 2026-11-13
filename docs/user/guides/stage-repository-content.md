@@ -38,20 +38,24 @@ http --auth "admin:$PULP_PASSWORD" PATCH \
   staging_autocommit:=true
 ```
 
-The first content staged after autocommit is enabled starts the delay set by
-[`STAGING_AUTOCOMMIT_DELAY_SECONDS`](site:pulpcore/docs/admin/reference/settings/#staging_autocommit_delay_seconds).
-Staging more content does not postpone that deadline.
-A separate scheduled task checks for expired deadlines at the interval set by
+The scheduled task checks for staged content at the interval set by
 [`STAGING_AUTOCOMMIT_SCAN_INTERVAL_SECONDS`](site:pulpcore/docs/admin/reference/settings/#staging_autocommit_scan_interval_seconds)
-and dispatches a commit task for each ready repository.
+and dispatches a commit task for each repository with staged content.
+Newly staged content is eligible at the next scan. Enabling autocommit makes content staged earlier
+eligible at the next scan too.
 The commit task may wait for other tasks holding the repository lock.
 
 Autocommit only affects content already placed in staging.
 Repositories using Pulp's default pull-through behavior stage new content fetched through their
 distributions when staging is enabled.
 Plugins with custom pull-through behavior may handle staging differently.
-A manual commit or restore clears the pending deadline.
-If a commit fails, the staged content and deadline remain available for another attempt.
+A manual commit or restore removes the staged content.
+
+!!! warning
+    A plugin may reject staged content because it cannot be added to the repository under that
+    plugin's constraints. The autocommit task then fails, and the content remains staged for another
+    attempt. Pulp cannot resolve the constraint automatically. Inspect the failed task and correct
+    the staged content or repository configuration manually.
 
 ## Stage Uploaded Content
 
@@ -97,11 +101,11 @@ Commit staged content to create a new repository version when the content change
 ```bash
 # Commit staged content.
 http --auth "admin:$PULP_PASSWORD" POST \
-  "$PULP_API_URL/repositories/file/file/${REPOSITORY_ID}/staging/?action=commit"
+  "$PULP_API_URL/repositories/file/file/${REPOSITORY_ID}/staging/"
 
 # Discard staged content.
-http --auth "admin:$PULP_PASSWORD" POST \
-  "$PULP_API_URL/repositories/file/file/${REPOSITORY_ID}/staging/?action=restore"
+http --auth "admin:$PULP_PASSWORD" DELETE \
+  "$PULP_API_URL/repositories/file/file/${REPOSITORY_ID}/staging/"
 ```
 
 If staging contains content, either action returns `202 Accepted` with a task URL in the `task` field.

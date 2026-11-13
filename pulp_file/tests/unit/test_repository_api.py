@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, timedelta
+from datetime import timedelta
 from importlib import reload
 from secrets import token_hex
 from urllib.parse import urlencode, urljoin, urlsplit
@@ -10,7 +10,6 @@ from django.conf import settings as django_settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import override_settings
 from django.urls import clear_url_caches
-from django.utils import timezone
 from django_guid import clear_guid, set_guid
 from rest_framework import status
 from rest_framework.test import APIClient
@@ -37,8 +36,6 @@ from pulpcore.app.util import (
 
 from pulp_file.app.models import FileContent, FileRepository
 from pulp_file.app.viewsets import FileContentViewSet, FileRepositoryViewSet
-
-AUTOCOMMIT_DELAY_SECONDS = 300
 
 
 def update_repository(repository: FileRepository, *, autocommit: bool = False) -> None:
@@ -135,53 +132,18 @@ class TestRepositoryEndpoint:
         assert "next_commit" not in response.data["results"][0]
 
 
-class TestRepositoryNextCommit:
-    @override_settings(STAGING_AUTOCOMMIT_DELAY_SECONDS=AUTOCOMMIT_DELAY_SECONDS)
-    def test_staging_sets_deadline_only_after_autocommit_enabled(self, repository):
-        update_repository(repository)
-        assert repository.next_commit is None
-
-        # Staging alone leaves the deadline unset
-        repository.stage_file(create_file_content("without-autocommit.txt"))
-        repository.refresh_from_db()
-        assert repository.next_commit is None
-
-        # The first staged file after enabling autocommit starts the delay
-        update_repository(repository, autocommit=True)
-
-        t_before = timezone.now() + timedelta(seconds=AUTOCOMMIT_DELAY_SECONDS)
-        repository.stage_file(create_file_content("with-autocommit.txt"))
-        t_after = timezone.now() + timedelta(seconds=AUTOCOMMIT_DELAY_SECONDS)
-
-        repository.refresh_from_db()
-        assert t_before <= repository.next_commit <= t_after
-
-    def test_later_staged_file_keeps_first_deadline(self, repository):
-        update_repository(repository, autocommit=True)
-
-        repository.stage_file(create_file_content("first.txt"))
-        repository.refresh_from_db()
-        first_deadline = repository.next_commit
-        assert first_deadline is not None
-
-        # Later files do not postpone the pending commit
-        repository.stage_file(create_file_content("second.txt"))
-        repository.refresh_from_db()
-
-        assert repository.next_commit == first_deadline
-
-
 class TestRepositoryStagingEndpoint:
     @pytest.mark.parametrize(
-        ("method", "query", "expected_status"),
+        ("method", "expected_status"),
         [
-            ("get", "", status.HTTP_200_OK),
-            ("head", "", status.HTTP_200_OK),
-            ("post", "?action=commit", status.HTTP_204_NO_CONTENT),
+            ("get", status.HTTP_200_OK),
+            ("head", status.HTTP_200_OK),
+            ("post", status.HTTP_204_NO_CONTENT),
+            ("delete", status.HTTP_204_NO_CONTENT),
         ],
     )
     def test_staging_accepts_version_route_parameter(
-        self, api_client, repository, versioned_api_urls, method, query, expected_status
+        self, api_client, repository, versioned_api_urls, method, expected_status
     ):
         update_repository(repository)
         url = get_detail_url(FileRepositoryViewSet, repository.pk, "staging/").replace(
@@ -189,7 +151,7 @@ class TestRepositoryStagingEndpoint:
         )
         assert resolve(url).kwargs["version"] == "v4"
 
-        response = getattr(api_client, method)(url + query)
+        response = getattr(api_client, method)(url)
 
         assert response.status_code == expected_status
 
@@ -205,10 +167,12 @@ class TestRepositoryStagingEndpoint:
 
         assign_role("file.filerepository_viewer", user, repository)
         assert api_client.get(url).status_code == status.HTTP_200_OK
-        assert api_client.post(url + "?action=commit").status_code == status.HTTP_403_FORBIDDEN
+        assert api_client.post(url).status_code == status.HTTP_403_FORBIDDEN
+        assert api_client.delete(url).status_code == status.HTTP_403_FORBIDDEN
 
         assign_role("file.filerepository_owner", user, repository)
-        assert api_client.post(url + "?action=commit").status_code == status.HTTP_204_NO_CONTENT
+        assert api_client.post(url).status_code == status.HTTP_204_NO_CONTENT
+        assert api_client.delete(url).status_code == status.HTTP_204_NO_CONTENT
 
     def test_customized_policy_keeps_staging_denied(self, api_client, repository):
         update_repository(repository)
@@ -296,9 +260,8 @@ class TestRepositoryStagingEndpoint:
             ("head", {"relative_path": "nested/file.txt"}),
             ("get", {"path": "old-name.txt"}),
             ("head", {"path": "old-name.txt"}),
-            ("post", {}),
-            ("post", {"action": "invalid"}),
-            ("post", {"action": "clear"}),
+            ("post", {"action": "commit"}),
+            ("delete", {"action": "restore"}),
         ],
     )
     def test_invalid_query_params_returns_400(self, api_client, repository, method, query_params):
@@ -316,20 +279,8 @@ class TestRepositoryStagingEndpoint:
         [
             ("get", "staging/", {}),
             ("head", "staging/", {}),
-            pytest.param(
-                "get",
-                "staging/missing.txt/",
-                {},
-                marks=pytest.mark.skip(reason="Staging path endpoint is temporarily removed."),
-            ),
-            pytest.param(
-                "head",
-                "staging/missing.txt/",
-                {},
-                marks=pytest.mark.skip(reason="Staging path endpoint is temporarily removed."),
-            ),
-            ("post", "staging/", {"action": "commit"}),
-            ("post", "staging/", {"action": "restore"}),
+            ("post", "staging/", {}),
+            ("delete", "staging/", {}),
         ],
     )
     def test_staging_disabled_returns_404(
@@ -392,59 +343,39 @@ class TestRepositoryStagingEndpoint:
         assert second_page.data["results"] == expected_urls[1:]
         assert api_client.head(second_page_url).status_code == status.HTTP_200_OK
 
-    @pytest.mark.skip(reason="Staging path endpoint is temporarily removed.")
-    def test_staging_path_get_and_head(self, api_client, repository):
+    @pytest.mark.parametrize("method", ["post", "delete"])
+    def test_commit_and_restore_return_204_for_empty_staging(self, api_client, repository, method):
         update_repository(repository)
-        content = create_file_content("nested/file.txt")
-        repository.stage_file(content)
-        found_url = get_detail_url(FileRepositoryViewSet, repository.pk, "staging/nested/file.txt/")
-
-        response = api_client.get(found_url)
-
-        # Nested path segments are part of relative_path
-        assert response.status_code == status.HTTP_200_OK
-        assert response.data["pulp_href"] == get_detail_url(FileContentViewSet, content.pk)
-        assert response.data["relative_path"] == content.relative_path
-        assert api_client.head(found_url).status_code == status.HTTP_200_OK
-
-        # Both methods report an unstaged path as missing
-        missing_url = get_detail_url(FileRepositoryViewSet, repository.pk, "staging/missing.txt/")
-        assert api_client.get(missing_url).status_code == status.HTTP_404_NOT_FOUND
-        assert api_client.head(missing_url).status_code == status.HTTP_404_NOT_FOUND
-
-    @pytest.mark.parametrize("action", ["commit", "restore"])
-    def test_commit_and_restore_return_204_for_empty_staging(self, api_client, repository, action):
-        update_repository(repository)
-        url = get_detail_url(FileRepositoryViewSet, repository.pk, "staging/", {"action": action})
+        url = get_detail_url(FileRepositoryViewSet, repository.pk, "staging/")
         task_count = Task.objects.count()
 
-        response = api_client.post(url)
+        response = getattr(api_client, method)(url)
 
         assert response.status_code == status.HTTP_204_NO_CONTENT
         assert response.data is None
         assert Task.objects.count() == task_count
 
-    @pytest.mark.parametrize("action", ["commit", "restore"])
+    @pytest.mark.parametrize("method", ["post", "delete"])
     def test_commit_and_restore_return_tasks_for_staged_content(
-        self, api_client, repository, action
+        self, api_client, repository, method
     ):
         task_names = {
-            "commit": "pulpcore.app.tasks.repository.commit_staging",
-            "restore": "pulpcore.app.tasks.repository.restore_staging",
+            "post": "pulpcore.app.tasks.repository.commit_staging",
+            "delete": "pulpcore.app.tasks.repository.restore_staging",
         }
         update_repository(repository)
         content = create_file_content("file.txt")
         repository.stage_file(content)
-        url = get_detail_url(FileRepositoryViewSet, repository.pk, "staging/", {"action": action})
+        url = get_detail_url(FileRepositoryViewSet, repository.pk, "staging/")
 
-        response = api_client.post(url)
+        response = getattr(api_client, method)(url)
 
         # Staging actions return tasks
         assert response.status_code == status.HTTP_202_ACCEPTED
         task_pk = resolve(response.data["task"]).kwargs["pk"]
         task = Task.objects.get(pk=task_pk)
         assert response.data == {"task": reverse("tasks-detail", kwargs={"pk": task.pk})}
-        assert task.name == task_names[action]
+        assert task.name == task_names[method]
         assert task.enc_kwargs == {"repository_pk": str(repository.pk)}
 
         # Staging actions lock on the repository
@@ -454,59 +385,37 @@ class TestRepositoryStagingEndpoint:
 
 
 class TestRepositoryStagingTasks:
-    def test_commit_creates_version_and_clears_staging_and_deadline(self, repository):
+    def test_commit_creates_version_and_clears_staging(self, repository):
         update_repository(repository, autocommit=True)
 
         content = create_file_content("file.txt")
         repository.stage_file(content)
-        repository.refresh_from_db()
-        first_deadline = repository.next_commit
-        assert first_deadline is not None
 
         repository_tasks.commit_staging(repository.pk)
 
-        # Commit clears staging and the deadline, then creates a version
+        # Commit clears staging and creates a version
         repository.refresh_from_db()
         assert repository.latest_version().content.filter(pk=content.pk).exists()
         assert not StagedContent.objects.filter(repository=repository).exists()
-        assert repository.next_commit is None
 
-        # New staged content starts a new deadline
-        repository.stage_file(create_file_content("later.txt"))
-        repository.refresh_from_db()
-        assert repository.next_commit > first_deadline
-
-    def test_restore_clears_staging_and_deadline_without_new_version(self, repository):
+    def test_restore_clears_staging_without_new_version(self, repository):
         update_repository(repository, autocommit=True)
 
         initial_version = repository.latest_version()
         content = create_file_content("file.txt")
         repository.stage_file(content)
-        repository.refresh_from_db()
-        first_deadline = repository.next_commit
-        assert first_deadline is not None
-
         repository_tasks.restore_staging(repository.pk)
 
-        # Restore clears staging and the deadline without creating a version
+        # Restore clears staging without creating a version
         repository.refresh_from_db()
         assert repository.latest_version().pk == initial_version.pk
         assert not StagedContent.objects.filter(repository=repository).exists()
-        assert repository.next_commit is None
 
-        # New staged content starts a new deadline
-        repository.stage_file(create_file_content("later.txt"))
-        repository.refresh_from_db()
-        assert repository.next_commit > first_deadline
-
-    def test_failed_commit_preserves_staging_and_deadline(self, repository, monkeypatch):
+    def test_failed_commit_preserves_staging(self, repository, monkeypatch):
         update_repository(repository, autocommit=True)
 
         content = create_file_content("file.txt")
         repository.stage_file(content)
-        repository.refresh_from_db()
-        deadline = repository.next_commit
-        assert deadline is not None
 
         def fail_add_content(*args, **kwargs):
             raise RuntimeError("simulated commit failure")
@@ -516,39 +425,61 @@ class TestRepositoryStagingTasks:
         with pytest.raises(RuntimeError, match="simulated commit failure"):
             repository_tasks.commit_staging(repository.pk)
 
-        # Failed commits leave the staged content and deadline available for retry
-        repository.refresh_from_db()
-        assert repository.next_commit == deadline
+        # Failed commits leave the staged content available for retry
         assert StagedContent.objects.filter(repository=repository, content=content).exists()
+
+    def test_content_staged_during_commit_remains_for_next_scan(self, repository, monkeypatch):
+        update_repository(repository, autocommit=True)
+        old = create_file_content("old.txt")
+        newer = create_file_content("newer.txt")
+        repository.stage_file(old)
+
+        original_add_content = RepositoryVersion.add_content
+
+        def stage_during_commit(version, *args, **kwargs):
+            repository.stage_file(newer)
+            return original_add_content(version, *args, **kwargs)
+
+        monkeypatch.setattr(RepositoryVersion, "add_content", stage_during_commit)
+        repository_tasks.commit_staging(repository.pk)
+
+        assert repository.latest_version().content.filter(pk=old.pk).exists()
+        assert not repository.latest_version().content.filter(pk=newer.pk).exists()
+        assert list(
+            StagedContent.objects.filter(repository=repository).values_list("content_id", flat=True)
+        ) == [newer.pk]
+
+        with with_user(None):
+            set_guid(token_hex(16))
+            try:
+                task_ids = repository_tasks.dispatch_staging_autocommits()
+            finally:
+                clear_guid()
+
+        assert len(task_ids) == 1
+        assert Task.objects.get(pk=task_ids[0]).enc_kwargs == {"repository_pk": str(repository.pk)}
 
 
 class TestRepositoryAutocommitScheduler:
     @staticmethod
-    def create_repo_and_stage_content(
-        next_commit: datetime | None, *, autocommit: bool = True
-    ) -> FileRepository:
+    def create_repo_and_stage_content(*, autocommit: bool = True) -> FileRepository:
         with with_user(None):
             repository = FileRepository.objects.create(name=f"autocommit-{token_hex(8)}")
         update_repository(repository, autocommit=autocommit)
         repository.stage_file(create_file_content(f"{repository.name}.txt"))
-        repository.next_commit = next_commit
-        repository.save(update_fields=["next_commit"])
         return repository
 
     def test_dispatches_due_repositories_with_serializable_task_ids(self, db):
-        now = timezone.now()
-        t_past = now - timedelta(seconds=1)
-        t_far_future = now + timedelta(hours=1)
-
         # These will trigger autocommit tasks
         due_repositories = (
-            self.create_repo_and_stage_content(next_commit=t_past),
-            self.create_repo_and_stage_content(next_commit=t_past),
+            self.create_repo_and_stage_content(),
+            self.create_repo_and_stage_content(),
         )
         # These won't trigger autocommit tasks
-        self.create_repo_and_stage_content(next_commit=t_far_future)
-        self.create_repo_and_stage_content(next_commit=t_past, autocommit=False)
-        self.create_repo_and_stage_content(next_commit=None)
+        with with_user(None):
+            empty = FileRepository.objects.create(name=f"empty-autocommit-{token_hex(8)}")
+        update_repository(empty, autocommit=True)
+        self.create_repo_and_stage_content(autocommit=False)
 
         with with_user(None):
             set_guid(token_hex(16))
@@ -581,31 +512,9 @@ class TestRepositoryAutocommitScheduler:
             assert repository_prn in task.reserved_resources_record
             assert f"shared:{repository_prn}" not in task.reserved_resources_record
 
-    @override_settings(STAGING_AUTOCOMMIT_DELAY_SECONDS=AUTOCOMMIT_DELAY_SECONDS)
-    def test_dispatches_without_deadline_when_oldest_staged_content_is_due(self, db):
-        now = timezone.now()
-        repository = self.create_repo_and_stage_content(next_commit=None)
-        oldest = StagedContent.objects.get(repository=repository)
-        oldest.pulp_created = now - timedelta(seconds=30)
-        oldest.save(update_fields=["pulp_created"])
-
-        newer = repository.stage_file(create_file_content("newer.txt"))
-        newer.pulp_created = now - timedelta(seconds=10)
-        newer.save(update_fields=["pulp_created"])
-        repository.next_commit = None
-        repository.save(update_fields=["next_commit"])
-
-        with with_user(None):
-            empty = FileRepository.objects.create(name=f"empty-autocommit-{token_hex(8)}")
-        update_repository(empty, autocommit=True)
-        disabled = self.create_repo_and_stage_content(next_commit=None, autocommit=False)
-        expired = self.create_repo_and_stage_content(next_commit=None)
-        expired_staged = StagedContent.objects.get(repository=expired)
-        expired_staged.pulp_created = now - timedelta(seconds=AUTOCOMMIT_DELAY_SECONDS + 1)
-        expired_staged.save(update_fields=["pulp_created"])
-        expired.stage_file(create_file_content("expired-newer.txt"))
-        expired.next_commit = None
-        expired.save(update_fields=["next_commit"])
+    def test_enabling_autocommit_includes_existing_staged_content(self, db):
+        repository = self.create_repo_and_stage_content(autocommit=False)
+        update_repository(repository, autocommit=True)
 
         with with_user(None):
             set_guid(token_hex(16))
@@ -614,17 +523,8 @@ class TestRepositoryAutocommitScheduler:
             finally:
                 clear_guid()
 
-        # Only an old-enough staged row dispatches without a stored deadline
-        repository.refresh_from_db()
-        empty.refresh_from_db()
-        disabled.refresh_from_db()
-        expired.refresh_from_db()
-        assert repository.next_commit is None
-        assert empty.next_commit is None
-        assert disabled.next_commit is None
-        assert expired.next_commit is None
         assert len(task_ids) == 1
-        assert Task.objects.get(pk=task_ids[0]).enc_kwargs == {"repository_pk": str(expired.pk)}
+        assert Task.objects.get(pk=task_ids[0]).enc_kwargs == {"repository_pk": str(repository.pk)}
 
     def test_scan_schedule_uses_configured_interval(self, db):
         name = "Scan repositories for staging autocommit"

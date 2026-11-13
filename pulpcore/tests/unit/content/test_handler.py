@@ -832,8 +832,6 @@ def test_pull_through_stages_content_when_enabled():
     assert repo.latest_version().pk == original_version
     assert not repo.latest_version().content.filter(pk=content.pk).exists()
     assert Task.objects.count() == task_count
-    repo.refresh_from_db()
-    assert repo.next_commit is None
 
 
 @pytest.mark.asyncio
@@ -855,8 +853,6 @@ async def test_async_pull_through_stages_content_with_autocommit():
         assert await StagedContent.objects.filter(
             repository=repo, content_id=ca.content_id
         ).aexists()
-        await repo.arefresh_from_db()
-        assert repo.next_commit is not None
         assert (await repo.versions.alatest()).pk == original_version
         assert await Task.objects.acount() == task_count
     finally:

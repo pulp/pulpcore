@@ -30,8 +30,10 @@ def get_default_access_policy(viewset):
     read_actions = [
         action for action in ("staging", "staging_head") if action not in declared_actions
     ]
-    write_action = "staging_post" not in declared_actions
-    if not read_actions and not write_action:
+    write_actions = [
+        action for action in ("staging_post", "staging_delete") if action not in declared_actions
+    ]
+    if not read_actions and not write_actions:
         return policy
 
     model_meta = viewset_class.queryset.model._meta
@@ -51,10 +53,10 @@ def get_default_access_policy(viewset):
                 "condition": f"has_model_or_domain_or_obj_perms:{view_permission}",
             }
         )
-    if write_action:
+    if write_actions:
         policy["statements"].append(
             {
-                "action": ["staging_post"],
+                "action": write_actions,
                 "principal": "authenticated",
                 "effect": "allow",
                 "condition": [
