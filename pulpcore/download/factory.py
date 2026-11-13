@@ -4,6 +4,7 @@ import copy
 import platform
 import ssl
 import sys
+import weakref
 from gettext import gettext as _
 from tempfile import NamedTemporaryFile
 from urllib.parse import urlparse
@@ -22,6 +23,19 @@ PROTOCOL_MAP = {
     "https": HttpDownloader,
     "file": FileDownloader,
 }
+
+
+# Factories whose session is closed when the process exits. The set holds them weakly, so a
+# factory that is no longer used can be freed: the content app builds a factory for every file
+# it fetches from a remote, and an atexit registration per factory would keep each of them, with
+# its remote and its session, in memory for the life of the process.
+_open_factories = weakref.WeakSet()
+
+
+@atexit.register
+def _close_open_sessions():
+    for factory in list(_open_factories):
+        factory._session_cleanup()
 
 
 class DownloaderFactory:
@@ -73,7 +87,7 @@ class DownloaderFactory:
         }
         self._session = self._make_aiohttp_session_from_remote()
         self._semaphore = asyncio.Semaphore(value=download_concurrency)
-        atexit.register(self._session_cleanup)
+        _open_factories.add(self)
 
     @staticmethod
     def user_agent():
@@ -87,7 +101,8 @@ class DownloaderFactory:
         return f"pulpcore/{pulp_version} ({python}, {system}) (aiohttp {aiohttp_version})"
 
     def _session_cleanup(self):
-        asyncio.get_event_loop().run_until_complete(self._session.close())
+        if not self._session.closed:
+            asyncio.get_event_loop().run_until_complete(self._session.close())
 
     def _make_aiohttp_session_from_remote(self):
         """

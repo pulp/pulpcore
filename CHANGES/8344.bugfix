@@ -1,0 +1,1 @@
+Fixed a memory leak in the content app: every file streamed from a remote left its downloader factory, remote and HTTP session in memory until the process exited.
