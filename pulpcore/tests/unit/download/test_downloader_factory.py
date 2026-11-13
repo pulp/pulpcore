@@ -1,3 +1,6 @@
+import gc
+import weakref
+
 import pytest
 
 from pulpcore.app.util import get_domain
@@ -36,3 +39,15 @@ async def test_custom_headers():
     factory = DownloaderFactory(remote)
     downloader = factory.build(remote.url)
     assert downloader.session.headers["Connection"] == "keep-alive"
+
+
+@pytest.mark.asyncio
+async def test_factory_is_freed_once_unused():
+    remote = Remote(url="http://example.org/", name="foo")
+    factory = DownloaderFactory(remote)
+    downloader = factory.build(remote.url)
+    await downloader.session.close()
+    ref = weakref.ref(factory)
+    del factory, downloader
+    gc.collect()
+    assert ref() is None
