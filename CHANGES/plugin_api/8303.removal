@@ -1,0 +1,1 @@
+`Domain.default_content_guard` is now a read-only property backed by the new `DomainDefaultContentGuard` model; use `Domain.set_default_content_guard()` to change it. The `default_content_guard_id` attribute was removed.

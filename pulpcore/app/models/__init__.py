@@ -15,7 +15,7 @@ from .access_policy import (
     Group,
 )
 
-from .domain import Domain
+from .domain import Domain, DomainDefaultContentGuard
 
 from .acs import AlternateContentSource, AlternateContentSourcePath
 
@@ -117,6 +117,7 @@ __all__ = [
     "AutoAddObjPermsMixin",
     "Group",
     "Domain",
+    "DomainDefaultContentGuard",
     "AlternateContentSource",
     "AlternateContentSourcePath",
     "Artifact",
