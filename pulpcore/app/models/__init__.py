@@ -69,6 +69,7 @@ from .repository import (
     Remote,
     Repository,
     RepositoryContent,
+    RepositoryMembership,
     RepositoryVersion,
     RepositoryVersionContentDetails,
 )
@@ -155,6 +156,7 @@ __all__ = [
     "Remote",
     "Repository",
     "RepositoryContent",
+    "RepositoryMembership",
     "RepositoryVersion",
     "RepositoryVersionContentDetails",
     "CreatedResource",
