@@ -71,6 +71,7 @@ from .repository import (
     RemoteViewSet,
     ListRemoteViewSet,
     RepositoryViewSet,
+    RepositoryStagingViewSet,
     RepositoryVersionViewSet,
     ListRepositoryVersionViewSet,
 )

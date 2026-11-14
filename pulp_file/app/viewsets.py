@@ -28,6 +28,7 @@ from pulpcore.plugin.viewsets import (
     OperationPostponedResponse,
     PublicationViewSet,
     RemoteViewSet,
+    RepositoryStagingViewSet,
     RepositoryVersionViewSet,
     RepositoryViewSet,
     RolesMixin,
@@ -116,6 +117,7 @@ class FileContentViewSet(SingleArtifactContentUploadViewSet):
                 "effect": "allow",
                 "condition": [
                     "has_model_or_domain_perms:file.upload_files",
+                    "has_staging_repository_perms",
                 ],
             },
         ],
@@ -285,6 +287,30 @@ class FileRepositoryViewSet(RepositoryViewSet, ModifyRepositoryActionMixin, Role
             kwargs=task_kwargs,
         )
         return OperationPostponedResponse(result, request)
+
+
+class FileRepositoryStagingViewSet(RepositoryStagingViewSet):
+    parent_viewset = FileRepositoryViewSet
+
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["list", "head"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_repository_model_or_domain_or_obj_perms:file.view_filerepository",
+            },
+            {
+                "action": ["commit", "restore"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": [
+                    "has_repository_model_or_domain_or_obj_perms:file.modify_filerepository",
+                    "has_repository_model_or_domain_or_obj_perms:file.view_filerepository",
+                ],
+            },
+        ]
+    }
 
 
 class FileRepositoryVersionViewSet(RepositoryVersionViewSet):

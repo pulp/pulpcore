@@ -362,7 +362,7 @@ class PulpSchemaGenerator(SchemaGenerator):
             pulp_model_alias = getattr(view, "pulp_model_alias", None)
             parent_viewset = getattr(view, "parent_viewset", None)
             if parent_viewset:
-                if view.action in ["list", "create"]:
+                if getattr(view, "detail", None) is False or view.action in ["list", "create"]:
                     resource_model = parent_viewset.queryset.model
                     pulp_model_alias = getattr(parent_viewset, "pulp_model_alias", None)
 

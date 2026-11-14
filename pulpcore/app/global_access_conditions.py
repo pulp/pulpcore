@@ -433,6 +433,25 @@ def has_repo_or_repo_ver_param_model_or_domain_or_obj_perms(request, view, actio
     return True
 
 
+def has_staging_repository_perms(request, view, action):
+    """Require view and modify permissions when a synchronous upload stages to a repository."""
+    if "repository" not in request.data:
+        return True
+
+    repository_field = view.get_serializer().fields["repository"]
+    repository = repository_field.run_validation(request.data["repository"]).cast()
+
+    app_label = repository._meta.app_label
+    model_name = repository._meta.model_name
+    for permission in (f"{app_label}.modify_{model_name}", f"{app_label}.view_{model_name}"):
+        if not (
+            has_model_or_domain_perms(request, view, action, permission)
+            or request.user.has_perm(permission, repository)
+        ):
+            return False
+    return True
+
+
 def has_repo_or_repo_ver_param_model_or_obj_perms(request, view, action, permission):
     """
     Checks if the current user has object-level permission on the `repository` object.

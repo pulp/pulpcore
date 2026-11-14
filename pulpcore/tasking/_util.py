@@ -23,6 +23,7 @@ from pulpcore.app.util import (
     configure_analytics,
     configure_cleanup,
     configure_periodic_telemetry,
+    configure_staging_autocommit,
 )
 from pulpcore.constants import TASK_FINAL_STATES, TASK_STATES
 from pulpcore.tasking.tasks import dispatch
@@ -41,6 +42,7 @@ def startup_hook():
     configure_analytics()
     configure_cleanup()
     configure_periodic_telemetry()
+    configure_staging_autocommit()
 
 
 def delete_incomplete_resources(task):

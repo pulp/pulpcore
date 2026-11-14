@@ -17,6 +17,7 @@ from pulpcore.plugin.serializers import (
     RepositorySerializer,
     RepositorySyncURLSerializer,
     SingleArtifactContentUploadSerializer,
+    StageContentUploadSerializerMixin,
 )
 from pulpcore.plugin.util import get_domain_pk
 
@@ -60,7 +61,7 @@ class FileContentSerializer(SingleArtifactContentUploadSerializer, ContentChecks
         model = FileContent
 
 
-class FileContentUploadSerializer(FileContentSerializer):
+class FileContentUploadSerializer(StageContentUploadSerializerMixin, FileContentSerializer):
     """
     Serializer for File Content.
     """
@@ -115,8 +116,8 @@ class FileContentUploadSerializer(FileContentSerializer):
         return data
 
     class Meta:
-        # This API does not support uploading to a repository.
-        fields = tuple(f for f in FileContentSerializer.Meta.fields if f not in ["repository"])
+        # Repository uploads are limited to staging-enabled repositories.
+        fields = FileContentSerializer.Meta.fields
         model = FileContent
         # Name used for the OpenAPI request object
         ref_name = "FileContentUploadSerializer"

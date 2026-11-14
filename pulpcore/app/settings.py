@@ -301,6 +301,9 @@ WORKER_TYPE = "pulpcore"
 # On SIGINT, this value represents the time before the worker will attempt to kill the subprocess.
 TASK_GRACE_INTERVAL = 600
 
+# Seconds between scans that dispatch automatic staging commits
+STAGING_AUTOCOMMIT_SCAN_INTERVAL_SECONDS = 60
+
 # how long to protect ephemeral items in minutes
 ORPHAN_PROTECTION_TIME = 24 * 60
 
@@ -593,6 +596,16 @@ otel_metrics_dispatch_interval_validator = Validator(
     },
 )
 
+staging_autocommit_scan_interval_validator = Validator(
+    "STAGING_AUTOCOMMIT_SCAN_INTERVAL_SECONDS",
+    is_type_of=(int, float),
+    gt=0,
+    messages={
+        "is_type_of": "{name} must be a number.",
+        "operations": "{name} must be greater than zero.",
+    },
+)
+
 distributed_publication_retention_period_validator = Validator(
     "DISTRIBUTED_PUBLICATION_RETENTION_PERIOD",
     is_type_of=int,
@@ -699,6 +712,7 @@ settings = DjangoDynaconf(
         authentication_json_header_openapi_security_scheme_validator,
         otel_pulp_api_histogram_buckets_validator,
         otel_metrics_dispatch_interval_validator,
+        staging_autocommit_scan_interval_validator,
         distributed_publication_retention_period_validator,
     ],
     post_hooks=(

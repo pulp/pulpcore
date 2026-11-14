@@ -421,6 +421,15 @@ A JSON object representing the security scheme advertised for the `PulpRemoteUse
 
 Defaults to `{"type": "mutualTLS"}`, which represents x509 certificate based authentication.
 
+### STAGING\_AUTOCOMMIT\_SCAN\_INTERVAL\_SECONDS
+
+How often, in seconds, the scheduled task checks for repositories with staged content and dispatches
+their commit tasks.
+Newly staged content is eligible at the next scan, so it may wait almost one scan interval.
+Worker scheduling, task pickup, and waiting for the repository lock can add more time.
+
+Defaults to `60` seconds.
+
 ### TASK\_DIAGNOSTICS
 
 When enabled, users are allowed to request various diagnostics for analysis by a developer.
