@@ -14,6 +14,7 @@ from redis.exceptions import RedisError
 from rest_framework.request import Request as ApiRequest
 from rest_framework.response import Response as ApiResponse
 
+from pulpcore.app.models import Artifact
 from pulpcore.app.redis_connection import (
     get_async_redis_connection,
     get_redis_connection,
@@ -406,6 +407,18 @@ class AsyncContentCache(AsyncCache):
                 headers={key: headers[key] for key in ("Cache-Control", "ETag") if key in headers}
             )
         else:
+            if response_type == "ArtifactResponse":
+                # The entry names its artifact, which orphan cleanup may have deleted since. The
+                # response would fetch it anyway; fetching it here instead turns a deleted
+                # artifact into a cache miss, so the handler serves the file again (pulling it
+                # through where it can) rather than the cache answering 404 until expiry.
+                try:
+                    entry["artifact"] = await Artifact.objects.select_related("pulp_domain").aget(
+                        pk=entry.pop("artifact_pk")
+                    )
+                except Artifact.DoesNotExist:
+                    await self.delete(key, base_key)
+                    return None
             response = self.RESPONSE_TYPES[response_type](**entry)
         response.headers.update({"X-PULP-CACHE": "HIT"})
         return response
