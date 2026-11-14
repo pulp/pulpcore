@@ -17,6 +17,7 @@ from pulpcore.plugin.serializers import (
     RepositorySerializer,
     RepositorySyncURLSerializer,
     SingleArtifactContentUploadSerializer,
+    StageContentUploadSerializerMixin,
 )
 from pulpcore.plugin.util import get_domain_pk
 
@@ -60,18 +61,13 @@ class FileContentSerializer(SingleArtifactContentUploadSerializer, ContentChecks
         model = FileContent
 
 
-class FileContentUploadSerializer(FileContentSerializer):
+class FileContentUploadSerializer(StageContentUploadSerializerMixin, FileContentSerializer):
     """
     Serializer for File Content.
     """
 
     def validate(self, data):
         """Validate the FileContent data."""
-        if repository := data.get("repository"):
-            if not repository.staging_enabled:
-                raise serializers.ValidationError(
-                    {"repository": _("The repository must have staging enabled.")}
-                )
         data = super().validate(data)
 
         if upload := data.pop("upload", None):
@@ -118,13 +114,6 @@ class FileContentUploadSerializer(FileContentSerializer):
         data["digest"] = data["artifact"].sha256
 
         return data
-
-    def create(self, validated_data):
-        repository = validated_data.pop("repository", None)
-        content = super().create(validated_data)
-        if repository:
-            repository.cast().stage_file(content)
-        return content
 
     class Meta:
         # Repository uploads are limited to staging-enabled repositories.

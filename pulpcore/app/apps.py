@@ -277,7 +277,6 @@ def _clean_app_status(sender, apps, verbosity, **kwargs):
 
 
 def _populate_access_policies(sender, apps, verbosity, **kwargs):
-    from pulpcore.app.access_policy import get_default_access_policy
     from pulpcore.app.util import get_view_urlpattern
     from pulpcore.app.viewsets import LoginViewSet
 
@@ -291,8 +290,8 @@ def _populate_access_policies(sender, apps, verbosity, **kwargs):
     extra_viewsets = [LoginViewSet]
     for viewset_batch in list(sender.named_viewsets.values()) + [extra_viewsets]:
         for viewset in viewset_batch:
-            if getattr(viewset, "DEFAULT_ACCESS_POLICY", None) is not None:
-                access_policy = get_default_access_policy(viewset)
+            access_policy = getattr(viewset, "DEFAULT_ACCESS_POLICY", None)
+            if access_policy is not None:
                 viewset_name = get_view_urlpattern(viewset)
                 db_access_policy, created = AccessPolicy.objects.get_or_create(
                     viewset_name=viewset_name, defaults=access_policy

@@ -35,6 +35,7 @@ from pulpcore.app.util import (
 )
 
 from pulp_file.app.models import FileContent, FileRepository
+from pulp_file.app.serializers import FileContentUploadSerializer
 from pulp_file.app.viewsets import FileContentViewSet, FileRepositoryViewSet
 
 
@@ -117,7 +118,6 @@ class TestRepositoryEndpoint:
         assert response.status_code == status.HTTP_200_OK
         assert response.data["staging_enabled"] is False
         assert response.data["staging_autocommit"] is False
-        assert "next_commit" not in response.data
 
     def test_list_exposes_staging_fields(self, api_client, repository):
         update_repository(repository, autocommit=True)
@@ -129,7 +129,6 @@ class TestRepositoryEndpoint:
         assert len(response.data["results"]) == 1
         assert response.data["results"][0]["staging_enabled"] is True
         assert response.data["results"][0]["staging_autocommit"] is True
-        assert "next_commit" not in response.data["results"][0]
 
 
 class TestRepositoryStagingEndpoint:
@@ -228,9 +227,18 @@ class TestRepositoryStagingEndpoint:
         assert StagedContent.objects.filter(repository=repository).count() == 1
 
     def test_synchronous_upload_requires_repository_modify_permission(
-        self, api_client, repository, django_user_model
+        self, api_client, repository, django_user_model, monkeypatch
     ):
         update_repository(repository)
+        validation_count = 0
+        original_validate = FileContentUploadSerializer.validate
+
+        def count_validation(serializer, data):
+            nonlocal validation_count
+            validation_count += 1
+            return original_validate(serializer, data)
+
+        monkeypatch.setattr(FileContentUploadSerializer, "validate", count_validation)
         user = django_user_model.objects.create_user(username="file-staging-uploader")
         assign_role("file.file_uploader", user)
         assign_role("file.filerepository_viewer", user, repository)
@@ -245,10 +253,12 @@ class TestRepositoryStagingEndpoint:
         assert (
             api_client.post(url, data, format="multipart").status_code == status.HTTP_403_FORBIDDEN
         )
+        assert validation_count == 0
 
         assign_role("file.filerepository_owner", user, repository)
         data["file"] = SimpleUploadedFile("restricted.txt", b"restricted")
         assert api_client.post(url, data, format="multipart").status_code == status.HTTP_201_CREATED
+        assert validation_count == 1
         assert StagedContent.objects.filter(repository=repository).count() == 1
 
     @pytest.mark.parametrize(

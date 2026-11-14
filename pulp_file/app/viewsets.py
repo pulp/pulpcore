@@ -116,10 +116,7 @@ class FileContentViewSet(SingleArtifactContentUploadViewSet):
                 "effect": "allow",
                 "condition": [
                     "has_model_or_domain_perms:file.upload_files",
-                    "has_repo_or_repo_ver_param_model_or_domain_or_obj_perms:"
-                    "file.modify_filerepository",
-                    "has_repo_or_repo_ver_param_model_or_domain_or_obj_perms:"
-                    "file.view_filerepository",
+                    "has_staging_repository_perms",
                 ],
             },
         ],
@@ -212,6 +209,21 @@ class FileRepositoryViewSet(RepositoryViewSet, ModifyRepositoryActionMixin, Role
             },
             {
                 "action": ["modify"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": [
+                    "has_model_or_domain_or_obj_perms:file.modify_filerepository",
+                    "has_model_or_domain_or_obj_perms:file.view_filerepository",
+                ],
+            },
+            {
+                "action": ["staging", "staging_head"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_model_or_domain_or_obj_perms:file.view_filerepository",
+            },
+            {
+                "action": ["staging_post", "staging_delete"],
                 "principal": "authenticated",
                 "effect": "allow",
                 "condition": [
