@@ -15,6 +15,7 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from pulpcore.app import urls as api_urls
+from pulpcore.app.access_policy import AccessPolicyFromDB
 from pulpcore.app.apps import _populate_access_policies
 from pulpcore.app.contexts import with_user
 from pulpcore.app.models import (
@@ -198,7 +199,7 @@ class TestRepositoryStagingEndpoint:
         assert api_client.post(url).status_code == status.HTTP_204_NO_CONTENT
         assert api_client.delete(url).status_code == status.HTTP_204_NO_CONTENT
 
-    def test_customized_policy_keeps_staging_denied(self, api_client, repository):
+    def test_customized_policy_keeps_staging_denied(self, api_client, repository, monkeypatch):
         update_repository(repository)
         policy = AccessPolicy.objects.get(
             viewset_name=get_view_urlpattern(FileRepositoryStagingViewSet)
@@ -212,6 +213,10 @@ class TestRepositoryStagingEndpoint:
         policy.refresh_from_db()
         assert policy.statements == []
         url = get_detail_url(FileRepositoryViewSet, repository.pk, "staging/")
+        # Viewsets capture the default permission class at import time; CI may use another one.
+        monkeypatch.setattr(
+            FileRepositoryStagingViewSet, "permission_classes", [AccessPolicyFromDB]
+        )
         assert api_client.get(url).status_code == status.HTTP_403_FORBIDDEN
 
     def test_synchronous_upload_stages_only_for_enabled_repository(self, api_client, repository):
