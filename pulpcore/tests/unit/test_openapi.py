@@ -1,6 +1,10 @@
 import pytest
 
-from pulpcore.app.viewsets.repository import RepositoryVersionViewSet, RepositoryViewSet
+from pulpcore.app.viewsets.repository import (
+    RepositoryStagingViewSet,
+    RepositoryVersionViewSet,
+    RepositoryViewSet,
+)
 from pulpcore.openapi import PulpSchemaGenerator
 
 
@@ -18,11 +22,11 @@ from pulpcore.openapi import PulpSchemaGenerator
             id="detail",
         ),
         pytest.param(
-            "/repositories/{pulp_id}/staging/",
-            RepositoryViewSet,
-            "staging",
+            "/repositories/{repository_pk}/staging/",
+            RepositoryStagingViewSet,
+            "list",
             "{repository_href}staging/",
-            id="detail-action",
+            id="nested-staging-collection",
         ),
         pytest.param(
             "/repositories/{repository_pk}/versions/",

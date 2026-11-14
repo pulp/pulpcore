@@ -28,6 +28,7 @@ from pulpcore.plugin.viewsets import (
     OperationPostponedResponse,
     PublicationViewSet,
     RemoteViewSet,
+    RepositoryStagingViewSet,
     RepositoryVersionViewSet,
     RepositoryViewSet,
     RolesMixin,
@@ -217,21 +218,6 @@ class FileRepositoryViewSet(RepositoryViewSet, ModifyRepositoryActionMixin, Role
                 ],
             },
             {
-                "action": ["staging", "staging_head"],
-                "principal": "authenticated",
-                "effect": "allow",
-                "condition": "has_model_or_domain_or_obj_perms:file.view_filerepository",
-            },
-            {
-                "action": ["staging_post", "staging_delete"],
-                "principal": "authenticated",
-                "effect": "allow",
-                "condition": [
-                    "has_model_or_domain_or_obj_perms:file.modify_filerepository",
-                    "has_model_or_domain_or_obj_perms:file.view_filerepository",
-                ],
-            },
-            {
                 "action": ["list_roles", "add_role", "remove_role"],
                 "principal": "authenticated",
                 "effect": "allow",
@@ -301,6 +287,30 @@ class FileRepositoryViewSet(RepositoryViewSet, ModifyRepositoryActionMixin, Role
             kwargs=task_kwargs,
         )
         return OperationPostponedResponse(result, request)
+
+
+class FileRepositoryStagingViewSet(RepositoryStagingViewSet):
+    parent_viewset = FileRepositoryViewSet
+
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["list", "head"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_repository_model_or_domain_or_obj_perms:file.view_filerepository",
+            },
+            {
+                "action": ["commit", "restore"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": [
+                    "has_repository_model_or_domain_or_obj_perms:file.modify_filerepository",
+                    "has_repository_model_or_domain_or_obj_perms:file.view_filerepository",
+                ],
+            },
+        ]
+    }
 
 
 class FileRepositoryVersionViewSet(RepositoryVersionViewSet):

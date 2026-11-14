@@ -33,10 +33,15 @@ from pulpcore.app.util import (
     resolve,
     reverse,
 )
+from pulpcore.openapi import PulpSchemaGenerator
 
 from pulp_file.app.models import FileContent, FileRepository
 from pulp_file.app.serializers import FileContentUploadSerializer
-from pulp_file.app.viewsets import FileContentViewSet, FileRepositoryViewSet
+from pulp_file.app.viewsets import (
+    FileContentViewSet,
+    FileRepositoryStagingViewSet,
+    FileRepositoryViewSet,
+)
 
 
 def update_repository(repository: FileRepository, *, autocommit: bool = False) -> None:
@@ -132,6 +137,26 @@ class TestRepositoryEndpoint:
 
 
 class TestRepositoryStagingEndpoint:
+    def test_staging_schema_has_collection_operations(self, db):
+        schema = PulpSchemaGenerator().get_schema(public=True)
+        staging_paths = {
+            path: operations
+            for path, operations in schema["paths"].items()
+            if "file_file_repository_href" in path and path.endswith("staging/")
+        }
+
+        assert len(staging_paths) == 1
+        operations = next(iter(staging_paths.values()))
+        assert {"get", "post", "delete"} <= set(operations)
+        get_schema = operations["get"]["responses"]["200"]["content"]["application/json"]["schema"]
+        assert get_schema == {"$ref": "#/components/schemas/StagingListResponse"}
+        assert schema["components"]["schemas"]["StagingListResponse"]["properties"]["results"] == {
+            "type": "array",
+            "items": {"type": "string"},
+        }
+        for method in ("post", "delete"):
+            assert {"202", "204"} <= set(operations[method]["responses"])
+
     @pytest.mark.parametrize(
         ("method", "expected_status"),
         [
@@ -175,7 +200,9 @@ class TestRepositoryStagingEndpoint:
 
     def test_customized_policy_keeps_staging_denied(self, api_client, repository):
         update_repository(repository)
-        policy = AccessPolicy.objects.get(viewset_name=get_view_urlpattern(FileRepositoryViewSet))
+        policy = AccessPolicy.objects.get(
+            viewset_name=get_view_urlpattern(FileRepositoryStagingViewSet)
+        )
         policy.statements = []
         policy.customized = True
         policy.save(update_fields=["statements", "customized"])

@@ -3,10 +3,11 @@ from gettext import gettext as _
 
 from django.db.models import Max, Q
 from django_filters import Filter
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, extend_schema_serializer
 from rest_framework import mixins, serializers, status
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound
+from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
@@ -195,29 +196,47 @@ class StagingGetQuerySerializer(StagingBaseQuerySerializer):
     offset = serializers.IntegerField(required=False, min_value=0)
 
 
+@extend_schema_serializer(many=False)
+class StagingListResponseSerializer(serializers.Serializer):
+    count = serializers.IntegerField()
+    next = serializers.CharField(allow_null=True)
+    previous = serializers.CharField(allow_null=True)
+    results = serializers.ListField(child=serializers.CharField())
+
+
 class RepositoryViewSet(ImmutableRepositoryViewSet, AsyncUpdateMixin, LabelsMixin):
     """
     A ViewSet for an ordinary repository.
     """
 
-    def filter_queryset(self, queryset):
-        if self.action in {
-            "staging",
-            "staging_head",
-            "staging_post",
-            "staging_delete",
-        }:
-            return queryset
-        return super().filter_queryset(queryset)
+
+class RepositoryStagingViewSet(NamedModelViewSet):
+    """Manage the staging area of a repository."""
+
+    collection_method_mapping = {"head": "head", "post": "commit", "delete": "restore"}
+    endpoint_name = "staging"
+    nest_prefix = "repositories"
+    parent_viewset = RepositoryViewSet
+    parent_lookup_kwargs = {"repository_pk": "repository__pk"}
+    queryset = StagedContent.objects.all()
+    serializer_class = StagingListResponseSerializer
+
+    def get_parent_field_and_object(self):
+        parent_view = self.parent_viewset()
+        parent_view.request = self.request
+        parent_view.kwargs = self.kwargs
+        parent_view.action = "retrieve"
+        repository = get_object_or_404(parent_view.get_queryset(), pk=self.kwargs["repository_pk"])
+        return "repository", repository
 
     def _check_staging_enabled(self):
-        repository = self.get_object()
+        repository = self.get_parent_object()
         if not repository.staging_enabled:
             raise NotFound()
         return repository
 
-    @action(detail=True, methods=["get"])
-    def staging(self, request, pk=None, **kwargs):
+    @extend_schema(responses={200: StagingListResponseSerializer})
+    def list(self, request, **kwargs):
         repository = self._check_staging_enabled()
         query = StagingGetQuerySerializer(data=request.query_params.dict())
         query.is_valid(raise_exception=True)
@@ -233,20 +252,19 @@ class RepositoryViewSet(ImmutableRepositoryViewSet, AsyncUpdateMixin, LabelsMixi
         contents = [get_url(membership.content, request=request) for membership in staged]
         return Response(contents)
 
-    @staging.mapping.head
-    def staging_head(self, request, pk=None, **kwargs):
+    def head(self, request, **kwargs):
         self._check_staging_enabled()
         query = StagingGetQuerySerializer(data=request.query_params.dict())
         query.is_valid(raise_exception=True)
         return Response(status=status.HTTP_200_OK)
 
-    @staging.mapping.post
-    def staging_post(self, request, pk=None, **kwargs):
+    @extend_schema(request=None, responses={202: AsyncOperationResponseSerializer, 204: None})
+    def commit(self, request, **kwargs):
         repository = self._check_staging_enabled()
         return self._dispatch_staging_task(request, repository, tasks.repository.commit_staging)
 
-    @staging.mapping.delete
-    def staging_delete(self, request, pk=None, **kwargs):
+    @extend_schema(request=None, responses={202: AsyncOperationResponseSerializer, 204: None})
+    def restore(self, request, **kwargs):
         repository = self._check_staging_enabled()
         return self._dispatch_staging_task(request, repository, tasks.repository.restore_staging)
 
