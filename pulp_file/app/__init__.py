@@ -11,3 +11,4 @@ class PulpFilePluginAppConfig(PulpPluginAppConfig):
     version = "3.124.0.dev"
     python_package_name = "pulpcore"
     domain_compatible = True
+    multi_db_compatible = True

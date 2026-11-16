@@ -1,11 +1,32 @@
 from itertools import compress
+from types import SimpleNamespace
 from uuid import uuid4
 
 import pytest
 
+from pulpcore.app.contexts import _current_task
 from pulpcore.app.models import RepositoryVersion, RepositoryVersionContentDetails
 from pulpcore.plugin.models import Artifact, Content, ContentArtifact, Repository
 from pulpcore.plugin.repo_version_utils import validate_version_paths
+
+
+def test_failed_task_lock_rolls_back_repository_creation(db):
+    """Regression test for review comment on PR #7862: the reserved_resources_record lock
+    update moved outside Repository.save()'s own atomic() block (to allow Task and Repository to
+    live on different aliases), so a failed lock no longer rolled back the already-committed
+    repository and its initial version for single-DB installs. Nesting an outer
+    atomic(using="default") around both restores that for the common single-DB case."""
+    token = _current_task.set(SimpleNamespace(pk=uuid4()))  # no Task row with this pk exists
+    try:
+        with pytest.raises(RuntimeError, match="could not be locked"):
+            Repository.objects.create(name="lock-rollback-test-repo")
+
+        assert not Repository.objects.filter(name="lock-rollback-test-repo").exists()
+        assert not RepositoryVersion.objects.filter(
+            repository__name="lock-rollback-test-repo"
+        ).exists()
+    finally:
+        _current_task.reset(token)
 
 
 def test_repository_version_count_helpers(db, repository):

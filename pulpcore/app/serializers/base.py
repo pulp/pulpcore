@@ -22,6 +22,7 @@ from rest_framework_nested.relations import (
 )
 
 from pulpcore.app.models import (
+    Domain,
     GenericRelationModel,
     MasterModel,
     Repository,
@@ -53,7 +54,18 @@ def _reverse(obj):
         @functools.wraps(reverse)
         def _patched_reverse(viewname, request=None, args=None, kwargs=None, **extra):
             kwargs = kwargs or {}
-            domain_name = obj.pulp_domain.name if hasattr(obj, "pulp_domain") else "default"
+            if hasattr(obj, "pulp_domain"):
+                domain_name = obj.pulp_domain.name
+            elif (db := getattr(getattr(obj, "_state", None), "db", None)) not in (None, "default"):
+                # Satellite roles and grants must be served from a domain living in their database.
+                domain = get_domain()
+                if getattr(obj, "domain_id", None) is not None:
+                    domain = obj.domain
+                elif domain.database_alias != db:
+                    domain = Domain.objects.filter(database_alias=db).first()
+                domain_name = domain.name
+            else:
+                domain_name = "default"
             kwargs["pulp_domain"] = domain_name
             return reverse(viewname, request=request, args=args, kwargs=kwargs, **extra)
 

@@ -5,7 +5,6 @@ from urllib.parse import urlparse
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldError, ValidationError
-from django.db import transaction
 from django.db.models.expressions import RawSQL
 from django.urls import Resolver404, resolve
 from drf_spectacular.utils import extend_schema, inline_serializer
@@ -17,8 +16,10 @@ from rest_framework.serializers import CharField, ListField
 from rest_framework.serializers import ValidationError as DRFValidationError
 
 from pulpcore.app import tasks
+from pulpcore.app.db_router import atomic
 from pulpcore.app.models import MasterModel
 from pulpcore.app.models.role import GroupRole, UserRole
+from pulpcore.app.rbac_sync import ensure_identities_on_alias
 from pulpcore.app.response import OperationPostponedResponse
 from pulpcore.app.role_util import get_objects_for_user
 from pulpcore.app.serializers import (
@@ -574,13 +575,20 @@ class RolesMixin:
     @action(detail=True, methods=["get"])
     def list_roles(self, request, pk, **kwargs):
         obj = self.get_object()
-        obj_type = ContentType.objects.get_for_model(obj)
-        user_qs = UserRole.objects.filter(
-            content_type_id=obj_type.id, object_id=obj.pk
-        ).select_related("user", "role")
-        group_qs = GroupRole.objects.filter(
-            content_type_id=obj_type.id, object_id=obj.pk
-        ).select_related("group", "role")
+        obj_type = ContentType.objects.db_manager(obj._state.db).get_for_model(obj)
+        # Object-level grants live on the target object's own database (role_util.assign_role),
+        # which may differ from the ambient alias this request happens to be scoped to.
+        alias = obj._state.db
+        user_qs = (
+            UserRole.objects.using(alias)
+            .filter(content_type_id=obj_type.id, object_id=obj.pk)
+            .select_related("user", "role")
+        )
+        group_qs = (
+            GroupRole.objects.using(alias)
+            .filter(content_type_id=obj_type.id, object_id=obj.pk)
+            .select_related("group", "role")
+        )
         roles = {}
         for user_role in user_qs:
             if user_role.role.name not in roles:
@@ -613,9 +621,18 @@ class RolesMixin:
             data=request.data, context={"request": request, "content_object": obj, "assign": True}
         )
         serializer.is_valid(raise_exception=True)
-        with transaction.atomic():
+        # Object-level grants live on the target object's own database (role_util.assign_role),
+        # which may differ from the ambient alias this request happens to be scoped to.
+        alias = obj._state.db
+        with atomic(using=alias):
+            # bulk_create skips the pre_save hook that creates satellite stubs.
+            ensure_identities_on_alias(
+                alias,
+                user_ids=[user.pk for user in serializer.validated_data["users"]],
+                group_ids=[group.pk for group in serializer.validated_data["groups"]],
+            )
             if serializer.validated_data["users"]:
-                UserRole.objects.bulk_create(
+                UserRole.objects.using(alias).bulk_create(
                     [
                         UserRole(
                             content_object=obj,
@@ -626,7 +643,7 @@ class RolesMixin:
                     ]
                 )
             if serializer.validated_data["groups"]:
-                GroupRole.objects.bulk_create(
+                GroupRole.objects.using(alias).bulk_create(
                     [
                         GroupRole(
                             content_object=obj,
@@ -650,9 +667,12 @@ class RolesMixin:
             data=request.data, context={"request": request, "content_object": obj, "assign": False}
         )
         serializer.is_valid(raise_exception=True)
-        with transaction.atomic():
-            UserRole.objects.filter(pk__in=serializer.user_role_pks).delete()
-            GroupRole.objects.filter(pk__in=serializer.group_role_pks).delete()
+        # Object-level grants live on the target object's own database (role_util.assign_role),
+        # which may differ from the ambient alias this request happens to be scoped to.
+        alias = obj._state.db
+        with atomic(using=alias):
+            UserRole.objects.using(alias).filter(pk__in=serializer.user_role_pks).delete()
+            GroupRole.objects.using(alias).filter(pk__in=serializer.group_role_pks).delete()
         return Response(serializer.data, status=201)
 
     @extend_schema(

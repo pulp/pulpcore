@@ -7,7 +7,8 @@ from django.contrib.auth import get_user_model as django_get_user_model
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import BadRequest
-from django.db.models import CharField, Exists, OuterRef, Q
+from django.db import router
+from django.db.models import CharField, Q
 from django.db.models.functions import Cast
 
 from pulpcore.app.models import Group
@@ -17,6 +18,14 @@ from pulpcore.app.models.role import GroupRole, Role, UserRole
 @lru_cache(maxsize=1)
 def get_user_model():
     return django_get_user_model()
+
+
+def grant_alias(obj=None, domain=None):
+    if domain is not None:
+        return domain.database_alias
+    if obj is not None:
+        return obj._state.db
+    return router.db_for_read(Role)
 
 
 def assign_role(rolename, entity, obj=None, domain=None):
@@ -33,12 +42,13 @@ def assign_role(rolename, entity, obj=None, domain=None):
     """
     if obj and domain:
         raise BadRequest(_("Object and domain can not both be set."))
+    using = grant_alias(obj, domain)
     try:
-        role = Role.objects.get(name=rolename)
+        role = Role.objects.using(using).get(name=rolename)
     except Role.DoesNotExist:
         raise BadRequest(_("The role '{}' does not exist.").format(rolename))
     if obj is not None:
-        ctype = ContentType.objects.get_for_model(obj, for_concrete_model=False)
+        ctype = ContentType.objects.db_manager(using).get_for_model(obj, for_concrete_model=False)
         if not role.permissions.filter(content_type__pk=ctype.id).exists():
             raise BadRequest(
                 _("The role '{}' does not carry any permission for that object.").format(rolename)
@@ -56,9 +66,13 @@ def assign_role(rolename, entity, obj=None, domain=None):
                 )
             )
     if isinstance(entity, Group):
-        GroupRole.objects.create(role=role, group=entity, content_object=obj, domain=domain)
+        return GroupRole.objects.using(using).create(
+            role=role, group=entity, content_object=obj, domain=domain
+        )
     else:
-        UserRole.objects.create(role=role, user=entity, content_object=obj, domain=domain)
+        return UserRole.objects.using(using).create(
+            role=role, user=entity, content_object=obj, domain=domain
+        )
 
 
 def remove_role(rolename, entity, obj=None, domain=None):
@@ -75,26 +89,75 @@ def remove_role(rolename, entity, obj=None, domain=None):
     """
     if obj and domain:
         raise BadRequest(_("Object and domain can not both be set."))
+    using = grant_alias(obj, domain)
     try:
-        role = Role.objects.get(name=rolename)
+        role = Role.objects.using(using).get(name=rolename)
     except Role.DoesNotExist:
         raise BadRequest(_("The role '{}' does not exist.").format(rolename))
     if isinstance(entity, Group):
-        qs = GroupRole.objects.filter(role=role, group=entity)
+        qs = GroupRole.objects.using(using).filter(role=role, group=entity)
     else:
-        qs = UserRole.objects.filter(role=role, user=entity)
+        qs = UserRole.objects.using(using).filter(role=role, user=entity)
     if obj is None:
         # Global or domain search
         qs = qs.filter(object_id=None, domain=domain)
     else:
-        ctype = ContentType.objects.get_for_model(obj, for_concrete_model=False)
+        ctype = ContentType.objects.db_manager(using).get_for_model(obj, for_concrete_model=False)
         qs = qs.filter(content_type__pk=ctype.id, object_id=obj.pk)
     qs.delete()
 
 
 def get_perms_for_model(obj):
-    ctype = ContentType.objects.get_for_model(obj, for_concrete_model=False)
-    return Permission.objects.filter(content_type__pk=ctype.id)
+    alias = getattr(getattr(obj, "_state", None), "db", None) or grant_alias()
+    ctype = ContentType.objects.db_manager(alias).get_for_model(obj, for_concrete_model=False)
+    return Permission.objects.using(alias).filter(content_type__pk=ctype.id)
+
+
+def _get_permission(alias, permission_name):
+    permissions = Permission.objects.using(alias)
+    if "." in permission_name:
+        app_label, codename = permission_name.split(".", maxsplit=1)
+        return permissions.get(content_type__app_label=app_label, codename=codename)
+    return permissions.get(codename=permission_name)
+
+
+def _domain_grant_aliases(qs):
+    # Domain grants live in their domain's database, which for control-plane models (e.g. Task)
+    # differs from the queryset's own database.
+    from pulpcore.app.db_router import PulpDomainRouter, is_multi_db_routing_active
+
+    if is_multi_db_routing_active() and PulpDomainRouter()._is_control_plane(qs.model):
+        return list(settings.DATABASES)
+    return [qs.db]
+
+
+def _domain_grant_ids(user, group_ids, permission_name, permission, alias, domain=None):
+    """Domain ids on `alias` where the user (directly or via `group_ids`) holds the permission.
+
+    `permission` is reused when it was already resolved on `alias`.
+    """
+    if permission._state.db != alias:
+        try:
+            permission = _get_permission(alias, permission_name)
+        except Permission.DoesNotExist:
+            return []
+    filters = {"role__permissions": permission}
+    if domain is None:
+        filters["domain__isnull"] = False
+    else:
+        filters["domain"] = domain
+    ids = list(
+        UserRole.objects.using(alias)
+        .filter(user=user, **filters)
+        .values_list("domain_id", flat=True)
+    )
+    if group_ids:
+        ids.extend(
+            GroupRole.objects.using(alias)
+            .filter(group_id__in=group_ids, **filters)
+            .values_list("domain_id", flat=True)
+        )
+    return ids
 
 
 def get_objects_for_user_roles(
@@ -110,65 +173,64 @@ def get_objects_for_user_roles(
         return qs.none()
     if with_superuser and user.is_superuser:
         return qs
-    if "." in permission_name:
-        app_label, codename = permission_name.split(".", maxsplit=1)
-        permission = Permission.objects.get(content_type__app_label=app_label, codename=codename)
-    else:
-        permission = Permission.objects.get(codename=permission_name)
+
+    alias = qs.db
+    permission = _get_permission(alias, permission_name)
+
+    group_ids = list(user.groups.values_list("pk", flat=True)) if use_groups else []
 
     if accept_global_perms:
-        if user.object_roles.filter(
-            object_id=None, domain=None, role__permissions=permission
-        ).exists():
+        if (
+            UserRole.objects.using(alias)
+            .filter(user=user, object_id=None, domain=None, role__permissions=permission)
+            .exists()
+        ):
             return qs
         if (
             use_groups
-            and GroupRole.objects.filter(
-                group__in=user.groups.all(),
+            and GroupRole.objects.using(alias)
+            .filter(
+                group_id__in=group_ids,
                 object_id=None,
                 domain=None,
                 role__permissions=permission,
-            ).exists()
+            )
+            .exists()
         ):
             return qs
 
-    user_role_pks = user.object_roles.filter(
-        domain__isnull=True, role__permissions=permission
-    ).values_list("object_id", flat=True)
+    user_role_pks = (
+        UserRole.objects.using(alias)
+        .filter(user=user, domain__isnull=True, role__permissions=permission)
+        .values_list("object_id", flat=True)
+    )
     final_q = Q(pk_str__in=user_role_pks)
     if accept_domain_perms and hasattr(qs.model, "pulp_domain"):
         # Optimization used by get_queryset in NamedModelViewSet
         if filtered_domain := getattr(qs, "filtered_domain", None):
-            if user.object_roles.filter(
-                domain=filtered_domain, role__permissions=permission
-            ).exists():
-                return qs
-            if (
-                use_groups
-                and GroupRole.objects.filter(
-                    group__in=user.groups.all(),
-                    domain=filtered_domain,
-                    role__permissions=permission,
-                ).exists()
+            if _domain_grant_ids(
+                user,
+                group_ids,
+                permission_name,
+                permission,
+                filtered_domain.database_alias,
+                filtered_domain,
             ):
                 return qs
         else:
-            user_domains = user.object_roles.filter(
-                domain__isnull=False, role__permissions=permission
-            ).values_list("domain_id", flat=True)
-            final_q |= Q(pulp_domain_id__in=user_domains)
-            if use_groups:
-                group_domains = GroupRole.objects.filter(
-                    group__in=user.groups.all(),
-                    domain__isnull=False,
-                    role__permissions=permission,
-                ).values_list("domain_id", flat=True)
-                final_q |= Q(pulp_domain_id__in=group_domains)
+            domains = []
+            for domain_alias in _domain_grant_aliases(qs):
+                domains.extend(
+                    _domain_grant_ids(user, group_ids, permission_name, permission, domain_alias)
+                )
+            final_q |= Q(pulp_domain_id__in=domains)
 
     if use_groups:
-        group_role_pks = GroupRole.objects.filter(
-            group__in=user.groups.all(), role__permissions=permission, domain__isnull=True
-        ).values_list("object_id", flat=True)
+        group_role_pks = (
+            GroupRole.objects.using(alias)
+            .filter(group_id__in=group_ids, role__permissions=permission, domain__isnull=True)
+            .values_list("object_id", flat=True)
+        )
         final_q |= Q(pk_str__in=group_role_pks)
 
     return qs.annotate(pk_str=Cast("pk", output_field=CharField())).filter(final_q)
@@ -256,29 +318,33 @@ def get_objects_for_user(
 def get_objects_for_group_roles(
     group, permission_name, qs, accept_domain_perms=True, accept_global_perms=True
 ):
+    alias = qs.db
+    grants = GroupRole.objects.using(alias).filter(group=group)
     if "." in permission_name:
         app_label, codename = permission_name.split(".", maxsplit=1)
-        permission = Permission.objects.get(content_type__app_label=app_label, codename=codename)
+        permission = Permission.objects.using(alias).get(
+            content_type__app_label=app_label, codename=codename
+        )
     else:
-        permission = Permission.objects.get(codename=permission_name)
+        permission = Permission.objects.using(alias).get(codename=permission_name)
 
     if (
         accept_global_perms
-        and group.object_roles.filter(
+        and grants.filter(
             object_id=None, domain_id__isnull=True, role__permissions=permission
         ).exists()
     ):
         return qs
 
-    group_role_pks = group.object_roles.filter(
+    group_role_pks = grants.filter(
         domain_id__isnull=True, role__permissions=permission
     ).values_list("object_id", flat=True)
     final_q = Q(pk_str__in=group_role_pks)
     if accept_domain_perms and hasattr(qs.model, "pulp_domain"):
-        domains = group.object_roles.filter(
-            domain__isnull=False, role__permissions=permission
-        ).values_list("domain_id", flat=True)
-        final_q |= Q(pk_str__in=qs.filter(pulp_domain_id__in=domains).values_list("pk", flat=True))
+        domains = grants.filter(domain__isnull=False, role__permissions=permission).values_list(
+            "domain_id", flat=True
+        )
+        final_q |= Q(pulp_domain_id__in=domains)
 
     return qs.annotate(pk_str=Cast("pk", output_field=CharField())).filter(final_q)
 
@@ -340,8 +406,11 @@ def get_users_with_perms_roles(
     qs = User.objects.none()
     if with_superusers:
         qs |= User.objects.filter(is_superuser=True)
-    ctype = ContentType.objects.get_for_model(obj, for_concrete_model=for_concrete_model)
-    perms = Permission.objects.filter(content_type__pk=ctype.id)
+    alias = obj._state.db
+    ctype = ContentType.objects.db_manager(alias).get_for_model(
+        obj, for_concrete_model=for_concrete_model
+    )
+    perms = Permission.objects.using(alias).filter(content_type__pk=ctype.id)
     if only_with_perms_in:
         codenames = [
             split_perm[-1]
@@ -356,12 +425,16 @@ def get_users_with_perms_roles(
     if include_model_permissions:
         object_query = Q(object_id=None, domain__isnull=True) | object_query
 
-    user_roles = UserRole.objects.filter(role__permissions__in=perms).filter(object_query)
-    qs |= User.objects.filter(Exists(user_roles.filter(user=OuterRef("pk"))))
+    user_roles = (
+        UserRole.objects.using(alias).filter(role__permissions__in=perms).filter(object_query)
+    )
+    qs |= User.objects.filter(pk__in=list(user_roles.values_list("user_id", flat=True)))
     if with_group_users:
         # Maybe I'm missing something, but I think this should have been using object_query
-        group_roles = GroupRole.objects.filter(role__permissions__in=perms).filter(object_query)
-        groups = Group.objects.filter(Exists(group_roles.filter(group=OuterRef("pk")))).distinct()
+        group_roles = (
+            GroupRole.objects.using(alias).filter(role__permissions__in=perms).filter(object_query)
+        )
+        groups = list(group_roles.values_list("group_id", flat=True))
         qs |= User.objects.filter(groups__in=groups)
     return qs.distinct()
 
@@ -376,8 +449,11 @@ def get_users_with_perms_attached_perms(
     for_concrete_model=False,
 ):
     User = get_user_model()
-    ctype = ContentType.objects.get_for_model(obj, for_concrete_model=for_concrete_model)
-    perms = Permission.objects.filter(content_type__pk=ctype.id)
+    alias = obj._state.db
+    ctype = ContentType.objects.db_manager(alias).get_for_model(
+        obj, for_concrete_model=for_concrete_model
+    )
+    perms = Permission.objects.using(alias).filter(content_type__pk=ctype.id)
     if only_with_perms_in:
         codenames = [
             split_perm[-1]
@@ -392,23 +468,29 @@ def get_users_with_perms_attached_perms(
     if include_model_permissions:
         object_query = Q(object_id=None) | object_query
 
-    user_roles = UserRole.objects.filter(role__permissions__in=perms).filter(object_query)
+    user_roles = (
+        UserRole.objects.using(alias).filter(role__permissions__in=perms).filter(object_query)
+    )
     res = defaultdict(set)
     if with_superusers:
         for user in User.objects.filter(is_superuser=True):
             res[user].update(perms)
     for user_role in user_roles:
         res[user_role.user].update(
-            user_role.role.permissions.filter(pk__in=perms).values_list("codename", flat=True)
+            user_role.role.permissions.using(alias)
+            .filter(pk__in=perms)
+            .values_list("codename", flat=True)
         )
     if with_group_users:
-        group_roles = GroupRole.objects.filter(role__permissions__in=perms).filter(object_query)
+        group_roles = (
+            GroupRole.objects.using(alias).filter(role__permissions__in=perms).filter(object_query)
+        )
         for group_role in group_roles:
             for user in group_role.group.user_set.all():
                 res[user].update(
-                    group_role.role.permissions.filter(pk__in=perms).values_list(
-                        "codename", flat=True
-                    )
+                    group_role.role.permissions.using(alias)
+                    .filter(pk__in=perms)
+                    .values_list("codename", flat=True)
                 )
     return {k: list(v) for k, v in res.items()}
 
@@ -421,8 +503,11 @@ def get_users_with_perms_attached_roles(
     include_model_permissions=True,
     for_concrete_model=False,
 ):
-    ctype = ContentType.objects.get_for_model(obj, for_concrete_model=for_concrete_model)
-    perms = Permission.objects.filter(content_type__pk=ctype.id)
+    alias = obj._state.db
+    ctype = ContentType.objects.db_manager(alias).get_for_model(
+        obj, for_concrete_model=for_concrete_model
+    )
+    perms = Permission.objects.using(alias).filter(content_type__pk=ctype.id)
     if only_with_perms_in:
         codenames = [
             split_perm[-1]
@@ -437,12 +522,16 @@ def get_users_with_perms_attached_roles(
     if include_model_permissions:
         object_query = Q(object_id=None) | object_query
 
-    user_roles = UserRole.objects.filter(role__permissions__in=perms).filter(object_query)
+    user_roles = (
+        UserRole.objects.using(alias).filter(role__permissions__in=perms).filter(object_query)
+    )
     res = defaultdict(set)
     for user_role in user_roles:
         res[user_role.user].add(user_role.role.name)
     if with_group_users:
-        group_roles = GroupRole.objects.filter(role__permissions__in=perms).filter(object_query)
+        group_roles = (
+            GroupRole.objects.using(alias).filter(role__permissions__in=perms).filter(object_query)
+        )
         for group_role in group_roles:
             for user in group_role.group.user_set.all():
                 res[user].add(group_role.role.name)
@@ -496,8 +585,11 @@ def get_groups_with_perms_roles(
     include_model_permissions=True,
     for_concrete_model=False,
 ):
-    ctype = ContentType.objects.get_for_model(obj, for_concrete_model=for_concrete_model)
-    perms = Permission.objects.filter(content_type__pk=ctype.id)
+    alias = obj._state.db
+    ctype = ContentType.objects.db_manager(alias).get_for_model(
+        obj, for_concrete_model=for_concrete_model
+    )
+    perms = Permission.objects.using(alias).filter(content_type__pk=ctype.id)
     if only_with_perms_in:
         codenames = [
             split_perm[-1]
@@ -512,8 +604,12 @@ def get_groups_with_perms_roles(
     if include_model_permissions:
         object_query = Q(object_id=None) | object_query
 
-    group_roles = GroupRole.objects.filter(role__permissions__in=perms).filter(object_query)
-    qs = Group.objects.filter(Exists(group_roles.filter(group=OuterRef("pk")))).distinct()
+    group_roles = (
+        GroupRole.objects.using(alias).filter(role__permissions__in=perms).filter(object_query)
+    )
+    qs = Group.objects.filter(
+        pk__in=list(group_roles.values_list("group_id", flat=True))
+    ).distinct()
     return qs
 
 
@@ -524,8 +620,11 @@ def get_groups_with_perms_attached_perms(
     include_model_permissions=True,
     for_concrete_model=False,
 ):
-    ctype = ContentType.objects.get_for_model(obj, for_concrete_model=for_concrete_model)
-    perms = Permission.objects.filter(content_type__pk=ctype.id)
+    alias = obj._state.db
+    ctype = ContentType.objects.db_manager(alias).get_for_model(
+        obj, for_concrete_model=for_concrete_model
+    )
+    perms = Permission.objects.using(alias).filter(content_type__pk=ctype.id)
     if only_with_perms_in:
         codenames = [
             split_perm[-1]
@@ -540,11 +639,15 @@ def get_groups_with_perms_attached_perms(
     if include_model_permissions:
         object_query = Q(object_id=None) | object_query
 
-    group_roles = GroupRole.objects.filter(role__permissions__in=perms).filter(object_query)
+    group_roles = (
+        GroupRole.objects.using(alias).filter(role__permissions__in=perms).filter(object_query)
+    )
     res = defaultdict(set)
     for group_role in group_roles:
         res[group_role.group].update(
-            group_role.role.permissions.filter(pk__in=perms).values_list("codename", flat=True)
+            group_role.role.permissions.using(alias)
+            .filter(pk__in=perms)
+            .values_list("codename", flat=True)
         )
     return {k: list(v) for k, v in res.items()}
 
@@ -556,8 +659,11 @@ def get_groups_with_perms_attached_roles(
     include_model_permissions=True,
     for_concrete_model=False,
 ):
-    ctype = ContentType.objects.get_for_model(obj, for_concrete_model=for_concrete_model)
-    perms = Permission.objects.filter(content_type__pk=ctype.id)
+    alias = obj._state.db
+    ctype = ContentType.objects.db_manager(alias).get_for_model(
+        obj, for_concrete_model=for_concrete_model
+    )
+    perms = Permission.objects.using(alias).filter(content_type__pk=ctype.id)
     if only_with_perms_in:
         codenames = [
             split_perm[-1]
@@ -572,7 +678,9 @@ def get_groups_with_perms_attached_roles(
     if include_model_permissions:
         object_query = Q(object_id=None) | object_query
 
-    group_roles = GroupRole.objects.filter(role__permissions__in=perms).filter(object_query)
+    group_roles = (
+        GroupRole.objects.using(alias).filter(role__permissions__in=perms).filter(object_query)
+    )
     res = defaultdict(set)
     for group_role in group_roles:
         res[group_role.group].add(group_role.role.name)

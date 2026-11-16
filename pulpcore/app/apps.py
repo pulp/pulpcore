@@ -1,3 +1,4 @@
+import logging
 import random
 from collections import defaultdict
 from contextlib import suppress
@@ -7,8 +8,8 @@ from importlib import import_module
 from django import apps
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.db import ProgrammingError, connection, transaction
-from django.db.models.signals import post_migrate, pre_migrate
+from django.db import ProgrammingError, connection, connections, transaction
+from django.db.models.signals import post_delete, post_migrate, post_save, pre_migrate, pre_save
 from django.utils.module_loading import module_has_submodule
 
 from pulpcore.exceptions.plugin import MissingPlugin
@@ -92,6 +93,14 @@ class PulpPluginAppConfig(apps.AppConfig):
                 msg = (
                     "The plugin `{}-{}` is not domain compatible. Please uninstall/update the "
                     "plugin or turn off `DOMAIN_ENABLED` for Pulp to start."
+                )
+                raise ImproperlyConfigured(msg.format(self.python_package_name, self.version))
+        if "pulpcore.app.db_router.PulpDomainRouter" in settings.DATABASE_ROUTERS:
+            if not getattr(self, "multi_db_compatible", None):
+                msg = (
+                    "The plugin `{}-{}` is not multi-database compatible. Please uninstall/update "
+                    "the plugin or remove `PulpDomainRouter` from `DATABASE_ROUTERS` for Pulp to "
+                    "start."
                 )
                 raise ImproperlyConfigured(msg.format(self.python_package_name, self.version))
         # Module containing viewsets eg. <module 'pulp_plugin.app.viewsets'
@@ -244,6 +253,7 @@ class PulpAppConfig(PulpPluginAppConfig):
     python_package_name = "pulpcore"
 
     domain_compatible = True
+    multi_db_compatible = True
 
     def ready(self):
         super().ready()
@@ -253,6 +263,16 @@ class PulpAppConfig(PulpPluginAppConfig):
         post_migrate.connect(
             _ensure_default_domain, sender=self, dispatch_uid="ensure_default_domain"
         )
+
+        # Connect this before _populate_system_id/_populate_artifact_serving_distribution below:
+        # post_migrate receivers fire in connection order, and those two create rows whose
+        # pulp_domain FK defaults to the 'default' alias's Domain row, which doesn't exist yet on
+        # a freshly-migrated satellite until _ensure_domains_replicated backfills it there.
+        from pulpcore.app.db_router import is_multi_db_routing_active
+
+        if is_multi_db_routing_active():
+            self._connect_multi_db_signals()
+
         post_migrate.connect(
             _populate_system_id, sender=self, dispatch_uid="populate_system_id_identifier"
         )
@@ -262,8 +282,49 @@ class PulpAppConfig(PulpPluginAppConfig):
             dispatch_uid="populate_artifact_serving_distribution_identifier",
         )
 
+    def _connect_multi_db_signals(self):
+        """Connect replication for Domains and stub Users/Groups."""
+        post_migrate.connect(
+            _ensure_domains_replicated,
+            sender=self,
+            dispatch_uid="ensure_domains_replicated_identifier",
+        )
+
+        # Must stay a local import, not module-level: this module is reachable from
+        # pulpcore.plugin.__init__ before Django settings/dynaconf have initialized (e.g. via
+        # pytest's pytest11 entry-point loading), and django.contrib.auth caches a reference to
+        # whatever settings object exists at its own import time -- a module-level import here
+        # would permanently wire it to a stale pre-dynaconf settings object.
+        from django.contrib.auth import get_user_model
+
+        from pulpcore.app.domain_sync import on_domain_post_delete, on_domain_post_save
+        from pulpcore.app.models import Domain, Group
+        from pulpcore.app.models.role import GroupRole, UserRole
+        from pulpcore.app.rbac_sync import (
+            on_group_post_delete,
+            on_group_role_pre_save,
+            on_user_post_delete,
+            on_user_role_pre_save,
+        )
+
+        post_save.connect(
+            on_domain_post_save, sender=Domain, dispatch_uid="replicate_domain_post_save"
+        )
+        post_delete.connect(
+            on_domain_post_delete, sender=Domain, dispatch_uid="replicate_domain_post_delete"
+        )
+
+        pre_save.connect(on_user_role_pre_save, sender=UserRole, dispatch_uid="user_role_stub")
+        pre_save.connect(on_group_role_pre_save, sender=GroupRole, dispatch_uid="group_role_stub")
+        post_delete.connect(
+            on_user_post_delete, sender=get_user_model(), dispatch_uid="remove_user_stubs"
+        )
+        post_delete.connect(on_group_post_delete, sender=Group, dispatch_uid="remove_group_stubs")
+
 
 def _clean_app_status(sender, apps, verbosity, **kwargs):
+    if kwargs.get("using", "default") != "default":
+        return
     from django.contrib.postgres.functions import TransactionNow
     from django.db.models import F
 
@@ -277,6 +338,9 @@ def _clean_app_status(sender, apps, verbosity, **kwargs):
 
 
 def _populate_access_policies(sender, apps, verbosity, **kwargs):
+    if kwargs.get("using", "default") != "default":
+        return
+
     from pulpcore.app.util import get_view_urlpattern
     from pulpcore.app.viewsets import LoginViewSet
 
@@ -321,6 +385,8 @@ def _populate_access_policies(sender, apps, verbosity, **kwargs):
 
 
 def _populate_system_id(sender, apps, verbosity, **kwargs):
+    if kwargs.get("using", "default") != "default":
+        return
     with suppress(LookupError):
         SystemID = apps.get_model("core", "SystemID")
         if not SystemID.objects.exists():
@@ -328,6 +394,8 @@ def _populate_system_id(sender, apps, verbosity, **kwargs):
 
 
 def _ensure_default_domain(sender, apps, **kwargs):
+    if kwargs.get("using", "default") != "default":
+        return
     # This is a post migrate hook.
     # But on rolling back the database may not match what this function expects.
     with suppress(LookupError, ProgrammingError):
@@ -348,7 +416,28 @@ def _ensure_default_domain(sender, apps, **kwargs):
                 default.save(skip_hooks=True)
 
 
+def _ensure_domains_replicated(sender, **kwargs):
+    using = kwargs.get("using", "default")
+    if using == "default":
+        return
+    if "core_domain" not in connections[using].introspection.table_names():
+        return
+    from pulpcore.app.domain_sync import reconcile_domains_to_alias
+
+    try:
+        reconcile_domains_to_alias(using)
+    except Exception:
+        logging.getLogger(__name__).error(
+            "Reconciling Domain rows to alias '%s' failed during migration. Data-plane objects "
+            "created on this alias by later migrations/post_migrate hooks that FK to Domain may "
+            "fail until Domain rows are reconciled to this alias.",
+            using,
+            exc_info=True,
+        )
+
+
 def _populate_roles(sender, apps, verbosity, **kwargs):
+    alias = kwargs.get("using", "default")
     role_prefix = f"{sender.label}."
     # collect all plugin defined roles
     desired_roles = {}
@@ -357,10 +446,10 @@ def _populate_roles(sender, apps, verbosity, **kwargs):
             locked_roles = getattr(viewset, "LOCKED_ROLES", None)
             if locked_roles is not None:
                 desired_roles.update(locked_roles or {})
-    adjust_roles(apps, role_prefix, desired_roles, verbosity)
+    adjust_roles(apps, role_prefix, desired_roles, verbosity, using=alias)
 
 
-def adjust_roles(apps, role_prefix, desired_roles, verbosity=1):
+def adjust_roles(apps, role_prefix, desired_roles, verbosity=1, using="default"):
     """
     Adjust all roles with a given prefix.
 
@@ -382,10 +471,12 @@ def adjust_roles(apps, role_prefix, desired_roles, verbosity=1):
 
     def _get_permission(perm):
         app_label, codename = perm.split(".", maxsplit=2)
-        return Permission.objects.get(content_type__app_label=app_label, codename=codename)
+        return Permission.objects.using(using).get(
+            content_type__app_label=app_label, codename=codename
+        )
 
     # Remove obsolete roles
-    Role.objects.filter(name__startswith=role_prefix, locked=True).exclude(
+    Role.objects.using(using).filter(name__startswith=role_prefix, locked=True).exclude(
         name__in=desired_roles.keys()
     ).delete()
     # Create / update desired roles
@@ -401,13 +492,14 @@ def adjust_roles(apps, role_prefix, desired_roles, verbosity=1):
                 _("Locked role definition for {name} is incompatible.").format(name=name)
             )
         permissions = [_get_permission(perm) for perm in permissions]
-        role, created = Role.objects.update_or_create(
+        role, created = Role.objects.using(using).update_or_create(
             name=name, defaults={"name": name, "locked": True, "description": description}
         )
         role.permissions.set(permissions)
 
 
 def _populate_artifact_serving_distribution(sender, apps, verbosity, **kwargs):
+    alias = kwargs.get("using", "default")
     if (
         settings.STORAGES["default"]["BACKEND"] == "pulpcore.app.models.storage.FileSystem"
         or not settings.REDIRECT_TO_OBJECT_STORAGE
@@ -420,15 +512,17 @@ def _populate_artifact_serving_distribution(sender, apps, verbosity, **kwargs):
                 print(_("ArtifactDistribution model does not exist. Skipping initialization."))
             return
         try:
-            ArtifactDistribution.objects.get()
+            ArtifactDistribution.objects.using(alias).get()
         except ArtifactDistribution.DoesNotExist:
             name = f"{random.getrandbits(256):x}"
-            with transaction.atomic():
-                content_guard, _created = ContentRedirectContentGuard.objects.get_or_create(
+            with transaction.atomic(using=alias):
+                content_guard, _created = ContentRedirectContentGuard.objects.using(
+                    alias
+                ).get_or_create(
                     name=name,
                     pulp_type="core.content_redirect",
                 )
-                _dist, _created = ArtifactDistribution.objects.get_or_create(
+                _dist, _created = ArtifactDistribution.objects.using(alias).get_or_create(
                     name=name,
                     pulp_type="core.artifact",
                     defaults={"base_path": name, "content_guard": content_guard},

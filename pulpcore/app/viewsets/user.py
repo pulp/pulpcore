@@ -387,6 +387,12 @@ class UserRoleViewSet(
     queryset = UserRole.objects.all()
     ordering = ("-pulp_created",)
 
+    def perform_destroy(self, instance):
+        # Delete on whichever alias the instance was actually loaded from -- it must be correct,
+        # since get_object() already found it there -- rather than re-deriving it from
+        # content_object (an extra lazy fetch with its own routing to get right).
+        instance.delete(using=instance._state.db)
+
 
 class GroupRoleFilter(NestedRoleFilter):
     """
@@ -417,6 +423,9 @@ class GroupRoleViewSet(
     serializer_class = GroupRoleSerializer
     queryset = GroupRole.objects.all()
     ordering = ("-pulp_created",)
+
+    def perform_destroy(self, instance):
+        instance.delete(using=instance._state.db)
 
 
 class LoginViewSet(generics.CreateAPIView):

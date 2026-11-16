@@ -1,0 +1,1 @@
+Added the `multi_db_compatible` attribute to `PulpPluginAppConfig`. Plugins must set it to `True` to be loaded while `PulpDomainRouter` is configured in `DATABASE_ROUTERS`; otherwise Pulp refuses to start.
