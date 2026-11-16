@@ -1551,7 +1551,7 @@ class RepositoryVersion(BaseModel):
                         self.repository.save()
                         self.save()
                         self._compute_counts()
-                    transaction.on_commit(self.repository.invalidate_cache)
+                    transaction.on_commit(self.repository.invalidate_cache, using=self._state.db)
                     self.repository.cleanup_old_versions()
                     repository.on_new_version(self)
             except Exception:
