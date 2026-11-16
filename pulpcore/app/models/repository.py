@@ -9,6 +9,7 @@ from gettext import gettext as _
 from os import path
 
 import django
+from asgiref.sync import sync_to_async
 from asyncio_throttle import Throttler
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField, HStoreField
@@ -450,6 +451,20 @@ class Repository(MasterModel):
 
         return self.versions.filter(pk__in=protected_pks)
 
+    def _pull_through_add_unversioned(self, cpk):
+        """
+        Add pull-through content to this unversioned repository within the request.
+
+        This runs in the content app instead of dispatching a task, and takes no lock. If
+        concurrent requests add different content at the same relative path, the repository may
+        end up with either one or neither of them.
+
+        Args:
+            cpk (uuid.UUID): The primary key of the content to add.
+        """
+        with self.new_version() as membership:
+            membership.add_content(Content.objects.filter(pk=cpk))
+
     def pull_through_add_content(self, content_artifact):
         """
         Dispatch a task to add the passed in content_artifact from the content app's pull-through
@@ -459,17 +474,23 @@ class Repository(MasterModel):
         repository. Plugins should overwrite this method if more complex behavior is necessary, i.e.
         adding multiple associated content units in the same task.
 
+        Unversioned repositories add the content immediately, without a task or lock.
+
         Args:
             content_artifact (pulpcore.app.models.ContentArtifact): the content artifact to add
 
         Returns:
-            Optional(Task): Returns the dispatched task or None if nothing was done
+            Optional(Task): Returns the dispatched task or None if nothing was dispatched
         """
         cpk = content_artifact.content_id
         already_present = RepositoryContent.objects.filter(
             content__pk=cpk, repository=self, version_removed__isnull=True
         )
         if not cpk or already_present.exists():
+            return None
+
+        if not self.versioned:
+            self._pull_through_add_unversioned(cpk)
             return None
 
         from pulpcore.plugin.tasking import aadd_and_remove, dispatch
@@ -483,6 +504,10 @@ class Repository(MasterModel):
             content__pk=cpk, repository=self, version_removed__isnull=True
         )
         if not cpk or await already_present.aexists():
+            return None
+
+        if not self.versioned:
+            await sync_to_async(self._pull_through_add_unversioned)(cpk)
             return None
 
         from pulpcore.plugin.tasking import aadd_and_remove, adispatch

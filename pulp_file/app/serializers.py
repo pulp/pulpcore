@@ -320,9 +320,19 @@ class FileDistributionSerializer(DistributionSerializer):
         allow_null=True,
     )
     checkpoint = serializers.BooleanField(required=False)
+    remote = DetailRelatedField(
+        required=False,
+        help_text=_(
+            "Remote that can be used to fetch content when using pull-through caching. "
+            "If the distribution serves an unversioned repository, fetched content is added to it."
+        ),
+        queryset=FileRemote.objects.all(),
+        view_name="remotes-file/file-detail",
+        allow_null=True,
+    )
 
     class Meta:
-        fields = DistributionSerializer.Meta.fields + ("publication", "checkpoint")
+        fields = DistributionSerializer.Meta.fields + ("publication", "checkpoint", "remote")
         model = FileDistribution
 
 
