@@ -202,3 +202,47 @@ def test_upload_sync_chunked(
     assert hashlib.sha256(download(distribution, path)).hexdigest() == expected_digest
     with pytest.raises(pulpcore_bindings.module.ApiException):
         pulpcore_bindings.UploadsApi.read(upload.pulp_href)
+
+
+### Pull-through ###
+
+
+@pytest.mark.parallel
+def test_pull_through_adds_content(
+    file_bindings,
+    pulpcore_bindings,
+    unversioned_repo,
+    file_distribution_factory,
+    file_remote_factory,
+    file_fixture_server,
+    file_fixtures_root,
+    write_3_iso_file_fixture_data_factory,
+    monitor_task,
+    download,
+):
+    """
+    Verify that pull-through adds fetched content to an unversioned repository without a task or
+    a version.
+    """
+    name = str(uuid.uuid4())
+    write_3_iso_file_fixture_data_factory(name)
+    expected_digest = hashlib.sha256((file_fixtures_root / name / "1.iso").read_bytes()).hexdigest()
+    remote = file_remote_factory(url=file_fixture_server.make_url(f"/{name}/"))
+    distribution = file_distribution_factory(
+        repository=unversioned_repo.pulp_href, remote=remote.pulp_href
+    )
+
+    assert hashlib.sha256(download(distribution, "1.iso")).hexdigest() == expected_digest
+
+    tasks = pulpcore_bindings.TasksApi.list(reserved_resources=unversioned_repo.pulp_href)
+    assert tasks.count == 0
+    versions = file_bindings.RepositoriesFileVersionsApi.list(unversioned_repo.pulp_href)
+    assert versions.count == 0
+
+    # Without the remote, the content can only be served from the repository
+    monitor_task(
+        file_bindings.DistributionsFileApi.partial_update(
+            distribution.pulp_href, {"remote": None}
+        ).task
+    )
+    assert hashlib.sha256(download(distribution, "1.iso")).hexdigest() == expected_digest
