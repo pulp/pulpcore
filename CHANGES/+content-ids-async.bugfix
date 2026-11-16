@@ -1,0 +1,1 @@
+Fixed SynchronousOnlyOperation errors in the content app when plugins access a distribution's repository version content.

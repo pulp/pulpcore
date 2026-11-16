@@ -8,6 +8,7 @@ import pytest_asyncio
 from aiohttp import web
 from aiohttp.test_utils import make_mocked_request
 from aiohttp.web_exceptions import HTTPMovedPermanently
+from asgiref.sync import sync_to_async
 from django.db import IntegrityError
 from django_guid import clear_guid, set_guid
 
@@ -221,6 +222,28 @@ async def test_distribution_cache_is_request_scoped(aiohttp_client, monkeypatch,
     assert match_distribution.call_count == 4
 
 
+@pytest.mark.django_db
+@pytest.mark.parametrize("via_publication", [False, True])
+def test_match_distribution_loads_content_ids(repo_version_1, via_publication):
+    """Plugins access the repository version content in async code, so it must not be deferred."""
+    name = str(uuid.uuid4())
+    if via_publication:
+        publication = Publication.objects.create(repository_version=repo_version_1)
+        Distribution.objects.create(name=name, base_path=name, publication=publication)
+    else:
+        Distribution.objects.create(name=name, base_path=name, repository_version=repo_version_1)
+
+    distro = Handler._match_distribution(f"{name}/c123")
+    if via_publication:
+        repository_version = distro.publication.repository_version
+        expected = {"content_ids"}
+    else:
+        repository_version = distro.repository_version
+        expected = set()
+
+    assert repository_version.get_deferred_fields() == expected
+
+
 # pytest-django fixtures does not work when testing async code
 async def create_artifact(tmp_path):
     tmp_file = tmp_path / str(uuid.uuid4())
@@ -259,6 +282,33 @@ async def create_distribution(remote, repository=None):
     return await Distribution.objects.acreate(
         name=name, base_path=name, remote=remote, repository=repository
     )
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db
+async def test_match_distribution_content_in_async_context():
+    """Accessing a matched distribution's repository version content must not query the db."""
+    repository = await create_repository()
+    content = await create_content()
+    repository_version = await repository.versions.aget(number=0)
+    # Creating a new version would copy content_ids from version 0, so set them directly
+    await RepositoryVersion.objects.filter(pk=repository_version.pk).aupdate(
+        content_ids=[content.pk]
+    )
+    name = str(uuid.uuid4())
+    distribution = await Distribution.objects.acreate(
+        name=name, base_path=name, repository_version=repository_version
+    )
+
+    try:
+        distro = await sync_to_async(Handler._match_distribution)(f"{name}/c123")
+        content_qs = distro.repository_version.content
+        assert await content_qs.acount() == 1
+    finally:
+        # Cleanup since this test isn't using fixtures
+        await distribution.adelete()
+        await repository.adelete()
+        await content.adelete()
 
 
 @pytest.mark.asyncio

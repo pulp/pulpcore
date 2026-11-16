@@ -351,7 +351,6 @@ class Handler:
                     "publication__repository_version__repository",
                 )
                 .defer(
-                    "repository_version__content_ids",
                     "publication__repository_version__content_ids",
                 )
                 .get(base_path__in=base_paths)
