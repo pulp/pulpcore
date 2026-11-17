@@ -14,7 +14,7 @@ from django.conf import settings
 from django.contrib.postgres.fields import ArrayField, HStoreField
 from django.core.validators import MinValueValidator
 from django.db import models, transaction
-from django.db.models import F, Func, Q, Value
+from django.db.models import Case, F, Func, Q, Value, When
 from django_lifecycle import AFTER_UPDATE, BEFORE_CREATE, BEFORE_DELETE, hook
 from rest_framework.exceptions import APIException
 
@@ -815,6 +815,20 @@ class RepositoryVersionQuerySet(models.QuerySet):
         return self.filter(query)
 
 
+class RepositoryVersionManager(models.Manager.from_queryset(RepositoryVersionQuerySet)):
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .annotate(
+                uses_content_ids=Case(
+                    When(content_ids__isnull=True, then=Value(False)),
+                    default=Value(True),
+                )
+            )
+        )
+
+
 class RepositoryVersion(BaseModel):
     """
     A version of a repository's content set.
@@ -843,7 +857,7 @@ class RepositoryVersion(BaseModel):
         base_version (models.ForeignKey): The repository version this was created from.
     """
 
-    objects = RepositoryVersionQuerySet.as_manager()
+    objects = RepositoryVersionManager()
 
     repository = models.ForeignKey(Repository, on_delete=models.CASCADE)
     number = models.PositiveIntegerField(db_index=True)
@@ -873,8 +887,13 @@ class RepositoryVersion(BaseModel):
         """
         Returns the content ids for a repository version
         """
-        if self.content_ids is not None:
-            return self.content_ids
+        if getattr(self, "uses_content_ids", False):
+            # Keep content IDs in PostgreSQL to avoid its query parameter limit.
+            return (
+                RepositoryVersion.objects.filter(pk=self.pk)
+                .annotate(cids=Func(F("content_ids"), function="unnest"))
+                .values_list("cids", flat=True)
+            )
         return self._content_relationships().values_list("content_id", flat=True)
 
     @hook(BEFORE_CREATE)
@@ -917,15 +936,7 @@ class RepositoryVersion(BaseModel):
         if content_qs is None:
             content_qs = Content.objects
 
-        content_ids = self._get_content_ids()
-        if isinstance(content_ids, list) and len(content_ids) >= 65535:
-            # Workaround for PostgreSQL's limit on the number of parameters in a query
-            content_ids = (
-                RepositoryVersion.objects.filter(pk=self.pk)
-                .annotate(cids=Func(F("content_ids"), function="unnest"))
-                .values_list("cids", flat=True)
-            )
-        return content_qs.filter(pk__in=content_ids)
+        return content_qs.filter(pk__in=self._get_content_ids())
 
     @property
     def content(self):

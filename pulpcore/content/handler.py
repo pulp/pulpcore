@@ -354,10 +354,33 @@ class Handler:
                     "repository_version__content_ids",
                     "publication__repository_version__content_ids",
                 )
+                .annotate(
+                    rv_uses_content_ids=models.Case(
+                        models.When(
+                            repository_version__content_ids__isnull=True,
+                            then=models.Value(False),
+                        ),
+                        default=models.Value(True),
+                    ),
+                    pub_rv_uses_content_ids=models.Case(
+                        models.When(
+                            publication__repository_version__content_ids__isnull=True,
+                            then=models.Value(False),
+                        ),
+                        default=models.Value(True),
+                    ),
+                )
                 .get(base_path__in=base_paths)
-                .cast()
             )
-            return distro_object
+            if distro_object.repository_version is not None:
+                distro_object.repository_version.uses_content_ids = (
+                    distro_object.rv_uses_content_ids
+                )
+            if distro_object.publication is not None:
+                distro_object.publication.repository_version.uses_content_ids = (
+                    distro_object.pub_rv_uses_content_ids
+                )
+            return distro_object.cast()
         except ObjectDoesNotExist:
             if path.rstrip("/") in base_paths:
                 distros = distro_model.objects.filter(
@@ -407,6 +430,17 @@ class Handler:
                     repository_version__repository=distro.repository,
                     checkpoint=True,
                 )
+                .select_related("repository_version")
+                .defer("repository_version__content_ids")
+                .annotate(
+                    rv_uses_content_ids=models.Case(
+                        models.When(
+                            repository_version__content_ids__isnull=True,
+                            then=models.Value(False),
+                        ),
+                        default=models.Value(True),
+                    )
+                )
                 .order_by("-pulp_created")
                 .first()
             )
@@ -421,6 +455,9 @@ class Handler:
             if pub_timestamp_str != request_timestamp_str:
                 Handler._redirect_sub_path(f"{distro.base_path}/{pub_timestamp_str}/{rel_path}")
 
+            checkpoint_publication.repository_version.uses_content_ids = (
+                checkpoint_publication.rv_uses_content_ids
+            )
             return checkpoint_publication
 
     @staticmethod
@@ -767,10 +804,22 @@ class Handler:
                     publications = Publication.objects.filter(
                         repository_version__in=versions, complete=True
                     )
-                    publication = await publications.select_related("repository_version").alatest(
-                        "repository_version", "pulp_created"
+                    publication = await (
+                        publications.select_related("repository_version")
+                        .defer("repository_version__content_ids")
+                        .annotate(
+                            rv_uses_content_ids=models.Case(
+                                models.When(
+                                    repository_version__content_ids__isnull=True,
+                                    then=models.Value(False),
+                                ),
+                                default=models.Value(True),
+                            )
+                        )
+                        .alatest("repository_version", "pulp_created")
                     )
                     repo_version = publication.repository_version
+                    repo_version.uses_content_ids = publication.rv_uses_content_ids
                 except ObjectDoesNotExist:
                     pass
 

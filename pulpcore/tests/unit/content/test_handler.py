@@ -8,6 +8,7 @@ import pytest_asyncio
 from aiohttp import web
 from aiohttp.test_utils import make_mocked_request
 from aiohttp.web_exceptions import HTTPMovedPermanently
+from asgiref.sync import async_to_sync
 from django.db import IntegrityError
 from django_guid import clear_guid, set_guid
 
@@ -29,8 +30,11 @@ from pulpcore.plugin.models import (
     Remote,
     RemoteArtifact,
     Repository,
+    RepositoryContent,
     RepositoryVersion,
 )
+
+from pulp_file.app.models import FileDistribution
 
 
 @pytest.fixture
@@ -93,6 +97,82 @@ def repo_version_2(repo):
 @pytest.fixture
 def repo_version_3(repo):
     return RepositoryVersion.objects.create(repository=repo, number=3)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("via_publication", [False, True])
+@pytest.mark.parametrize("content_ids_state", ["cached", "empty", "legacy"])
+def test_match_distribution_deferred_content(
+    repo_version_1, c1, via_publication, content_ids_state, django_assert_num_queries
+):
+    RepositoryContent.objects.create(
+        repository=repo_version_1.repository, version_added=repo_version_1, content=c1
+    )
+    content_ids = {"cached": [c1.pk], "empty": [], "legacy": None}[content_ids_state]
+    RepositoryVersion.objects.filter(pk=repo_version_1.pk).update(content_ids=content_ids)
+    name = str(uuid.uuid4())
+    if via_publication:
+        publication = Publication.objects.create(repository_version=repo_version_1)
+        FileDistribution.objects.create(name=name, base_path=name, publication=publication)
+    else:
+        FileDistribution.objects.create(
+            name=name, base_path=name, repository_version=repo_version_1
+        )
+
+    distro = Handler._match_distribution(f"{name}/file.txt")
+    assert isinstance(distro, FileDistribution)
+    version = (
+        distro.publication.repository_version if via_publication else distro.repository_version
+    )
+    assert version.uses_content_ids is (content_ids is not None)
+
+    async def read_content():
+        return [pk async for pk in version.content.values_list("pk", flat=True)]
+
+    with django_assert_num_queries(1):
+        actual = async_to_sync(read_content)()
+    assert actual == ([] if content_ids_state == "empty" else [c1.pk])
+    assert "content_ids" in version.get_deferred_fields()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("content_ids_state", ["cached", "empty", "legacy"])
+def test_latest_publication_deferred_content(
+    repo_version_1, c1, content_ids_state, django_assert_num_queries
+):
+    RepositoryContent.objects.create(
+        repository=repo_version_1.repository, version_added=repo_version_1, content=c1
+    )
+    content_ids = {"cached": [c1.pk], "empty": [], "legacy": None}[content_ids_state]
+    RepositoryVersion.objects.filter(pk=repo_version_1.pk).update(content_ids=content_ids)
+    Publication.objects.create(repository_version=repo_version_1, complete=True, pass_through=True)
+    name = str(uuid.uuid4())
+    FileDistribution.objects.create(name=name, base_path=name, repository=repo_version_1.repository)
+    handler = Handler()
+    handler.list_directory = AsyncMock(return_value=({"file.txt"}, {}, {}))
+
+    async def serve():
+        token = _current_distribution.set(None)
+        try:
+            request = make_mocked_request("GET", f"/{name}/", match_info={"path": f"{name}/"})
+            return await handler._match_and_stream(f"{name}/", request)
+        finally:
+            _current_distribution.reset(token)
+
+    assert async_to_sync(serve)().status == 200
+    publication = handler.list_directory.call_args.args[1]
+    version = publication.repository_version
+    assert version.pk == repo_version_1.pk
+    assert version.uses_content_ids is (content_ids is not None)
+    assert "content_ids" in version.get_deferred_fields()
+
+    async def read_content():
+        return [pk async for pk in version.content.values_list("pk", flat=True)]
+
+    with django_assert_num_queries(1):
+        actual = async_to_sync(read_content)()
+    assert actual == ([] if content_ids_state == "empty" else [c1.pk])
+    assert "content_ids" in version.get_deferred_fields()
 
 
 @pytest.fixture
@@ -512,22 +592,44 @@ def test_handle_checkpoint_listing(
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize("content_ids_state", ["cached", "empty", "legacy"])
 def test_handle_checkpoint_exact_ts(
     checkpoint_distribution,
     checkpoint_publication_1,
     noncheckpoint_publication,
     checkpoint_publication_2,
+    c1,
+    content_ids_state,
+    django_assert_num_queries,
 ):
     """Checkpoint is correctly served when using exact timestamp."""
+    version = checkpoint_publication_2.repository_version
+    RepositoryContent.objects.create(
+        repository=version.repository, version_added=version, content=c1
+    )
+    content_ids = {"cached": [c1.pk], "empty": [], "legacy": None}[content_ids_state]
+    RepositoryVersion.objects.filter(pk=version.pk).update(content_ids=content_ids)
     checkpoint_pub_2_ts = Handler._format_checkpoint_timestamp(
         checkpoint_publication_2.pulp_created
     )
-    publication = Handler._select_checkpoint_publication(
-        checkpoint_distribution, f"{checkpoint_pub_2_ts}/"
-    )
+    with django_assert_num_queries(1):
+        publication = Handler._select_checkpoint_publication(
+            checkpoint_distribution, f"{checkpoint_pub_2_ts}/"
+        )
+        version = publication.repository_version
 
     assert publication is not None
     assert publication == checkpoint_publication_2
+    assert version.uses_content_ids is (content_ids is not None)
+    assert "content_ids" in version.get_deferred_fields()
+
+    async def read_content():
+        return [pk async for pk in version.content.values_list("pk", flat=True)]
+
+    with django_assert_num_queries(1):
+        actual = async_to_sync(read_content)()
+    assert actual == ([] if content_ids_state == "empty" else [c1.pk])
+    assert "content_ids" in version.get_deferred_fields()
 
 
 @pytest.mark.django_db
