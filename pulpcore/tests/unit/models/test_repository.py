@@ -2,9 +2,10 @@ from itertools import compress
 from uuid import uuid4
 
 import pytest
+from asgiref.sync import async_to_sync
 
 from pulpcore.app.models import RepositoryVersionContentDetails
-from pulpcore.plugin.models import Artifact, Content, ContentArtifact, Repository
+from pulpcore.plugin.models import Artifact, Content, ContentArtifact, Repository, RepositoryVersion
 from pulpcore.plugin.repo_version_utils import validate_version_paths
 
 
@@ -18,6 +19,29 @@ def repository(db):
     repository = Repository.objects.create(name=uuid4())
     repository.CONTENT_TYPES = [Content]
     return repository
+
+
+@pytest.mark.parametrize("content_ids_state", ["cached", "empty", "legacy"])
+def test_deferred_repository_version_content(
+    repository, content_ids_state, django_assert_num_queries
+):
+    content = Content.objects.create()
+    with repository.new_version() as version:
+        version.add_content(Content.objects.filter(pk=content.pk))
+
+    content_ids = {"cached": [content.pk], "empty": [], "legacy": None}[content_ids_state]
+    RepositoryVersion.objects.filter(pk=version.pk).update(content_ids=content_ids)
+    version = RepositoryVersion.objects.defer("content_ids").get(pk=version.pk)
+
+    assert version.uses_content_ids is (content_ids is not None)
+
+    async def read_content():
+        return [pk async for pk in version.content.values_list("pk", flat=True)]
+
+    with django_assert_num_queries(1):
+        actual = async_to_sync(read_content)()
+    assert actual == ([] if content_ids_state == "empty" else [content.pk])
+    assert "content_ids" in version.get_deferred_fields()
 
 
 @pytest.fixture
