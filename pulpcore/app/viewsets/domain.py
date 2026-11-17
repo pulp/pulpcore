@@ -105,7 +105,7 @@ class DomainViewSet(
     def get_queryset(self):
         """Prefetch the default content guard to avoid N+1 queries."""
         qs = super().get_queryset()
-        return qs.select_related("default_content_guard")
+        return qs.select_related("default_content_guard_mapping__content_guard")
 
     @extend_schema(
         description="Trigger an asynchronous update task",

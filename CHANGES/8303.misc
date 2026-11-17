@@ -1,0 +1,1 @@
+Moved the domain default content-guard into a dedicated table, preparing for domains stored in separate databases.

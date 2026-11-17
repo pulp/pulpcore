@@ -3,6 +3,7 @@ from gettext import gettext as _
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+from django.db import transaction
 from django.utils.module_loading import import_string
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema_field
@@ -478,6 +479,20 @@ class DomainSerializer(BackendSettingsValidator, ModelSerializer):
         storage_settings = data.get("storage_settings") or self.instance.storage_settings
         self._validate_storage_backend(storage_class, storage_settings)
         return data
+
+    def create(self, validated_data):
+        # validate() rejects a non-null default content-guard on create.
+        validated_data.pop("default_content_guard", None)
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        unset = object()
+        default_content_guard = validated_data.pop("default_content_guard", unset)
+        with transaction.atomic():
+            instance = super().update(instance, validated_data)
+            if default_content_guard is not unset:
+                instance.set_default_content_guard(default_content_guard)
+        return instance
 
     class Meta:
         model = Domain

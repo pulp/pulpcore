@@ -365,6 +365,17 @@ def test_domain_default_content_guard(
         assert domain.default_content_guard is None
         assert domain.default_content_guard_prn is None
 
+        # Deleting the default content guard clears it from the domain
+        response = pulpcore_bindings.DomainsApi.partial_update(
+            domain.pulp_href, {"default_content_guard": guard.pulp_href}
+        )
+        monitor_task(response.task)
+        pulpcore_bindings.ContentguardsRbacApi.delete(guard.pulp_href)
+        guard = None
+        domain = pulpcore_bindings.DomainsApi.read(domain.pulp_href)
+        assert domain.default_content_guard is None
+        assert domain.default_content_guard_prn is None
+
     finally:
         # ContentGuard.pulp_domain is PROTECT; delete guard before domain.
         if guard is not None:
