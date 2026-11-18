@@ -8,6 +8,32 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.85.37 (2026-11-18) {: #3.85.37 }
+
+### REST API {: #3.85.37-rest-api }
+
+#### Bugfixes {: #3.85.37-rest-api-bugfix }
+
+- Disabled complex `jq_filter` programs in `HeaderContentGuard` by default. Simple dotted paths continue to work. Use `settings.ALLOW_INSECURE_HEADER_CONTENT_GUARD_JQ_PROCESSING_AND_FORFEIT_ALL_COMMUNITY_SUPPORT` if you __need__ to use it. CVE-2026-123084
+
+#### Deprecations {: #3.85.37-rest-api-deprecation }
+
+- Deprecated `jq_filter` allowing to run arbitrary jq scripts for scheduled removal in 3.130. It will be removed with its feature flag `settings.ALLOW_INSECURE_HEADER_CONTENT_GUARD_JQ_PROCESSING_AND_FORFEIT_ALL_COMMUNITY_SUPPORT`. Relates to CVE-2026-123084.
+
+### Plugin API {: #3.85.37-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.85.37-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.37-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.85.36 (2026-11-09) {: #3.85.36 }
 
 ### REST API {: #3.85.36-rest-api }
