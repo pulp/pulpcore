@@ -8,6 +8,32 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.123.3 (2026-11-18) {: #3.123.3 }
+
+### REST API {: #3.123.3-rest-api }
+
+#### Bugfixes {: #3.123.3-rest-api-bugfix }
+
+- Disabled complex `jq_filter` programs in `HeaderContentGuard` by default. Simple dotted paths continue to work. Use `settings.ALLOW_INSECURE_HEADER_CONTENT_GUARD_JQ_PROCESSING_AND_FORFEIT_ALL_COMMUNITY_SUPPORT` if you __need__ to use it. CVE-2026-123084
+
+#### Deprecations {: #3.123.3-rest-api-deprecation }
+
+- Deprecated `jq_filter` allowing to run arbitrary jq scripts for scheduled removal in 3.130. It will be removed with its feature flag `settings.ALLOW_INSECURE_HEADER_CONTENT_GUARD_JQ_PROCESSING_AND_FORFEIT_ALL_COMMUNITY_SUPPORT`. Relates to CVE-2026-123084.
+
+### Plugin API {: #3.123.3-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.123.3-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.123.3-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.123.2 (2026-11-05) {: #3.123.2 }
 
 ### REST API {: #3.123.2-rest-api }
@@ -378,6 +404,32 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.119.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.118.8 (2026-11-18) {: #3.118.8 }
+
+### REST API {: #3.118.8-rest-api }
+
+#### Bugfixes {: #3.118.8-rest-api-bugfix }
+
+- Disabled complex `jq_filter` programs in `HeaderContentGuard` by default. Simple dotted paths continue to work. Use `settings.ALLOW_INSECURE_HEADER_CONTENT_GUARD_JQ_PROCESSING_AND_FORFEIT_ALL_COMMUNITY_SUPPORT` if you __need__ to use it. CVE-2026-123084
+
+#### Deprecations {: #3.118.8-rest-api-deprecation }
+
+- Deprecated `jq_filter` allowing to run arbitrary jq scripts for scheduled removal in 3.130. It will be removed with its feature flag `settings.ALLOW_INSECURE_HEADER_CONTENT_GUARD_JQ_PROCESSING_AND_FORFEIT_ALL_COMMUNITY_SUPPORT`. Relates to CVE-2026-123084.
+
+### Plugin API {: #3.118.8-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.118.8-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.118.8-pulp-cert-guard }
 
 No significant changes.
 
@@ -1686,6 +1738,33 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.106.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.105.28 (2026-11-17) {: #3.105.28 }
+
+### REST API {: #3.105.28-rest-api }
+
+#### Bugfixes {: #3.105.28-rest-api-bugfix }
+
+- Disabled complex `jq_filter` programs in `HeaderContentGuard` by default. Simple dotted paths continue to work. Use `settings.ALLOW_INSECURE_HEADER_CONTENT_GUARD_JQ_PROCESSING_AND_FORFEIT_ALL_COMMUNITY_SUPPORT` if you __need__ to use it. CVE-2026-123084
+- Fixed content downloads from distributions pinned to repository versions while keeping content IDs deferred.
+
+#### Deprecations {: #3.105.28-rest-api-deprecation }
+
+- Deprecated `jq_filter` allowing to run arbitrary jq scripts for scheduled removal in 3.130. It will be removed with its feature flag `settings.ALLOW_INSECURE_HEADER_CONTENT_GUARD_JQ_PROCESSING_AND_FORFEIT_ALL_COMMUNITY_SUPPORT`. Relates to CVE-2026-123084.
+
+### Plugin API {: #3.105.28-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.105.28-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.105.28-pulp-cert-guard }
 
 No significant changes.
 
@@ -3317,6 +3396,32 @@ No significant changes.
 
 ---
 
+## 3.85.37 (2026-11-18) {: #3.85.37 }
+
+### REST API {: #3.85.37-rest-api }
+
+#### Bugfixes {: #3.85.37-rest-api-bugfix }
+
+- Disabled complex `jq_filter` programs in `HeaderContentGuard` by default. Simple dotted paths continue to work. Use `settings.ALLOW_INSECURE_HEADER_CONTENT_GUARD_JQ_PROCESSING_AND_FORFEIT_ALL_COMMUNITY_SUPPORT` if you __need__ to use it. CVE-2026-123084
+
+#### Deprecations {: #3.85.37-rest-api-deprecation }
+
+- Deprecated `jq_filter` allowing to run arbitrary jq scripts for scheduled removal in 3.130. It will be removed with its feature flag `settings.ALLOW_INSECURE_HEADER_CONTENT_GUARD_JQ_PROCESSING_AND_FORFEIT_ALL_COMMUNITY_SUPPORT`. Relates to CVE-2026-123084.
+
+### Plugin API {: #3.85.37-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.85.37-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.85.37-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.85.36 (2026-11-09) {: #3.85.36 }
 
 ### REST API {: #3.85.36-rest-api }
@@ -4913,6 +5018,32 @@ No significant changes.
   [#6244](https://github.com/pulp/pulpcore/issues/6244)
 
 ### Pulp Cert Guard {: #3.74.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.73.50 (2026-11-18) {: #3.73.50 }
+
+### REST API {: #3.73.50-rest-api }
+
+#### Bugfixes {: #3.73.50-rest-api-bugfix }
+
+- Disabled complex `jq_filter` programs in `HeaderContentGuard` by default. Simple dotted paths continue to work. Use `settings.ALLOW_INSECURE_HEADER_CONTENT_GUARD_JQ_PROCESSING_AND_FORFEIT_ALL_COMMUNITY_SUPPORT` if you __need__ to use it. CVE-2026-123084
+
+#### Deprecations {: #3.73.50-rest-api-deprecation }
+
+- Deprecated `jq_filter` allowing to run arbitrary jq scripts for scheduled removal in 3.130. It will be removed with its feature flag `settings.ALLOW_INSECURE_HEADER_CONTENT_GUARD_JQ_PROCESSING_AND_FORFEIT_ALL_COMMUNITY_SUPPORT`. Relates to CVE-2026-123084.
+
+### Plugin API {: #3.73.50-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.73.50-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.50-pulp-cert-guard }
 
 No significant changes.
 
@@ -6725,6 +6856,32 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.64.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.63.52 (2026-11-18) {: #3.63.52 }
+
+### REST API {: #3.63.52-rest-api }
+
+#### Bugfixes {: #3.63.52-rest-api-bugfix }
+
+- Disabled complex `jq_filter` programs in `HeaderContentGuard` by default. Simple dotted paths continue to work. Use `settings.ALLOW_INSECURE_HEADER_CONTENT_GUARD_JQ_PROCESSING_AND_FORFEIT_ALL_COMMUNITY_SUPPORT` if you __need__ to use it. CVE-2026-123084
+
+#### Deprecations {: #3.63.52-rest-api-deprecation }
+
+- Deprecated `jq_filter` allowing to run arbitrary jq scripts for scheduled removal in 3.130. It will be removed with its feature flag `settings.ALLOW_INSECURE_HEADER_CONTENT_GUARD_JQ_PROCESSING_AND_FORFEIT_ALL_COMMUNITY_SUPPORT`. Relates to CVE-2026-123084.
+
+### Plugin API {: #3.63.52-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.52-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.52-pulp-cert-guard }
 
 No significant changes.
 
@@ -8735,6 +8892,32 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard
+
+No significant changes.
+
+---
+
+## 3.49.75 (2026-11-18) {: #3.49.75 }
+
+### REST API {: #3.49.75-rest-api }
+
+#### Bugfixes {: #3.49.75-rest-api-bugfix }
+
+- Disabled complex `jq_filter` programs in `HeaderContentGuard` by default. Simple dotted paths continue to work. Use `settings.ALLOW_INSECURE_HEADER_CONTENT_GUARD_JQ_PROCESSING_AND_FORFEIT_ALL_COMMUNITY_SUPPORT` if you __need__ to use it. CVE-2026-123084
+
+#### Deprecations {: #3.49.75-rest-api-deprecation }
+
+- Deprecated `jq_filter` allowing to run arbitrary jq scripts for scheduled removal in 3.130. It will be removed with its feature flag `settings.ALLOW_INSECURE_HEADER_CONTENT_GUARD_JQ_PROCESSING_AND_FORFEIT_ALL_COMMUNITY_SUPPORT`. Relates to CVE-2026-123084.
+
+### Plugin API {: #3.49.75-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.75-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.75-pulp-cert-guard }
 
 No significant changes.
 
