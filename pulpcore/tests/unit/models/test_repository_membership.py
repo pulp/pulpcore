@@ -48,8 +48,11 @@ def _qs(*pks):
 
 
 def _rows(repository):
+    # Tombstones of removed content are left out
     return set(
-        RepositoryContent.objects.filter(repository=repository).values_list("content_id", flat=True)
+        RepositoryContent.objects.filter(
+            repository=repository, removed_seq__isnull=True
+        ).values_list("content_id", flat=True)
     )
 
 
@@ -309,3 +312,76 @@ def test_failure_keeps_changes(repository, content_pks, hooks, failing):
     repository.invalidate_cache.assert_called_once()
     assert _rows(repository) == {content_pks[0]}
     assert version.complete is True
+
+
+def test_remove_keeps_tombstone(repository, content_pks):
+    """
+    Verify that removed content stays as a tombstone row with a sequence number, and that adding it
+    again creates a new row.
+    """
+    assert repository.latest_version().seq == 0
+    version = repository.new_version()
+    version.add_content(_qs(content_pks[0]))
+    version.remove_content(_qs(content_pks[0]))
+
+    tombstone = RepositoryContent.objects.get(repository=repository, content_id=content_pks[0])
+    assert tombstone.removed_seq > tombstone.added_seq
+    assert repository.latest_version().seq == tombstone.removed_seq
+    assert not repository.latest_version().contains(Content.objects.get(pk=content_pks[0]))
+
+    version.add_content(_qs(content_pks[0]))
+    assert RepositoryContent.objects.filter(content_id=content_pks[0]).count() == 2
+    assert _rows(repository) == {content_pks[0]}
+
+
+def test_changes_since(repository, content_pks):
+    """
+    Verify that `changes_since()` compares the content at a sequence number with the content now,
+    so content removed and added again in between is not reported.
+    """
+    a, b, c = content_pks[:3]
+    version = repository.new_version()
+    seqs = []
+    for write, pk in (
+        (version.add_content, a),
+        (version.add_content, b),
+        (version.remove_content, a),
+        (version.add_content, c),
+        (version.add_content, a),
+    ):
+        write(_qs(pk))
+        seqs.append(repository.latest_version().seq)
+    latest = repository.latest_version()
+
+    # At the second change the repository held a and b, now it holds b, c and a
+    added, removed = latest.changes_since(seqs[1])
+    assert (_pks(added), _pks(removed)) == ({c}, set())
+    # At the third change it held only b
+    added, removed = latest.changes_since(seqs[2])
+    assert (_pks(added), _pks(removed)) == ({a, c}, set())
+    # Before the first change it held nothing
+    added, removed = latest.changes_since(0)
+    assert (_pks(added), _pks(removed)) == ({a, b, c}, set())
+
+    version.remove_content(_qs(b))
+    added, removed = repository.latest_version().changes_since(seqs[4])
+    assert (_pks(added), _pks(removed)) == (set(), {b})
+
+
+def test_membership_at_seq(repository, content_pks):
+    """
+    Verify that a membership created with a sequence number holds the content as it was after that
+    change and is read-only.
+    """
+    a, b, c = content_pks[:3]
+    version = repository.new_version()
+    version.add_content(_qs(a, b))
+    seq = repository.latest_version().seq
+    version.add_content(_qs(c))
+    version.remove_content(_qs(a))
+
+    pinned = RepositoryMembership(repository, seq=seq)
+    assert _pks(pinned.content) == {a, b}
+    assert pinned.seq == seq
+    with pytest.raises(ResourceImmutableError):
+        pinned.add_content(_qs(c))
