@@ -51,6 +51,7 @@ from pulpcore.app.serializers import (
 from .content import (
     NoArtifactContentUploadSerializer,
     SingleArtifactContentUploadSerializer,
+    StageContentUploadSerializerMixin,
 )
 
 __all__ = [
@@ -99,5 +100,6 @@ __all__ = [
     "TaskSerializer",
     "NoArtifactContentUploadSerializer",
     "SingleArtifactContentUploadSerializer",
+    "StageContentUploadSerializerMixin",
     "VulnerabilityReportSerializer",
 ]

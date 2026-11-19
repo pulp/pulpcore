@@ -133,3 +133,20 @@ available as `self.context` in the Serializer.
 !!! note
     Context passed from the ViewSet to the Task must be easily serializable. i.e. one cannot
     return the request from `get_deferred_context`.
+
+### Repository Staging ViewSet
+
+To expose staging for a repository type, define a subclass in the plugin's `viewsets.py`:
+
+```python
+from pulpcore.plugin.viewsets import RepositoryStagingViewSet
+
+
+class MyRepositoryStagingViewSet(RepositoryStagingViewSet):
+    parent_viewset = MyRepositoryViewSet
+```
+
+Define a `DEFAULT_ACCESS_POLICY` on this subclass for `list` and `head` (read access), and
+`commit` and `restore` (write access). The File plugin's `FileRepositoryStagingViewSet` shows
+how to use repository view and modify permissions for those actions. The viewset exposes
+`GET`, `HEAD`, `POST`, and `DELETE` at the repository's `staging/` URL.
