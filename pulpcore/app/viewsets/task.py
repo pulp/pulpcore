@@ -81,6 +81,12 @@ class TaskFilter(BaseFilterSet):
         }
 
 
+class TaskGroupFilter(BaseFilterSet):
+    class Meta:
+        model = TaskGroup
+        fields = {"pulp_created": DATETIME_FILTER_OPTIONS}
+
+
 class TaskViewSet(
     NamedModelViewSet,
     mixins.RetrieveModelMixin,
@@ -297,6 +303,7 @@ class TaskViewSet(
 class TaskGroupViewSet(mixins.RetrieveModelMixin, mixins.ListModelMixin, NamedModelViewSet):
     queryset = TaskGroup.objects.all()
     endpoint_name = "task-groups"
+    filterset_class = TaskGroupFilter
     serializer_class = TaskGroupSerializer
     ordering = "-pulp_created"
 
