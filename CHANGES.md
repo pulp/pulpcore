@@ -8,6 +8,53 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.124.0 (2026-11-19) {: #3.124.0 }
+
+### REST API {: #3.124.0-rest-api }
+
+#### Features {: #3.124.0-rest-api-feature }
+
+- Added a `sha256sums` option to file repositories that publishes SHA256SUMS files alongside the content, either one at the root of the repository or one in every directory. Each file lists every file below it in the format read by `sha256sum -c`.
+  [#8097](https://github.com/pulp/pulpcore/issues/8097)
+
+#### Bugfixes {: #3.124.0-rest-api-bugfix }
+
+- Fixed uploads of files whose names start with `artifact` when the media root is empty.
+  [#8041](https://github.com/pulp/pulpcore/issues/8041)
+- Fixed the content app returning 404 instead of 502 when the remote of on-demand content could not be reached or answered with a server error.
+  [#8217](https://github.com/pulp/pulpcore/issues/8217)
+- Fixed responses for a distribution being cached from the previous repository version, and served until the cache entry expired, when they were requested while a new version was being created.
+  [#8246](https://github.com/pulp/pulpcore/issues/8246)
+- Disabled complex `jq_filter` programs in `HeaderContentGuard` by default. Simple dotted paths continue to work. Use `settings.ALLOW_INSECURE_HEADER_CONTENT_GUARD_JQ_PROCESSING_AND_FORFEIT_ALL_COMMUNITY_SUPPORT` if you __need__ to use it. CVE-2026-123084
+- Increased the default maximum HTTP header field size for the pulpcore gunicorn config from 8190 to 16384 bytes to support PQC (post-quantum) X.509 certificates forwarded via the `X-CLIENT-CERT` header.
+- Insures that `Content-Disposition`, `Content-Security-Policy`, and `X-Content-Type-Options`
+  are set consistently in the content-app. This addresses CVE-2026-84232.
+- Sped up content app lookups (the `index.html` probe, directory listings and exact file lookups) by checking repository membership per matching row instead of across the whole repository version, backed by a new index on `ContentArtifact.relative_path`.
+
+#### Deprecations {: #3.124.0-rest-api-deprecation }
+
+- Deprecated `jq_filter` allowing to run arbitrary jq scripts for scheduled removal in 3.130. It will be removed with its feature flag `settings.ALLOW_INSECURE_HEADER_CONTENT_GUARD_JQ_PROCESSING_AND_FORFEIT_ALL_COMMUNITY_SUPPORT`. Relates to CVE-2026-123084.
+
+#### Misc {: #3.124.0-rest-api-misc }
+
+- 
+
+### Plugin API {: #3.124.0-plugin-api }
+
+#### Bugfixes {: #3.124.0-plugin-api-bugfix }
+
+- Pulp's `gpg_verify()` function now respects the system policy for the sequoia crypto library in `/etc/crypto-policies/back-ends/sequoia.config` (or the path set by the environment variable `SEQUOIA_CRYPTO_POLICY`).
+
+### Pulp File {: #3.124.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.124.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.123.3 (2026-11-18) {: #3.123.3 }
 
 ### REST API {: #3.123.3-rest-api }
