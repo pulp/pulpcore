@@ -1,5 +1,4 @@
 import asyncio
-import atexit
 import copy
 import platform
 import ssl
@@ -73,7 +72,6 @@ class DownloaderFactory:
         }
         self._session = self._make_aiohttp_session_from_remote()
         self._semaphore = asyncio.Semaphore(value=download_concurrency)
-        atexit.register(self._session_cleanup)
 
     @staticmethod
     def user_agent():
@@ -85,9 +83,6 @@ class DownloaderFactory:
         uname = platform.uname()
         system = f"{uname.system} {uname.machine}"
         return f"pulpcore/{pulp_version} ({python}, {system}) (aiohttp {aiohttp_version})"
-
-    def _session_cleanup(self):
-        asyncio.get_event_loop().run_until_complete(self._session.close())
 
     def _make_aiohttp_session_from_remote(self):
         """
