@@ -1,4 +1,5 @@
 import asyncio
+from contextlib import asynccontextmanager
 
 from aiohttp import hdrs
 from aiohttp.web import StreamResponse
@@ -36,28 +37,44 @@ class ArtifactResponse(StreamResponse):
         self._storage = storage
 
     async def _sendfile(self, request, storage, name, offset, count):
-        # To keep memory usage low, fobj is transferred in chunks
+        # Keep memory usage low by transferring the response in bounded chunks
         # controlled by the constructor's chunk_size argument.
 
         writer = await super().prepare(request)
         assert writer is not None
 
-        loop = asyncio.get_event_loop()
-
-        context = open_stream(storage, name, start=offset, length=count)
-        stream = await loop.run_in_executor(None, context.__enter__)
-        try:
-            while count > 0:
-                chunk = await loop.run_in_executor(None, stream.read, min(self._chunk_size, count))
+        async with self._storage_stream(storage, name, offset, count) as stream:
+            remaining = count
+            while remaining:
+                chunk = await asyncio.to_thread(stream.read, min(self._chunk_size, remaining))
                 if not chunk:
                     break
+                if len(chunk) > remaining:
+                    chunk = chunk[:remaining]
                 await writer.write(chunk)
-                count -= len(chunk)
-        finally:
-            await loop.run_in_executor(None, context.__exit__, None, None, None)
+                remaining -= len(chunk)
 
         await writer.drain()
         return writer
+
+    @staticmethod
+    @asynccontextmanager
+    async def _storage_stream(storage, name, offset, count):
+        """Open a Pulp-bounded storage stream without blocking the event loop.
+
+        Opening and closing storage streams can perform synchronous network I/O.
+        Run those operations, as well as each read, in a worker thread while
+        preserving the storage context manager's exception and cleanup behavior.
+        """
+        context = await asyncio.to_thread(open_stream, storage, name, start=offset, length=count)
+        stream = await asyncio.to_thread(context.__enter__)
+        try:
+            yield stream
+        except BaseException as exc:
+            if not await asyncio.to_thread(context.__exit__, type(exc), exc, exc.__traceback__):
+                raise
+        else:
+            await asyncio.to_thread(context.__exit__, None, None, None)
 
     async def prepare(self, request):
         if self._artifact is None:
