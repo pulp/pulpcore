@@ -30,6 +30,8 @@ jobs:
       name: "pypi"
       url: "https://pypi.org/p/pulpcore"
     permissions:
+      attestations: "write"
+      contents: "read"
       id-token: "write"
 
     steps:
@@ -37,6 +39,11 @@ jobs:
         with:
           name: "plugin_package"
           path: "dist/"
+
+      - name: "Attest package build provenance"
+        uses: "actions/attest@v4"
+        with:
+          subject-path: "dist/*"
 
       - name: "Publish package to PyPI"
         uses: pypa/gh-action-pypi-publish@release/v1
@@ -47,6 +54,8 @@ jobs:
     environment:
       name: "pypi"
     permissions:
+      attestations: "write"
+      contents: "read"
       id-token: "write"
 
     steps:
@@ -66,6 +75,11 @@ jobs:
           tar -xvf core-python-client.tar
           tar -xvf file-python-client.tar
           tar -xvf certguard-python-client.tar
+
+      - name: "Attest Python client build provenance"
+        uses: "actions/attest@v4"
+        with:
+          subject-path: "pulpcore/dist/*"
 
       - name: "Publish client to pypi"
         uses: "pypa/gh-action-pypi-publish@release/v1"
