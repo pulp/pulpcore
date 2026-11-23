@@ -8,6 +8,7 @@ from pulpcore.plugin.models import (
     ContentArtifact,
     PublishedMetadata,
     RemoteArtifact,
+    Repository,
     RepositoryVersion,
 )
 
@@ -20,7 +21,8 @@ log = logging.getLogger(__name__)
 
 def publish(
     manifest,
-    repository_version_pk,
+    repository_version_pk=None,
+    repository_pk=None,
     sha256sums=FileRepository.SHA256SUMS_DISABLED,
     checkpoint=False,
     **kwargs,
@@ -31,11 +33,16 @@ def publish(
     Args:
         manifest (str): Filename to use for manifest file.
         repository_version_pk (str): Create a publication from this repository version.
+        repository_pk (str): Create a publication from this unversioned repository, with its
+            content at its current change sequence number. Set instead of repository_version_pk.
         sha256sums (str): Whether to generate SHA256SUMS files, and where to place them.
         checkpoint (bool): Whether to create a checkpoint publication.
 
     """
-    repo_version = RepositoryVersion.objects.get(pk=repository_version_pk)
+    if repository_pk:
+        repo_version = Repository.objects.get(pk=repository_pk).cast().latest_version()
+    else:
+        repo_version = RepositoryVersion.objects.get(pk=repository_version_pk)
 
     log.info(
         _(
@@ -43,7 +50,7 @@ def publish(
             "sha256sums={sha256sums}"
         ).format(
             repo=repo_version.repository.name,
-            ver=repo_version.number,
+            ver=repo_version.number if repository_version_pk else "unversioned",
             manifest=manifest,
             sha256sums=sha256sums,
         )
@@ -53,6 +60,8 @@ def publish(
         with FilePublication.create(
             repo_version, pass_through=True, checkpoint=checkpoint
         ) as publication:
+            # For an unversioned repository, the content at the stored seq
+            repo_version = publication.published_version
             publication.manifest = manifest
             publication.sha256sums = sha256sums
             if manifest:

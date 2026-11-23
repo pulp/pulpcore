@@ -41,6 +41,7 @@ class Command(BaseCommand):
                 publication = distribution.publication
             elif distribution.repository:
                 repository = distribution.repository
+                # Publications of unversioned repositories are not found
                 publication = Publication.objects.filter(
                     repository_version__in=repository.versions.all(), complete=True
                 ).latest("repository_version", "pulp_created")

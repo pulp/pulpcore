@@ -93,11 +93,25 @@ def test_same_relative_path_replaces_content(
 @pytest.mark.parallel
 def test_unversioned_restrictions(file_bindings, file_repository_factory, unversioned_repo):
     """
-    Verify that unversioned repositories reject `autopublish`, a change of `versioned` and
-    publications.
+    Verify that unversioned repositories reject `autopublish`, `retain_checkpoints`,
+    `retain_repo_versions`, a change of `versioned` and checkpoint publications.
     """
     with pytest.raises(ApiException) as exc:
         file_repository_factory(versioned=False, autopublish=True)
+    assert exc.value.status == 400
+
+    with pytest.raises(ApiException) as exc:
+        file_repository_factory(versioned=False, retain_checkpoints=1)
+    assert exc.value.status == 400
+
+    with pytest.raises(ApiException) as exc:
+        file_repository_factory(versioned=False, retain_repo_versions=1)
+    assert exc.value.status == 400
+
+    with pytest.raises(ApiException) as exc:
+        file_bindings.RepositoriesFileApi.partial_update(
+            unversioned_repo.pulp_href, {"retain_checkpoints": 1}
+        )
     assert exc.value.status == 400
 
     with pytest.raises(ApiException) as exc:
@@ -107,7 +121,9 @@ def test_unversioned_restrictions(file_bindings, file_repository_factory, unvers
     assert exc.value.status == 400
 
     with pytest.raises(ApiException) as exc:
-        file_bindings.PublicationsFileApi.create({"repository": unversioned_repo.pulp_href})
+        file_bindings.PublicationsFileApi.create(
+            {"repository": unversioned_repo.pulp_href, "checkpoint": True}
+        )
     assert exc.value.status == 400
 
 
@@ -246,3 +262,54 @@ def test_pull_through_adds_content(
         ).task
     )
     assert hashlib.sha256(download(distribution, "1.iso")).hexdigest() == expected_digest
+
+
+### Publications ###
+
+
+@pytest.mark.parallel
+def test_publication_serves_published_content(
+    file_bindings,
+    unversioned_repo,
+    file_distribution_factory,
+    file_content_unit_with_name_factory,
+    monitor_task,
+    download,
+):
+    """
+    Verify that a publication of an unversioned repository lists and serves the content as it was
+    when published, until the repository is published again.
+    """
+    distribution = file_distribution_factory(repository=unversioned_repo.pulp_href)
+    first_path, second_path = str(uuid.uuid4()), str(uuid.uuid4())
+    first = file_content_unit_with_name_factory(first_path)
+    second = file_content_unit_with_name_factory(second_path)
+
+    def publish():
+        body = {"repository": unversioned_repo.pulp_href}
+        monitor_task(file_bindings.PublicationsFileApi.create(body).task)
+
+    def manifest():
+        return download(distribution, "PULP_MANIFEST").decode()
+
+    _modify(file_bindings, monitor_task, unversioned_repo, add=[first])
+    publish()
+    publications = file_bindings.PublicationsFileApi.list(repository=unversioned_repo.pulp_href)
+    assert publications.count == 1
+    assert first_path in manifest()
+
+    # Content added after publishing is neither listed nor served
+    _modify(file_bindings, monitor_task, unversioned_repo, add=[second])
+    assert second_path not in manifest()
+    with pytest.raises(ClientResponseError) as exc:
+        download(distribution, second_path)
+    assert exc.value.status == 404
+
+    publish()
+    assert second_path in manifest()
+    assert hashlib.sha256(download(distribution, second_path)).hexdigest() == second.sha256
+
+    # Content removed after publishing is still listed and served
+    _modify(file_bindings, monitor_task, unversioned_repo, remove=[first])
+    assert first_path in manifest()
+    assert hashlib.sha256(download(distribution, first_path)).hexdigest() == first.sha256

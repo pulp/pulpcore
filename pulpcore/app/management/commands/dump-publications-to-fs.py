@@ -102,6 +102,7 @@ class Command(BaseCommand):
                 elif distribution.repository:
                     repository = distribution.repository
                     # Account for distributions serving the latest publication of a given repository
+                    # Publications of unversioned repositories are not found
                     try:
                         publication = Publication.objects.filter(
                             repository_version__in=repository.versions.all(), complete=True

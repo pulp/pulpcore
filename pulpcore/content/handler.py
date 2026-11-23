@@ -688,7 +688,7 @@ class Handler:
                 raise Exception("Either a repo_version or publication is required.")
             if publication and repo_version:
                 raise Exception("Either a repo_version or publication can be specified.")
-            content_repo_ver = repo_version or publication.repository_version
+            content_repo_ver = repo_version or publication.published_version
             directory_list = set()
             dates = {}
             content_to_find = {}
@@ -888,7 +888,7 @@ class Handler:
             except ObjectDoesNotExist:
                 pass
             else:
-                publication_rv = publication.repository_version
+                publication_rv = publication.published_version
                 await self._set_last_modified_header(headers, ca=ca, rv=publication_rv)
                 if ca.artifact:
                     return await self._serve_content_artifact(ca, headers, request)
@@ -906,7 +906,7 @@ class Handler:
                         )
                         .filter(
                             Exists(
-                                publication.repository_version._content_relationships().filter(
+                                publication.published_version._content_relationships().filter(
                                     content_id=OuterRef("content_id")
                                 )
                             ),
@@ -924,7 +924,7 @@ class Handler:
                 except ObjectDoesNotExist:
                     pass
                 else:
-                    publication_rv = publication.repository_version
+                    publication_rv = publication.published_version
                     await self._set_last_modified_header(headers, ca=ca, rv=publication_rv)
                     if ca.artifact:
                         return await self._serve_content_artifact(ca, headers, request)

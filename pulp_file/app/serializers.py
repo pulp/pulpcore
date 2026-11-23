@@ -179,7 +179,7 @@ class FileRepositorySerializer(RepositorySerializer):
     versioned = serializers.BooleanField(
         help_text=_(
             "Whether the repository keeps repository versions. Unversioned repositories store "
-            "their content directly and do not support publications or version retention. "
+            "their content directly and do not support autopublish, checkpoints or retention. "
             "Can only be set on creation."
         ),
         default=True,
@@ -203,12 +203,11 @@ class FileRepositorySerializer(RepositorySerializer):
                 {"versioned": _("Can only be set on repository creation.")}
             )
         versioned = data.get("versioned", self.instance.versioned if self.instance else True)
-        if not versioned:
-            for field in ("autopublish", "retain_repo_versions", "retain_checkpoints"):
-                if data.get(field):
-                    raise serializers.ValidationError(
-                        {field: _("Not supported for unversioned repositories.")}
-                    )
+        # Not implemented for unversioned repositories yet
+        if not versioned and data.get("autopublish"):
+            raise serializers.ValidationError(
+                {"autopublish": _("Not supported for unversioned repositories.")}
+            )
         return data
 
     class Meta:

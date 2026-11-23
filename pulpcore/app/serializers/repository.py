@@ -69,6 +69,19 @@ class RepositorySerializer(ModelSerializer):
 
         return value
 
+    def validate(self, data):
+        data = super().validate(data)
+        # Only plugins that support unversioned repositories expose the versioned field
+        versioned = data.get("versioned", self.instance.versioned if self.instance else True)
+        if not versioned:
+            # Without versions, there is nothing to retain; checkpoints are not implemented yet
+            for field in ("retain_repo_versions", "retain_checkpoints"):
+                if data.get(field):
+                    raise serializers.ValidationError(
+                        {field: _("Not supported for unversioned repositories.")}
+                    )
+        return data
+
     class Meta:
         model = models.Repository
         fields = ModelSerializer.Meta.fields + (
