@@ -313,3 +313,42 @@ def test_publication_serves_published_content(
     _modify(file_bindings, monitor_task, unversioned_repo, remove=[first])
     assert first_path in manifest()
     assert hashlib.sha256(download(distribution, first_path)).hexdigest() == first.sha256
+
+
+@pytest.mark.parallel
+def test_publication_patches_previous_manifest(
+    file_bindings,
+    unversioned_repo,
+    file_repository_factory,
+    file_distribution_factory,
+    file_content_unit_with_name_factory,
+    monitor_task,
+    download,
+):
+    """
+    Verify that a manifest patched from the previous publication equals one built from all
+    content.
+    """
+    kept, removed, added = (
+        file_content_unit_with_name_factory(str(uuid.uuid4())) for _ in range(3)
+    )
+
+    def publish(repo):
+        distribution = file_distribution_factory(repository=repo.pulp_href)
+        body = {"repository": repo.pulp_href}
+        monitor_task(file_bindings.PublicationsFileApi.create(body).task)
+        # The patch appends added entries, so the order differs from a full build
+        return set(download(distribution, "PULP_MANIFEST").decode().splitlines())
+
+    _modify(file_bindings, monitor_task, unversioned_repo, add=[kept, removed])
+    publish(unversioned_repo)
+    _modify(file_bindings, monitor_task, unversioned_repo, add=[added], remove=[removed])
+    patched = publish(unversioned_repo)
+
+    # Without a previous publication, the manifest is built from all content
+    other_repo = file_repository_factory(versioned=False)
+    _modify(file_bindings, monitor_task, other_repo, add=[kept, added])
+    full = publish(other_repo)
+
+    assert len(full) == 2
+    assert patched == full
