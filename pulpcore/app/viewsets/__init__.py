@@ -89,6 +89,7 @@ from .replica import UpstreamPulpViewSet
 from .vulnerability_report import VulnerabilityReportViewSet
 from .openpgp import (
     OpenPGPDistributionViewSet,
+    OpenPGPKeyringVersionViewSet,
     OpenPGPKeyringViewSet,
     OpenPGPPublicKeyViewSet,
     OpenPGPPublicSubkeyViewSet,
