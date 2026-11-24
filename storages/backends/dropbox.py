@@ -173,12 +173,8 @@ class DropboxStorage(BaseStorage):
         return name
 
     def _chunked_upload(self, content, dest_path):
-        upload_session = self.client.files_upload_session_start(
-            content.read(self.CHUNK_SIZE)
-        )
-        cursor = UploadSessionCursor(
-            session_id=upload_session.session_id, offset=content.tell()
-        )
+        upload_session = self.client.files_upload_session_start(content.read(self.CHUNK_SIZE))
+        cursor = UploadSessionCursor(session_id=upload_session.session_id, offset=content.tell())
         commit = CommitInfo(path=dest_path, mode=WriteMode(self.write_mode))
 
         while content.tell() < content.size:
@@ -187,9 +183,7 @@ class DropboxStorage(BaseStorage):
                     content.read(self.CHUNK_SIZE), cursor, commit
                 )
             else:
-                self.client.files_upload_session_append_v2(
-                    content.read(self.CHUNK_SIZE), cursor
-                )
+                self.client.files_upload_session_append_v2(content.read(self.CHUNK_SIZE), cursor)
                 cursor.offset = content.tell()
 
     def get_available_name(self, name, max_length=None):

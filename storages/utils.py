@@ -88,9 +88,7 @@ def safe_join(base, *paths):
     # the base path is /.
     base_path_len = len(base_path)
     if not final_path.startswith(base_path) or final_path[base_path_len] != "/":
-        raise ValueError(
-            "the joined path is located outside of the base path component"
-        )
+        raise ValueError("the joined path is located outside of the base path component")
 
     return final_path.lstrip("/")
 
@@ -99,10 +97,7 @@ def check_location(storage):
     if storage.location.startswith("/"):
         correct = storage.location.lstrip("/")
         raise ImproperlyConfigured(
-            (
-                "{}.location cannot begin with a leading slash. Found '{}'. Use '{}' "
-                "instead."
-            ).format(
+            ("{}.location cannot begin with a leading slash. Found '{}'. Use '{}' instead.").format(
                 storage.__class__.__name__,
                 storage.location,
                 correct,
@@ -126,9 +121,7 @@ def get_available_overwrite_name(name, max_length):
     # Django 5.1 is the lowest supported version
     dir_name, file_name = os.path.split(name)
     if ".." in pathlib.PurePath(dir_name).parts:
-        raise SuspiciousFileOperation(
-            "Detected path traversal attempt in '%s'" % dir_name
-        )
+        raise SuspiciousFileOperation("Detected path traversal attempt in '%s'" % dir_name)
     validate_file_name(file_name, allow_relative_path=True)
 
     if max_length is None or len(name) <= max_length:

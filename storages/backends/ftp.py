@@ -42,8 +42,7 @@ class FTPStorage(BaseStorage):
         super().__init__(**settings)
         if self.location is None:
             raise ImproperlyConfigured(
-                "You must set a location at instantiation "
-                "or at settings.FTP_STORAGE_LOCATION."
+                "You must set a location at instantiation or at settings.FTP_STORAGE_LOCATION."
             )
         self._config = self._decode_location(self.location)
         self._connection = None
@@ -153,9 +152,7 @@ class FTPStorage(BaseStorage):
         try:
             pwd = self._connection.pwd()
             self._connection.cwd(os.path.dirname(name))
-            self._connection.retrbinary(
-                "RETR " + os.path.basename(name), memory_file.write
-            )
+            self._connection.retrbinary("RETR " + os.path.basename(name), memory_file.write)
             self._connection.cwd(pwd)
             memory_file.seek(0)
             return memory_file

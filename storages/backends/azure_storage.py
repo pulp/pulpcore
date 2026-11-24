@@ -129,9 +129,7 @@ class AzureStorage(BaseStorage):
         self._user_delegation_key = None
         self._user_delegation_key_expiry = datetime.utcnow()
         if self.connection_string and (not self.account_name or not self.account_key):
-            parsed = parse_connection_string(
-                self.connection_string, case_sensitive_keys=True
-            )
+            parsed = parse_connection_string(self.connection_string, case_sensitive_keys=True)
             if not self.account_name and "AccountName" in parsed:
                 self.account_name = parsed["AccountName"]
             if not self.account_key and "AccountKey" in parsed:
@@ -199,9 +197,7 @@ class AzureStorage(BaseStorage):
     @property
     def client(self):
         if self._client is None:
-            self._client = self.service_client.get_container_client(
-                self.azure_container
-            )
+            self._client = self.service_client.get_container_client(self.azure_container)
         return self._client
 
     def get_user_delegation_key(self, expiry):
@@ -212,10 +208,7 @@ class AzureStorage(BaseStorage):
 
         # Get a new key if we don't already have one, or if the one we have expires too
         # soon.
-        if (
-            self._user_delegation_key is None
-            or expiry > self._user_delegation_key_expiry
-        ):
+        if self._user_delegation_key is None or expiry > self._user_delegation_key_expiry:
             now = datetime.utcnow()
             key_expiry_time = now + timedelta(days=7)
             self._user_delegation_key = self.service_client.get_user_delegation_key(
@@ -347,9 +340,7 @@ class AzureStorage(BaseStorage):
         if self.custom_domain:
             # Replace the account name with the custom domain
             parsed_url = urlparse(container_blob_url)
-            container_blob_url = urlunparse(
-                parsed_url._replace(netloc=self.custom_domain)
-            )
+            container_blob_url = urlunparse(parsed_url._replace(netloc=self.custom_domain))
 
         return BlobClient.from_blob_url(container_blob_url, credential=credential).url
 
@@ -357,9 +348,7 @@ class AzureStorage(BaseStorage):
         params = {}
 
         guessed_type, content_encoding = mimetypes.guess_type(name)
-        content_type = (
-            _content_type(content) or guessed_type or self.default_content_type
-        )
+        content_type = _content_type(content) or guessed_type or self.default_content_type
 
         params["cache_control"] = self.cache_control
         params["content_type"] = content_type
@@ -404,9 +393,7 @@ class AzureStorage(BaseStorage):
         # XXX make generator, add start, end
         return [
             blob.name
-            for blob in self.client.list_blobs(
-                name_starts_with=path, timeout=self.timeout
-            )
+            for blob in self.client.list_blobs(name_starts_with=path, timeout=self.timeout)
         ]
 
     def listdir(self, path=""):

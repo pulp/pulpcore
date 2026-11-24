@@ -50,9 +50,7 @@ class GoogleCloudFile(CompressedFileMixin, File):
         self._storage = storage
         self.blob = storage.bucket.get_blob(name, chunk_size=storage.blob_chunk_size)
         if not self.blob and "w" in mode:
-            self.blob = Blob(
-                self.name, storage.bucket, chunk_size=storage.blob_chunk_size
-            )
+            self.blob = Blob(self.name, storage.bucket, chunk_size=storage.blob_chunk_size)
         self._file = None
         self._is_dirty = False
 
@@ -231,9 +229,7 @@ class GoogleCloudStorage(BaseStorage):
             raise FileNotFoundError("File does not exist: %s" % name)
 
         available = max(blob.size - start, 0)
-        stream = _GoogleCloudStream(
-            blob, start, min(length, available) if length else available
-        )
+        stream = _GoogleCloudStream(blob, start, min(length, available) if length else available)
         yield LimitedStream(stream, stream.length)
 
     def _compress_content(self, content):
@@ -257,9 +253,7 @@ class GoogleCloudStorage(BaseStorage):
 
         upload_params = {}
         upload_params["predefined_acl"] = blob_params.pop("acl", self.default_acl)
-        upload_params[CONTENT_TYPE] = blob_params.pop(
-            CONTENT_TYPE, file_object.mime_type
-        )
+        upload_params[CONTENT_TYPE] = blob_params.pop(CONTENT_TYPE, file_object.mime_type)
 
         if (
             self.gzip
@@ -370,8 +364,7 @@ class GoogleCloudStorage(BaseStorage):
         blob = self.bucket.blob(name)
         blob_params = self.get_object_parameters(name)
         no_signed_url = (
-            blob_params.get("acl", self.default_acl) == "publicRead"
-            or not self.querystring_auth
+            blob_params.get("acl", self.default_acl) == "publicRead" or not self.querystring_auth
         )
 
         if not self.custom_endpoint and no_signed_url:

@@ -57,9 +57,7 @@ def _use_cryptography_signer():
             pem = pem.encode("ascii")
         key = load_pem_private_key(pem, password=None, backend=default_backend())
 
-        return CloudFrontSigner(
-            key_id, lambda x: key.sign(x, padding.PKCS1v15(), hashes.SHA1())
-        )
+        return CloudFrontSigner(key_id, lambda x: key.sign(x, padding.PKCS1v15(), hashes.SHA1()))
 
     return _cloud_front_signer_from_pem
 
@@ -128,9 +126,7 @@ class S3File(CompressedFileMixin, File):
         self.obj = storage.bucket.Object(name)
         if "w" not in mode:
             # Force early RAII-style exception if object does not exist
-            params = _filter_download_params(
-                self._storage.get_object_parameters(self.name)
-            )
+            params = _filter_download_params(self._storage.get_object_parameters(self.name))
             self.obj.load(**params)
         self._closed = False
         self._file = None
@@ -176,9 +172,7 @@ class S3File(CompressedFileMixin, File):
             )
             if "r" in self._mode:
                 self._is_dirty = False
-                params = _filter_download_params(
-                    self._storage.get_object_parameters(self.name)
-                )
+                params = _filter_download_params(self._storage.get_object_parameters(self.name))
                 self.obj.download_fileobj(
                     self._file, ExtraArgs=params, Config=self._storage.transfer_config
                 )
@@ -195,9 +189,7 @@ class S3File(CompressedFileMixin, File):
                         self._file = io.TextIOWrapper(self._file, encoding="utf-8")
                     else:
                         # For versions <= Python 3.10 compatibility
-                        self._file = io.TextIOWrapper(
-                            self._file._file, encoding="utf-8"
-                        )
+                        self._file = io.TextIOWrapper(self._file._file, encoding="utf-8")
             self._closed = False
         return self._file
 
@@ -248,9 +240,7 @@ class S3File(CompressedFileMixin, File):
             self.file.seek(0)
             part = self._multipart.Part(self._write_counter)
             response = part.upload(Body=self.file.read())
-            self._parts.append(
-                {"ETag": response["ETag"], "PartNumber": self._write_counter}
-            )
+            self._parts.append({"ETag": response["ETag"], "PartNumber": self._write_counter})
             self.file.seek(0)
             self.file.truncate()
 
@@ -274,9 +264,7 @@ class S3File(CompressedFileMixin, File):
             self.obj.load()
         except ClientError as err:
             if err.response["ResponseMetadata"]["HTTPStatusCode"] == 404:
-                self.obj.put(
-                    Body=b"", **self._storage._get_write_parameters(self.obj.key)
-                )
+                self.obj.put(Body=b"", **self._storage._get_write_parameters(self.obj.key))
             else:
                 raise
 
@@ -378,9 +366,7 @@ class S3Storage(CompressStorageMixin, BaseStorage):
     def get_cloudfront_signer(self, key_id, key):
         cache_key = f"{key_id}:{key}"
         if cache_key not in self.__class__._signers:
-            self.__class__._signers[cache_key] = _cloud_front_signer_from_pem(
-                key_id, key
-            )
+            self.__class__._signers[cache_key] = _cloud_front_signer_from_pem(key_id, key)
         return self.__class__._signers[cache_key]
 
     def get_default_settings(self):
@@ -478,9 +464,7 @@ class S3Storage(CompressStorageMixin, BaseStorage):
         unsigned_connection = getattr(self._unsigned_connections, "connection", None)
         if unsigned_connection is None:
             session = self._create_session()
-            config = self.client_config.merge(
-                Config(signature_version=botocore.UNSIGNED)
-            )
+            config = self.client_config.merge(Config(signature_version=botocore.UNSIGNED))
             self._unsigned_connections.connection = session.resource(
                 "s3",
                 region_name=self.region_name,
@@ -615,9 +599,7 @@ class S3Storage(CompressStorageMixin, BaseStorage):
         name = self._normalize_name(clean_name(name))
         params = _filter_download_params(self.get_object_parameters(name))
         try:
-            self.connection.meta.client.head_object(
-                Bucket=self.bucket_name, Key=name, **params
-            )
+            self.connection.meta.client.head_object(Bucket=self.bucket_name, Key=name, **params)
             return True
         except ClientError as err:
             if err.response["ResponseMetadata"]["HTTPStatusCode"] == 404:
@@ -638,8 +620,7 @@ class S3Storage(CompressStorageMixin, BaseStorage):
         pages = paginator.paginate(Bucket=self.bucket_name, Delimiter="/", Prefix=path)
         for page in pages:
             directories += [
-                posixpath.relpath(entry["Prefix"], path)
-                for entry in page.get("CommonPrefixes", ())
+                posixpath.relpath(entry["Prefix"], path) for entry in page.get("CommonPrefixes", ())
             ]
             for entry in page.get("Contents", ()):
                 key = entry["Key"]
@@ -714,18 +695,14 @@ class S3Storage(CompressStorageMixin, BaseStorage):
 
             if self.querystring_auth and self.cloudfront_signer:
                 expiration = datetime.utcnow() + timedelta(seconds=expire)
-                return self.cloudfront_signer.generate_presigned_url(
-                    url, date_less_than=expiration
-                )
+                return self.cloudfront_signer.generate_presigned_url(url, date_less_than=expiration)
 
             return url
 
         params["Bucket"] = self.bucket.name
         params["Key"] = name
 
-        connection = (
-            self.connection if self.querystring_auth else self.unsigned_connection
-        )
+        connection = self.connection if self.querystring_auth else self.unsigned_connection
         url = connection.meta.client.generate_presigned_url(
             "get_object", Params=params, ExpiresIn=expire, HttpMethod=http_method
         )

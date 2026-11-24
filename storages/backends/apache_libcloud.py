@@ -49,13 +49,10 @@ class LibCloudStorage(Storage):
                 provider_type = getattr(Provider, tag)
 
             Driver = get_driver(provider_type)
-            self.driver = Driver(
-                self.provider["user"], self.provider["key"], **extra_kwargs
-            )
+            self.driver = Driver(self.provider["user"], self.provider["key"], **extra_kwargs)
         except Exception as e:
             raise ImproperlyConfigured(
-                "Unable to create libcloud driver type %s: %s"
-                % (self.provider.get("type"), e)
+                "Unable to create libcloud driver type %s: %s" % (self.provider.get("type"), e)
             )
         self.bucket = self.provider["bucket"]  # Limit to one container
 
