@@ -61,6 +61,7 @@ class CustomRedirectStorage:
         ("pulpcore.app.models.storage.FileSystem", []),
         ("storages.backends.s3.S3Storage", []),
         ("pulpcore.vendor.storages.backends.s3.S3Storage", []),
+        ("pulpcore.vendor.storages.backends.s3boto3.S3Boto3Storage", []),
         ("storages.backends.azure_storage.AzureStorage", []),
         ("pulpcore.vendor.storages.backends.azure_storage.AzureStorage", []),
         ("storages.backends.gcloud.GoogleCloudStorage", []),
@@ -129,6 +130,11 @@ def test_built_in_backends_use_vendored_implementations():
     assert backend_path("s3") == "pulpcore.vendor.storages.backends.s3.S3Storage"
     assert backend_path("azure") == "pulpcore.vendor.storages.backends.azure_storage.AzureStorage"
     assert backend_path("gcs") == "pulpcore.vendor.storages.backends.gcloud.GoogleCloudStorage"
+    assert backend_id("pulpcore.vendor.storages.backends.s3boto3.S3Boto3Storage") == "s3"
+    assert (
+        legacy_backend_path("pulpcore.vendor.storages.backends.s3boto3.S3Boto3Storage")
+        == "storages.backends.s3.S3Storage"
+    )
     assert (
         legacy_backend_path("pulpcore.vendor.storages.backends.s3.S3Storage")
         == "storages.backends.s3.S3Storage"
