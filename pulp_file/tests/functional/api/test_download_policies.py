@@ -45,9 +45,9 @@ def _do_range_request_download_and_assert(url, range_header, expected_bytes):
 @pytest.mark.parametrize(
     "storage_class",
     (
-        pytest.param("storages.backends.s3.S3Storage", id="s3"),
-        pytest.param("storages.backends.s3boto3.S3Boto3Storage", id="s3boto3"),
-        pytest.param("storages.backends.azure_storage.AzureStorage", id="azure"),
+        pytest.param("pulpcore.vendor.storages.backends.s3.S3Storage", id="s3"),
+        pytest.param("pulpcore.vendor.storages.backends.s3boto3.S3Boto3Storage", id="s3boto3"),
+        pytest.param("pulpcore.vendor.storages.backends.azure_storage.AzureStorage", id="azure"),
     ),
 )
 def test_proxied_object_storage_artifact_streaming(

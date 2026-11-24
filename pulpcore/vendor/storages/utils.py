@@ -3,10 +3,8 @@ import pathlib
 import posixpath
 
 from django.conf import settings
-from django.core.exceptions import ImproperlyConfigured
-from django.core.exceptions import SuspiciousFileOperation
-from django.core.files.utils import FileProxyMixin
-from django.core.files.utils import validate_file_name
+from django.core.exceptions import ImproperlyConfigured, SuspiciousFileOperation
+from django.core.files.utils import FileProxyMixin, validate_file_name
 from django.utils.encoding import force_bytes
 
 

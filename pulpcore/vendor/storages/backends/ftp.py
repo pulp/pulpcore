@@ -26,8 +26,8 @@ from django.core.exceptions import ImproperlyConfigured
 from django.core.files.base import File
 from django.utils.deconstruct import deconstructible
 
-from storages.base import BaseStorage
-from storages.utils import setting
+from pulpcore.vendor.storages.base import BaseStorage
+from pulpcore.vendor.storages.utils import setting
 
 
 class FTPStorageException(Exception):

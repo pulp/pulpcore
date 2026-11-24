@@ -60,8 +60,11 @@ class CustomRedirectStorage:
     [
         ("pulpcore.app.models.storage.FileSystem", []),
         ("storages.backends.s3.S3Storage", []),
+        ("pulpcore.vendor.storages.backends.s3.S3Storage", []),
         ("storages.backends.azure_storage.AzureStorage", []),
+        ("pulpcore.vendor.storages.backends.azure_storage.AzureStorage", []),
         ("storages.backends.gcloud.GoogleCloudStorage", []),
+        ("pulpcore.vendor.storages.backends.gcloud.GoogleCloudStorage", []),
         ("pulpcore.tests.unit.test_storage_backends.CustomRedirectStorage", []),
         ("pulpcore.tests.unit.test_storage_backends.FirstStorage", ["pulpcore.E003"]),
         ("missing.storage.Backend", ["pulpcore.E003"]),
@@ -119,6 +122,17 @@ def test_implementation_mapping_does_not_change_backend_id():
     assert backend_id("example.adapters.S3Storage") == "s3"
     assert backend_path("s3") == "example.adapters.S3Storage"
     assert legacy_backend_path("example.adapters.S3Storage") == "storages.backends.s3.S3Storage"
+
+
+def test_built_in_backends_use_vendored_implementations():
+    """Resolve stable backend IDs to Pulp's isolated vendored package."""
+    assert backend_path("s3") == "pulpcore.vendor.storages.backends.s3.S3Storage"
+    assert backend_path("azure") == "pulpcore.vendor.storages.backends.azure_storage.AzureStorage"
+    assert backend_path("gcs") == "pulpcore.vendor.storages.backends.gcloud.GoogleCloudStorage"
+    assert (
+        legacy_backend_path("pulpcore.vendor.storages.backends.s3.S3Storage")
+        == "storages.backends.s3.S3Storage"
+    )
 
 
 def test_local_storage_path_uses_backend_capability():

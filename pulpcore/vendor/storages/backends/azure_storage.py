@@ -1,33 +1,37 @@
 import mimetypes
 import warnings
 from contextlib import contextmanager
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 from tempfile import SpooledTemporaryFile
-from urllib.parse import urlparse
-from urllib.parse import urlunparse
+from urllib.parse import urlparse, urlunparse
 
 from azure.core.exceptions import ResourceNotFoundError
 from azure.core.utils import parse_connection_string
-from azure.storage.blob import BlobClient
-from azure.storage.blob import BlobSasPermissions
-from azure.storage.blob import BlobServiceClient
-from azure.storage.blob import ContentSettings
-from azure.storage.blob import generate_blob_sas
+from azure.storage.blob import (
+    BlobClient,
+    BlobSasPermissions,
+    BlobServiceClient,
+    ContentSettings,
+    generate_blob_sas,
+)
 from django.core.exceptions import SuspiciousOperation
 from django.core.files.base import File
 from django.utils import timezone
 from django.utils.deconstruct import deconstructible
 
-from storages.backends._stream import ChunkIteratorStream
-from storages.backends._stream import LimitedStream
-from storages.backends._stream import validate_byte_range
-from storages.base import BaseStorage
-from storages.utils import clean_name
-from storages.utils import get_available_overwrite_name
-from storages.utils import safe_join
-from storages.utils import setting
-from storages.utils import to_bytes
+from pulpcore.vendor.storages.backends._stream import (
+    ChunkIteratorStream,
+    LimitedStream,
+    validate_byte_range,
+)
+from pulpcore.vendor.storages.base import BaseStorage
+from pulpcore.vendor.storages.utils import (
+    clean_name,
+    get_available_overwrite_name,
+    safe_join,
+    setting,
+    to_bytes,
+)
 
 
 @deconstructible

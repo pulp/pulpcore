@@ -3,7 +3,7 @@ import zlib
 from gzip import GzipFile
 from typing import Optional
 
-from storages.utils import to_bytes
+from pulpcore.vendor.storages.utils import to_bytes
 
 
 class GzipCompressionWrapper(io.RawIOBase):

@@ -99,7 +99,13 @@ print(''.join(secrets.choice(chars) for i in range(50)))
 !!! note "Added in `3.70`"
     Starting in `3.70`, this should be used in the place of [`DEFAULT_FILE_STORAGE`](#default_file_storage).
 
-Pulp uses [django-storages] to support multiple storage backends.
+Pulp bundles its supported object-storage backends under `pulpcore.vendor.storages`.
+Use those import paths in `STORAGES` to select Pulp's bundled implementations. Existing
+Domain API `storage_class` values such as `storages.backends.s3.S3Storage` remain supported
+as compatibility identifiers.
+If your deployment overrides `DOMAIN_STORAGE_BACKENDS` or configures object storage in
+`STORAGES`, update implementation paths from `storages.backends.*` to
+`pulpcore.vendor.storages.backends.*` to select the bundled code.
 If no backend is configured, Pulp will by default use the local filesystem (`pulpcore.app.models.storage.FileSystem`).
 
 The storage setting has the form:
@@ -119,8 +125,7 @@ STORAGES = {
 To use another backend storage, you'll need to:
 
 1. Set up your storage and gather required credentials and specific configs.
-1. Ensure the `django-storage[s3|google|azure]` python package is installed.
-This depends on the installation method.
+1. Install Pulp with the provider extra required by your backend, such as `s3`, `google`, or `azure`.
 1. Configure the default `BACKEND` storage class.
 1. Configure available `OPTIONS` for that backend.
 
@@ -130,7 +135,7 @@ Learn more on the
 Overview of the integration with Pulp:
 
 - **Supported**: We support (test) Amazon S3 and Azure.
-- **Untested**: Other backends provided by `django-storages` may work as well, but we provide no guarantee.
+- **Untested**: Other vendored backends may work, but we provide no guarantee.
 
 
 ## Pulp Settings
@@ -647,7 +652,6 @@ Defaults to `pulpcore.tasking.status`.
 [djangosaml2]: https://djangosaml2.readthedocs.io
 [Django secret key]: https://docs.djangoproject.com/en/4.2/ref/settings/#secret-key
 [Django setting]: https://docs.djangoproject.com/en/4.2/ref/settings/
-[django-storages]: https://django-storages.readthedocs.io/en/latest/index.html
 [Django warning at the end of this section in their docs]: https://docs.djangoproject.com/en/4.2/howto/auth-remote-user/#configuration
 [Enabling Debug Logging]: site:pulpcore/docs/admin/guides/troubleshooting/#enabling-debug-logging
 [librdkafka configuration documentation]: https://github.com/confluentinc/librdkafka/blob/master/CONFIGURATION.md

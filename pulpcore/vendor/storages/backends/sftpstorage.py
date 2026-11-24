@@ -17,9 +17,8 @@ from django.core.files.base import File
 from django.utils.deconstruct import deconstructible
 from paramiko.util import ClosingContextManager
 
-from storages.base import BaseStorage
-from storages.utils import is_seekable
-from storages.utils import setting
+from pulpcore.vendor.storages.base import BaseStorage
+from pulpcore.vendor.storages.utils import is_seekable, setting
 
 
 @deconstructible

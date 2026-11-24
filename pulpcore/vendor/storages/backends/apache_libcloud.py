@@ -10,12 +10,11 @@ from django.core.files.base import File
 from django.core.files.storage import Storage
 from django.utils.deconstruct import deconstructible
 
-from storages.utils import clean_name
+from pulpcore.vendor.storages.utils import clean_name
 
 try:
     from libcloud.storage.providers import get_driver
-    from libcloud.storage.types import ObjectDoesNotExistError
-    from libcloud.storage.types import Provider
+    from libcloud.storage.types import ObjectDoesNotExistError, Provider
 except ImportError:
     raise ImproperlyConfigured("Could not load libcloud")
 

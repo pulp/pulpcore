@@ -19,6 +19,7 @@ from aiohttp import web
 from packaging.version import parse as parse_version
 from yarl import URL
 
+from pulpcore.app.storage_backends import legacy_backend_path
 from pulpcore.plugin.find_url import find_api_root
 from pulpcore.tests.functional.utils import (
     SLEEP_TIME,
@@ -809,7 +810,13 @@ def backend_settings_factory(pulp_settings):
             "region_name",
             "bucket_name",
         ]
+        keys["pulpcore.vendor.storages.backends.s3.S3Storage"] = keys[
+            "storages.backends.s3.S3Storage"
+        ]
         keys["storages.backends.s3boto3.S3Boto3Storage"] = keys["storages.backends.s3.S3Storage"]
+        keys["pulpcore.vendor.storages.backends.s3boto3.S3Boto3Storage"] = keys[
+            "storages.backends.s3.S3Storage"
+        ]
         keys["storages.backends.azure_storage.AzureStorage"] = [
             "account_name",
             "azure_container",
@@ -818,6 +825,9 @@ def backend_settings_factory(pulp_settings):
             "overwrite_files",
             "location",
             "connection_string",
+        ]
+        keys["pulpcore.vendor.storages.backends.azure_storage.AzureStorage"] = keys[
+            "storages.backends.azure_storage.AzureStorage"
         ]
 
         def get_installation_storage_option(key, backend):
@@ -832,7 +842,9 @@ def backend_settings_factory(pulp_settings):
         unset_storage_settings = (k for k in keys[storage_backend] if k not in storage_settings)
         for key in unset_storage_settings:
             storage_settings[key] = get_installation_storage_option(key, storage_backend)
-        return storage_backend, storage_settings
+        # Domain API storage_class values remain legacy identifiers; the configured path above
+        # is only used to identify backend-specific installation options.
+        return legacy_backend_path(storage_backend), storage_settings
 
     return _settings_factory
 

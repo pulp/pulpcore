@@ -6,31 +6,30 @@ import tempfile
 import threading
 import warnings
 from contextlib import contextmanager
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 from urllib.parse import urlencode
 
 from django.contrib.staticfiles.storage import ManifestFilesMixin
-from django.core.exceptions import ImproperlyConfigured
-from django.core.exceptions import SuspiciousOperation
+from django.core.exceptions import ImproperlyConfigured, SuspiciousOperation
 from django.core.files.base import File
 from django.utils.deconstruct import deconstructible
 from django.utils.encoding import filepath_to_uri
 from django.utils.timezone import make_naive
 
-from storages.backends._stream import validate_byte_range
-from storages.base import BaseStorage
-from storages.compress import CompressedFileMixin
-from storages.compress import CompressStorageMixin
-from storages.utils import ReadBytesWrapper
-from storages.utils import check_location
-from storages.utils import clean_name
-from storages.utils import get_available_overwrite_name
-from storages.utils import is_seekable
-from storages.utils import lookup_env
-from storages.utils import safe_join
-from storages.utils import setting
-from storages.utils import to_bytes
+from pulpcore.vendor.storages.backends._stream import validate_byte_range
+from pulpcore.vendor.storages.base import BaseStorage
+from pulpcore.vendor.storages.compress import CompressedFileMixin, CompressStorageMixin
+from pulpcore.vendor.storages.utils import (
+    ReadBytesWrapper,
+    check_location,
+    clean_name,
+    get_available_overwrite_name,
+    is_seekable,
+    lookup_env,
+    safe_join,
+    setting,
+    to_bytes,
+)
 
 try:
     import boto3.session
