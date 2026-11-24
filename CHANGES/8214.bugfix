@@ -1,0 +1,1 @@
+The content cache no longer answers 404 for a file whose artifact orphan cleanup deleted after the response was cached; the request is handled again, which pulls the file through where a remote has it.
