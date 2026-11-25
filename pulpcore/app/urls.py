@@ -171,7 +171,7 @@ class ViewSetNode:
         if self.viewset:
             router.register(self.viewset.urlpattern(), self.viewset, self.viewset.view_name())
             if self.children:
-                router = routers.NestedDefaultRouter(
+                router = PulpNestedDefaultRouter(
                     router, self.viewset.urlpattern(), lookup=self.viewset.router_lookup
                 )
                 created_routers.append(router)
@@ -205,6 +205,23 @@ class PulpDefaultRouter(routers.DefaultRouter):
     """A DefaultRouter class that benefits from the customized PulpAPIRootView class."""
 
     APIRootView = PulpAPIRootView
+
+
+class PulpNestedDefaultRouter(routers.NestedDefaultRouter):
+    """Allow viewsets to declare additional collection method mappings."""
+
+    def get_routes(self, viewset):
+        routes = super().get_routes(viewset)
+        if mapping := getattr(viewset, "collection_method_mapping", None):
+            # DRF maps collection POST to create and has no collection DELETE mapping.
+            # Extend this route so viewsets can bind those verbs to their own methods.
+            routes = [
+                route._replace(mapping={**route.mapping, **mapping})
+                if route.name == "{basename}-list"
+                else route
+                for route in routes
+            ]
+        return routes
 
 
 all_viewsets = []

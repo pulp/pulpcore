@@ -1,12 +1,57 @@
 """Tests that perform actions over content unit."""
 
 import hashlib
+import json
 import os
 import uuid
 
 import pytest
 
 from pulpcore.tests.functional.utils import PulpTaskError, generate_iso
+
+
+@pytest.mark.parallel
+def test_synchronous_upload_stages_without_creating_a_version(
+    file_bindings, file_repository_factory, random_artifact, monitor_task, tmp_path
+):
+    repository = file_repository_factory(staging_enabled=True)
+    path = f"staged-{uuid.uuid4()}.txt"
+
+    file_path = tmp_path / "synchronous.txt"
+    file_path.write_bytes(b"synchronous staged content")
+    uploaded = file_bindings.ContentFilesApi.upload(
+        file=str(file_path),
+        relative_path=f"sync-{path}",
+        repository=repository.pulp_href,
+    )
+
+    headers = {}
+    file_bindings.client.update_params_for_auth(
+        headers, {}, ["basicAuth"], repository.pulp_href, "GET", None
+    )
+    url = f"{file_bindings.client.configuration.host}{repository.pulp_href}staging/"
+    staging = file_bindings.client.rest_client.request("GET", url, headers=headers)
+    assert staging.status == 200
+    staged = json.loads(staging.response.data)
+    assert staged["count"] == 1
+    assert staged["results"] == [uploaded.pulp_href]
+    assert file_bindings.RepositoriesFileApi.read(
+        repository.pulp_href
+    ).latest_version_href.endswith("/versions/0/")
+
+    response = file_bindings.ContentFilesApi.create(
+        artifact=random_artifact.pulp_href,
+        relative_path=path,
+        repository=repository.pulp_href,
+    )
+    task = monitor_task(response.task)
+    assert len(task.created_resources) == 2
+    assert any(resource.endswith("/versions/1/") for resource in task.created_resources)
+    staging = file_bindings.client.rest_client.request("GET", url, headers=headers)
+    assert json.loads(staging.response.data)["results"] == [uploaded.pulp_href]
+    assert file_bindings.RepositoriesFileApi.read(
+        repository.pulp_href
+    ).latest_version_href.endswith("/versions/1/")
 
 
 @pytest.mark.parallel

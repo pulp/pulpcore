@@ -162,6 +162,25 @@ class UploadSerializerFieldsMixin(Serializer):
         fields = ("file", "upload", "file_url", "downloader_config")
 
 
+class StageContentUploadSerializerMixin:
+    """Stage content created by a synchronous upload when a repository is supplied."""
+
+    def validate(self, data):
+        if repository := data.get("repository"):
+            if not repository.staging_enabled:
+                raise ValidationError(
+                    {"repository": _("The repository must have staging enabled.")}
+                )
+        return super().validate(data)
+
+    def create(self, validated_data):
+        repository = validated_data.pop("repository", None)
+        content = super().create(validated_data)
+        if repository:
+            repository.cast().stage_file(content)
+        return content
+
+
 class NoArtifactContentUploadSerializer(UploadSerializerFieldsMixin, NoArtifactContentSerializer):
     """A serializer for content types with no Artifact."""
 

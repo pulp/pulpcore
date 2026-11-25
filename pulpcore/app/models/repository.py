@@ -9,6 +9,7 @@ from gettext import gettext as _
 from os import path
 
 import django
+from asgiref.sync import sync_to_async
 from asyncio_throttle import Throttler
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField, HStoreField
@@ -55,6 +56,8 @@ class Repository(MasterModel):
         retain_checkpoints (models.PositiveIntegerField): Number of checkpoint publications to
             keep as checkpoints.
         user_hidden (models.BooleanField): Whether to expose this repo to users via the API
+        staging_enabled (models.BooleanField): Whether repository staging is enabled.
+        staging_autocommit (models.BooleanField): Whether staged content is committed on a schedule.
 
     Relations:
 
@@ -75,6 +78,8 @@ class Repository(MasterModel):
     retain_repo_versions = models.PositiveIntegerField(default=None, null=True)
     retain_checkpoints = models.PositiveIntegerField(default=None, null=True)
     user_hidden = models.BooleanField(default=False)
+    staging_enabled = models.BooleanField(default=False)
+    staging_autocommit = models.BooleanField(default=False)
     content = models.ManyToManyField(
         "Content", through="RepositoryContent", related_name="repositories"
     )
@@ -430,18 +435,17 @@ class Repository(MasterModel):
 
     def pull_through_add_content(self, content_artifact):
         """
-        Dispatch a task to add the passed in content_artifact from the content app's pull-through
-        feature to this repository.
+        Associate pull-through content with this repository, staging it when enabled.
 
-        Defaults to adding the associated content of the passed in content_artifact to the
-        repository. Plugins should overwrite this method if more complex behavior is necessary, i.e.
-        adding multiple associated content units in the same task.
+        Defaults to staging the associated content when staging is enabled, or adding it to a
+        repository version otherwise. Plugins should overwrite this method if more complex behavior
+        is necessary, i.e. handling multiple associated content units together.
 
         Args:
             content_artifact (pulpcore.app.models.ContentArtifact): the content artifact to add
 
         Returns:
-            Optional(Task): Returns the dispatched task or None if nothing was done
+            Optional(Task): Returns the dispatched task or None if content was staged or skipped
         """
         cpk = content_artifact.content_id
         already_present = RepositoryContent.objects.filter(
@@ -450,10 +454,22 @@ class Repository(MasterModel):
         if not cpk or already_present.exists():
             return None
 
+        if self.staging_enabled:
+            self._stage_pull_through_content(cpk)
+            return None
+
         from pulpcore.plugin.tasking import aadd_and_remove, dispatch
 
         body = {"repository_pk": self.pk, "add_content_units": [cpk], "remove_content_units": []}
         return dispatch(aadd_and_remove, kwargs=body, exclusive_resources=[self], immediate=True)
+
+    def stage_file(self, content):
+        """Associate a content unit with this repository's staging area."""
+        staged_content, _ = StagedContent.objects.get_or_create(repository=self, content=content)
+        return staged_content
+
+    def _stage_pull_through_content(self, content_pk):
+        self.stage_file(Content.objects.get(pk=content_pk))
 
     async def async_pull_through_add_content(self, content_artifact):
         cpk = content_artifact.content_id
@@ -461,6 +477,10 @@ class Repository(MasterModel):
             content__pk=cpk, repository=self, version_removed__isnull=True
         )
         if not cpk or await already_present.aexists():
+            return None
+
+        if self.staging_enabled:
+            await sync_to_async(self._stage_pull_through_content)(cpk)
             return None
 
         from pulpcore.plugin.tasking import aadd_and_remove, adispatch
@@ -879,6 +899,18 @@ class RepositoryContent(BaseModel):
             ("repository", "content", "version_added"),
             ("repository", "content", "version_removed"),
         )
+
+
+class StagedContent(BaseModel):
+    """Content associated with a repository outside its versions."""
+
+    content = models.ForeignKey(
+        "Content", on_delete=models.PROTECT, related_name="staged_memberships"
+    )
+    repository = models.ForeignKey(Repository, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ("repository", "content")
 
 
 class RepositoryVersionQuerySet(models.QuerySet):
