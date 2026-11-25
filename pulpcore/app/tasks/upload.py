@@ -42,3 +42,4 @@ def commit(upload_id, sha256, **kwargs):
 
     # delete the upload since it can't be reused to create another artifact
     upload.delete()
+    return ArtifactSerializer(artifact, context={"request": None}).data
