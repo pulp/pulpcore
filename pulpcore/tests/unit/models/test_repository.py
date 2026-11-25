@@ -3,9 +3,45 @@ from uuid import uuid4
 
 import pytest
 
-from pulpcore.app.models import RepositoryVersionContentDetails
+from pulpcore.app.models import RepositoryVersion, RepositoryVersionContentDetails
 from pulpcore.plugin.models import Artifact, Content, ContentArtifact, Repository
 from pulpcore.plugin.repo_version_utils import validate_version_paths
+
+
+def test_empty_content_cache_is_rebuilt_when_content_is_read(
+    db, repository, add_content, content_pks
+):
+    with repository.new_version() as version:
+        add_content(version, [1, 1, 1, 1, 1])
+
+    RepositoryVersion.objects.filter(pk=version.pk).update(content_ids=[])
+    version.refresh_from_db()
+    assert version.content_ids == []
+
+    assert set(version.content.values_list("pk", flat=True)) == set(content_pks)
+    version.refresh_from_db()
+    assert set(version.content_ids) == set(content_pks)
+
+
+def test_empty_version_zero_cache_is_not_rewritten(db, repository):
+    version = repository.latest_version()
+    assert version.number == 0
+    assert version.complete is True
+
+    assert list(version.content) == []
+    version.refresh_from_db()
+    assert version.content_ids == []
+
+
+def test_incomplete_version_empty_cache_is_not_rebuilt(db, repository, add_content):
+    with repository.new_version() as version:
+        add_content(version, [1, 0, 0, 0, 0])
+        RepositoryVersion.objects.filter(pk=version.pk).update(content_ids=[])
+        version.refresh_from_db()
+
+        assert list(version.content.values_list("pk", flat=True)) == []
+        version.refresh_from_db()
+        assert version.content_ids == []
 
 
 def pks_of_next_qs(qs_generator):
