@@ -1,1 +1,1 @@
-Rebuilt an empty repository version content cache from repository membership before that version's content is read.
+Fixed a repository copy dropping existing content when the repository version's content_ids list was empty but its content membership was still present.
