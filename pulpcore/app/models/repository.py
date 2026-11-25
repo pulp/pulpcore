@@ -886,6 +886,7 @@ class RepositoryVersion(BaseModel):
         if content_qs is None:
             content_qs = Content.objects
 
+        self._repair_empty_content_cache()
         content_ids = self._get_content_ids()
         if isinstance(content_ids, list) and len(content_ids) >= 65535:
             # Workaround for PostgreSQL's limit on the number of parameters in a query
@@ -895,6 +896,40 @@ class RepositoryVersion(BaseModel):
                 .values_list("cids", flat=True)
             )
         return content_qs.filter(pk__in=content_ids)
+
+    def _repair_empty_content_cache(self):
+        """
+        Rebuild a completed version's empty ``content_ids`` cache from membership.
+
+        An empty list is treated as authoritative, so a later copy publishes no
+        existing content. A null cache is left unchanged. Version 0 and versions
+        that are still being created are left unchanged. A non-empty cache is
+        not compared here; ``datarepair 7272`` covers other cache mismatches.
+        """
+        if not self.complete or not self.pk or self.number == 0:
+            return
+
+        if "content_ids" in self.__dict__:
+            if self.content_ids:
+                return
+            if self.content_ids is None:
+                return
+        elif not RepositoryVersion.objects.filter(pk=self.pk, content_ids=[]).exists():
+            return
+
+        if not self._content_relationships().exists():
+            return
+
+        repaired = list(self._content_relationships().values_list("content_id", flat=True))
+        updated = RepositoryVersion.objects.filter(
+            pk=self.pk, complete=True, content_ids=[]
+        ).update(content_ids=repaired)
+        if updated:
+            self.content_ids = repaired
+        else:
+            self.content_ids = RepositoryVersion.objects.values_list("content_ids", flat=True).get(
+                pk=self.pk
+            )
 
     @property
     def content(self):
