@@ -1,6 +1,7 @@
 # Configure Storage Backend
 
-Pulp uses [django-storages](https://django-storages.readthedocs.io) to support multiple storage backends.
+Pulp bundles supported object-storage backends based on [django-storages](https://django-storages.readthedocs.io).
+Use the `pulpcore.vendor.storages` import paths when selecting a backend in Django's `STORAGES` setting.
 See the reference for the [`STORAGES` settings](site:pulpcore/docs/admin/reference/settings/#storages).
 
 ## Modifying the settings
@@ -8,6 +9,10 @@ See the reference for the [`STORAGES` settings](site:pulpcore/docs/admin/referen
 The settings can be updated via the `settings.py` file or through environment variables
 and have support to dynaconf merge features.
 The means to modify them will depend on your deployment option.
+
+When upgrading a deployment that overrides `STORAGES` or `DOMAIN_STORAGE_BACKENDS`, change
+Pulp backend implementation paths from `storages.backends.*` to `pulpcore.vendor.storages.backends.*`.
+Domain API `storage_class` values remain the historical `storages.backends.*` identifiers.
 
 Learn more on the [Settings Introduction](site:pulpcore/docs/admin/guides/configure-pulp/).
 
@@ -63,7 +68,7 @@ In this example, the storage uses a bucket called `pulp3` that is hosted in regi
 MEDIA_ROOT = ""
 STORAGES = {
     "default": {
-        "BACKEND": "storages.backends.s3.S3Storage",
+        "BACKEND": "pulpcore.vendor.storages.backends.s3.S3Storage",
         "OPTIONS": {
             "access_key": 'AKIAIT2Z5TDYPX3ARJBA',
             "secret_key": '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',
@@ -101,6 +106,9 @@ You'll need:
 - And a Custom Domain (`custom_domain`)
 
 When creating a `Domain` you can use the following payload:
+
+The `storage_class` value is a historical API identifier. Keep using the `storages.backends.*`
+value there; use the `pulpcore.vendor.storages.backends.*` path only in `STORAGES` settings.
 
 ```json
 {
@@ -150,7 +158,7 @@ Comprehensive options for Amazon S3 can be found in
 
 ## S3 Compatible
 
-The same `storages.backends.s3.S3Storage` backend can be used for S3 Compatible API services, such as [rustfs](https://rustfs.com/), [Ceph/RADOS](https://docs.ceph.com/en/reef/man/8/rados/) and [Backblaze B2](https://www.backblaze.com/cloud-storage).
+The same S3 `storage_class` identifier can be used for S3 Compatible API services, such as [rustfs](https://rustfs.com/), [Ceph/RADOS](https://docs.ceph.com/en/reef/man/8/rados/) and [Backblaze B2](https://www.backblaze.com/cloud-storage).
 
 The [django-storages](https://django-storages.readthedocs.io/en/latest/backends/s3_compatible/index.html) documentation
 provides a reference for setting up some of these services.
@@ -175,7 +183,7 @@ In this example, the storage uses a container called `pulp3` with the `pulp-acco
 MEDIA_ROOT = ""
 STORAGES = {
     "default": {
-        "BACKEND": "storages.backends.azure_storage.AzureStorage",
+        "BACKEND": "pulpcore.vendor.storages.backends.azure_storage.AzureStorage",
         "OPTIONS": {
             "account_name": 'pulp-account',
             "azure_container": 'pulp3',

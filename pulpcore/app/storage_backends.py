@@ -20,6 +20,12 @@ LEGACY_STORAGE_CLASSES = SimpleNamespace(
     GCS="storages.backends.gcloud.GoogleCloudStorage",
 )
 
+# Vendored settings paths that are valid aliases but aren't the canonical paths in
+# DOMAIN_STORAGE_BACKENDS.
+VENDORED_STORAGE_ALIASES = SimpleNamespace(
+    S3BOTO3="pulpcore.vendor.storages.backends.s3boto3.S3Boto3Storage",
+)
+
 LEGACY_BACKENDS = {
     LEGACY_STORAGE_CLASSES.FILESYSTEM: STORAGE_BACKENDS.FILESYSTEM,
     LEGACY_STORAGE_CLASSES.S3BOTO3: STORAGE_BACKENDS.S3,
@@ -27,6 +33,9 @@ LEGACY_BACKENDS = {
     LEGACY_STORAGE_CLASSES.AZURE: STORAGE_BACKENDS.AZURE,
     LEGACY_STORAGE_CLASSES.GCS: STORAGE_BACKENDS.GCS,
 }
+
+# Resolve those import aliases to their stable storage service IDs.
+VENDORED_BACKEND_ALIASES = {VENDORED_STORAGE_ALIASES.S3BOTO3: STORAGE_BACKENDS.S3}
 
 LEGACY_BACKEND_PATHS = {
     STORAGE_BACKENDS.FILESYSTEM: LEGACY_STORAGE_CLASSES.FILESYSTEM,
@@ -51,6 +60,8 @@ def backend_id(value):
         return value
     if value in LEGACY_BACKENDS:
         return LEGACY_BACKENDS[value]
+    if value in VENDORED_BACKEND_ALIASES:
+        return VENDORED_BACKEND_ALIASES[value]
     for kind, path in settings.DOMAIN_STORAGE_BACKENDS.items():
         if value == path and kind in BACKEND_IDS:
             return kind
@@ -149,11 +160,14 @@ class _BoundedReader:
 
 @contextmanager
 def open_stream(storage, name, start=0, length=None):
-    """Open a bounded read stream and close it on exit, including after errors.
+    """Open the bounded stream used when Pulp serves an artifact itself.
 
-    Backends with native ranged reads should implement `open_stream`. The
-    Django `open` fallback bounds bytes returned but may still buffer the
-    entire object internally, depending on the installed implementation.
+    ArtifactResponse calls this for artifact distributions and for content
+    responses that Pulp serves instead of redirecting to object storage. Use a
+    backend's native ranged stream when available; otherwise seek on Django's
+    `open()` result and bound returned bytes. The fallback may buffer the full
+    object, depending on the backend. The stream is closed on context exit,
+    including after errors or early termination.
     """
     if start < 0 or (length is not None and length < 0):
         raise ValueError("Stream start and length must be non-negative")

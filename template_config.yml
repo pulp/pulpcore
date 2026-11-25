@@ -69,7 +69,7 @@ pulp_settings_azure:
   MEDIA_ROOT: ""
   STORAGES:
     default:
-      BACKEND: "storages.backends.azure_storage.AzureStorage"
+      BACKEND: "pulpcore.vendor.storages.backends.azure_storage.AzureStorage"
       OPTIONS:
         account_key: "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
         account_name: "devstoreaccount1"
@@ -107,7 +107,7 @@ pulp_settings_s3:
   MEDIA_ROOT: ""
   STORAGES:
     default:
-      BACKEND: "storages.backends.s3boto3.S3Boto3Storage"
+      BACKEND: "pulpcore.vendor.storages.backends.s3boto3.S3Boto3Storage"
       OPTIONS:
         access_key: "AKIAIT2Z5TDYPX3ARJBA"
         addressing_style: "path"

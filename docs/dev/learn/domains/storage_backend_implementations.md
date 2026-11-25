@@ -19,8 +19,8 @@ Set the class path for each non-default Domain storage type you are replacing:
 DOMAIN_STORAGE_BACKENDS = {
     "filesystem": "pulpcore.app.models.storage.FileSystem",
     "s3": "my_storage.backends.s3.S3Storage",
-    "azure": "storages.backends.azure_storage.AzureStorage",
-    "gcs": "storages.backends.gcloud.GoogleCloudStorage",
+    "azure": "pulpcore.vendor.storages.backends.azure_storage.AzureStorage",
+    "gcs": "pulpcore.vendor.storages.backends.gcloud.GoogleCloudStorage",
 }
 ```
 

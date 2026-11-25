@@ -81,9 +81,11 @@ STORAGES = {
 # here to change the implementation without rewriting stored Domain rows.
 DOMAIN_STORAGE_BACKENDS = {
     constants.STORAGE_BACKENDS.FILESYSTEM: "pulpcore.app.models.storage.FileSystem",
-    constants.STORAGE_BACKENDS.S3: "storages.backends.s3.S3Storage",
-    constants.STORAGE_BACKENDS.AZURE: "storages.backends.azure_storage.AzureStorage",
-    constants.STORAGE_BACKENDS.GCS: "storages.backends.gcloud.GoogleCloudStorage",
+    constants.STORAGE_BACKENDS.S3: "pulpcore.vendor.storages.backends.s3.S3Storage",
+    constants.STORAGE_BACKENDS.AZURE: (
+        "pulpcore.vendor.storages.backends.azure_storage.AzureStorage"
+    ),
+    constants.STORAGE_BACKENDS.GCS: "pulpcore.vendor.storages.backends.gcloud.GoogleCloudStorage",
 }
 
 REDIRECT_TO_OBJECT_STORAGE = True
@@ -127,7 +129,6 @@ INSTALLED_APPS = [
 OPTIONAL_APPS = [
     "crispy_forms",
     "django_extensions",
-    "storages",
 ]
 
 for app in OPTIONAL_APPS:
