@@ -1,0 +1,1 @@
+Passing an Artifact without a preloaded `pulp_domain` to `ArtifactResponse` is deprecated. Use `select_related("pulp_domain")` or pass `storage=`.
