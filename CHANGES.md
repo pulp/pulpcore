@@ -8,6 +8,32 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.125.0 (2026-11-25) {: #3.125.0 }
+
+### REST API {: #3.125.0-rest-api }
+
+#### Features {: #3.125.0-rest-api-feature }
+
+- Storage backends can now be replaced without changing Domain records or the Domain API.
+
+#### Bugfixes {: #3.125.0-rest-api-bugfix }
+
+- Task group lists now show the newest groups first, matching task lists.
+
+### Plugin API {: #3.125.0-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.125.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.125.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.124.0 (2026-11-19) {: #3.124.0 }
 
 ### REST API {: #3.124.0-rest-api }
