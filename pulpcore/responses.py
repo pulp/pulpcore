@@ -6,7 +6,9 @@ from aiohttp.web_exceptions import (
     HTTPPartialContent,
     HTTPRequestRangeNotSatisfiable,
 )
+from asgiref.sync import sync_to_async
 
+from pulpcore.app.loggers import deprecation_logger
 from pulpcore.app.models import Artifact
 from pulpcore.app.storage_backends import open_stream
 
@@ -58,6 +60,18 @@ class ArtifactResponse(StreamResponse):
 
         await writer.drain()
         return writer
+
+    async def _get_storage(self):
+        if self._storage is not None:
+            return self._storage
+        if not Artifact.pulp_domain.is_cached(self._artifact):
+            deprecation_logger.warning(
+                "ArtifactResponse received an Artifact without a preloaded pulp_domain. "
+                "Use select_related('pulp_domain') or pass storage=. "
+                "Loading it on demand is deprecated and will be removed in pulpcore 3.130."
+            )
+            await sync_to_async(lambda: self._artifact.pulp_domain)()
+        return self._artifact.pulp_domain.get_storage()
 
     async def prepare(self, request):
         if self._artifact is None:
@@ -155,7 +169,7 @@ class ArtifactResponse(StreamResponse):
 
         return await self._sendfile(
             request,
-            self._storage or self._artifact.pulp_domain.get_storage(),
+            await self._get_storage(),
             self._file.name,
             offset,
             count,
