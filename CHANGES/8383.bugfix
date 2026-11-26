@@ -1,0 +1,1 @@
+Fixed a race condition during concurrent on-demand downloads where unlinking an already-moved temporary artifact raised FileNotFoundError and aborted client transfers.
