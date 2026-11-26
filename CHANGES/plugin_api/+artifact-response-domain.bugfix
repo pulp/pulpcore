@@ -1,0 +1,1 @@
+Fixed a regression in 3.125.0 where `ArtifactResponse` failed with `SynchronousOnlyOperation` when given an Artifact without a preloaded `pulp_domain`.
