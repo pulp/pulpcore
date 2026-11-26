@@ -325,7 +325,7 @@ async def test_list_directory_metadata(monkeypatch, use_publication):
             for entry in content_artifacts
         ]
         publication = SimpleNamespace(
-            repository_version=repo_version,
+            published_version=repo_version,
             pass_through=False,
             published_artifact=publication_manager,
         )

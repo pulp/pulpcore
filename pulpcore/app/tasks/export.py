@@ -228,7 +228,7 @@ def _export_publication_to_file_system(
 
     if publication.pass_through:
         content_artifacts |= ContentArtifact.objects.filter(
-            content__in=publication.repository_version.content
+            content__in=publication.published_version.content
         )
 
     if not allow_missing:

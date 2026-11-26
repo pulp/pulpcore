@@ -94,7 +94,7 @@ class FileContentViewSet(SingleArtifactContentUploadViewSet):
                 "effect": "allow",
             },
             {
-                "action": ["create"],
+                "action": ["create", "upload_sync"],
                 "principal": "authenticated",
                 "effect": "allow",
                 "condition": [
@@ -556,11 +556,11 @@ class FilePublicationViewSet(PublicationViewSet, RolesMixin):
             sha256sums = repository_version.repository.cast().sha256sums
         validate_manifest_sha256sums(manifest, sha256sums)
 
-        task_kwargs = {
-            "repository_version_pk": str(repository_version.pk),
-            "manifest": manifest,
-            "sha256sums": sha256sums,
-        }
+        task_kwargs = {"manifest": manifest, "sha256sums": sha256sums}
+        if repository_version.repository.versioned:
+            task_kwargs["repository_version_pk"] = str(repository_version.pk)
+        else:
+            task_kwargs["repository_pk"] = str(repository_version.repository.pk)
 
         if checkpoint:
             task_kwargs["checkpoint"] = True

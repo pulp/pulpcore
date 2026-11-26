@@ -31,7 +31,7 @@ from pulpcore.responses import ArtifactResponse
 
 from .base import BaseModel, MasterModel
 from .content import Artifact, Content, ContentArtifact
-from .repository import Remote, Repository, RepositoryVersion
+from .repository import Remote, Repository, RepositoryMembership, RepositoryVersion
 from .task import CreatedResource
 
 _logger = logging.getLogger(__name__)
@@ -60,6 +60,7 @@ class PublicationQuerySet(models.QuerySet):
         pub_artifact_q = Publication.objects.filter(
             published_artifact__content_artifact__content__pk__in=content
         )
+        # Pass-through publications of unversioned repositories are not found
         pass_thru_q = Publication.objects.filter(
             pass_through=True,
             repository_version__pk__in=RepositoryVersion.objects.with_content(content),
@@ -83,10 +84,14 @@ class Publication(MasterModel):
             to the repository version. Enabling pass-through has the same effect as creating
             a PublishedArtifact for all of the content (artifacts) in the repository.
         checkpoint (models.BooleanField): Indicates a checkpoint publication.
+        seq (models.BigIntegerField): The change sequence number of the unversioned repository
+            when it was published.
 
     Relations:
         repository_version (models.ForeignKey): The RepositoryVersion used to
             create this Publication.
+        unversioned_repository (models.ForeignKey): The unversioned Repository used to create
+            this Publication. Set instead of repository_version.
         pulp_domain (models.ForeignKey): The domain the Publication is a part of.
 
     Examples:
@@ -110,8 +115,24 @@ class Publication(MasterModel):
     pass_through = models.BooleanField(default=False)
     checkpoint = models.BooleanField(default=False)
 
-    repository_version = models.ForeignKey("RepositoryVersion", on_delete=models.CASCADE)
+    repository_version = models.ForeignKey("RepositoryVersion", null=True, on_delete=models.CASCADE)
+    # No reverse accessor: it would list only the unversioned publications of a repository
+    unversioned_repository = models.ForeignKey(
+        "Repository", null=True, on_delete=models.CASCADE, related_name="+"
+    )
+    seq = models.BigIntegerField(null=True)
     pulp_domain = models.ForeignKey("Domain", default=get_domain_pk, on_delete=models.PROTECT)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(
+                    repository_version__isnull=False, unversioned_repository__isnull=True
+                )
+                | models.Q(repository_version__isnull=True, unversioned_repository__isnull=False),
+                name="publication_version_or_unversioned_repository",
+            ),
+        ]
 
     @classmethod
     def create(cls, repository_version, pass_through=False, checkpoint=False):
@@ -123,7 +144,9 @@ class Publication(MasterModel):
 
         Args:
             repository_version (pulpcore.app.models.RepositoryVersion): The repository
-                version to be published.
+                version to be published. A pulpcore.app.models.RepositoryMembership publishes
+                the content of an unversioned repository as it was at its current change
+                sequence number, which is stored as seq.
             pass_through (bool): Indicates that the publication is a pass-through
                 to the repository version. Enabling pass-through has the same effect
                 as creating a PublishedArtifact for all of the content (artifacts)
@@ -135,12 +158,15 @@ class Publication(MasterModel):
         Notes:
             Adds a Task.created_resource for the publication.
         """
+        if isinstance(repository_version, RepositoryMembership):
+            source = {
+                "unversioned_repository": repository_version.repository,
+                "seq": repository_version.seq,
+            }
+        else:
+            source = {"repository_version": repository_version}
         with transaction.atomic():
-            publication = cls(
-                pass_through=pass_through,
-                repository_version=repository_version,
-                checkpoint=checkpoint,
-            )
+            publication = cls(pass_through=pass_through, checkpoint=checkpoint, **source)
             publication.save()
             resource = CreatedResource(content_object=publication)
             resource.save()
@@ -154,7 +180,22 @@ class Publication(MasterModel):
         Returns:
             pulpcore.app.models.Repository: The repository associated to this publication
         """
+        if self.unversioned_repository_id:
+            return self.unversioned_repository
         return self.repository_version.repository
+
+    @property
+    def published_version(self):
+        """
+        Return the content this publication was created from.
+
+        Returns:
+            pulpcore.app.models.RepositoryVersion: The repository version, or for an unversioned
+                repository a pulpcore.app.models.RepositoryMembership holding the content at seq.
+        """
+        if self.unversioned_repository_id:
+            return RepositoryMembership(self.unversioned_repository, seq=self.seq)
+        return self.repository_version
 
     def delete(self, **kwargs):
         """
@@ -176,11 +217,18 @@ class Publication(MasterModel):
             try:
                 if self.checkpoint:
                     base_paths |= Distribution.objects.filter(
-                        checkpoint=True, repository=self.repository_version.repository
+                        checkpoint=True, repository=self.repository
                     ).values_list("base_path", flat=True)
-                versions = self.repository.versions.all()
-                pubs = Publication.objects.filter(repository_version__in=versions, complete=True)
-                publication = pubs.latest("repository_version", "pulp_created")
+                if self.unversioned_repository_id:
+                    publication = Publication.objects.filter(
+                        unversioned_repository=self.unversioned_repository, complete=True
+                    ).latest("pulp_created")
+                else:
+                    versions = self.repository.versions.all()
+                    pubs = Publication.objects.filter(
+                        repository_version__in=versions, complete=True
+                    )
+                    publication = pubs.latest("repository_version", "pulp_created")
                 if self.pk == publication.pk:
                     base_paths |= self.repository.distributions.values_list("base_path", flat=True)
             except Publication.DoesNotExist:
@@ -189,16 +237,17 @@ class Publication(MasterModel):
             # A distribution serving this publication's version directly (repository_version)
             # resolves to the latest publication of that version. Invalidate those distributions
             # when this is that latest publication.
-            try:
-                version_latest = Publication.objects.filter(
-                    repository_version=self.repository_version, complete=True
-                ).latest("pulp_created")
-                if self.pk == version_latest.pk:
-                    base_paths |= Distribution.objects.filter(
-                        repository_version=self.repository_version
-                    ).values_list("base_path", flat=True)
-            except Publication.DoesNotExist:
-                pass
+            if self.repository_version_id:
+                try:
+                    version_latest = Publication.objects.filter(
+                        repository_version=self.repository_version, complete=True
+                    ).latest("pulp_created")
+                    if self.pk == version_latest.pk:
+                        base_paths |= Distribution.objects.filter(
+                            repository_version=self.repository_version
+                        ).values_list("base_path", flat=True)
+                except Publication.DoesNotExist:
+                    pass
 
             # Invalidate cache for all distributions serving this publication
             if base_paths:
@@ -257,28 +306,28 @@ class Publication(MasterModel):
                 self.delete()
                 raise
 
-            # Refresh distributed publications for the auto-publish scenario. A distribution can
-            # distribute this publication indirectly either through its repository (latest
-            # publication of the latest version) or through its repository_version (latest
-            # publication of that version), without the distribution itself changing.
+            # A distribution can distribute this publication indirectly either through its
+            # repository (latest publication of the latest version) or through its
+            # repository_version (latest publication of that version)
+            distributions = models.Q(repository=self.repository)
+            if self.repository_version_id:
+                distributions |= models.Q(repository_version=self.repository_version)
+
+            # Refresh distributed publications for the auto-publish scenario, where the
+            # distribution itself does not change
             if retain_distributed_pub_enabled():
-                for distro in Distribution.objects.filter(
-                    models.Q(repository=self.repository_version.repository)
-                    | models.Q(repository_version=self.repository_version)
-                ):
+                for distro in Distribution.objects.filter(distributions):
                     distro.set_distributed_publication()
 
             # Unmark old checkpoints if retention is configured
             if self.checkpoint:
-                repository = self.repository_version.repository
-                repository.cleanup_old_checkpoints()
+                self.repository.cleanup_old_checkpoints()
 
             # invalidate cache
             if settings.CACHE_ENABLED:
-                base_paths = Distribution.objects.filter(
-                    models.Q(repository=self.repository_version.repository)
-                    | models.Q(repository_version=self.repository_version)
-                ).values_list("base_path", flat=True)
+                base_paths = Distribution.objects.filter(distributions).values_list(
+                    "base_path", flat=True
+                )
                 if base_paths:
                     Cache().delete(base_key=cache_key(base_paths))
 
@@ -794,7 +843,7 @@ class Distribution(MasterModel):
 
         Checks in priority order: explicit publication, explicit repository_version
         (latest publication for that version), explicit repository (latest publication
-        across all versions).
+        across all versions, or of the unversioned repository).
 
         Publication lookup only occurs when SERVE_FROM_PUBLICATION is True.
 
@@ -804,8 +853,8 @@ class Distribution(MasterModel):
         repository = repo_version = publication = None
         if self.publication:
             publication = self.publication.cast()
-            repo_version = publication.repository_version
-            repository = repo_version.repository.cast()
+            repo_version = publication.published_version
+            repository = publication.repository.cast()
         elif self.repository_version:
             repo_version = self.repository_version
             repository = repo_version.repository.cast()
@@ -820,7 +869,18 @@ class Distribution(MasterModel):
                     pass
         elif self.repository:
             repository = self.repository.cast()
-            if self.SERVE_FROM_PUBLICATION:
+            if self.SERVE_FROM_PUBLICATION and not repository.versioned:
+                try:
+                    publication = (
+                        Publication.objects.filter(unversioned_repository=repository, complete=True)
+                        .latest("pulp_created")
+                        .cast()
+                    )
+                    publication.unversioned_repository = repository
+                    repo_version = publication.published_version
+                except Publication.DoesNotExist:
+                    pass
+            elif self.SERVE_FROM_PUBLICATION:
                 try:
                     publication = (
                         Publication.objects.filter(
@@ -922,11 +982,11 @@ class Distribution(MasterModel):
             if pub.pass_through:
                 ca = (
                     ContentArtifact.objects.select_related("artifact", "artifact__pulp_domain")
-                    .filter(content__in=pub.repository_version.content, relative_path=path)
+                    .filter(content__in=pub.published_version.content, relative_path=path)
                     .first()
                 )
                 if ca is not None:
-                    return ca, pub.repository_version
+                    return ca, pub.published_version
             else:
                 pa = (
                     pub.published_artifact.select_related(
@@ -937,7 +997,7 @@ class Distribution(MasterModel):
                     .first()
                 )
                 if pa is not None:
-                    return pa.content_artifact, pub.repository_version
+                    return pa.content_artifact, pub.published_version
         return None
 
     @hook(BEFORE_CREATE)

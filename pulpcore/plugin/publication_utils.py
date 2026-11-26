@@ -15,7 +15,7 @@ def validate_publication_paths(publication):
 
     if publication.pass_through:
         paths += ContentArtifact.objects.filter(
-            content__pk__in=publication.repository_version.content
+            content__pk__in=publication.published_version.content
         ).values_list("relative_path", flat=True)
 
     try:

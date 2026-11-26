@@ -46,6 +46,17 @@ class FileContent(Content):
             ("upload_files", "Can upload File content using synchronous API."),
         ]
 
+    @staticmethod
+    def init_from_artifact_and_relative_path(artifact, relative_path):
+        """
+        Returns an instance of FileContent for this artifact, used by pull-through caching.
+
+        Args:
+            artifact (pulpcore.plugin.models.Artifact): The downloaded artifact.
+            relative_path (str): The relative path of the content.
+        """
+        return FileContent(relative_path=relative_path, digest=artifact.sha256)
+
 
 class FileRemote(Remote, AutoAddObjPermsMixin):
     """
@@ -53,6 +64,12 @@ class FileRemote(Remote, AutoAddObjPermsMixin):
     """
 
     TYPE = "file"
+
+    def get_remote_artifact_content_type(self, relative_path=None):
+        """
+        Returns FileContent, the only content type served at any relative path.
+        """
+        return FileContent
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
@@ -121,6 +138,11 @@ class FileRepository(Repository, AutoAddObjPermsMixin):
             ("manage_roles_filerepository", "Can manage roles on file repositories"),
             ("repair_filerepository", "Can repair repository versions"),
         ]
+
+    @property
+    def PULL_THROUGH_SUPPORTED(self):
+        # Overrides the core class flag: only unversioned repositories add pull-through content
+        return not self.versioned
 
     def on_new_version(self, version):
         """

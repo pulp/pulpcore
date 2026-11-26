@@ -1,6 +1,6 @@
 from gettext import gettext as _
 
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Q
 from django_filters import Filter
 from rest_framework import mixins, serializers
 
@@ -58,7 +58,9 @@ class RepositoryThroughVersionFilter(Filter):
             )
 
         repository = NamedModelViewSet.get_resource(value, Repository)
-        return qs.filter(repository_version__repository=repository)
+        return qs.filter(
+            Q(repository_version__repository=repository) | Q(unversioned_repository=repository)
+        )
 
 
 class PublicationFilter(BaseFilterSet):
