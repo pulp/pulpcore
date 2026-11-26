@@ -1185,7 +1185,11 @@ class Handler:
                     # The file needs to be unlinked because it was not used to create an artifact.
                     # The artifact must have already been saved while servicing another request for
                     # the same artifact.
-                    os.unlink(download_result.path)
+                    try:
+                        os.unlink(download_result.path)
+                    except FileNotFoundError:
+                        # Temp file may already be moved to storage before the IntegrityError
+                        pass
 
             if content_artifact._state.adding:
                 # This is the first time pull-through content was requested.
