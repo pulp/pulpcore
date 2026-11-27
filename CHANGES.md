@@ -8,6 +8,32 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.125.1 (2026-11-26) {: #3.125.1 }
+
+### REST API {: #3.125.1-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.125.1-plugin-api }
+
+#### Bugfixes {: #3.125.1-plugin-api-bugfix }
+
+- Fixed a regression in 3.125.0 where `ArtifactResponse` failed with `SynchronousOnlyOperation` when given an Artifact without a preloaded `pulp_domain`.
+
+#### Deprecations {: #3.125.1-plugin-api-deprecation }
+
+- Passing an Artifact without a preloaded `pulp_domain` to `ArtifactResponse` is deprecated. Use `select_related("pulp_domain")` or pass `storage=`.
+
+### Pulp File {: #3.125.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.125.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.125.0 (2026-11-25) {: #3.125.0 }
 
 ### REST API {: #3.125.0-rest-api }
